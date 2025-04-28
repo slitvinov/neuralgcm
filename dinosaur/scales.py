@@ -25,9 +25,6 @@ WATER_DENSITY = 997 * units.kg / units.m**3
 
 def _get_dimension(quantity: Quantity) -> str:
     exponents = list(quantity.dimensionality.values())
-    if len(quantity.dimensionality) != 1 or exponents[0] != 1:
-        raise ValueError('All scales must describe a single dimension;'
-                         f'got dimensionality {quantity.dimensionality}')
     return str(quantity.dimensionality)
 
 
@@ -46,9 +43,6 @@ class Scale:
         self._scales = dict()
         for quantity in scales:
             dimension = _get_dimension(quantity)
-            if dimension in self._scales:
-                raise ValueError(
-                    f'Got duplicate scales for dimension {dimension}.')
             self._scales[_get_dimension(quantity)] = quantity.to_base_units()
 
     def _scaling_factor(self,
@@ -56,8 +50,6 @@ class Scale:
         factor = Quantity(1)
         for dimension, exponent in dimensionality.items():
             quantity = self._scales.get(dimension)
-            if quantity is None:
-                raise ValueError(f'No scale has been set for {dimension}.')
             factor *= quantity**exponent
         assert factor.check(dimensionality)
         return factor

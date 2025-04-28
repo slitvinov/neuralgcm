@@ -27,9 +27,6 @@ def _evaluate_rhombus(n_l: int,
 
 
 def evaluate(n_m: int, n_l: int, x: np.ndarray) -> np.ndarray:
-    if n_m > n_l:
-        raise ValueError(
-            f'Expected n_m <= n_l; got n_m = {n_m} and n_l = {n_l}.')
     r = np.transpose(
         _evaluate_rhombus(n_l=n_l, n_m=n_m, x=x, truncation='triangle'),
         (1, 2, 0))

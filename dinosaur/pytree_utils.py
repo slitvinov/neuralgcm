@@ -15,7 +15,7 @@
 from collections import abc
 import dataclasses
 import functools
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, Union
 
 from dinosaur import typing
 

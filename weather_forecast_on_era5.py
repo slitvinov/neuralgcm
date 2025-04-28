@@ -314,6 +314,8 @@ ds_out.surface_pressure.sel(
 ds_out_unfiltered.surface_pressure.sel(
     latitude=0, longitude=0, method='nearest').plot.line(label='unfiltered')
 plt.legend()
+plt.savefig("00.png")
+plt.close()
 
 ds_out.specific_humidity.thin(time=4 * 24).isel(sigma=1).plot.imshow(
     col='time',
@@ -326,6 +328,9 @@ ds_out.specific_humidity.thin(time=4 * 24).isel(sigma=1).plot.imshow(
     vmin=0,
     vmax=0.01,
 )
+plt.savefig("01.png")
+plt.close()
+
 
 ds_out.specific_cloud_liquid_water_content.thin(time=4 *
                                                 24).isel(sigma=2).plot.imshow(
@@ -339,3 +344,5 @@ ds_out.specific_cloud_liquid_water_content.thin(time=4 *
                                                     vmin=-1e-4,
                                                     vmax=1e-4,
                                                 )
+plt.savefig("02.png")
+plt.close()

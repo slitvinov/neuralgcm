@@ -34,20 +34,6 @@ def _single_device_dot_cumsum(x: jax.Array,
     )
 
 
-def _parallel_dot_cumsum(x: jax.Array, axis: int, reverse: bool,
-                         axis_name: str) -> jax.Array:
-    partials = _single_device_dot_cumsum(x, axis=axis, reverse=reverse)
-    last_partial = lax.index_in_dim(partials, 0 if reverse else -1, axis)
-    sums = lax.all_gather(last_partial, axis_name, tiled=True)
-    axis_index = lax.axis_index(axis_name)
-    op = jnp.greater if reverse else jnp.less
-    total = partials
-    terms = sums[1:] if reverse else sums[:-1]
-    start = 1 if reverse else 0
-    for i, term in enumerate(terms, start=start):
-        total += op(i, axis_index) * term
-    return total
-
 
 def _dot_cumsum(
     x: jax.Array,
@@ -55,27 +41,7 @@ def _dot_cumsum(
     sharding: jax.sharding.NamedSharding | None,
     reverse: bool = False,
 ) -> jax.Array:
-    if sharding is None or sharding.spec[axis] is None:
-        return _single_device_dot_cumsum(x, axis, reverse=reverse)
-    mesh = sharding.mesh
-    spec = sharding.spec
-
-    @jax.jit
-    @functools.partial(
-        shard_map.shard_map,
-        mesh=mesh,
-        in_specs=(spec, ),
-        out_specs=spec,
-        check_rep=False,
-    )
-    def dot_cumsum(x):
-        return _parallel_dot_cumsum(x,
-                                    axis=axis,
-                                    reverse=reverse,
-                                    axis_name=sharding.spec[axis])
-
-    return dot_cumsum(x)
-
+    return _single_device_dot_cumsum(x, axis, reverse=reverse)
 
 def cumsum(
     x: np.ndarray | jax.Array,

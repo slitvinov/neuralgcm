@@ -355,17 +355,6 @@ def exponential_step_filter(
     return runge_kutta_step_filter(filter_fn)
 
 
-def exponential_leapfrog_step_filter(
-    grid: spherical_harmonic.Grid,
-    dt: float,
-    tau: float = 0.010938,
-    order: int = 18,
-    cutoff: float = 0,
-):
-    filter_fn = filtering.exponential_filter(grid, dt / tau, order, cutoff)
-    return leapfrog_step_filter(filter_fn)
-
-
 def horizontal_diffusion_step_filter(
     grid: spherical_harmonic.Grid,
     dt: float,

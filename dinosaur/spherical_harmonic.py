@@ -12,6 +12,7 @@ from jax import lax
 from jax.experimental import shard_map
 import jax.numpy as jnp
 import numpy as np
+import scipy
 
 Array = typing.Array
 ArrayOrArrayTuple = typing.ArrayOrArrayTuple

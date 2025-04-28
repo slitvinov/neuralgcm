@@ -122,9 +122,6 @@ temperature = dinosaur.xarray_utils.temperature_variation_to_absolute(
     trajectory_ds.temperature_variation.data, ref_temps)
 trajectory_ds = trajectory_ds.assign(
     temperature=(trajectory_ds.temperature_variation.dims, temperature))
-plt.savefig("04.png")
-plt.close()
-
 data_array = trajectory_ds['vorticity']
 
 data_array.isel(lon=0).thin(time=12).plot.contour(x='lat',
@@ -138,7 +135,7 @@ data_array = (trajectory_ds['surface_pressure'] /
               physics_specs.nondimensionalize(1e5 * units.pascal))
 data_array.max(['lon']).plot(x='time', hue='lat')
 ax = plt.gca()
-plt.savefig("05.png")
+plt.savefig("04.png")
 plt.close()
 
 
@@ -151,7 +148,7 @@ t_array_si.isel(lon=0).thin(time=12).plot.contour(x='lat',
                                                   col='time')
 ax = plt.gca()
 ax.set_ylim((1, 0))
-plt.savefig("06.png")
+plt.savefig("05.png")
 plt.close()
 
 # Divergence is expected to be very close to 0 throughout
@@ -159,7 +156,7 @@ data_array = trajectory_ds['divergence']
 data_array.mean(['lat', 'lon']).plot(x='time', hue='level')
 ax = plt.gca()
 ax.legend().remove()
-plt.savefig("07.png")
+plt.savefig("06.png")
 plt.close()
 
 perturbation = dinosaur.primitive_equations_states.baroclinic_perturbation_jw(
@@ -217,7 +214,7 @@ data_array.sel({
 
 fig = plt.gcf()
 fig.set_figwidth(10)
-plt.savefig("08.png")
+plt.savefig("07.png")
 plt.close()
 
 
@@ -240,7 +237,7 @@ levels = [(930 + 10 * i) / 1000 for i in range(10)]
 
 fig = plt.gcf()
 fig.set_figwidth(10)
-plt.savefig("09.png")
+plt.savefig("08.png")
 plt.close()
 
 # Temperature at days 4, 6, 8, 10 (note we do not interpolate to exactly 850hPa)
@@ -263,7 +260,7 @@ target_pressure = 0.85 * physics_specs.nondimensionalize(
                                 cmap=plt.cm.Spectral_r))
 fig = plt.gcf()
 fig.set_figwidth(12)
-plt.savefig("10.png")
+plt.savefig("09.png")
 plt.close()
 
 # Vorticity features
@@ -288,7 +285,7 @@ levels = [-10e-5 + 5e-5 * i for i in range(11)]
     'time': (9 * units.day).to(units.s).m
 }).isel(level=22).plot.contourf(x='lon', y='lat', levels=levels, ax=ax2))
 fig.set_figwidth(25)
-plt.savefig("11.png")
+plt.savefig("10.png")
 plt.close()
 
 # Daily vertical slices of temperature.
@@ -297,5 +294,5 @@ data = (temp_array.sel(lat=slice(54, 56), lon=slice(120, 270),
                        time=times).isel(lat=0))
 data.attrs['units'] = 'seconds'
 data.plot.contourf(x='lon', y='level', row='time', aspect=2, col_wrap=3)
-plt.savefig("12.png")
+plt.savefig("11.png")
 plt.close()

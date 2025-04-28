@@ -310,19 +310,6 @@ def imex_rk_sil3(
     )
 
 
-def robert_asselin_leapfrog_filter(r: float) -> PyTreeStepFilterFn:
-
-    def _filter(u: PyTreeState, u_next: PyTreeState) -> PyTreeState:
-        previous, current = u
-        _, future = u_next
-        filtered_current = tree_map(
-            lambda p, c, f: (1 - 2 * r) * c + r * (p + f), previous, current,
-            future)
-        return (filtered_current, future)
-
-    return _filter
-
-
 def runge_kutta_step_filter(
     state_filter: PyTreeTermsFn, ) -> PyTreeStepFilterFn:
 

@@ -73,10 +73,6 @@ class RealSphericalHarmonics(SphericalHarmonics):
         return (0, 0)
 
     @functools.cached_property
-    def modal_dtype(self) -> np.dtype:
-        return np.dtype(np.float32)
-
-    @functools.cached_property
     def mask(self) -> np.ndarray:
         m, l = np.meshgrid(*self.modal_axes, indexing='ij')
         return abs(m) <= l

@@ -39,7 +39,7 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
     not_scalar = bool(shape)
     if times is not None:
         shape = times.shape + shape
-        dims = ('times', ) + dims
+        dims = ('time', ) + dims
     return shape, dims
 
 

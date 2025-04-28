@@ -61,11 +61,11 @@ class RandomnessState:
       has poor statistical properties. The recommended pattern for generating a
       new PRNG key is `jax.random.fold_in(state.prng_key, state.prng_step)`.
   """
-    core: Pytree | None = None
-    nodal_value: Pytree | None = None
-    modal_value: Pytree | None = None
-    prng_key: PRNGKeyArray | None = None
-    prng_step: int | None = None
+    core: Union[Pytree, None] = None
+    nodal_value: Union[Pytree, None] = None
+    modal_value: Union[Pytree, None] = None
+    prng_key: Union[PRNGKeyArray, None] = None
+    prng_step: Union[int, None] = None
 
 
 @tree_math.struct

@@ -29,8 +29,8 @@ def _with_sharding_constraint(
 
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
-    horizontal: HorizontalGridTypes
-    vertical: VerticalCoordinateTypes
+    horizontal: Any
+    vertical: Any
     spmd_mesh: Union[jax.sharding.Mesh, None] = None
     dycore_partition_spec: jax.sharding.PartitionSpec = P('z', 'x', 'y')
     physics_partition_spec: jax.sharding.PartitionSpec = P(

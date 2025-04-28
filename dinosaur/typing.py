@@ -158,10 +158,10 @@ LayerFactory = Callable[..., Callable[..., Any]]
 EmbeddingFn = Callable[
     [
         Pytree,
-        PyTreeMemory | None,
-        PyTreeDiagnostics | None,
-        RandomnessState | None,
-        Forcing | None,
+        Union[PyTreeMemory, None],
+        Union[PyTreeDiagnostics, None],
+        Union[RandomnessState, None],
+        Union[Forcing, None],
     ],
     Pytree,
 ]

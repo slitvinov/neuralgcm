@@ -16,7 +16,7 @@ physics_specs = dinosaur.primitive_equations.PrimitiveEquationsSpecs.from_si()
 initial_state_fn, aux_features = dinosaur.primitive_equations_states.steady_state_jw(
     coords, physics_specs)
 steady_state = initial_state_fn()
-ref_temps = aux_features[dinosaur.xarray_utils.REF_TEMP_KEY]
+ref_temps = aux_features['ref_temperatures']
 orography = dinosaur.primitive_equations.truncated_modal_orography(
     aux_features[dinosaur.xarray_utils.OROGRAPHY], coords)
 

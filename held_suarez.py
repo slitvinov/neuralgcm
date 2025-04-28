@@ -31,7 +31,7 @@ rng_key = jax.random.PRNGKey(0)
 initial_state_fn, aux_features = dinosaur.primitive_equations_states.isothermal_rest_atmosphere(
     coords=coords, physics_specs=physics_specs, p0=p0, p1=p1)
 initial_state = initial_state_fn(rng_key)
-ref_temps = aux_features[dinosaur.xarray_utils.REF_TEMP_KEY]
+ref_temps = aux_features['ref_temperatures']
 orography = dinosaur.primitive_equations.truncated_modal_orography(
     aux_features[dinosaur.xarray_utils.OROGRAPHY], coords)
 

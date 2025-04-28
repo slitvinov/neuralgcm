@@ -214,27 +214,6 @@ def crank_nicolson_rk3(
     )
 
 
-def crank_nicolson_rk4(
-    equation: ImplicitExplicitODE,
-    time_step: float,
-) -> TimeStepFn:
-    return low_storage_runge_kutta_crank_nicolson(
-        alphas=[
-            0, 0.1496590219993, 0.3704009573644, 0.6222557631345,
-            0.9582821306748, 1
-        ],
-        betas=[
-            0, -0.4178904745, -1.192151694643, -1.697784692471, -1.514183444257
-        ],
-        gammas=[
-            0.1496590219993, 0.3792103129999, 0.8229550293869, 0.6994504559488,
-            0.1530572479681
-        ],
-        equation=equation,
-        time_step=time_step,
-    )
-
-
 @dataclasses.dataclass
 class ImExButcherTableau:
     a_ex: Sequence[Sequence[float]]

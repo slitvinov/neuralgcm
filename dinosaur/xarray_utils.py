@@ -16,7 +16,6 @@ import xarray
 XR_INIT_TIME_NAME = 'initial_time'
 XR_TIMEDELTA_NAME = 'prediction_timedelta'
 XR_LEVEL_NAME = 'level'
-XR_SURFACE_NAME = 'surface'
 XR_LON_NAME = 'lon'
 XR_LAT_NAME = 'lat'
 XR_LON_MODE_NAME = 'longitudinal_mode'
@@ -120,9 +119,9 @@ def data_to_xarray(
                        if 'diagnostics' in data else set())
     if additional_coords is None:
         additional_coords = {}
-    if (coords.vertical.layers != 1) and (XR_SURFACE_NAME
+    if (coords.vertical.layers != 1) and ('surface'
                                           not in additional_coords):
-        additional_coords[XR_SURFACE_NAME] = np.ones(1)
+        additional_coords['surface'] = np.ones(1)
     all_coords, shape_to_dims = _infer_dims_shape_and_coords(
         coords, times, sample_ids, additional_coords)
     dims_in_state = set()

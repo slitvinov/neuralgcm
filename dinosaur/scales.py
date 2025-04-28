@@ -15,12 +15,9 @@ ANGULAR_VELOCITY = OMEGA = 7.292e-5 / units.s
 GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
 ISOBARIC_HEAT_CAPACITY = 1004 * units.J / units.kilogram / units.degK
 WATER_VAPOR_CP = 1859 * units.J / units.kilogram / units.degK
-MASS_OF_DRY_ATMOSPHERE = 5.18e18 * units.kg
 KAPPA = 2 / 7 * units.dimensionless
-LATENT_HEAT_OF_VAPORIZATION = 2.501e6 * units.J / units.kilogram
 IDEAL_GAS_CONSTANT = ISOBARIC_HEAT_CAPACITY * KAPPA
 IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
-WATER_DENSITY = 997 * units.kg / units.m**3
 
 
 def _get_dimension(quantity: Quantity) -> str:
@@ -69,18 +66,6 @@ class Scale:
 NEURALGCM_V1_SCALE = Scale(
     RADIUS,  # length
     1 / 2 / OMEGA,  # time
-    1 * units.kilogram,  # mass
-    1 * units.degK,  # temperature
-)
-ATMOSPHERIC_SCALE = Scale(
-    RADIUS,  # length
-    1 / 2 / OMEGA,  # time
-    MASS_OF_DRY_ATMOSPHERE,  # mass
-    1 * units.degK,  # temperature
-)
-SI_SCALE = Scale(
-    1 * units.m,  # length
-    1 * units.s,  # time
     1 * units.kilogram,  # mass
     1 * units.degK,  # temperature
 )

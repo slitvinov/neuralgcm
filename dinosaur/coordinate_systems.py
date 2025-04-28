@@ -46,51 +46,23 @@ class CoordinateSystem:
         return jax.sharding.NamedSharding(self.spmd_mesh, partition_spec)
 
     @property
-    def physics_sharding(self):
-        return self._get_sharding(self.physics_partition_spec)
-
-    def with_physics_sharding(self, x: typing.PyTreeState):
-        return _with_sharding_constraint(x, self.physics_sharding)
-
-    @property
     def dycore_sharding(self):
         return self._get_sharding(self.dycore_partition_spec)
 
     def with_dycore_sharding(self, x: typing.PyTreeState):
         return _with_sharding_constraint(x, self.dycore_sharding)
 
-    def dycore_to_physics_sharding(self, x: typing.PyTreeState):
-        return self.with_physics_sharding(self.with_dycore_sharding(x))
-
-    def physics_to_dycore_sharding(self, x: typing.PyTreeState):
-        return self.with_dycore_sharding(self.with_physics_sharding(x))
-
     def asdict(self) ->...:
         horizontal_keys = set(self.horizontal.asdict().keys())
         vertical_keys = set(self.vertical.asdict().keys())
-        if horizontal_keys.intersection(vertical_keys):
-            raise ValueError('keys in horizontal and vertical grids collide.')
         out = {**self.horizontal.asdict(), **self.vertical.asdict()}
         out['horizontal_grid_type'] = type(self.horizontal).__name__
         out['vertical_grid_type'] = type(self.vertical).__name__
         return out
 
     @property
-    def nodal_shape(self):
-        return (self.vertical.layers, ) + self.horizontal.nodal_shape
-
-    @property
-    def modal_shape(self):
-        return (self.vertical.layers, ) + self.horizontal.modal_shape
-
-    @property
     def surface_nodal_shape(self):
         return (1, ) + self.horizontal.nodal_shape
-
-    @property
-    def surface_modal_shape(self):
-        return (1, ) + self.horizontal.modal_shape
-
 
 def get_nodal_shapes(
     inputs: typing.Pytree,

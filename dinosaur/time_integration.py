@@ -333,17 +333,6 @@ def runge_kutta_step_filter(
     return _filter
 
 
-def leapfrog_step_filter(state_filter: PyTreeTermsFn, ) -> PyTreeStepFilterFn:
-
-    def _filter(u: PyTreeState, u_next: PyTreeState) -> PyTreeState:
-        del u  # unused
-        current, future = u_next  # leapfrog state is a tuple of 2 time slices.
-        future = state_filter(future)
-        return (current, future)
-
-    return _filter
-
-
 def exponential_step_filter(
     grid: spherical_harmonic.Grid,
     dt: float,

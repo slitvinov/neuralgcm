@@ -18,7 +18,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import scipy.linalg
-
+from typing import Union
 
 def real_basis(wavenumbers: int, nodes: int) -> np.ndarray:
     """Returns the real-valued Fourier basis.
@@ -57,7 +57,7 @@ def real_basis(wavenumbers: int, nodes: int) -> np.ndarray:
     return f
 
 
-def real_basis_derivative(u: jnp.ndarray | jax.Array,
+def real_basis_derivative(u: Union[jnp.ndarray, jax.Array],
                           /,
                           axis: int = -1) -> jax.Array:
     """Calculate the derivative of a signal using a real basis.
@@ -105,7 +105,7 @@ def real_basis_with_zero_imag(wavenumbers: int, nodes: int) -> np.ndarray:
 
 
 def real_basis_derivative_with_zero_imag(
-        u: jnp.ndarray | jax.Array,
+        u: Union[jnp.ndarray, jax.Array],
         axis: int = -1,
         frequency_offset: int = 0) -> jax.Array:
     """Calculate the derivative along a real basis with zero imaginary part."""

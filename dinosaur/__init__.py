@@ -9,8 +9,6 @@ import dinosaur.primitive_equations_states
 import dinosaur.pytree_utils
 import dinosaur.radiation
 import dinosaur.scales
-import dinosaur.shallow_water
-import dinosaur.shallow_water_states
 import dinosaur.sigma_coordinates
 import dinosaur.spherical_harmonic
 import dinosaur.time_integration

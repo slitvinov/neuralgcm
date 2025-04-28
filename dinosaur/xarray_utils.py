@@ -23,13 +23,6 @@ XR_LON_NAME = 'lon'
 XR_LAT_NAME = 'lat'
 XR_LON_MODE_NAME = 'longitudinal_mode'
 XR_LAT_MODE_NAME = 'total_wavenumber'
-XR_REALIZATION_NAME = 'realization'
-OROGRAPHY = 'orography'
-GEOPOTENTIAL_KEY = 'geopotential'
-REF_TEMP_KEY = 'ref_temperatures'
-REF_POTENTIAL_KEY = 'reference_potential'
-REFERENCE_DATETIME_KEY = 'reference_datetime'
-XARRAY_DS_KEY = 'xarray_dataset'
 NODAL_AXES_NAMES = (
     XR_LON_NAME,
     XR_LAT_NAME,
@@ -84,7 +77,7 @@ def _infer_dims_shape_and_coords(
     basic_shape_to_dims[modal_shape] = MODAL_AXES_NAMES
     basic_shape_to_dims[coords.surface_nodal_shape] = NODAL_AXES_NAMES
     for dim, value in additional_coords.items():
-        if dim == XR_REALIZATION_NAME:
+        if dim == 'realization':
             continue
         if value.ndim != 1:
             raise ValueError(
@@ -104,7 +97,7 @@ def _infer_dims_shape_and_coords(
         _maybe_update_shape_and_dim_with_realization_time_sample,
         times=times,
         sample_ids=sample_ids,
-        include_realization=XR_REALIZATION_NAME in additional_coords,
+        include_realization='realization' in additional_coords,
     )
     shape_to_dims = {}
     for shape, dims in basic_shape_to_dims.items():

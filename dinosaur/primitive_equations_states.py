@@ -79,8 +79,8 @@ def isothermal_rest_atmosphere(
         )
 
     aux_features = {
-        xarray_utils.OROGRAPHY: orography,
-        xarray_utils.REF_TEMP_KEY: np.full((coords.vertical.layers, ), tref)
+        'orography': orography,
+        'ref_temperatures': np.full((coords.vertical.layers, ), tref)
     }
     return random_state_fn, aux_features
 
@@ -195,9 +195,9 @@ def steady_state_jw(
         _get_reference_temperature(sigma) for sigma in coords.vertical.centers
     ])
     aux_features = {
-        xarray_utils.GEOPOTENTIAL_KEY: geopotential,
-        xarray_utils.OROGRAPHY: orography,
-        xarray_utils.REF_TEMP_KEY: reference_temperatures,
+        'geopotential': geopotential,
+        'orography': orography,
+        'ref_temperatures': reference_temperatures,
     }
     return initial_state_fn, aux_features
 

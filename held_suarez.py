@@ -60,6 +60,8 @@ initial_state_ds = initial_state_ds.assign(
 pressure_array = initial_state_ds['surface_pressure']
 pressure_array_si = dimensionalize(pressure_array, units.pascal)
 pressure_array_si.plot.imshow(x='lon', y='lat', size=5)
+plt.savefig("00.png")
+plt.close()
 
 # Integration settings
 dt_si = 5 * units.minute
@@ -131,6 +133,8 @@ data_array_si.isel(time=slice(0, 18, 4)).plot(x='lon',
                                               y='lat',
                                               col='time',
                                               col_wrap=6)
+plt.savefig("01.png")
+plt.close()
 
 # Vorticity (near earth surface)
 data_array = ds['vorticity']
@@ -138,12 +142,16 @@ data_array.isel(level=10).isel(time=slice(0, 18, 4)).plot(x='lon',
                                                           y='lat',
                                                           col='time',
                                                           col_wrap=6)
+plt.savefig("02.png")
+plt.close()
 
 # Total Kinetic Energy
 data_array = ds['total_kinetic_energy']
 data_array.plot(x='time')
 ax = plt.gca()
 ax.legend().remove()
+plt.savefig("03.png")
+plt.close()
 
 hs = dinosaur.held_suarez.HeldSuarezForcing(coords=coords,
                                             physics_specs=physics_specs,
@@ -184,6 +192,8 @@ def linspace_step(start, stop, step):
 kv = ds['kv']
 kv_si = dimensionalize(kv, 1 / units.day)
 kv_si.plot(size=5)
+plt.savefig("04.png")
+plt.close()
 
 # Thermal relaxation coefficient {form-width: "40%"}
 kt_array = ds['kt']
@@ -196,6 +206,8 @@ p = kt_array_si.isel(lon=0).plot.contour(x='lat',
                                          aspect=1.5)
 ax = plt.gca()
 ax.set_ylim((1, 0))
+plt.savefig("05.png")
+plt.close()
 #plt.colorbar(p);
 
 # Radiative equilibrium temperature {form-width: "40%"}
@@ -210,6 +222,8 @@ p = teq_array_si.isel(lon=0).plot.contour(x='lat',
 ax = plt.gca()
 ax.set_ylim((1, 0))
 #plt.colorbar(p);
+plt.savefig("06.png")
+plt.close()
 
 # Radiative equilibrium potential temperature {form-width: "40%"}
 temperature = dimensionalize(ds['eq_temp'], units.degK)
@@ -229,10 +243,15 @@ p = potential_temperature.isel(lon=0).plot.contour(x='lat',
 ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.colorbar(p)
+plt.savefig("07.png")
+plt.close()
+
 
 print(potential_temperature.min())
 print(potential_temperature.max())
 # Stable for d(potential temperature)/dz > 0
+plt.savefig("07.png")
+plt.close()
 
 # Integration settings
 dt_si = 10 * units.minute
@@ -284,6 +303,8 @@ data_array = ds['total_kinetic_energy']
 data_array.plot(x='time')
 ax = plt.gca()
 ax.legend().remove()
+plt.savefig("08.png")
+plt.close()
 
 # Temperature
 mask = ds['time'] <= 150  # days
@@ -292,6 +313,8 @@ data_array.isel(level=-1, time=mask).plot(x='lon',
                                           y='lat',
                                           col='time',
                                           col_wrap=4)
+plt.savefig("09.png")
+plt.close()
 
 # Vorticity
 mask = ds['time'] <= 150  # days
@@ -300,6 +323,8 @@ data_array.isel(level=-1, time=mask).plot(x='lon',
                                           y='lat',
                                           col='time',
                                           col_wrap=4)
+plt.savefig("10.png")
+plt.close()
 
 # Temperature
 mask = ds['time'] <= 100  # days
@@ -313,6 +338,9 @@ data_array.isel(time=mask).mean('lon').plot.contour(x='lat',
                                                     levels=levels)
 ax = plt.gca()
 ax.set_ylim((1, 0))
+plt.savefig("11.png")
+plt.close()
+
 
 start_time = 200  # days
 
@@ -419,7 +447,11 @@ ds = trajectory_to_xarray(coords, trajectory_2, times)
 # Temperature
 data_array = ds['temperature']
 data_array.thin(time=4).isel(level=-10).plot(x='lon', y='lat', col='time')
+plt.savefig("12.png")
+plt.close()
 
 # Vorticity
 data_array = ds['vorticity']
 data_array.thin(time=4).isel(level=-5).plot(x='lon', y='lat', col='time')
+plt.savefig("13.png")
+plt.close()

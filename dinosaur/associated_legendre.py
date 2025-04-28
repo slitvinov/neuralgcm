@@ -13,6 +13,8 @@ def _evaluate_rhombus(n_l, n_m, x, truncation='rhombus'):
     for k in range(1, n_l):
         if truncation == 'triangle':
             m_max = min(n_m, n_l - k)
+        else:
+            assert False
         m = np.arange(m_max).reshape((-1, 1))
         m2 = np.square(m)
         mk2 = np.square(m + k)

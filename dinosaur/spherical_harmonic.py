@@ -116,10 +116,6 @@ class RealSphericalHarmonics(SphericalHarmonics):
         return fourier.real_basis_derivative(x, axis=-2)
 
 
-def _round_to_multiple(x: int, multiple: int) -> int:
-    return multiple * math.ceil(x / multiple)
-
-
 P = jax.sharding.PartitionSpec
 shmap = shard_map.shard_map
 
@@ -160,22 +156,6 @@ class FastSphericalHarmonics(SphericalHarmonics):
             return (self.spmd_mesh.shape['x'], self.spmd_mesh.shape['y'])
         else:
             return (1, 1)
-
-    @functools.cached_property
-    def nodal_shape(self) -> tuple[int, int]:
-        base = self.base_shape_multiple or 1
-        x_shards, y_shards = self._mesh_shape()
-        shape_multiples = (base * x_shards, base * y_shards)
-        return tuple(
-            map(_round_to_multiple, self.nodal_limits, shape_multiples))
-
-    @functools.cached_property
-    def modal_shape(self) -> tuple[int, int]:
-        base = self.base_shape_multiple or 1
-        x_shards, y_shards = self._mesh_shape()
-        shape_multiples = (2 * base * x_shards, base * y_shards)
-        return tuple(
-            map(_round_to_multiple, self.modal_limits, shape_multiples))
 
     @functools.cached_property
     def nodal_padding(self) -> tuple[int, int]:
@@ -300,10 +280,7 @@ def _vertical_pad(
     if field.ndim < 3 or field.shape[0] == 1 or mesh is None:
         return field, None
     assert field.ndim == 3, field.shape
-    z_multiple = mesh.shape['z']
-    z_padding = _round_to_multiple(field.shape[0], z_multiple) - field.shape[0]
-    return jnp.pad(field, [(0, z_padding), (0, 0), (0, 0)]), z_padding
-
+    assert False
 
 def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
     if not padding:

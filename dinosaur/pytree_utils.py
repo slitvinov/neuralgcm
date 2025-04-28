@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Utility functions that operate on pytrees."""
 from collections import abc
 import dataclasses
@@ -24,51 +23,46 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-
 tree_map = jax.tree_util.tree_map
 
 
 def pack_pytree(pytree: typing.Pytree, axis: int = -3) -> typing.Array:
-  """Packs `pytree` by concatenating leaves along `axis`."""
-  flat, _ = jax.tree_util.tree_flatten(pytree)
-  if not flat:
-    return None  # pytype: disable=bad-return-type  # jax-ndarray
-  packed = jnp.concatenate(flat, axis)
-  return packed
+    """Packs `pytree` by concatenating leaves along `axis`."""
+    flat, _ = jax.tree_util.tree_flatten(pytree)
+    if not flat:
+        return None  # pytype: disable=bad-return-type  # jax-ndarray
+    packed = jnp.concatenate(flat, axis)
+    return packed
 
 
-def unpack_to_pytree(
-    array: typing.Array,
-    pytree_of_shapes: typing.Pytree,
-    axis: int = -3
-) -> typing.Pytree:
-  """Unpacks an `array` into a pytree with shapes `pytree_of_shapes`."""
-  shapes, tree_def = jax.tree_util.tree_flatten(pytree_of_shapes)
-  splits = np.cumsum(np.array([x[axis] for x in shapes]))[:-1]
-  split = jnp.split(array, splits, axis)
-  return jax.tree_util.tree_unflatten(tree_def, split)
+def unpack_to_pytree(array: typing.Array,
+                     pytree_of_shapes: typing.Pytree,
+                     axis: int = -3) -> typing.Pytree:
+    """Unpacks an `array` into a pytree with shapes `pytree_of_shapes`."""
+    shapes, tree_def = jax.tree_util.tree_flatten(pytree_of_shapes)
+    splits = np.cumsum(np.array([x[axis] for x in shapes]))[:-1]
+    split = jnp.split(array, splits, axis)
+    return jax.tree_util.tree_unflatten(tree_def, split)
 
 
 def stack_pytree(pytree: typing.Pytree, axis: int = 0) -> typing.Array:
-  """Stacks `pytree` by stacking leaves along a new axis."""
-  flat, _ = jax.tree_util.tree_flatten(pytree)
-  if not flat:
-    return None  # pytype: disable=bad-return-type  # jax-ndarray
-  stacked = jnp.stack(flat, axis)
-  return stacked
+    """Stacks `pytree` by stacking leaves along a new axis."""
+    flat, _ = jax.tree_util.tree_flatten(pytree)
+    if not flat:
+        return None  # pytype: disable=bad-return-type  # jax-ndarray
+    stacked = jnp.stack(flat, axis)
+    return stacked
 
 
-def unstack_to_pytree(
-    array: typing.Array,
-    pytree_of_shapes: typing.Pytree,
-    axis: int = 0
-) -> typing.Pytree:
-  """Unstacks an `array` into a pytree with shapes `pytree_of_shapes`."""
-  _, tree_def = jax.tree_util.tree_flatten(pytree_of_shapes)
-  # `array` is split along `axis` and resulting singleton dimension is removed
-  split = jnp.split(array, array.shape[axis], axis)
-  split = tree_map(lambda x: jnp.squeeze(x, axis=axis), split)
-  return jax.tree_util.tree_unflatten(tree_def, split)
+def unstack_to_pytree(array: typing.Array,
+                      pytree_of_shapes: typing.Pytree,
+                      axis: int = 0) -> typing.Pytree:
+    """Unstacks an `array` into a pytree with shapes `pytree_of_shapes`."""
+    _, tree_def = jax.tree_util.tree_flatten(pytree_of_shapes)
+    # `array` is split along `axis` and resulting singleton dimension is removed
+    split = jnp.split(array, array.shape[axis], axis)
+    split = tree_map(lambda x: jnp.squeeze(x, axis=axis), split)
+    return jax.tree_util.tree_unflatten(tree_def, split)
 
 
 def tree_map_where(
@@ -77,10 +71,12 @@ def tree_map_where(
     g: Callable[[typing.Array], typing.Array],
     x: typing.Pytree,
 ) -> typing.Pytree:
-  """Map `f` over pytree leaves if condition_fn(leaf), else use `g`."""
-  def tm_where(x: typing.Array) -> typing.Array:
-    return f(x) if condition_fn(x) else g(x)
-  return tree_map(tm_where, x)
+    """Map `f` over pytree leaves if condition_fn(leaf), else use `g`."""
+
+    def tm_where(x: typing.Array) -> typing.Array:
+        return f(x) if condition_fn(x) else g(x)
+
+    return tree_map(tm_where, x)
 
 
 def tree_map_over_nonscalars(
@@ -90,26 +86,28 @@ def tree_map_over_nonscalars(
     scalar_fn: Callable[[typing.Array], typing.Array] = lambda x: x,
     backend: str = 'jax',
 ) -> typing.Pytree:
-  """Map `f` over nonscalar pytree leaves, but use `scalar_fn` on scalars."""
-  as_array_fn = {'jax': jnp.asarray, 'numpy': np.asarray}[backend]
-  def g(x: typing.Array) -> typing.Array:
-    x = as_array_fn(x)
-    return f(x) if x.ndim else scalar_fn(x)
-  return tree_map(g, x)
+    """Map `f` over nonscalar pytree leaves, but use `scalar_fn` on scalars."""
+    as_array_fn = {'jax': jnp.asarray, 'numpy': np.asarray}[backend]
+
+    def g(x: typing.Array) -> typing.Array:
+        x = as_array_fn(x)
+        return f(x) if x.ndim else scalar_fn(x)
+
+    return tree_map(g, x)
 
 
 def shape_structure(inputs):
-  """Returns `inputs` with leafs replaced by arrays of corresponding shapes."""
-  return tree_map(lambda x: np.asarray(x.shape), inputs)
+    """Returns `inputs` with leafs replaced by arrays of corresponding shapes."""
+    return tree_map(lambda x: np.asarray(x.shape), inputs)
 
 
 def _normalize_axis(axis: int, ndim: int) -> int:
-  """Validates and returns positive `axis` value."""
-  if not -ndim <= axis < ndim:
-    raise ValueError(f'invalid axis {axis} for ndim {ndim}')
-  if axis < 0:
-    axis += ndim
-  return axis
+    """Validates and returns positive `axis` value."""
+    if not -ndim <= axis < ndim:
+        raise ValueError(f'invalid axis {axis} for ndim {ndim}')
+    if axis < 0:
+        axis += ndim
+    return axis
 
 
 def slice_along_axis(
@@ -118,7 +116,7 @@ def slice_along_axis(
     idx: int | slice,
     expect_same_dims: bool = False,
 ) -> typing.Pytree:
-  """Returns slice of `inputs` defined by `idx` along axis `axis`.
+    """Returns slice of `inputs` defined by `idx` along axis `axis`.
 
   Args:
     inputs: pytree to slice.
@@ -130,20 +128,22 @@ def slice_along_axis(
     Slice of `inputs` defined by `idx` along axis `axis`. If idx is an int,
     the axis is dropped. If idx is a slice, the axis is handled accordingly.
   """
-  arrays, tree_def = jax.tree_util.tree_flatten(inputs)
-  ndims = set(a.ndim for a in arrays)
-  if expect_same_dims and len(ndims) != 1:
-    raise ValueError('arrays in `inputs` expected to have same ndims, but have '
-                     f'{ndims}. To allow this, pass expect_same_dims=False')
-  elif axis < 0:
-    raise ValueError(f'Using {axis=} is error-prone if expect_same_dims=False')
-  sliced = []
-  for array in arrays:
-    ndim = array.ndim
-    slc = tuple(idx if j == _normalize_axis(axis, ndim) else slice(None)
-                for j in range(ndim))
-    sliced.append(array[slc])
-  return jax.tree_util.tree_unflatten(tree_def, sliced)
+    arrays, tree_def = jax.tree_util.tree_flatten(inputs)
+    ndims = set(a.ndim for a in arrays)
+    if expect_same_dims and len(ndims) != 1:
+        raise ValueError(
+            'arrays in `inputs` expected to have same ndims, but have '
+            f'{ndims}. To allow this, pass expect_same_dims=False')
+    elif axis < 0:
+        raise ValueError(
+            f'Using {axis=} is error-prone if expect_same_dims=False')
+    sliced = []
+    for array in arrays:
+        ndim = array.ndim
+        slc = tuple(idx if j == _normalize_axis(axis, ndim) else slice(None)
+                    for j in range(ndim))
+        sliced.append(array[slc])
+    return jax.tree_util.tree_unflatten(tree_def, sliced)
 
 
 def split_along_axis(
@@ -152,7 +152,7 @@ def split_along_axis(
     axis: int,
     expect_same_dims: bool = False,
 ) -> tuple[typing.Pytree, typing.Pytree]:
-  """Returns 2 pytrees formed by splitting `inputs` along `axis` at `split_idx`.
+    """Returns 2 pytrees formed by splitting `inputs` along `axis` at `split_idx`.
 
   Args:
     inputs: pytree to split.
@@ -164,11 +164,11 @@ def split_along_axis(
     Tuple of slices of `inputs` split along `axis` at `split_idx`.
   """
 
-  first_slice = slice_along_axis(
-      inputs, axis, slice(0, split_idx), expect_same_dims)
-  second_slice = slice_along_axis(
-      inputs, axis, slice(split_idx, None), expect_same_dims)
-  return first_slice, second_slice
+    first_slice = slice_along_axis(inputs, axis, slice(0, split_idx),
+                                   expect_same_dims)
+    second_slice = slice_along_axis(inputs, axis, slice(split_idx, None),
+                                    expect_same_dims)
+    return first_slice, second_slice
 
 
 def split_axis(
@@ -176,7 +176,7 @@ def split_axis(
     axis: int,
     keep_dims: bool = False,
 ) -> tuple[typing.Pytree, ...]:
-  """Splits `inputs` along `axis`.
+    """Splits `inputs` along `axis`.
 
   Args:
     inputs: pytree to be split.
@@ -190,73 +190,73 @@ def split_axis(
   Raises:
     ValueError: if arrays in `inputs` don't have unique size along `axis`.
   """
-  arrays, tree_def = jax.tree_util.tree_flatten(inputs)
-  axis_shapes = set(a.shape[axis] for a in arrays)
-  if len(axis_shapes) != 1:
-    raise ValueError(f'Arrays must have equal sized axis but got {axis_shapes}')
-  axis_shape, = axis_shapes
-  splits = [jnp.split(a, axis_shape, axis=axis) for a in arrays]
-  if not keep_dims:
-    splits = tree_map(lambda a: jnp.squeeze(a, axis), splits)
-  splits = zip(*splits)
-  return tuple(jax.tree_util.tree_unflatten(tree_def, leaves)
-               for leaves in splits)
+    arrays, tree_def = jax.tree_util.tree_flatten(inputs)
+    axis_shapes = set(a.shape[axis] for a in arrays)
+    if len(axis_shapes) != 1:
+        raise ValueError(
+            f'Arrays must have equal sized axis but got {axis_shapes}')
+    axis_shape, = axis_shapes
+    splits = [jnp.split(a, axis_shape, axis=axis) for a in arrays]
+    if not keep_dims:
+        splits = tree_map(lambda a: jnp.squeeze(a, axis), splits)
+    splits = zip(*splits)
+    return tuple(
+        jax.tree_util.tree_unflatten(tree_def, leaves) for leaves in splits)
 
 
-def concat_along_axis(
-    pytrees: Sequence[typing.Pytree],
-    axis: int
-) -> typing.Pytree:
-  """Concatenates `pytrees` along `axis`."""
-  concat_leaves_fn = lambda *args: jnp.concatenate(args, axis)
-  return tree_map(concat_leaves_fn, *pytrees)
+def concat_along_axis(pytrees: Sequence[typing.Pytree],
+                      axis: int) -> typing.Pytree:
+    """Concatenates `pytrees` along `axis`."""
+    concat_leaves_fn = lambda *args: jnp.concatenate(args, axis)
+    return tree_map(concat_leaves_fn, *pytrees)
 
 
 def as_dict(inputs: typing.Pytree) -> typing.Pytree:
-  """Returns a dict representation of `inputs` and a from_dict_fn."""
-  return_type = type(inputs)
-  if dataclasses.is_dataclass(inputs):
-    inputs = inputs.asdict()
-  else:
-    if return_type != dict:
-      raise ValueError(f'Inputs of type {return_type} are not supported.')
+    """Returns a dict representation of `inputs` and a from_dict_fn."""
+    return_type = type(inputs)
+    if dataclasses.is_dataclass(inputs):
+        inputs = inputs.asdict()
+    else:
+        if return_type != dict:
+            raise ValueError(
+                f'Inputs of type {return_type} are not supported.')
 
-  from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
-  return inputs, from_dict_fn
+    from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
+    return inputs, from_dict_fn
 
 
 def none_to_zeros(
     tree: typing.Pytree,
     reference_tree: typing.Pytree,
 ) -> typing.Pytree:
-  """Returns tree where `None` is replaced with zeros_like of reference_tree."""
-  return tree_map(
-      lambda x, y: jnp.zeros_like(y) if x is None else x, tree, reference_tree)
+    """Returns tree where `None` is replaced with zeros_like of reference_tree."""
+    return tree_map(lambda x, y: jnp.zeros_like(y)
+                    if x is None else x, tree, reference_tree)
 
 
 @dataclasses.dataclass(frozen=True)
 class _HashableNDArrayWrapper:
-  shape: tuple[int, ...]
-  dtype: np.dtype
-  data: bytes
+    shape: tuple[int, ...]
+    dtype: np.dtype
+    data: bytes
 
 
 def _hash_leaf(x: typing.Pytree) -> abc.Hashable:
-  if isinstance(x, (jax.Array, np.ndarray)):
-    return _HashableNDArrayWrapper(x.shape, x.dtype, x.tobytes())
-  else:
-    return x
+    if isinstance(x, (jax.Array, np.ndarray)):
+        return _HashableNDArrayWrapper(x.shape, x.dtype, x.tobytes())
+    else:
+        return x
 
 
 def tree_hashable(x: typing.Pytree) -> abc.Hashable:
-  """Convert a pytree into something hashable."""
-  values, treedef = jax.tree_util.tree_flatten(x)
-  values = tuple(map(_hash_leaf, values))
-  return values, treedef
+    """Convert a pytree into something hashable."""
+    values, treedef = jax.tree_util.tree_flatten(x)
+    values = tuple(map(_hash_leaf, values))
+    return values, treedef
 
 
 def tree_cache(func):
-  """Like functools.cache, but hashes with tree_hashable.
+    """Like functools.cache, but hashes with tree_hashable.
 
   Example usage::
 
@@ -279,17 +279,17 @@ def tree_cache(func):
   Returns:
     Function where cached results are reused.
   """
-  results = {}
+    results = {}
 
-  @functools.wraps(func)
-  def wrapper(*args, **kwargs):
-    key = tree_hashable((args, kwargs))
-    if key in results:
-      return results[key]
-    result = results[key] = func(*args, **kwargs)
-    return result
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        key = tree_hashable((args, kwargs))
+        if key in results:
+            return results[key]
+        result = results[key] = func(*args, **kwargs)
+        return result
 
-  return wrapper
+    return wrapper
 
 
 def flatten_dict(
@@ -297,51 +297,52 @@ def flatten_dict(
     prefix: str = '',
     sep: str = '&',
 ) -> tuple[dict[str, Any], tuple[str, ...]]:
-  """Flattens potentially nested `input_dict`."""
-  items = []
-  empty_keys = []
-  for k, v in input_dict.items():
-    if sep in k:
-      raise ValueError(f'Key {k} contains {sep=}. Use different name or sep.')
-    new_key = prefix + sep + k if prefix else k
-    if isinstance(v, dict) and v:
-      sub_dict, sub_empty_keys = flatten_dict(v, new_key, sep=sep)
-      items.extend(sub_dict.items())
-      empty_keys.extend(sub_empty_keys)
-    elif isinstance(v, dict) and not v:
-      empty_keys.append(new_key)
-    else:
-      items.append((new_key, v))
-  unique_keys, counts = np.unique(
-      np.array([x[0] for x in items]), return_counts=True)
-  if (counts > 1).any():
-    raise ValueError(f'got duplicate keys {unique_keys[counts > 1]}')
-  unique_empty_keys, counts = np.unique(
-      np.array([x[0] for x in empty_keys]), return_counts=True)
-  if (counts > 1).any():
-    raise ValueError(f'got duplicate keys {unique_empty_keys[counts > 1]}')
-  return dict(items), tuple(empty_keys)
+    """Flattens potentially nested `input_dict`."""
+    items = []
+    empty_keys = []
+    for k, v in input_dict.items():
+        if sep in k:
+            raise ValueError(
+                f'Key {k} contains {sep=}. Use different name or sep.')
+        new_key = prefix + sep + k if prefix else k
+        if isinstance(v, dict) and v:
+            sub_dict, sub_empty_keys = flatten_dict(v, new_key, sep=sep)
+            items.extend(sub_dict.items())
+            empty_keys.extend(sub_empty_keys)
+        elif isinstance(v, dict) and not v:
+            empty_keys.append(new_key)
+        else:
+            items.append((new_key, v))
+    unique_keys, counts = np.unique(np.array([x[0] for x in items]),
+                                    return_counts=True)
+    if (counts > 1).any():
+        raise ValueError(f'got duplicate keys {unique_keys[counts > 1]}')
+    unique_empty_keys, counts = np.unique(np.array([x[0] for x in empty_keys]),
+                                          return_counts=True)
+    if (counts > 1).any():
+        raise ValueError(f'got duplicate keys {unique_empty_keys[counts > 1]}')
+    return dict(items), tuple(empty_keys)
 
 
 def unflatten_dict(
-    flat_dict: dict[str, Any],
-    empty_keys: tuple[str, ...] = tuple(),
-    sep: str = '&',
+        flat_dict: dict[str, Any],
+        empty_keys: tuple[str, ...] = tuple(),
+        sep: str = '&',
 ) -> dict[str, Any]:
-  """Unflattens `flat_dict` with structure specified with separataion `sep`."""
-  result = dict()
-  empty_key_dict = {k: {} for k in empty_keys}
-  for key, value in (flat_dict | empty_key_dict).items():
-    sub_keys = key.split(sep)
-    sub_dict = result
-    for sub_key in sub_keys[:-1]:
-      if sub_key in sub_dict:
-        sub_dict = sub_dict[sub_key]
-      else:
-        sub_dict[sub_key] = dict()
-        sub_dict = sub_dict[sub_key]
-    sub_dict[sub_keys[-1]] = value
-  return result
+    """Unflattens `flat_dict` with structure specified with separataion `sep`."""
+    result = dict()
+    empty_key_dict = {k: {} for k in empty_keys}
+    for key, value in (flat_dict | empty_key_dict).items():
+        sub_keys = key.split(sep)
+        sub_dict = result
+        for sub_key in sub_keys[:-1]:
+            if sub_key in sub_dict:
+                sub_dict = sub_dict[sub_key]
+            else:
+                sub_dict[sub_key] = dict()
+                sub_dict = sub_dict[sub_key]
+        sub_dict[sub_keys[-1]] = value
+    return result
 
 
 def replace_with_matching_or_default(
@@ -350,12 +351,13 @@ def replace_with_matching_or_default(
     default: Any = None,
     check_used_all_replace_keys: bool = True,
 ) -> dict[str, Any]:
-  """Returns `x` structure with leaves from `replace` or `default`."""
-  flat_x, empty_keys = flatten_dict(x)
-  flat_replace, _ = flatten_dict(replace)
-  if check_used_all_replace_keys:
-    unused_replace_keys = set(flat_replace.keys()) - set(flat_x.keys())
-    if unused_replace_keys:
-      raise ValueError(f'Keys {unused_replace_keys} not present in {x.keys()=}')
-  flat_result = {k: flat_replace.get(k, default) for k in flat_x.keys()}
-  return unflatten_dict(flat_result, empty_keys)
+    """Returns `x` structure with leaves from `replace` or `default`."""
+    flat_x, empty_keys = flatten_dict(x)
+    flat_replace, _ = flatten_dict(replace)
+    if check_used_all_replace_keys:
+        unused_replace_keys = set(flat_replace.keys()) - set(flat_x.keys())
+        if unused_replace_keys:
+            raise ValueError(
+                f'Keys {unused_replace_keys} not present in {x.keys()=}')
+    flat_result = {k: flat_replace.get(k, default) for k in flat_x.keys()}
+    return unflatten_dict(flat_result, empty_keys)

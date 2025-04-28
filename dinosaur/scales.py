@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Code for describing units and non-dimensionalizing quantities."""
 
 from collections import abc
@@ -76,46 +75,43 @@ IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
 # Density of liquid water.
 WATER_DENSITY = 997 * units.kg / units.m**3
 
-
 #
 # Code for defining scales and non-dimensionalizing quantities.
 #
 
 
 def parse_units(units_str: str) -> Quantity:
-  if units_str in {'(0 - 1)', '%', '~'}:
-    units_str = 'dimensionless'
-  return units.parse_expression(units_str)
+    if units_str in {'(0 - 1)', '%', '~'}:
+        units_str = 'dimensionless'
+    return units.parse_expression(units_str)
 
 
 def _get_dimension(quantity: Quantity) -> str:
-  """Asserts `quantity` has a single dimension and returns that dimension."""
-  exponents = list(quantity.dimensionality.values())
-  if len(quantity.dimensionality) != 1 or exponents[0] != 1:
-    raise ValueError(
-        'All scales must describe a single dimension;'
-        f'got dimensionality {quantity.dimensionality}'
-    )
-  return str(quantity.dimensionality)
+    """Asserts `quantity` has a single dimension and returns that dimension."""
+    exponents = list(quantity.dimensionality.values())
+    if len(quantity.dimensionality) != 1 or exponents[0] != 1:
+        raise ValueError('All scales must describe a single dimension;'
+                         f'got dimensionality {quantity.dimensionality}')
+    return str(quantity.dimensionality)
 
 
 class ScaleProtocol(Protocol):
-  """A protocol class for `Scale` objects that perform nondimensionalization."""
+    """A protocol class for `Scale` objects that perform nondimensionalization."""
 
-  def nondimensionalize(self, quantity: Quantity) -> Numeric:
-    """Converts a `pint.Quantity` to a non-dimensional value."""
-    ...
+    def nondimensionalize(self, quantity: Quantity) -> Numeric:
+        """Converts a `pint.Quantity` to a non-dimensional value."""
+        ...
 
-  def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
-    """Converts non-dimensional `value` to a `pint.Quantity` with `unit`."""
-    ...
+    def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
+        """Converts non-dimensional `value` to a `pint.Quantity` with `unit`."""
+        ...
 
 
 class Scale(abc.Mapping):
-  """A `Scale` converts values to and from dimensionless quantities."""
+    """A `Scale` converts values to and from dimensionless quantities."""
 
-  def __init__(self, *scales: Quantity):
-    """Initializes a `Scale` from the given `Quantity`s.
+    def __init__(self, *scales: Quantity):
+        """Initializes a `Scale` from the given `Quantity`s.
 
     Example usage:
 
@@ -138,43 +134,41 @@ class Scale(abc.Mapping):
         [printing_unit], [substance], [temperature], [time]. In particular, each
         scale must not have a 'compound' unit such as 'm / s'.
     """
-    self._scales = dict()
-    for quantity in scales:
-      dimension = _get_dimension(quantity)
-      if dimension in self._scales:
-        raise ValueError(f'Got duplicate scales for dimension {dimension}.')
-      self._scales[_get_dimension(quantity)] = quantity.to_base_units()
+        self._scales = dict()
+        for quantity in scales:
+            dimension = _get_dimension(quantity)
+            if dimension in self._scales:
+                raise ValueError(
+                    f'Got duplicate scales for dimension {dimension}.')
+            self._scales[_get_dimension(quantity)] = quantity.to_base_units()
 
-  def __getitem__(self, key: str) -> Quantity:
-    return self._scales[key]
+    def __getitem__(self, key: str) -> Quantity:
+        return self._scales[key]
 
-  def __iter__(self) -> Iterator[str]:
-    return iter(self._scales)
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._scales)
 
-  def __len__(self) -> int:
-    return len(self._scales)
+    def __len__(self) -> int:
+        return len(self._scales)
 
-  def __repr__(self) -> str:
-    return '\n'.join(
-        f'{dimension}: {quantity}'
-        for dimension, quantity in self._scales.items()
-    )
+    def __repr__(self) -> str:
+        return '\n'.join(f'{dimension}: {quantity}'
+                         for dimension, quantity in self._scales.items())
 
-  def _scaling_factor(
-      self, dimensionality: pint.util.UnitsContainer
-  ) -> Quantity:
-    """Returns the value used to scale quantities of given dimensionality."""
-    factor = Quantity(1)
-    for dimension, exponent in dimensionality.items():
-      quantity = self._scales.get(dimension)
-      if quantity is None:
-        raise ValueError(f'No scale has been set for {dimension}.')
-      factor *= quantity**exponent
-    assert factor.check(dimensionality)
-    return factor
+    def _scaling_factor(self,
+                        dimensionality: pint.util.UnitsContainer) -> Quantity:
+        """Returns the value used to scale quantities of given dimensionality."""
+        factor = Quantity(1)
+        for dimension, exponent in dimensionality.items():
+            quantity = self._scales.get(dimension)
+            if quantity is None:
+                raise ValueError(f'No scale has been set for {dimension}.')
+            factor *= quantity**exponent
+        assert factor.check(dimensionality)
+        return factor
 
-  def nondimensionalize(self, quantity: Quantity) -> Numeric:
-    """Converts a `pint.Quantity` to a non-dimensional value.
+    def nondimensionalize(self, quantity: Quantity) -> Numeric:
+        """Converts a `pint.Quantity` to a non-dimensional value.
 
     Args:
       quantity: a `pint.Quantity` to be converted to a dimensionless quantity.
@@ -183,12 +177,13 @@ class Scale(abc.Mapping):
     Returns:
       A dimensionless value corresponding to the rescaled `quantity`.
     """
-    scaling_factor = self._scaling_factor(quantity.dimensionality)
-    nondimensionalized = (quantity / scaling_factor).to(units.dimensionless)
-    return nondimensionalized.magnitude
+        scaling_factor = self._scaling_factor(quantity.dimensionality)
+        nondimensionalized = (quantity / scaling_factor).to(
+            units.dimensionless)
+        return nondimensionalized.magnitude
 
-  def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
-    """Scales `value` by the appropriate factor and attached `unit`.
+    def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
+        """Scales `value` by the appropriate factor and attached `unit`.
 
     Args:
       value: a dimensionless value representing a quantity corresponding to
@@ -198,9 +193,9 @@ class Scale(abc.Mapping):
     Returns:
       A `Quantity` corresponding to `value` after rescaling.
     """
-    scaling_factor = self._scaling_factor(unit.dimensionality)
-    dimensionalized = value * scaling_factor
-    return dimensionalized.to(unit)  # pytype: disable=attribute-error  # jax-ndarray
+        scaling_factor = self._scaling_factor(unit.dimensionality)
+        dimensionalized = value * scaling_factor
+        return dimensionalized.to(unit)  # pytype: disable=attribute-error  # jax-ndarray
 
 
 NEURALGCM_V1_SCALE = Scale(

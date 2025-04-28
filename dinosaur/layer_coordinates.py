@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """A vertical coordinate system for a system with layers of fixed density."""
 
 from __future__ import annotations
@@ -22,7 +21,7 @@ import numpy as np
 
 @dataclasses.dataclass(frozen=True)
 class LayerCoordinates:
-  """Vertical coordinate system for a multi-layer shallow water equations.
+    """Vertical coordinate system for a multi-layer shallow water equations.
 
   A description of a discrete, constant density vertical layer. Layers are
   indexed from the "top"  of the atmosphere to the surface of the earth.
@@ -31,12 +30,11 @@ class LayerCoordinates:
     layers: the number of layers.
     centers: indices of layers.
   """
-  layers: int
+    layers: int
 
-  @property
-  def centers(self) -> np.ndarray:
-    return np.arange(self.layers)
+    @property
+    def centers(self) -> np.ndarray:
+        return np.arange(self.layers)
 
-  def asdict(self):
-    return dataclasses.asdict(self)
-
+    def asdict(self):
+        return dataclasses.asdict(self)

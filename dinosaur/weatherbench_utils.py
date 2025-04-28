@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Defines structures and functions relevant to modeling WeatherBench data."""
 
 import dataclasses
@@ -22,11 +21,12 @@ import tree_math
 
 @tree_math.struct
 class State:
-  """A WeatherBench state described using velocity components."""
-  u: typing.Array
-  v: typing.Array
-  t: typing.Array
-  z: typing.Array
-  sim_time: float
-  tracers: dict[str, typing.Array] = dataclasses.field(default_factory=dict)
-  diagnostics: dict[str, typing.Array] = dataclasses.field(default_factory=dict)
+    """A WeatherBench state described using velocity components."""
+    u: typing.Array
+    v: typing.Array
+    t: typing.Array
+    z: typing.Array
+    sim_time: float
+    tracers: dict[str, typing.Array] = dataclasses.field(default_factory=dict)
+    diagnostics: dict[str,
+                      typing.Array] = dataclasses.field(default_factory=dict)

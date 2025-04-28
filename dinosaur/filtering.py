@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Filters for GCM models."""
 import functools
 from typing import Callable
@@ -25,14 +24,14 @@ import numpy as np
 
 
 def _preserves_shape(target, scaling):
-  target_shape = np.shape(target)
-  return target_shape == np.broadcast_shapes(target_shape, scaling.shape)
+    target_shape = np.shape(target)
+    return target_shape == np.broadcast_shapes(target_shape, scaling.shape)
 
 
 def _make_filter_fn(scaling, name=None):
-  rescale = lambda x: scaling * x if _preserves_shape(x, scaling) else x
-  return functools.partial(
-      jax.tree_util.tree_map, jax.named_call(rescale, name=name))
+    rescale = lambda x: scaling * x if _preserves_shape(x, scaling) else x
+    return functools.partial(jax.tree_util.tree_map,
+                             jax.named_call(rescale, name=name))
 
 
 def exponential_filter(
@@ -41,7 +40,7 @@ def exponential_filter(
     order: int | typing.Array = 18,
     cutoff: float = 0,
 ) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
-  """Returns a filter that attenuates modes with high total wavenumber.
+    """Returns a filter that attenuates modes with high total wavenumber.
 
   Components with `k > cutoff` are damped by a factor of:
 
@@ -78,15 +77,15 @@ def exponential_filter(
       2177-2189 (2003)
   """
 
-  _, total_wavenumber = grid.modal_axes
+    _, total_wavenumber = grid.modal_axes
 
-  k = total_wavenumber / total_wavenumber.max()
-  a = attenuation
-  c = cutoff
-  p = order
+    k = total_wavenumber / total_wavenumber.max()
+    a = attenuation
+    c = cutoff
+    p = order
 
-  scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c)) ** (2 * p))))
-  return _make_filter_fn(scaling, "exponential_filter")
+    scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
+    return _make_filter_fn(scaling, "exponential_filter")
 
 
 def horizontal_diffusion_filter(
@@ -94,7 +93,7 @@ def horizontal_diffusion_filter(
     scale: float | typing.Array,
     order: int = 1,
 ) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
-  """Returns a filter that applies a horizontal diffusion step."""
-  eigenvalues = grid.laplacian_eigenvalues
-  scaling = jnp.exp(-scale * (-eigenvalues) ** order)
-  return _make_filter_fn(scaling, "horizontal_diffusion_filter")
+    """Returns a filter that applies a horizontal diffusion step."""
+    eigenvalues = grid.laplacian_eigenvalues
+    scaling = jnp.exp(-scale * (-eigenvalues)**order)
+    return _make_filter_fn(scaling, "horizontal_diffusion_filter")

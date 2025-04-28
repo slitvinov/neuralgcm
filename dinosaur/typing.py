@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Defined commonly used types in the codebase."""
 
 import dataclasses
@@ -22,7 +21,6 @@ from dinosaur import scales
 import jax.numpy as jnp
 import numpy as np
 import tree_math
-
 
 Array = np.ndarray | jnp.ndarray
 ArrayOrArrayTuple = Array | tuple[Array, ...]
@@ -43,15 +41,15 @@ ForcingData = dict[str, Any]
 
 @dataclasses.dataclass(eq=True, order=True, frozen=True)
 class KeyWithCosLatFactor:
-  """Class describing a key by `name` and an integer `factor_order`."""
-  name: str
-  factor_order: int
-  filter_strength: float = 0.0
+    """Class describing a key by `name` and an integer `factor_order`."""
+    name: str
+    factor_order: int
+    filter_strength: float = 0.0
 
 
 @tree_math.struct
 class RandomnessState:
-  """Representation of random states on the sphere.
+    """Representation of random states on the sphere.
 
   Attributes:
     core: internal representation of the random state.
@@ -63,16 +61,16 @@ class RandomnessState:
       has poor statistical properties. The recommended pattern for generating a
       new PRNG key is `jax.random.fold_in(state.prng_key, state.prng_step)`.
   """
-  core: Pytree | None = None
-  nodal_value: Pytree | None = None
-  modal_value: Pytree | None = None
-  prng_key: PRNGKeyArray | None = None
-  prng_step: int | None = None
+    core: Pytree | None = None
+    nodal_value: Pytree | None = None
+    modal_value: Pytree | None = None
+    prng_key: PRNGKeyArray | None = None
+    prng_step: int | None = None
 
 
 @tree_math.struct
 class ModelState(Generic[PyTreeState]):
-  """PyTreeState decomposed into deterministic and perturbation components.
+    """PyTreeState decomposed into deterministic and perturbation components.
 
   A stochastic model advances by maintaining a model state and perturbations.
 
@@ -83,31 +81,32 @@ class ModelState(Generic[PyTreeState]):
     randomness: An optional random field that is used to stochastically perturb
       the advance step of the model.
   """
-  state: PyTreeState
-  memory: Pytree = dataclasses.field(default=None)
-  diagnostics: Pytree = dataclasses.field(default_factory=dict)
-  randomness: RandomnessState = dataclasses.field(
-      default_factory=RandomnessState
-  )
+    state: PyTreeState
+    memory: Pytree = dataclasses.field(default=None)
+    diagnostics: Pytree = dataclasses.field(default_factory=dict)
+    randomness: RandomnessState = dataclasses.field(
+        default_factory=RandomnessState)
 
 
 @tree_math.struct
 class TrajectoryRepresentations:
-  """Dataclass that holds trajectories in all default representations."""
-  data_nodal_trajectory: Pytree
-  data_modal_trajectory: Pytree
-  model_nodal_trajectory: Pytree
-  model_modal_trajectory: Pytree
+    """Dataclass that holds trajectories in all default representations."""
+    data_nodal_trajectory: Pytree
+    data_modal_trajectory: Pytree
+    model_nodal_trajectory: Pytree
+    model_modal_trajectory: Pytree
 
-  def get_representation(self, *, is_nodal: bool, is_encoded: bool) -> Pytree:
-    """Retrieves representation based on `is_nodal`, `is_encoded` booleans."""
-    binary_nodal_encoded_dict = {
-        (True, True): self.model_nodal_trajectory,
-        (True, False): self.data_nodal_trajectory,
-        (False, True): self.model_modal_trajectory,
-        (False, False): self.data_modal_trajectory,
-    }
-    return binary_nodal_encoded_dict[(is_nodal, is_encoded)]
+    def get_representation(self, *, is_nodal: bool,
+                           is_encoded: bool) -> Pytree:
+        """Retrieves representation based on `is_nodal`, `is_encoded` booleans."""
+        binary_nodal_encoded_dict = {
+            (True, True): self.model_nodal_trajectory,
+            (True, False): self.data_nodal_trajectory,
+            (False, True): self.model_modal_trajectory,
+            (False, False): self.data_modal_trajectory,
+        }
+        return binary_nodal_encoded_dict[(is_nodal, is_encoded)]
+
 
 # TODO(dkochkov) unify State and PyTreeState and integrators.
 State = TypeVar('State')
@@ -134,9 +133,8 @@ Params = Mapping[str, Mapping[str, Array]] | None
 
 StepFn = Callable[[PyTreeState, Forcing | None], PyTreeState]
 StepModule = Callable[..., StepFn]
-CorrectorFn = Callable[
-    [PyTreeState, PyTreeState | None, Forcing | None], PyTreeState
-]
+CorrectorFn = Callable[[PyTreeState, PyTreeState | None, Forcing | None],
+                       PyTreeState]
 CorrectorModule = Callable[..., CorrectorFn]
 ParameterizationFn = Callable[
     [

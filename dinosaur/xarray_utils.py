@@ -35,8 +35,7 @@ import numpy as np
 import pandas as pd
 from sklearn import neighbors
 import xarray
-import xarray_tensorstore
-
+# import xarray_tensorstore
 
 # pylint: disable=g-bare-generic
 # pylint: disable=line-too-long

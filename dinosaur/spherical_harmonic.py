@@ -42,52 +42,6 @@ class SphericalHarmonics:
     latitude_nodes: int = 0
     latitude_spacing: str = 'gauss'
 
-    @property
-    def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
-        raise NotImplementedError
-
-    @property
-    def nodal_shape(self) -> tuple[int, int]:
-        raise NotImplementedError
-
-    @property
-    def nodal_padding(self) -> tuple[int, int]:
-        raise NotImplementedError
-
-    @property
-    def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
-        raise NotImplementedError
-
-    @property
-    def modal_shape(self) -> tuple[int, int]:
-        raise NotImplementedError
-
-    @property
-    def modal_padding(self) -> tuple[int, int]:
-        raise NotImplementedError
-
-    @property
-    def modal_dtype(self) -> np.dtype:
-        raise NotImplementedError
-
-    @property
-    def mask(self) -> np.ndarray:
-        raise NotImplementedError
-
-    @property
-    def basis(self) -> _SphericalHarmonicBasis:
-        raise NotImplementedError
-
-    def inverse_transform(self, x: jax.Array) -> jax.Array:
-        raise NotImplementedError
-
-    def transform(self, x: jax.Array) -> jax.Array:
-        raise NotImplementedError
-
-    def longitudinal_derivative(self, x: Array) -> Array:
-        raise NotImplementedError
-
-
 class RealSphericalHarmonics(SphericalHarmonics):
 
     @functools.cached_property

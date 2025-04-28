@@ -212,10 +212,8 @@ def get_geopotential_diff(
     if method == 'dense':
         weights = get_geopotential_weights(coordinates, ideal_gas_constant)
         return _vertical_matvec(weights, temperature)
-    elif method == 'sparse':
-        assert False
     else:
-        raise ValueError(f'unknown {method=} for get_geopotential_diff')
+        assert False
 
 
 def get_geopotential(

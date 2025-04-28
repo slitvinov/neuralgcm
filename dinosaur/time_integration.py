@@ -310,36 +310,12 @@ def imex_rk_sil3(
     )
 
 
-def robert_asselin_leapfrog_filter(r: float) -> PyTreeStepFilterFn:
-
-    def _filter(u: PyTreeState, u_next: PyTreeState) -> PyTreeState:
-        previous, current = u
-        _, future = u_next
-        filtered_current = tree_map(
-            lambda p, c, f: (1 - 2 * r) * c + r * (p + f), previous, current,
-            future)
-        return (filtered_current, future)
-
-    return _filter
-
-
 def runge_kutta_step_filter(
     state_filter: PyTreeTermsFn, ) -> PyTreeStepFilterFn:
 
     def _filter(u: PyTreeState, u_next: PyTreeState) -> PyTreeState:
         del u  # unused
         return state_filter(u_next)
-
-    return _filter
-
-
-def leapfrog_step_filter(state_filter: PyTreeTermsFn, ) -> PyTreeStepFilterFn:
-
-    def _filter(u: PyTreeState, u_next: PyTreeState) -> PyTreeState:
-        del u  # unused
-        current, future = u_next  # leapfrog state is a tuple of 2 time slices.
-        future = state_filter(future)
-        return (current, future)
 
     return _filter
 
@@ -352,29 +328,6 @@ def exponential_step_filter(
     cutoff: float = 0,
 ):
     filter_fn = filtering.exponential_filter(grid, dt / tau, order, cutoff)
-    return runge_kutta_step_filter(filter_fn)
-
-
-def exponential_leapfrog_step_filter(
-    grid: spherical_harmonic.Grid,
-    dt: float,
-    tau: float = 0.010938,
-    order: int = 18,
-    cutoff: float = 0,
-):
-    filter_fn = filtering.exponential_filter(grid, dt / tau, order, cutoff)
-    return leapfrog_step_filter(filter_fn)
-
-
-def horizontal_diffusion_step_filter(
-    grid: spherical_harmonic.Grid,
-    dt: float,
-    tau: float,
-    order: int = 1,
-):
-    eigenvalues = grid.laplacian_eigenvalues
-    scale = dt / (tau * abs(eigenvalues[-1])**order)
-    filter_fn = filtering.horizontal_diffusion_filter(grid, scale, order)
     return runge_kutta_step_filter(filter_fn)
 
 
@@ -435,30 +388,6 @@ Input = TypeVar('Input')
 Output = TypeVar('Output')
 Func = TypeVar('Func', bound=Callable)
 
-
-def nested_checkpoint_scan(
-    f: Callable[[Carry, Input], tuple[Carry, Output]],
-    init: Carry,
-    xs: Input,
-    length: Optional[int] = None,
-    *,
-    nested_lengths: Sequence[int],
-    scan_fn: typing.ScanFn = jax.lax.scan,
-    checkpoint_fn: Callable[[Func], Func] = jax.checkpoint,
-) -> tuple[Carry, Output]:
-    if length is not None and length != math.prod(nested_lengths):
-        raise ValueError(f'inconsistent {length=} and {nested_lengths=}')
-
-    def nested_reshape(x):
-        x = jnp.asarray(x)
-        new_shape = tuple(nested_lengths) + x.shape[1:]
-        return x.reshape(new_shape)
-
-    sub_xs = tree_map(nested_reshape, xs)
-    return _inner_nested_scan(f, init, sub_xs, nested_lengths, scan_fn,
-                              checkpoint_fn)
-
-
 def _inner_nested_scan(f, init, xs, lengths, scan_fn, checkpoint_fn):
     if len(lengths) == 1:
         return scan_fn(f, init, xs, lengths[0])
@@ -472,68 +401,3 @@ def _inner_nested_scan(f, init, xs, lengths, scan_fn, checkpoint_fn):
     stacked_out = tree_map(jnp.concatenate, out)
     return carry, stacked_out
 
-
-def accumulate_repeated(
-    step_fn: StateFn,
-    weights: jnp.ndarray,
-    state: State,
-    scan_fn: typing.ScanFn = jax.lax.scan,
-) -> State:
-
-    def f(carry, weight):
-        state, averaged = carry
-        state = step_fn(state)
-        averaged = tree_map(lambda s, a: a + weight * s, state, averaged)
-        return (state, averaged), None
-
-    zeros = tree_map(jnp.zeros_like, state)
-    init = (state, zeros)
-    (_, averaged), _ = scan_fn(f, init, weights)
-    return averaged
-
-
-def _dfi_lanczos_weights(
-    time_span: float,
-    cutoff_period: float,
-    dt: float,
-) -> np.ndarray:
-    N = round(time_span / (2 * dt))
-    n = np.arange(1, N + 1)
-    w = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
-    return w
-
-
-def digital_filter_initialization(
-    equation: ImplicitExplicitODE,
-    ode_solver: Callable[[ImplicitExplicitODE, float], StateFn],
-    filters: Sequence[PyTreeStepFilterFn],
-    time_span: float,
-    cutoff_period: float,
-    dt: float,
-) -> StateFn:
-
-    def f(state):
-        forward_step = step_with_filters(ode_solver(equation, dt), filters)
-        backward_step = step_with_filters(
-            ode_solver(TimeReversedImExODE(equation), dt), filters)
-        weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
-        init_weight = 1.0  # for time=0
-        total_weight = init_weight + 2 * weights.sum()
-        init_weight /= total_weight
-        weights /= total_weight
-        init_term = tree_map(lambda x: x * init_weight, state)
-        forward_term = accumulate_repeated(forward_step, weights, state)
-        backward_term = accumulate_repeated(backward_step, weights, state)
-        return tree_map(lambda *xs: sum(xs), init_term, forward_term,
-                        backward_term)
-
-    return f
-
-
-def maybe_fix_sim_time_roundoff(
-    state: typing.PyTreeState,
-    dt: float,
-) -> typing.PyTreeState:
-    if hasattr(state, 'sim_time') and state.sim_time is not None:
-        state.sim_time = dt * jnp.round(state.sim_time / dt)
-    return state

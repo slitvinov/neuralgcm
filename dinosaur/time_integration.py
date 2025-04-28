@@ -366,6 +366,18 @@ def exponential_leapfrog_step_filter(
     return leapfrog_step_filter(filter_fn)
 
 
+def horizontal_diffusion_step_filter(
+    grid: spherical_harmonic.Grid,
+    dt: float,
+    tau: float,
+    order: int = 1,
+):
+    eigenvalues = grid.laplacian_eigenvalues
+    scale = dt / (tau * abs(eigenvalues[-1])**order)
+    filter_fn = filtering.horizontal_diffusion_filter(grid, scale, order)
+    return runge_kutta_step_filter(filter_fn)
+
+
 def step_with_filters(
     step_fn: TimeStepFn,
     filters: Sequence[PyTreeStepFilterFn],
@@ -518,3 +530,10 @@ def digital_filter_initialization(
     return f
 
 
+def maybe_fix_sim_time_roundoff(
+    state: typing.PyTreeState,
+    dt: float,
+) -> typing.PyTreeState:
+    if hasattr(state, 'sim_time') and state.sim_time is not None:
+        state.sim_time = dt * jnp.round(state.sim_time / dt)
+    return state

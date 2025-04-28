@@ -759,29 +759,6 @@ def coordinate_system_from_dataset_shape(
     return coordinate_systems.CoordinateSystem(horizontal, vertical)
 
 
-def coordinate_system_from_dataset(
-    ds: xarray.Dataset,
-    truncation: str = CUBIC,
-    spherical_harmonics_impl: (
-        Union[Callable[..., spherical_harmonic.SphericalHarmonics],
-              None]) = None,
-    spmd_mesh: Union[jax.sharding.Mesh, None] = None,
-) -> coordinate_systems.CoordinateSystem:
-    try:
-        coords = coordinate_system_from_attrs(ds.attrs)
-    except KeyError:
-        coords = coordinate_system_from_dataset_shape(ds,
-                                                      truncation=truncation)
-    if spherical_harmonics_impl is not None:
-        coords = dataclasses.replace(
-            coords,
-            horizontal=dataclasses.replace(
-                coords.horizontal,
-                spherical_harmonics_impl=spherical_harmonics_impl),
-        )
-    coords = dataclasses.replace(coords, spmd_mesh=spmd_mesh)
-    return coords
-
 
 def temperature_variation_to_absolute(
     temperature_variation: np.ndarray,

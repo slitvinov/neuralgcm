@@ -113,7 +113,7 @@ def _normalize_axis(axis: int, ndim: int) -> int:
 def slice_along_axis(
     inputs: typing.Pytree,
     axis: int,
-    idx: int | slice,
+    idx: Union[int, slice],
     expect_same_dims: bool = False,
 ) -> typing.Pytree:
     """Returns slice of `inputs` defined by `idx` along axis `axis`.

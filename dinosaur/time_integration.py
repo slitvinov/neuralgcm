@@ -171,36 +171,6 @@ def crank_nicolson_rk2(
 
     return step_fn
 
-
-def low_storage_runge_kutta_crank_nicolson(
-    alphas: Sequence[float],
-    betas: Sequence[float],
-    gammas: Sequence[float],
-    equation: ImplicitExplicitODE,
-    time_step: float,
-) -> TimeStepFn:
-    α = alphas
-    β = betas
-    γ = gammas
-    dt = time_step
-    F = tree_math.unwrap(equation.explicit_terms)
-    G = tree_math.unwrap(equation.implicit_terms)
-    G_inv = tree_math.unwrap(equation.implicit_inverse, vector_argnums=0)
-    if len(alphas) - 1 != len(betas) != len(gammas):
-        raise ValueError('number of RK coefficients does not match')
-
-    @tree_math.wrap
-    def step_fn(u):
-        h = 0
-        for k in range(len(β)):
-            h = F(u) + β[k] * h
-            µ = 0.5 * dt * (α[k + 1] - α[k])
-            u = G_inv(u + γ[k] * dt * h + µ * G(u), µ)
-        return u
-
-    return step_fn
-
-
 @dataclasses.dataclass
 class ImExButcherTableau:
     a_ex: Sequence[Sequence[float]]

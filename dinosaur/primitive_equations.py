@@ -154,22 +154,8 @@ class PrimitiveEquationsSpecs:
     def nondimensionalize(self, quantity: Quantity) -> Numeric:
         return self.scale.nondimensionalize(quantity)
 
-    def nondimensionalize_timedelta64(self,
-                                      timedelta: np.timedelta64) -> Numeric:
-        base_unit = 's'
-        return self.scale.nondimensionalize(
-            timedelta / np.timedelta64(1, base_unit) * units(base_unit))
-
     def dimensionalize(self, value: Numeric, unit: units.Unit) -> Quantity:
         return self.scale.dimensionalize(value, unit)
-
-    def dimensionalize_timedelta64(self, value: Numeric) -> np.timedelta64:
-        base_unit = 's'  # return value is rounded down to nearest base_unit
-        dt = self.scale.dimensionalize(value, units(base_unit)).m
-        if isinstance(dt, np.ndarray):
-            return dt.astype(f'timedelta64[{base_unit}]')
-        else:
-            return np.timedelta64(int(dt), base_unit)
 
     @classmethod
     def from_si(

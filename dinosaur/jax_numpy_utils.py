@@ -49,13 +49,7 @@ def cumsum(
     method: str = 'dot',
     sharding: jax.sharding.NamedSharding | None = None,
 ) -> jax.Array:
-    if method == 'dot':
-        return _dot_cumsum(x, axis, sharding=sharding)
-    elif method == 'jax':
-        return jnp.cumsum(x, axis)
-    else:
-        raise ValueError(f'invalid {method=}')
-
+    return _dot_cumsum(x, axis, sharding=sharding)
 
 def pad_in_dim(x: np.ndarray | jax.Array, pad_width: tuple[int, int],
                axis: int) -> jax.Array:

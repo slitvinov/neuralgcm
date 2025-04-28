@@ -397,27 +397,6 @@ def truncated_modal_orography(
                                  n=wavenumbers_to_clip)
 
 
-def filtered_modal_orography(
-        orography: Array,
-        coords: coordinate_systems.CoordinateSystem,
-        input_coords: Union[coordinate_systems.CoordinateSystem, None] = None,
-        filter_fns: Sequence[typing.PostProcessFn] = tuple(),
-) -> Array:
-    if input_coords is None:
-        input_coords = coords
-    expected_shape = input_coords.horizontal.nodal_shape
-    if orography.shape != expected_shape:
-        raise ValueError(
-            f'Expected nodal orography with shape={expected_shape}')
-    interpolate_fn = coordinate_systems.get_spectral_interpolate_fn(
-        input_coords, coords, expect_same_vertical=False)
-    modal_orography = interpolate_fn(
-        input_coords.horizontal.to_modal(orography))
-    for filter_fn in filter_fns:
-        modal_orography = filter_fn(modal_orography)
-    return modal_orography
-
-
 @dataclasses.dataclass
 class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     reference_temperature: np.ndarray

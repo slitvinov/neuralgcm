@@ -283,13 +283,7 @@ def get_geopotential_diff(
         weights = get_geopotential_weights(coordinates, ideal_gas_constant)
         return _vertical_matvec(weights, temperature)
     elif method == 'sparse':
-        alpha = ideal_gas_constant * get_sigma_ratios(coordinates)
-        alpha2 = np.concatenate([[0], alpha[1:] + alpha[:-1]])
-        return (jax_numpy_utils.reverse_cumsum(
-            alpha2[:, np.newaxis, np.newaxis] * temperature,
-            axis=0,
-            sharding=sharding,
-        ) + (alpha - alpha2)[:, np.newaxis, np.newaxis] * temperature)
+        assert False
     else:
         raise ValueError(f'unknown {method=} for get_geopotential_diff')
 
@@ -384,19 +378,7 @@ def get_temperature_implicit(
     if method == 'dense':
         return _vertical_matvec(weights, divergence)
     elif method == 'sparse':
-        diag_weights = np.diag(weights)
-        up_weights = np.concatenate([[0], weights[1:, 0]])
-        down_weights = np.concatenate([weights[:-1, -1], [0]])
-        up_divergence = (
-            jax_numpy_utils.cumsum(divergence, axis=0, sharding=sharding) -
-            divergence)
-        result = (up_weights[:, np.newaxis, np.newaxis] * up_divergence +
-                  diag_weights[:, np.newaxis, np.newaxis] * divergence)
-        if (down_weights != 0).any():
-            down_divergence = (jax_numpy_utils.reverse_cumsum(
-                divergence, axis=0, sharding=sharding) - divergence)
-            result += down_weights[:, np.newaxis, np.newaxis] * down_divergence
-        return result
+        assert False
     else:
         raise ValueError(f'unknown {method=} for get_temperature_implicit')
 

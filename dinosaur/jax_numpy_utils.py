@@ -91,20 +91,6 @@ def cumsum(
         raise ValueError(f'invalid {method=}')
 
 
-def reverse_cumsum(
-    x: np.ndarray | jax.Array,
-    axis: int,
-    method: str = 'dot',
-    sharding: jax.sharding.NamedSharding | None = None,
-) -> jax.Array:
-    if method == 'dot':
-        return _dot_cumsum(x, axis, reverse=True, sharding=sharding)
-    elif method == 'jax':
-        return jnp.flip(jnp.cumsum(jnp.flip(x, axis), axis), axis)
-    else:
-        raise ValueError(f'invalid {method=}')
-
-
 def pad_in_dim(x: np.ndarray | jax.Array, pad_width: tuple[int, int],
                axis: int) -> jax.Array:
     padding_value = jnp.array(0, dtype=x.dtype)

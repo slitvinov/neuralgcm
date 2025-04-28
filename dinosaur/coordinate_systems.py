@@ -151,29 +151,6 @@ def get_spectral_downsample_fn(
     return downsample_fn
 
 
-def get_spectral_upsample_fn(
-    coords: CoordinateSystem,
-    save_coords: CoordinateSystem,
-    expect_same_vertical: bool = True,
-) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
-    if expect_same_vertical and (coords.vertical != save_coords.vertical):
-        raise ValueError('upsampling vertical resolution is not supported.')
-    save_shape = save_coords.horizontal.modal_shape
-    coords_shape = coords.horizontal.modal_shape
-    lon_wavenumber_pad = (0, save_shape[0] - coords_shape[0])
-    total_wavenumber_pad = (0, save_shape[1] - coords_shape[1])
-    if (min(lon_wavenumber_pad) != 0) or (min(total_wavenumber_pad) != 0):
-        raise ValueError(
-            'save_coords.horizontal smaller than coords.horizontal')
-    tail_pad = (lon_wavenumber_pad, total_wavenumber_pad)
-
-    def upsample_fn(state: typing.PyTreeState) -> typing.PyTreeState:
-        pad_fn = lambda x: jnp.pad(x, ((0, 0), ) * (x.ndim - 2) + tail_pad)
-        return pytree_utils.tree_map_over_nonscalars(pad_fn, state)
-
-    return upsample_fn
-
-
 def get_nodal_shapes(
     inputs: typing.Pytree,
     coords: CoordinateSystem,

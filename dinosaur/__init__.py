@@ -7,7 +7,6 @@ import dinosaur.layer_coordinates
 import dinosaur.primitive_equations
 import dinosaur.primitive_equations_states
 import dinosaur.pytree_utils
-import dinosaur.radiation
 import dinosaur.scales
 import dinosaur.sigma_coordinates
 import dinosaur.spherical_harmonic

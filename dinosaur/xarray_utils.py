@@ -38,9 +38,6 @@ MODAL_AXES_NAMES = (
     XR_LON_MODE_NAME,
     XR_LAT_MODE_NAME,
 )
-Grid = spherical_harmonic.Grid
-
-
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape,
     dims,

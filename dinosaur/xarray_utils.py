@@ -23,31 +23,13 @@ XR_LON_NAME = 'lon'
 XR_LAT_NAME = 'lat'
 XR_LON_MODE_NAME = 'longitudinal_mode'
 XR_LAT_MODE_NAME = 'total_wavenumber'
-XR_AUX_FEATURES_LIST_KEY = 'aux_features_key'
 XR_REALIZATION_NAME = 'realization'
-OROGRAPHY = 'orography'  # key for referring to orography.
-GEOPOTENTIAL_KEY = 'geopotential'  # key for referring to geopotential.
-GEOPOTENTIAL_AT_SURFACE_KEY = 'geopotential_at_surface'
-REF_TEMP_KEY = 'ref_temperatures'  # key for referring to reference temperature.
-REF_POTENTIAL_KEY = 'reference_potential'  # key for referring to ref potential.
-REFERENCE_DATETIME_KEY = 'reference_datetime'  # key for referencing 0-time.
+OROGRAPHY = 'orography'
+GEOPOTENTIAL_KEY = 'geopotential'
+REF_TEMP_KEY = 'ref_temperatures'
+REF_POTENTIAL_KEY = 'reference_potential'
+REFERENCE_DATETIME_KEY = 'reference_datetime'
 XARRAY_DS_KEY = 'xarray_dataset'
-GEOPOTENTIAL_AT_SURFACE = (  # Geopotential, z, m**2 s**-2
-    'geopotential_at_surface')
-HIGH_VEGETATION_COVER = (  # High vegetation cover, cvh, (0 - 1)
-    'high_vegetation_cover')
-LAKE_COVER = 'lake_cover'  # Lake cover, cl, (0 - 1)
-LAKE_DEPTH = 'lake_depth'  # Lake total depth, dl, m
-LAND_SEA_MASK = 'land_sea_mask'  # Land-sea mask, lsm, (0 - 1)
-LOW_VEGETATION_COVER = (  # Low vegetation cover, cvl, (0 - 1)
-    'low_vegetation_cover')
-SOIL_TYPE = 'soil_type'  # Soil type, slt, ~
-TYPE_OF_HIGH_VEGETATION = (  # Type of high vegetation, tvh, ~
-    'type_of_high_vegetation')
-TYPE_OF_LOW_VEGETATION = (  # Type of low vegetation, tvl, ~
-    'type_of_low_vegetation')
-VOLUMETRIC_SOIL_WATER_LAYER_4 = (  # Volumetric soil water layer 4, swvl4, m**3 m**-3
-    'volumetric_soil_water_layer_4')
 NODAL_AXES_NAMES = (
     XR_LON_NAME,
     XR_LAT_NAME,

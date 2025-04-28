@@ -195,7 +195,7 @@ def open_dataset(
 
 
 def open_netcdf(path: str,
-                max_parallel_reads: int | None = None,
+                max_parallel_reads: Union[int, None] = None,
                 **kwargs) -> xarray.Dataset:
     """Load a dataset stored in NetCDF format."""
     del max_parallel_reads  # unused.
@@ -248,7 +248,7 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
 
 def _infer_dims_shape_and_coords(
     coords: coordinate_systems.CoordinateSystem,
-    times: typing.Array | None,
+    times: Union[typing.Array, None],
     sample_ids: typing.Array,
     additional_coords: Mapping[str, typing.Array],
 ) -> tuple[dict[str, typing.Array], dict[tuple[int, ...], tuple[int, ...]]]:
@@ -370,10 +370,10 @@ def data_to_xarray(
     data: dict,
     *,
     coords: coordinate_systems.CoordinateSystem,
-    times: typing.Array | None,
-    sample_ids: typing.Array | None = None,
-    additional_coords: MutableMapping[str, typing.Array] | None = None,
-    attrs: Mapping[str, Any] | None = None,
+    times: Union[typing.Array, None],
+    sample_ids: Union[typing.Array, None] = None,
+    additional_coords: Union[MutableMapping[str, typing.Array], None] = None,
+    attrs: Union[Mapping[str, Any], None] = None,
     serialize_coords_to_attrs: bool = True,
 ) -> xarray.Dataset:
     """Returns a sample/time referenced xarray.Dataset of primitive equation data.
@@ -463,10 +463,10 @@ def dynamic_covariate_data_to_xarray(
     data: dict,
     *,
     coords: coordinate_systems.CoordinateSystem,
-    times: typing.Array | None,
-    sample_ids: typing.Array | None = None,
-    additional_coords: MutableMapping[str, typing.Array] | None = None,
-    attrs: Mapping[str, Any] | None = None,
+    times: Union[typing.Array, None],
+    sample_ids: Union[typing.Array, None] = None,
+    additional_coords: Union[MutableMapping[str, typing.Array], None] = None,
+    attrs: Union[Mapping[str, Any], None] = None,
 ) -> xarray.Dataset:
     """Returns an xarray.Dataset of dynamic covariate data.
 
@@ -705,7 +705,7 @@ def xarray_to_state_and_dynamic_covariate_data(
     *,
     values: str = 'values',
     xarray_to_state_data_fn: Callable[..., dict],
-    xarray_to_dynamic_covariate_data_fn: Callable[..., dict] | None = None,
+    xarray_to_dynamic_covariate_data_fn: Union[Callable[..., dict], None] = None,
 ) -> tuple[dict, dict]:
     """Returns `values` of state and dynamic covariate data from `dataset`.
 
@@ -749,10 +749,10 @@ def data_to_xarray_with_renaming(
     to_xarray_fn: Callable[..., xarray.Dataset],
     renaming_dict: dict[str, str],
     coords: coordinate_systems.CoordinateSystem,
-    times: typing.Array | None,
-    sample_ids: typing.Array | None = None,
-    additional_coords: MutableMapping[str, typing.Array] | None = None,
-    attrs: Mapping[str, Any] | None = None,
+    times: Union[typing.Array, None],
+    sample_ids: Union[typing.Array, None] = None,
+    additional_coords: Union[MutableMapping[str, typing.Array], None] = None,
+    attrs: Union[Mapping[str, Any], None] = None,
 ) -> xarray.Dataset:
     """Adapts naming convention after calling `to_xarray_fn`.
 
@@ -792,7 +792,7 @@ def aux_features_from_xarray(ds: xarray.Dataset) -> typing.AuxFeatures:
 
 def aux_features_to_xarray(
     aux_features: typing.AuxFeatures,
-    xr_coords: Mapping[str, np.ndarray] | None = None,
+    xr_coords: Union[Mapping[str, np.ndarray], None] = None,
 ) -> xarray.Dataset:
     """Creates an Xarray dataset containing aux_features.
 
@@ -845,8 +845,8 @@ def xarray_nondimensionalize(
 
 
 def verify_grid_consistency(
-    longitude: np.ndarray | xarray.DataArray,
-    latitude: np.ndarray | xarray.DataArray,
+    longitude: Union[np.ndarray, xarray.DataArray],
+    latitude: Union[np.ndarray, xarray.DataArray],
     grid: spherical_harmonic.Grid,
 ):
     """Verifies that longitude and latitude axes are compatible with `grid`."""

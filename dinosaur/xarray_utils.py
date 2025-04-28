@@ -206,17 +206,6 @@ def data_to_xarray(
     tracer_keys = data['tracers'].keys() if 'tracers' in data else set()
     diagnostic_keys = (data['diagnostics'].keys()
                        if 'diagnostics' in data else set())
-    if not prognostic_keys.isdisjoint(tracer_keys):
-        raise ValueError(
-            'Tracer names collide with prognostic variables',
-            f'Tracers: {tracer_keys}; prognostics: {prognostic_keys}',
-        )
-    if not prognostic_keys.isdisjoint(diagnostic_keys):
-        raise ValueError(
-            'Diagnostic names collide with prognostic variables',
-            f'Diagnostic: {diagnostic_keys}; ',
-            f'prognostics: {prognostic_keys}',
-        )
     if additional_coords is None:
         additional_coords = {}
     if (coords.vertical.layers != 1) and (XR_SURFACE_NAME
@@ -228,37 +217,10 @@ def data_to_xarray(
     data_vars = {}
     for key in prognostic_keys:
         value = data[key]
-        if value.shape not in shape_to_dims:
-            raise ValueError(
-                f'Value of shape {value.shape} is not in {shape_to_dims=}')
-        else:
-            dims = shape_to_dims[value.shape]
-            data_vars[key] = (dims, value)
-            dims_in_state.update(set(dims))
-    for key in tracer_keys:
-        value = data['tracers'][key]
-        if value.shape not in shape_to_dims:
-            raise ValueError(
-                f'Value of shape {value.shape} is not recognized.')
-        else:
-            dims = shape_to_dims[value.shape]
-            data_vars[key] = (dims, value)
-            dims_in_state.update(set(dims))
-    for key in diagnostic_keys:
-        value = data['diagnostics'][key]
-        if value.shape not in shape_to_dims:
-            raise ValueError(
-                f'Value of shape {value.shape} is not recognized.')
-        else:
-            dims = shape_to_dims[value.shape]
-            data_vars[key] = (dims, value)
-            dims_in_state.update(set(dims))
+        dims = shape_to_dims[value.shape]
+        data_vars[key] = (dims, value)
+        dims_in_state.update(set(dims))
     dataset_attrs = coords.asdict() if serialize_coords_to_attrs else {}
-    if attrs is not None:
-        for key in dataset_attrs.keys():
-            if key in attrs:
-                raise ValueError(f'Key {key} is not allowed in `attrs`.')
-        dataset_attrs.update(attrs)
     coords = {k: v for k, v in all_coords.items() if k in dims_in_state}
     return xarray.Dataset(data_vars, coords, attrs=dataset_attrs)
 

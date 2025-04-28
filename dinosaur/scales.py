@@ -14,7 +14,7 @@
 """Code for describing units and non-dimensionalizing quantities."""
 
 from collections import abc
-from typing import Iterator, Protocol
+from typing import Iterator, Protocol, Union
 
 import jax.numpy as jnp
 import numpy as np
@@ -26,7 +26,7 @@ Quantity = units.Quantity
 Unit = units.Unit
 UnitsContainer = pint.util.UnitsContainer
 
-Array = np.ndarray | jnp.ndarray
+Array = Union[np.ndarray, jnp.ndarray]
 Numeric = Array | float | int
 
 #

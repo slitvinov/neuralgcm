@@ -127,30 +127,6 @@ class CoordinateSystem:
         return (1, ) + self.horizontal.modal_shape
 
 
-def get_spectral_downsample_fn(
-    coords: CoordinateSystem,
-    save_coords: CoordinateSystem,
-    expect_same_vertical: bool = True,
-) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
-    if expect_same_vertical and (coords.vertical != save_coords.vertical):
-        raise ValueError('downsampling vertical resolution is not supported.')
-    lon_wavenumber_slice = slice(0, save_coords.horizontal.modal_shape[0])
-    total_wavenumber_slice = slice(0, save_coords.horizontal.modal_shape[1])
-    if (coords.horizontal.total_wavenumbers
-            < save_coords.horizontal.total_wavenumbers) or (
-                coords.horizontal.longitude_wavenumbers
-                < save_coords.horizontal.longitude_wavenumbers):
-        raise ValueError(
-            'save_coords.horizontal larger than coords.horizontal')
-
-    def downsample_fn(state: typing.PyTreeState) -> typing.PyTreeState:
-        slice_fn = lambda x: x[..., lon_wavenumber_slice,
-                               total_wavenumber_slice]
-        return pytree_utils.tree_map_over_nonscalars(slice_fn, state)
-
-    return downsample_fn
-
-
 def get_nodal_shapes(
     inputs: typing.Pytree,
     coords: CoordinateSystem,

@@ -13,7 +13,6 @@ import jax
 import numpy as np
 import xarray
 
-XR_TIME_NAME = 'time'
 XR_INIT_TIME_NAME = 'initial_time'
 XR_TIMEDELTA_NAME = 'prediction_timedelta'
 XR_LEVEL_NAME = 'level'
@@ -40,7 +39,7 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
     not_scalar = bool(shape)
     if times is not None:
         shape = times.shape + shape
-        dims = (XR_TIME_NAME, ) + dims
+        dims = ('times', ) + dims
     return shape, dims
 
 
@@ -61,7 +60,7 @@ def _infer_dims_shape_and_coords(
         **additional_coords,
     }
     if times is not None:
-        all_xr_coords[XR_TIME_NAME] = times
+        all_xr_coords['time'] = times
     if sample_ids is not None:
         all_xr_coords['sample'] = sample_ids
     basic_shape_to_dims = {}

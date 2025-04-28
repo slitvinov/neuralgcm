@@ -45,34 +45,6 @@ def _asdict(state: State) -> dict[str, Any]:
 State.asdict = _asdict
 StateWithTime = State  # deprecated alias
 
-
-class StateShapeError(Exception):
-
-    def validate_state_shape(state: State,
-                             coords: coordinate_systems.CoordinateSystem):
-        if state.vorticity.shape != coords.modal_shape:
-            raise StateShapeError(
-                f'Expected vorticity shape {coords.modal_shape}; '
-                f'got shape {state.vorticity.shape}.')
-        if state.divergence.shape != coords.modal_shape:
-            raise StateShapeError(
-                f'Expected divergence shape {coords.modal_shape}; '
-                f'got shape {state.divergence.shape}.')
-        if state.temperature_variation.shape != coords.modal_shape:
-            raise StateShapeError(
-                f'Expected temperature_variation shape {coords.modal_shape}; '
-                f'got shape {state.temperature_variation.shape}.')
-        if state.log_surface_pressure.shape != coords.surface_modal_shape:
-            raise StateShapeError(
-                f'Expected log_surface_pressure shape {coords.surface_modal_shape}; '
-                f'got shape {state.log_surface_pressure.shape}.')
-        for tracer_name, array in state.tracers.items():
-            if array.shape[-3:] != coords.modal_shape:
-                raise StateShapeError(
-                    f'Expected tracer {tracer_name} shape {coords.modal_shape}; '
-                    f'got shape {array.shape}.')
-
-
 @tree_math.struct
 class DiagnosticState:
     vorticity: Array

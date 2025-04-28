@@ -135,6 +135,7 @@ data_array = (trajectory_ds['surface_pressure'] /
               physics_specs.nondimensionalize(1e5 * units.pascal))
 data_array.max(['lon']).plot(x='time', hue='lat')
 ax = plt.gca()
+ax.legend().remove()
 plt.savefig("04.png")
 plt.close()
 

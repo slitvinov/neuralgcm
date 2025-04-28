@@ -358,9 +358,9 @@ def data_to_xarray(
     coords = {k: v for k, v in all_coords.items() if k in dims_in_state}
     return xarray.Dataset(data_vars, coords, attrs=dataset_attrs)
 
+
 def temperature_variation_to_absolute(
     temperature_variation: np.ndarray,
     ref_temperature: np.ndarray,
 ) -> np.ndarray:
-    return temperature_variation + ref_temperature[:, np.newaxis,
-                                                   np.newaxis]
+    return temperature_variation + ref_temperature[:, np.newaxis, np.newaxis]

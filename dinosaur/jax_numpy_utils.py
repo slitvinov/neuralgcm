@@ -32,7 +32,6 @@ def _single_device_dot_cumsum(x: jax.Array,
     )
 
 
-
 def _dot_cumsum(
     x: jax.Array,
     axis: int,
@@ -41,6 +40,7 @@ def _dot_cumsum(
 ) -> jax.Array:
     return _single_device_dot_cumsum(x, axis, reverse=reverse)
 
+
 def cumsum(
     x: np.ndarray | jax.Array,
     axis: int,
@@ -48,6 +48,7 @@ def cumsum(
     sharding: jax.sharding.NamedSharding | None = None,
 ) -> jax.Array:
     return _dot_cumsum(x, axis, sharding=sharding)
+
 
 def pad_in_dim(x: np.ndarray | jax.Array, pad_width: tuple[int, int],
                axis: int) -> jax.Array:
@@ -73,4 +74,3 @@ def diff(x, axis=-1):
     upper = lax.slice_in_dim(x, 1, None, axis=axis)
     lower = lax.slice_in_dim(x, 0, -1, axis=axis)
     return upper - lower
-

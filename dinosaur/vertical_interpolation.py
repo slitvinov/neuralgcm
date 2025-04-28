@@ -328,4 +328,3 @@ def regrid_hybrid_to_sigma(
 
     return pytree_utils.tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
-

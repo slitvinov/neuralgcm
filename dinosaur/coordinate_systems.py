@@ -195,7 +195,8 @@ def get_spectral_interpolate_fn(
         raise ValueError('Incompatible horizontal coordinates with shapes '
                          f'{source_coords.horizontal.modal_shape}, '
                          f'{target_coords.horizontal.modal_shape}')
-    
+
+
 def get_nodal_shapes(
     inputs: typing.Pytree,
     coords: CoordinateSystem,
@@ -206,6 +207,8 @@ def get_nodal_shapes(
     return pytree_utils.tree_map_over_nonscalars(array_shape_fn,
                                                  inputs,
                                                  scalar_fn=scalar_shape_fn)
+
+
 def maybe_to_nodal(
     fields: typing.Pytree,
     coords: CoordinateSystem,

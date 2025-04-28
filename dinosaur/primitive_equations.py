@@ -44,6 +44,7 @@ def _asdict(state: State) -> dict[str, Any]:
 
 State.asdict = _asdict
 
+
 @tree_math.struct
 class DiagnosticState:
     vorticity: Array

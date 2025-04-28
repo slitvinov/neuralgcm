@@ -9,6 +9,7 @@ import numpy as np
 
 tree_map = jax.tree_util.tree_map
 
+
 def tree_map_over_nonscalars(
     f: Callable[[typing.Array], typing.Array],
     x: typing.Pytree,
@@ -24,6 +25,7 @@ def tree_map_over_nonscalars(
 
     return tree_map(g, x)
 
+
 def as_dict(inputs: typing.Pytree) -> typing.Pytree:
     return_type = type(inputs)
     if dataclasses.is_dataclass(inputs):
@@ -32,4 +34,3 @@ def as_dict(inputs: typing.Pytree) -> typing.Pytree:
         assert 0
     from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
     return inputs, from_dict_fn
-

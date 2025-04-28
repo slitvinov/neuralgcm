@@ -18,6 +18,7 @@ AuxFeatures = dict[str, Any]
 DataState = dict[str, Any]
 ForcingData = dict[str, Any]
 
+
 @tree_math.struct
 class RandomnessState:
     core: Union[Pytree, None] = None

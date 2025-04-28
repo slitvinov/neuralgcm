@@ -109,6 +109,7 @@ def cumulative_sigma_integral(
     else:
         assert False
 
+
 @jax.named_call
 def sigma_integral(
     x: Array,
@@ -157,5 +158,3 @@ def centered_vertical_advection(
     w_times_x_diff = w * x_diff
     return -0.5 * (lax.slice_in_dim(w_times_x_diff, 1, None, axis=axis) +
                    lax.slice_in_dim(w_times_x_diff, 0, -1, axis=axis))
-
-

@@ -435,6 +435,7 @@ Input = TypeVar('Input')
 Output = TypeVar('Output')
 Func = TypeVar('Func', bound=Callable)
 
+
 def accumulate_repeated(
     step_fn: StateFn,
     weights: jnp.ndarray,
@@ -490,5 +491,3 @@ def digital_filter_initialization(
                         backward_term)
 
     return f
-
-

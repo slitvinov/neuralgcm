@@ -38,4 +38,3 @@ def evaluate(n_m: int, n_l: int, x: np.ndarray) -> np.ndarray:
 
 def gauss_legendre_nodes(n: int) -> tuple[np.ndarray, np.ndarray]:
     return sps.roots_legendre(n)
-

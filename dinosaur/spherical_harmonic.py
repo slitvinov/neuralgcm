@@ -17,9 +17,7 @@ import numpy as np
 Array = typing.Array
 ArrayOrArrayTuple = typing.ArrayOrArrayTuple
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-LATITUDE_SPACINGS = dict(
-    gauss=associated_legendre.gauss_legendre_nodes,
-)
+LATITUDE_SPACINGS = dict(gauss=associated_legendre.gauss_legendre_nodes, )
 
 
 def get_latitude_nodes(n: int, spacing: str) -> tuple[np.ndarray, np.ndarray]:
@@ -41,6 +39,7 @@ class SphericalHarmonics:
     longitude_nodes: int = 0
     latitude_nodes: int = 0
     latitude_spacing: str = 'gauss'
+
 
 class RealSphericalHarmonics(SphericalHarmonics):
 
@@ -123,6 +122,7 @@ def _round_to_multiple(x: int, multiple: int) -> int:
 
 P = jax.sharding.PartitionSpec
 shmap = shard_map.shard_map
+
 
 @dataclasses.dataclass(frozen=True)
 class FastSphericalHarmonics(SphericalHarmonics):
@@ -288,9 +288,11 @@ class FastSphericalHarmonics(SphericalHarmonics):
         return _fourier_derivative_for_real_basis_with_zero_imag(
             x, self.spmd_mesh)
 
+
 @dataclasses.dataclass(frozen=True)
 class RealSphericalHarmonicsWithZeroImag(FastSphericalHarmonics):
-  """Deprecated alias for `FastSphericalHarmonics`."""
+    """Deprecated alias for `FastSphericalHarmonics`."""
+
 
 def _vertical_pad(
         field: jax.Array,
@@ -299,9 +301,9 @@ def _vertical_pad(
         return field, None
     assert field.ndim == 3, field.shape
     z_multiple = mesh.shape['z']
-    z_padding = _round_to_multiple(field.shape[0],
-                                   z_multiple) - field.shape[0]
+    z_padding = _round_to_multiple(field.shape[0], z_multiple) - field.shape[0]
     return jnp.pad(field, [(0, z_padding), (0, 0), (0, 0)]), z_padding
+
 
 def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
     if not padding:
@@ -309,9 +311,10 @@ def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
     assert field.ndim == 3, field.shape
     return jax.lax.slice_in_dim(field, 0, -padding, axis=0)
 
+
 def _with_vertical_padding(
-        f: Callable[[jax.Array], jax.Array], mesh: jax.sharding.Mesh | None
-) -> Callable[[jax.Array], jax.Array]:
+        f: Callable[[jax.Array], jax.Array],
+        mesh: jax.sharding.Mesh | None) -> Callable[[jax.Array], jax.Array]:
 
     def g(x):
         x, padding = _vertical_pad(x, mesh)

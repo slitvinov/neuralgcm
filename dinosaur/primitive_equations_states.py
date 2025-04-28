@@ -254,5 +254,3 @@ def baroclinic_perturbation_jw(
         log_surface_pressure=np.zeros_like(modal_vorticity[:1, ...]),
     )
     return state
-
-

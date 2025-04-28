@@ -13,7 +13,6 @@ import jax
 import numpy as np
 import xarray
 
-XR_SAMPLE_NAME = 'sample'
 XR_TIME_NAME = 'time'
 XR_INIT_TIME_NAME = 'initial_time'
 XR_TIMEDELTA_NAME = 'prediction_timedelta'
@@ -64,7 +63,7 @@ def _infer_dims_shape_and_coords(
     if times is not None:
         all_xr_coords[XR_TIME_NAME] = times
     if sample_ids is not None:
-        all_xr_coords[XR_SAMPLE_NAME] = sample_ids
+        all_xr_coords['sample'] = sample_ids
     basic_shape_to_dims = {}
     basic_shape_to_dims[tuple()] = tuple()
     modal_shape = coords.horizontal.modal_shape

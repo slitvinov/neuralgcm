@@ -88,71 +88,11 @@ class HybridCoordinates:
                              surface_pressure: typing.Numeric) -> typing.Array:
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
-
-@functools.partial(jax.jit, static_argnums=0)
-def get_surface_pressure(
-    pressure_levels: PressureCoordinates,
-    geopotential: typing.Array,
-    orography: typing.Array,
-    gravity_acceleration: float,
-) -> typing.Array:
-    relative_height = orography * gravity_acceleration - geopotential
-
-    @functools.partial(jnp.vectorize, signature='(z,x,y),(z)->(1,x,y)')
-    @functools.partial(jax.vmap, in_axes=(-1, None), out_axes=-1)
-    @functools.partial(jax.vmap, in_axes=(-1, None), out_axes=-1)
-    def find_intercept(rh, levels):
-        return linear_interp_with_linear_extrap(0.0, rh, levels)[np.newaxis]
-
-    return find_intercept(relative_height, pressure_levels.centers)
-
-
-def vertical_interpolation(
-    x: typing.Array,
-    xp: typing.Array,
-    fp: typing.Array,
-) -> typing.Array:
-    return interp(x, jnp.asarray(xp), fp)
-
-
 SigmaOrPressure = TypeVar(
     'SigmaOrPressure',
     sigma_coordinates.SigmaCoordinates,
     PressureCoordinates,
 )
-
-
-def _interp_centers_to_centers(
-    fields: typing.Pytree,
-    source_sigma: SigmaOrPressure,
-    target_sigma: SigmaOrPressure,
-    interpolate_fn: InterpolateFn = vertical_interpolation,
-) -> typing.Pytree:
-    interpolate_fn = jax.vmap(interpolate_fn, (None, None, -1), out_axes=-1)
-    interpolate_fn = jax.vmap(interpolate_fn, (None, None, -1), out_axes=-1)
-    interpolate_fn = jax.vmap(interpolate_fn, (0, None, None), out_axes=0)
-    interpolate_fn = jnp.vectorize(interpolate_fn,
-                                   signature='(a),(b),(b,x,y)->(a,x,y)')
-    regrid = lambda x: interpolate_fn(
-        target_sigma.centers,
-        source_sigma.centers,
-        x  # currently I have an error
-    )
-
-    def cond_fn(x) -> bool:
-        x = jnp.asarray(x)
-        return x.ndim > 2
-
-    return pytree_utils.tree_map_where(
-        condition_fn=cond_fn,
-        f=regrid,
-        g=lambda x: x,
-        x=fields,
-    )
-
-
-interp_sigma_to_sigma = _interp_centers_to_centers
-interp_pressure_to_pressure = _interp_centers_to_centers
 
 def _interval_overlap(source_bounds: typing.Array,
                       target_bounds: typing.Array) -> jnp.ndarray:

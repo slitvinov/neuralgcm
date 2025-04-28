@@ -1,5 +1,3 @@
-! pip install -q -U dinosaur
-
 import functools
 import dinosaur
 import jax
@@ -88,7 +86,7 @@ integrate_fn = dinosaur.time_integration.trajectory_from_step(
 integrate_fn = jax.jit(integrate_fn)
 
 # Running integration starting with steady state
-%time final, trajectory = jax.block_until_ready(integrate_fn(steady_state))
+final, trajectory = jax.block_until_ready(integrate_fn(steady_state))
 
 # Constructing predictions and diagnostics
 trajectory = jax.device_get(trajectory)
@@ -148,7 +146,7 @@ integrate_fn = dinosaur.time_integration.trajectory_from_step(
     step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 
-%time final, trajectory = jax.block_until_ready(integrate_fn(state))
+final, trajectory = jax.block_until_ready(integrate_fn(state))
 
 # formatting predictions to xarray.Dataset for ease of vizualization
 trajectory = jax.device_get(trajectory)

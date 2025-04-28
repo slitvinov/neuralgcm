@@ -25,20 +25,6 @@ PostProcessFn = typing.PostProcessFn
 
 
 class ImplicitExplicitODE:
-
-    def explicit_terms(self, state: PyTreeState):
-        raise NotImplementedError
-
-    def implicit_terms(self, state: PyTreeState):
-        raise NotImplementedError
-
-    def implicit_inverse(
-        self,
-        state: PyTreeState,
-        step_size: float,
-    ):
-        raise NotImplementedError
-
     @classmethod
     def from_functions(
         cls,

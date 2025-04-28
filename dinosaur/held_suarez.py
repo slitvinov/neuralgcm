@@ -17,7 +17,7 @@ class HeldSuarezForcing:
         self,
         coords: coordinate_systems.CoordinateSystem,
         physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-        reference_temperature: typing.Array,
+        reference_temperature,
         p0: Quantity = 1e5 * units.pascal,
         sigma_b: Quantity = 0.7,
         kf: Quantity = 1 / (1 * units.day),

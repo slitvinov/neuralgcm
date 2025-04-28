@@ -13,7 +13,7 @@ P = jax.sharding.PartitionSpec
 
 
 def _with_sharding_constraint(
-    x: typing.Pytree,
+    x,
     sharding: Union[jax.sharding.NamedSharding, None],
 ):
     if sharding is None:
@@ -49,7 +49,7 @@ class CoordinateSystem:
     def dycore_sharding(self):
         return self._get_sharding(self.dycore_partition_spec)
 
-    def with_dycore_sharding(self, x: typing.PyTreeState):
+    def with_dycore_sharding(self, x):
         return _with_sharding_constraint(x, self.dycore_sharding)
 
     def asdict(self) ->...:
@@ -66,7 +66,7 @@ class CoordinateSystem:
 
 
 def get_nodal_shapes(
-    inputs: typing.Pytree,
+    inputs,
     coords: CoordinateSystem,
 ):
     nodal_shape = coords.horizontal.nodal_shape
@@ -78,7 +78,7 @@ def get_nodal_shapes(
 
 
 def maybe_to_nodal(
-    fields: typing.Pytree,
+    fields,
     coords: CoordinateSystem,
 ):
     nodal_shapes = get_nodal_shapes(fields, coords)

@@ -33,7 +33,7 @@ def _with_f64_math(
 class SigmaCoordinates:
     boundaries: np.ndarray
 
-    def __init__(self, boundaries: np.typing.ArrayLike):
+    def __init__(self, boundaries):
         boundaries = np.asarray(boundaries)
         object.__setattr__(self, 'boundaries', boundaries)
 
@@ -54,10 +54,7 @@ class SigmaCoordinates:
         return len(self.boundaries) - 1
 
     @classmethod
-    def equidistant(
-            cls,
-            layers: int,
-            dtype: np.typing.DTypeLike = np.float32) -> SigmaCoordinates:
+    def equidistant(cls, layers: int, dtype=np.float32) -> SigmaCoordinates:
         boundaries = np.linspace(0, 1, layers + 1, dtype=dtype)
         return cls(boundaries)
 

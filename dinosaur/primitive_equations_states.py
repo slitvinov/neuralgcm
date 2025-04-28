@@ -95,7 +95,7 @@ def steady_state_jw(
     gamma: Quantity = 0.005 * units.degK / units.m,
     sigma_tropo: float = 0.2,
     sigma0: float = 0.252,
-) -> tuple[Callable[..., primitive_equations.State], typing.AuxFeatures]:
+):
     u0 = physics_specs.nondimensionalize(u0)
     t0 = physics_specs.nondimensionalize(t0)
     delta_t = physics_specs.nondimensionalize(delta_t)

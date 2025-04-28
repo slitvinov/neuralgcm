@@ -20,8 +20,8 @@ def _make_filter_fn(scaling, name=None):
 
 def exponential_filter(
     grid: spherical_harmonic.Grid,
-    attenuation: Union[float, typing.Array] = 16,
-    order: Union[int, typing.Array] = 18,
+    attenuation=16,
+    order=18,
     cutoff: float = 0,
 ):
     _, total_wavenumber = grid.modal_axes
@@ -34,9 +34,9 @@ def exponential_filter(
 
 
 def horizontal_diffusion_filter(
-    grid: spherical_harmonic.Grid,
-    scale: Union[float, typing.Array],
-    order: int = 1,
+    grid,
+    scale,
+    order=1,
 ):
     eigenvalues = grid.laplacian_eigenvalues
     scaling = jnp.exp(-scale * (-eigenvalues)**order)

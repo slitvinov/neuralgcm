@@ -454,13 +454,13 @@ class Grid:
         return -l * (l + 1) / (self.radius**2)
 
     @jax.named_call
-    def to_nodal(self, x: typing.Pytree) -> typing.Pytree:
+    def to_nodal(self, x):
         f = _with_vertical_padding(self.spherical_harmonics.inverse_transform,
                                    self.spmd_mesh)
         return pytree_utils.tree_map_over_nonscalars(f, x)
 
     @jax.named_call
-    def to_modal(self, z: typing.Pytree) -> typing.Pytree:
+    def to_modal(self, z):
         f = _with_vertical_padding(self.spherical_harmonics.transform,
                                    self.spmd_mesh)
         return pytree_utils.tree_map_over_nonscalars(f, z)
@@ -479,7 +479,7 @@ class Grid:
         return x * inverse_eigenvalues
 
     @jax.named_call
-    def clip_wavenumbers(self, x: typing.Pytree, n: int = 1) -> typing.Pytree:
+    def clip_wavenumbers(self, x, n: int = 1):
         if n <= 0:
             raise ValueError(f'`n` must be >= 0; got {n}.')
 

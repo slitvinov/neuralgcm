@@ -708,58 +708,6 @@ def with_sim_time(
 
 ds_with_sim_time = with_sim_time  # deprecated alias
 
-
-def infer_longitude_offset(lon: Union[np.ndarray, xarray.DataArray]) -> float:
-    if isinstance(lon, xarray.DataArray):
-        lon = lon.data
-    if lon.max() < 2 * np.pi:
-        raise ValueError(f'Expected longitude values in degrees, got {lon=}')
-    return lon[0] * np.pi / 180
-
-
-def infer_latitude_spacing(lat: Union[np.ndarray, xarray.DataArray]) -> str:
-    if np.allclose(np.diff(lat), lat[1] - lat[0]):
-        if np.isclose(max(lat), 90.0):
-            spacing = 'equiangular_with_poles'
-        else:
-            spacing = 'equiangular'
-    else:
-        spacing = 'gauss'
-    return spacing
-
-
-def coordinate_system_from_dataset_shape(
-    ds: xarray.Dataset,
-    truncation: str = CUBIC,
-) -> coordinate_systems.CoordinateSystem:
-    if truncation == CUBIC:
-        shape_to_grid_dict = CUBIC_SHAPE_TO_GRID_DICT
-    elif truncation == LINEAR:
-        shape_to_grid_dict = LINEAR_SHAPE_TO_GRID_DICT
-    else:
-        raise ValueError(f'{truncation=} is not supported.')
-    if XR_LON_NAME in ds and XR_LAT_NAME in ds:
-        lon, lat = ds[XR_LON_NAME], ds[XR_LAT_NAME]
-    elif 'longitude' in ds and 'latitude' in ds:
-        lon, lat = ds.longitude, ds.latitude
-    else:
-        raise ValueError(
-            'Dataset must provide lon/lat or longitude/latitude axes.')
-    grid_cls = shape_to_grid_dict[lon.shape + lat.shape]
-    horizontal = grid_cls(
-        latitude_spacing=infer_latitude_spacing(lat),
-        radius=1.0,  # Note: only valid for NeuralGCM v1 models
-    )
-    verify_grid_consistency(lon, lat, horizontal)
-    if XR_LEVEL_NAME in ds:
-        vertical_centers = ds.level.values
-        vertical = vertical_interpolation.PressureCoordinates(vertical_centers)
-    else:
-        vertical = None  # no vertical discretization provided.
-    return coordinate_systems.CoordinateSystem(horizontal, vertical)
-
-
-
 def temperature_variation_to_absolute(
     temperature_variation: np.ndarray,
     ref_temperature: np.ndarray,

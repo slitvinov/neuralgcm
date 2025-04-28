@@ -119,6 +119,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
 P = jax.sharding.PartitionSpec
 shmap = shard_map.shard_map
 
+
 def _vertical_pad(
         field: jax.Array,
         mesh: jax.sharding.Mesh | None) -> tuple[jax.Array, int | None]:

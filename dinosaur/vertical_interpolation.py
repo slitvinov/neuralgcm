@@ -14,6 +14,7 @@ import numpy as np
 Array = typing.Array
 InterpolateFn = Callable[[Array, Array, Array], Array]
 
+
 @dataclasses.dataclass(frozen=True)
 class HybridCoordinates:
     a_boundaries: np.ndarray

@@ -243,13 +243,8 @@ p = potential_temperature.isel(lon=0).plot.contour(x='lat',
 ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.colorbar(p)
-plt.savefig("07.png")
-plt.close()
-
-
 print(potential_temperature.min())
 print(potential_temperature.max())
-# Stable for d(potential temperature)/dz > 0
 plt.savefig("07.png")
 plt.close()
 

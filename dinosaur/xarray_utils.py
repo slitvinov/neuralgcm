@@ -39,6 +39,8 @@ MODAL_AXES_NAMES = (
     XR_LAT_MODE_NAME,
 )
 Grid = spherical_harmonic.Grid
+
+
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape,
     dims,
@@ -122,7 +124,7 @@ def data_to_xarray(
     sample_ids=None,
     additional_coords=None,
     attrs=None,
-    serialize_coords_to_attrs= True,
+    serialize_coords_to_attrs=True,
 ):
     prognostic_keys = set(data.keys()) - {'tracers'} - {'diagnostics'}
     tracer_keys = data['tracers'].keys() if 'tracers' in data else set()

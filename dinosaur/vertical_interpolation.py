@@ -21,10 +21,7 @@ class HybridCoordinates:
     b_boundaries: np.ndarray
 
     def __post_init__(self):
-        if len(self.a_boundaries) != len(self.b_boundaries):
-            raise ValueError(
-                'Expected `a_boundaries` and `b_boundaries` to have the same length, '
-                f'got {len(self.a_boundaries)} and {len(self.b_boundaries)}.')
+        pass
 
     @classmethod
     def _from_resource_csv(cls, path: str) -> HybridCoordinates:
@@ -42,10 +39,6 @@ class HybridCoordinates:
     def ECMWF137(cls) -> HybridCoordinates:  # pylint: disable=invalid-name
         return cls._from_resource_csv('data/ecmwf137_hybrid_levels.csv')
 
-    @classmethod
-    def UFS127(cls) -> HybridCoordinates:  # pylint: disable=invalid-name
-        return cls._from_resource_csv('data/ufs127_hybrid_levels.csv')
-
     @property
     def layers(self) -> int:
         return len(self.a_boundaries) - 1
@@ -53,11 +46,6 @@ class HybridCoordinates:
     def __hash__(self):
         return hash((tuple(self.a_boundaries.tolist()),
                      tuple(self.b_boundaries.tolist())))
-
-    def __eq__(self, other):
-        return (isinstance(other, HybridCoordinates)
-                and np.array_equal(self.a_boundaries, other.a_boundaries)
-                and np.array_equal(self.b_boundaries, other.b_boundaries))
 
     def get_sigma_boundaries(self,
                              surface_pressure: typing.Numeric) -> typing.Array:

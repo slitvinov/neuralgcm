@@ -90,13 +90,6 @@ class HybridCoordinates:
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
 
-SigmaOrPressure = TypeVar(
-    'SigmaOrPressure',
-    sigma_coordinates.SigmaCoordinates,
-    PressureCoordinates,
-)
-
-
 def _interval_overlap(source_bounds: typing.Array,
                       target_bounds: typing.Array) -> jnp.ndarray:
     upper = jnp.minimum(target_bounds[1:, jnp.newaxis],

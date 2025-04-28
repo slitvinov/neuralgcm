@@ -23,22 +23,6 @@ TimeStepFn = typing.TimeStepFn
 PyTreeStepFilterFn = typing.PyTreeStepFilterFn
 PostProcessFn = typing.PostProcessFn
 
-
-class ExplicitODE:
-
-    def explicit_terms(self, state: PyTreeState) -> PyTreeState:
-        raise NotImplementedError
-
-    @classmethod
-    def from_functions(
-        cls,
-        explicit_terms: PyTreeTermsFn,
-    ) -> ExplicitODE:
-        explicit_ode = cls()
-        explicit_ode.explicit_terms = explicit_terms
-        return explicit_ode
-
-
 class ImplicitExplicitODE:
 
     def explicit_terms(self, state: PyTreeState) -> PyTreeState:

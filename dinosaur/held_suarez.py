@@ -11,7 +11,7 @@ units = scales.units
 Quantity = units.Quantity
 
 
-class HeldSuarezForcing(time_integration.ExplicitODE):
+class HeldSuarezForcing:
 
     def __init__(
         self,

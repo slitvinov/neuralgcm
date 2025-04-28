@@ -13,8 +13,6 @@ import numpy as np
 def _single_device_dot_cumsum(x: jax.Array,
                               axis: int,
                               reverse: bool = False) -> jax.Array:
-    if not -x.ndim <= axis < x.ndim:
-        raise ValueError(f'invalid {axis=}')
     if axis < 0:
         axis = axis + x.ndim
     size = x.shape[axis]

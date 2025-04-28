@@ -9,11 +9,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-HORIZONTAL_COORD_TYPE_KEY = 'horizontal_grid_type'
-VERTICAL_COORD_TYPE_KEY = 'vertical_grid_type'
-HorizontalGridTypes = spherical_harmonic.Grid
 P = jax.sharding.PartitionSpec
-
 
 def _with_sharding_constraint(
     x: typing.Pytree,
@@ -80,8 +76,8 @@ class CoordinateSystem:
         if horizontal_keys.intersection(vertical_keys):
             raise ValueError('keys in horizontal and vertical grids collide.')
         out = {**self.horizontal.asdict(), **self.vertical.asdict()}
-        out[HORIZONTAL_COORD_TYPE_KEY] = type(self.horizontal).__name__
-        out[VERTICAL_COORD_TYPE_KEY] = type(self.vertical).__name__
+        out['horizontal_grid_type'] = type(self.horizontal).__name__
+        out['vertical_grid_type'] = type(self.vertical).__name__
         return out
 
     @property

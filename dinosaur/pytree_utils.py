@@ -9,19 +9,6 @@ import numpy as np
 
 tree_map = jax.tree_util.tree_map
 
-def tree_map_where(
-    condition_fn: Callable[[typing.Array], typing.Array],
-    f: Callable[[typing.Array], typing.Array],
-    g: Callable[[typing.Array], typing.Array],
-    x: typing.Pytree,
-) -> typing.Pytree:
-
-    def tm_where(x: typing.Array) -> typing.Array:
-        return f(x) if condition_fn(x) else g(x)
-
-    return tree_map(tm_where, x)
-
-
 def tree_map_over_nonscalars(
     f: Callable[[typing.Array], typing.Array],
     x: typing.Pytree,
@@ -37,77 +24,6 @@ def tree_map_over_nonscalars(
 
     return tree_map(g, x)
 
-
-def _normalize_axis(axis: int, ndim: int) -> int:
-    if not -ndim <= axis < ndim:
-        raise ValueError(f'invalid axis {axis} for ndim {ndim}')
-    if axis < 0:
-        axis += ndim
-    return axis
-
-
-def slice_along_axis(
-    inputs: typing.Pytree,
-    axis: int,
-    idx: Union[int, slice],
-    expect_same_dims: bool = False,
-) -> typing.Pytree:
-    arrays, tree_def = jax.tree_util.tree_flatten(inputs)
-    ndims = set(a.ndim for a in arrays)
-    if expect_same_dims and len(ndims) != 1:
-        raise ValueError(
-            'arrays in `inputs` expected to have same ndims, but have '
-            f'{ndims}. To allow this, pass expect_same_dims=False')
-    elif axis < 0:
-        raise ValueError(
-            f'Using {axis=} is error-prone if expect_same_dims=False')
-    sliced = []
-    for array in arrays:
-        ndim = array.ndim
-        slc = tuple(idx if j == _normalize_axis(axis, ndim) else slice(None)
-                    for j in range(ndim))
-        sliced.append(array[slc])
-    return jax.tree_util.tree_unflatten(tree_def, sliced)
-
-
-def split_along_axis(
-    inputs: typing.Pytree,
-    split_idx: int,
-    axis: int,
-    expect_same_dims: bool = False,
-) -> tuple[typing.Pytree, typing.Pytree]:
-    first_slice = slice_along_axis(inputs, axis, slice(0, split_idx),
-                                   expect_same_dims)
-    second_slice = slice_along_axis(inputs, axis, slice(split_idx, None),
-                                    expect_same_dims)
-    return first_slice, second_slice
-
-
-def split_axis(
-    inputs: typing.Pytree,
-    axis: int,
-    keep_dims: bool = False,
-) -> tuple[typing.Pytree, ...]:
-    arrays, tree_def = jax.tree_util.tree_flatten(inputs)
-    axis_shapes = set(a.shape[axis] for a in arrays)
-    if len(axis_shapes) != 1:
-        raise ValueError(
-            f'Arrays must have equal sized axis but got {axis_shapes}')
-    axis_shape, = axis_shapes
-    splits = [jnp.split(a, axis_shape, axis=axis) for a in arrays]
-    if not keep_dims:
-        splits = tree_map(lambda a: jnp.squeeze(a, axis), splits)
-    splits = zip(*splits)
-    return tuple(
-        jax.tree_util.tree_unflatten(tree_def, leaves) for leaves in splits)
-
-
-def concat_along_axis(pytrees: Sequence[typing.Pytree],
-                      axis: int) -> typing.Pytree:
-    concat_leaves_fn = lambda *args: jnp.concatenate(args, axis)
-    return tree_map(concat_leaves_fn, *pytrees)
-
-
 def as_dict(inputs: typing.Pytree) -> typing.Pytree:
     return_type = type(inputs)
     if dataclasses.is_dataclass(inputs):
@@ -120,75 +36,9 @@ def as_dict(inputs: typing.Pytree) -> typing.Pytree:
     return inputs, from_dict_fn
 
 
-def none_to_zeros(
-    tree: typing.Pytree,
-    reference_tree: typing.Pytree,
-) -> typing.Pytree:
-    return tree_map(lambda x, y: jnp.zeros_like(y)
-                    if x is None else x, tree, reference_tree)
-
-
 @dataclasses.dataclass(frozen=True)
 class _HashableNDArrayWrapper:
     shape: tuple[int, ...]
     dtype: np.dtype
     data: bytes
-
-
-def _hash_leaf(x: typing.Pytree) -> abc.Hashable:
-    if isinstance(x, (jax.Array, np.ndarray)):
-        return _HashableNDArrayWrapper(x.shape, x.dtype, x.tobytes())
-    else:
-        return x
-
-
-def tree_hashable(x: typing.Pytree) -> abc.Hashable:
-    values, treedef = jax.tree_util.tree_flatten(x)
-    values = tuple(map(_hash_leaf, values))
-    return values, treedef
-
-
-def tree_cache(func):
-    results = {}
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        key = tree_hashable((args, kwargs))
-        if key in results:
-            return results[key]
-        result = results[key] = func(*args, **kwargs)
-        return result
-
-    return wrapper
-
-
-def flatten_dict(
-    input_dict: dict[str, Any],
-    prefix: str = '',
-    sep: str = '&',
-) -> tuple[dict[str, Any], tuple[str, ...]]:
-    items = []
-    empty_keys = []
-    for k, v in input_dict.items():
-        if sep in k:
-            raise ValueError(
-                f'Key {k} contains {sep=}. Use different name or sep.')
-        new_key = prefix + sep + k if prefix else k
-        if isinstance(v, dict) and v:
-            sub_dict, sub_empty_keys = flatten_dict(v, new_key, sep=sep)
-            items.extend(sub_dict.items())
-            empty_keys.extend(sub_empty_keys)
-        elif isinstance(v, dict) and not v:
-            empty_keys.append(new_key)
-        else:
-            items.append((new_key, v))
-    unique_keys, counts = np.unique(np.array([x[0] for x in items]),
-                                    return_counts=True)
-    if (counts > 1).any():
-        raise ValueError(f'got duplicate keys {unique_keys[counts > 1]}')
-    unique_empty_keys, counts = np.unique(np.array([x[0] for x in empty_keys]),
-                                          return_counts=True)
-    if (counts > 1).any():
-        raise ValueError(f'got duplicate keys {unique_empty_keys[counts > 1]}')
-    return dict(items), tuple(empty_keys)
 

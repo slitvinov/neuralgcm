@@ -46,17 +46,6 @@ TYPE_OF_HIGH_VEGETATION = (  # Type of high vegetation, tvh, ~
     'type_of_high_vegetation')
 TYPE_OF_LOW_VEGETATION = (  # Type of low vegetation, tvl, ~
     'type_of_low_vegetation')
-ICE_TEMPERATURE_LAYER_4 = (  # Ice temperature layer 4, istl4, K
-    'ice_temperature_layer_4')
-LAKE_ICE_DEPTH = 'lake_ice_depth'  # Lake ice total depth, licd, m
-LAKE_ICE_TEMPERATURE = (  # Lake ice surface temperature, lict, K
-    'lake_ice_temperature')
-SEA_ICE_COVER = 'sea_ice_cover'  # Sea ice area fraction, siconc, (0 - 1)
-SEA_SURFACE_TEMPERATURE = (  # Sea surface temperature, sst, K
-    'sea_surface_temperature')
-SNOW_DEPTH = 'snow_depth'  # Snow depth, sd, m of water equivalent
-SOIL_TEMPERATURE_LEVEL_4 = (  # Soil temperature level 4, stl4, K
-    'soil_temperature_level_4')
 VOLUMETRIC_SOIL_WATER_LAYER_4 = (  # Volumetric soil water layer 4, swvl4, m**3 m**-3
     'volumetric_soil_water_layer_4')
 NODAL_AXES_NAMES = (
@@ -67,8 +56,6 @@ MODAL_AXES_NAMES = (
     XR_LON_MODE_NAME,
     XR_LAT_MODE_NAME,
 )
-LINEAR = 'LINEAR'
-CUBIC = 'CUBIC'
 Grid = spherical_harmonic.Grid
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape: tuple[int, ...],
@@ -179,7 +166,7 @@ def data_to_xarray(
 
 
 def temperature_variation_to_absolute(
-    temperature_variation: np.ndarray,
-    ref_temperature: np.ndarray,
+    temperature_variation,
+    ref_temperature,
 ):
     return temperature_variation + ref_temperature[:, np.newaxis, np.newaxis]

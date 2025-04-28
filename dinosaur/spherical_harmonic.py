@@ -4,7 +4,6 @@ import functools
 import math
 from typing import Any, Callable
 from dinosaur import associated_legendre
-from dinosaur import fourier
 from dinosaur import jax_numpy_utils
 from dinosaur import pytree_utils
 from dinosaur import typing
@@ -18,6 +17,30 @@ Array = typing.Array
 ArrayOrArrayTuple = typing.ArrayOrArrayTuple
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 LATITUDE_SPACINGS = dict(gauss=associated_legendre.gauss_legendre_nodes, )
+
+def real_basis(wavenumbers, nodes):
+    dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
+    cos = np.real(dft[:, 1:])
+    sin = -np.imag(dft[:, 1:])
+    f = np.empty(shape=[nodes, 2 * wavenumbers - 1], dtype=np.float64)
+    f[:, 0] = 1 / np.sqrt(2 * np.pi)
+    f[:, 1::2] = cos
+    f[:, 2::2] = sin
+    return f
+
+
+def real_basis_derivative(u, /, axis=-1):
+    i = jnp.arange(u.shape[axis]).reshape((-1, ) + (1, ) * (-1 - axis))
+    j = (i + 1) // 2
+    u_down = jax_numpy_utils.shift(u, -1, axis)
+    u_up = jax_numpy_utils.shift(u, +1, axis)
+    return j * jnp.where(i % 2, u_down, -u_up)
+
+
+def quadrature_nodes(nodes):
+    xs = np.linspace(0, 2 * np.pi, nodes, endpoint=False)
+    weights = 2 * np.pi / nodes
+    return xs, weights
 
 
 def get_latitude_nodes(n: int, spacing: str) -> tuple[np.ndarray, np.ndarray]:
@@ -45,7 +68,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
 
     @functools.cached_property
     def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
-        longitude, _ = fourier.quadrature_nodes(self.longitude_nodes)
+        longitude, _ = quadrature_nodes(self.longitude_nodes)
         sin_latitude, _ = get_latitude_nodes(self.latitude_nodes,
                                              self.latitude_spacing)
         return longitude, sin_latitude
@@ -78,11 +101,11 @@ class RealSphericalHarmonics(SphericalHarmonics):
 
     @functools.cached_property
     def basis(self) -> _SphericalHarmonicBasis:
-        f = fourier.real_basis(
+        f = real_basis(
             wavenumbers=self.longitude_wavenumbers,
             nodes=self.longitude_nodes,
         )
-        _, wf = fourier.quadrature_nodes(self.longitude_nodes)
+        _, wf = quadrature_nodes(self.longitude_nodes)
         x, wp = get_latitude_nodes(self.latitude_nodes, self.latitude_spacing)
         w = wf * wp
         p = associated_legendre.evaluate(n_m=self.longitude_wavenumbers,
@@ -113,7 +136,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
         return pfwx
 
     def longitudinal_derivative(self, x: Array) -> Array:
-        return fourier.real_basis_derivative(x, axis=-2)
+        return real_basis_derivative(x, axis=-2)
 
 
 P = jax.sharding.PartitionSpec

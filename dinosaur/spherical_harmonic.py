@@ -443,32 +443,32 @@ class FastSphericalHarmonics(SphericalHarmonics):
 @dataclasses.dataclass(frozen=True)
 class RealSphericalHarmonicsWithZeroImag(FastSphericalHarmonics):
 
-    def _vertical_pad(
-            field: jax.Array,
-            mesh: jax.sharding.Mesh | None) -> tuple[jax.Array, int | None]:
-        if field.ndim < 3 or field.shape[0] == 1 or mesh is None:
-            return field, None
-        assert field.ndim == 3, field.shape
-        z_multiple = mesh.shape['z']
-        z_padding = _round_to_multiple(field.shape[0],
-                                       z_multiple) - field.shape[0]
-        return jnp.pad(field, [(0, z_padding), (0, 0), (0, 0)]), z_padding
+def _vertical_pad(
+        field: jax.Array,
+        mesh: jax.sharding.Mesh | None) -> tuple[jax.Array, int | None]:
+    if field.ndim < 3 or field.shape[0] == 1 or mesh is None:
+        return field, None
+    assert field.ndim == 3, field.shape
+    z_multiple = mesh.shape['z']
+    z_padding = _round_to_multiple(field.shape[0],
+                                   z_multiple) - field.shape[0]
+    return jnp.pad(field, [(0, z_padding), (0, 0), (0, 0)]), z_padding
 
-    def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
-        if not padding:
-            return field
-        assert field.ndim == 3, field.shape
-        return jax.lax.slice_in_dim(field, 0, -padding, axis=0)
+def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
+    if not padding:
+        return field
+    assert field.ndim == 3, field.shape
+    return jax.lax.slice_in_dim(field, 0, -padding, axis=0)
 
-    def _with_vertical_padding(
-            f: Callable[[jax.Array], jax.Array], mesh: jax.sharding.Mesh | None
-    ) -> Callable[[jax.Array], jax.Array]:
+def _with_vertical_padding(
+        f: Callable[[jax.Array], jax.Array], mesh: jax.sharding.Mesh | None
+) -> Callable[[jax.Array], jax.Array]:
 
-        def g(x):
-            x, padding = _vertical_pad(x, mesh)
-            return _vertical_crop(f(x), padding)
+    def g(x):
+        x, padding = _vertical_pad(x, mesh)
+        return _vertical_crop(f(x), padding)
 
-        return g
+    return g
 
 
 SPHERICAL_HARMONICS_IMPL_KEY = 'spherical_harmonics_impl'

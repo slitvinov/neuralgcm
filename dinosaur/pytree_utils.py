@@ -35,10 +35,3 @@ def as_dict(inputs: typing.Pytree) -> typing.Pytree:
     from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
     return inputs, from_dict_fn
 
-
-@dataclasses.dataclass(frozen=True)
-class _HashableNDArrayWrapper:
-    shape: tuple[int, ...]
-    dtype: np.dtype
-    data: bytes
-

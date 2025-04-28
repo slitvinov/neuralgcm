@@ -1296,77 +1296,73 @@ def regrid_vertical(
     if compute_chunks is None:
         compute_chunks = {'latitude': 32, 'longitude': 32}
 
-    match (source_grid, target_grid):
-        case (
+    if (source_grid, target_grid) == (
             vertical_interpolation.HybridCoordinates(),
             sigma_coordinates.SigmaCoordinates(),
-        ):
-            if surface_pressure is None:
-                raise ValueError(
-                    'surface_pressure is required for hybrid to sigma regridding'
-                )
+    ):
+        if surface_pressure is None:
+            raise ValueError(
+                'surface_pressure is required for hybrid to sigma regridding')
 
-            def regrid_chunk_hybrid_to_sigma(field, surface_pressure):
-                chunks = list(field.chunks)
-                chunks[-3] = (target_grid.layers, )
-                return dask.array.map_blocks(
-                    regridder,
-                    field,
-                    surface_pressure,
-                    drop_axis=-3,
-                    new_axis=-3,
-                    chunks=chunks,
-                    meta=np.array((), dtype=np.float32),
-                )
-
-            data = xarray.apply_ufunc(
-                regrid_chunk_hybrid_to_sigma,
-                data.chunk(compute_chunks),
-                surface_pressure.chunk(compute_chunks),
-                input_core_dims=[
-                    (in_dim, 'longitude', 'latitude'),
-                    ('longitude', 'latitude'),
-                ],
-                output_core_dims=[(out_dim, 'longitude', 'latitude')],
-                exclude_dims={in_dim},
-                dask='allowed',
+        def regrid_chunk_hybrid_to_sigma(field, surface_pressure):
+            chunks = list(field.chunks)
+            chunks[-3] = (target_grid.layers, )
+            return dask.array.map_blocks(
+                regridder,
+                field,
+                surface_pressure,
+                drop_axis=-3,
+                new_axis=-3,
+                chunks=chunks,
+                meta=np.array((), dtype=np.float32),
             )
 
-        case (
+        data = xarray.apply_ufunc(
+            regrid_chunk_hybrid_to_sigma,
+            data.chunk(compute_chunks),
+            surface_pressure.chunk(compute_chunks),
+            input_core_dims=[
+                (in_dim, 'longitude', 'latitude'),
+                ('longitude', 'latitude'),
+            ],
+            output_core_dims=[(out_dim, 'longitude', 'latitude')],
+            exclude_dims={in_dim},
+            dask='allowed',
+        )
+    elif (source_grid, target_grid) == (
             vertical_interpolation.PressureCoordinates(),
             vertical_interpolation.PressureCoordinates(),
-        ):
+    ):
+        assert isinstance(source_grid,
+                          vertical_interpolation.PressureCoordinates)
+        if not np.allclose(data.coords[in_dim], source_grid.centers,
+                           rtol=1e-5):
+            raise ValueError(
+                'inconsistent vertical dimension between data and source grid:'
+                f' {data.coords[in_dim]} vs {source_grid.centers}')
 
-            assert isinstance(source_grid,
-                              vertical_interpolation.PressureCoordinates)
-            if not np.allclose(
-                    data.coords[in_dim], source_grid.centers, rtol=1e-5):
-                raise ValueError(
-                    'inconsistent vertical dimension between data and source grid:'
-                    f' {data.coords[in_dim]} vs {source_grid.centers}')
-
-            def regrid_chunk_pressure_to_pressure(field):
-                chunks = list(field.chunks)
-                chunks[-3] = (target_grid.layers, )
-                return dask.array.map_blocks(
-                    lambda x: regridder(x, surface_pressure=None),
-                    field,
-                    drop_axis=-3,
-                    new_axis=-3,
-                    chunks=chunks,
-                    meta=np.array((), dtype=np.float32),
-                )
-
-            data = xarray.apply_ufunc(
-                regrid_chunk_pressure_to_pressure,
-                data.chunk(compute_chunks),
-                input_core_dims=[
-                    (in_dim, 'longitude', 'latitude'),
-                ],
-                output_core_dims=[(out_dim, 'longitude', 'latitude')],
-                exclude_dims={in_dim},
-                dask='allowed',
+        def regrid_chunk_pressure_to_pressure(field):
+            chunks = list(field.chunks)
+            chunks[-3] = (target_grid.layers, )
+            return dask.array.map_blocks(
+                lambda x: regridder(x, surface_pressure=None),
+                field,
+                drop_axis=-3,
+                new_axis=-3,
+                chunks=chunks,
+                meta=np.array((), dtype=np.float32),
             )
+
+        data = xarray.apply_ufunc(
+            regrid_chunk_pressure_to_pressure,
+            data.chunk(compute_chunks),
+            input_core_dims=[
+                (in_dim, 'longitude', 'latitude'),
+            ],
+            output_core_dims=[(out_dim, 'longitude', 'latitude')],
+            exclude_dims={in_dim},
+            dask='allowed',
+        )
 
     data.coords[out_dim] = regridder.target_grid.centers
 

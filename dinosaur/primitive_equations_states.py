@@ -287,26 +287,3 @@ def baroclinic_perturbation_jw(
     return state
 
 
-def gaussian_scalar(coords: coordinate_systems.CoordinateSystem,
-                    physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-                    lon_location: float = np.pi / 9,
-                    lat_location: float = 2 * np.pi / 9,
-                    perturbation_radius: float = 0.2,
-                    amplitude: float = 1.) -> Array:
-    a = physics_specs.radius
-
-    def _get_field_values(lat, lon, sigma):
-        del sigma  # unused.
-        x = (np.sin(lat_location) * np.sin(lat) +
-             np.cos(lat_location) * np.cos(lat) * np.cos(lon - lon_location))
-        r = a * np.arccos(x)
-        R = a * perturbation_radius  # pylint: disable=invalid-name
-        return amplitude * np.exp(-(r / R)**2)
-
-    lon, sin_lat = coords.horizontal.nodal_mesh
-    lat = np.arcsin(sin_lat)
-    return coords.horizontal.to_modal(
-        np.stack([
-            _get_field_values(lat, lon, sigma)
-            for sigma in coords.vertical.centers
-        ]))

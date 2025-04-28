@@ -31,11 +31,7 @@ def isothermal_rest_atmosphere(
     if surface_height is None:
         orography = np.zeros_like(lat)  # flat planet
     else:
-        orography = np.asarray(physics_specs.nondimensionalize(surface_height))
-        if orography.shape != lat.shape:
-            raise ValueError(
-                f'Expected surface_height to have shape {lat.shape}, '
-                f'got {surface_height.shape}')
+        assert False
 
     def _get_vorticity(sigma, lon, lat):
         del sigma, lon  # unused.

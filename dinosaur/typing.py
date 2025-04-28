@@ -131,18 +131,18 @@ ForcingModule = Callable[..., ForcingFn]
 PostProcessFn = Callable[..., Any]
 Params = Union[Mapping[str, Mapping[str, Array]], None]
 
-StepFn = Callable[[PyTreeState, Forcing | None], PyTreeState]
+StepFn = Callable[[PyTreeState, Union[Forcing, None]], PyTreeState]
 StepModule = Callable[..., StepFn]
-CorrectorFn = Callable[[PyTreeState, PyTreeState | None, Forcing | None],
+CorrectorFn = Callable[[PyTreeState, Union[PyTreeState, None], Union[Forcing, None]],
                        PyTreeState]
 CorrectorModule = Callable[..., CorrectorFn]
 ParameterizationFn = Callable[
     [
         PyTreeState,
-        PyTreeMemory | None,
-        PyTreeDiagnostics | None,
-        RandomnessState | None,
-        Forcing | None,
+        Union[PyTreeMemory, None],
+        Union[PyTreeDiagnostics, None],
+        Union[RandomnessState, None],
+        Union[Forcing, None],
     ],
     PyTreeState,
 ]

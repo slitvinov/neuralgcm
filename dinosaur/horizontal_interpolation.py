@@ -115,23 +115,3 @@ class Regridder:
         raise NotImplementedError
 
 
-@dataclasses.dataclass(frozen=True)
-class BilinearRegridder(Regridder):
-
-    @functools.partial(jax.jit, static_argnums=0)
-    def __call__(self, field: typing.Array) -> jnp.ndarray:
-        batch_interp = jax.vmap(jnp.interp, in_axes=(0, None, None))
-        lat_source = self.source_grid.latitudes
-        lat_target = self.target_grid.latitudes
-        lat_interp = jnp.vectorize(batch_interp, signature='(a),(b),(b)->(a)')
-        field = lat_interp(lat_target, lat_source, field)
-        lon_source = self.source_grid.longitudes
-        lon_target = self.target_grid.longitudes
-        lon_interp = jnp.vectorize(
-            jax.vmap(batch_interp, in_axes=(None, None, -1), out_axes=-1),
-            signature='(a),(b),(b,y)->(a,y)',
-        )
-        field = lon_interp(lon_target, lon_source, field)
-        return field
-
-

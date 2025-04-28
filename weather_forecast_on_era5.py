@@ -1,5 +1,3 @@
-! pip install -U -q dinosaur gcsfs
-
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
@@ -191,7 +189,7 @@ dfi = jax.jit(time_integration.digital_filter_initialization(
     cutoff_period=cutoff_period,
     dt=dt,
 ))
-%time dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
+dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
 
 # time integration & post-processing
 
@@ -293,10 +291,10 @@ integrate_fn = jax.jit(time_integration.trajectory_from_step(
     post_process_fn=nodal_prognostics_and_diagnostics,
 ))
 
-%time out_state, trajectory = jax.block_until_ready(integrate_fn(dfi_init_state))
+out_state, trajectory = jax.block_until_ready(integrate_fn(dfi_init_state))
 ds_out = trajectory_to_xarray(trajectory)
 
-%time out_state, trajectory = jax.block_until_ready(integrate_fn(raw_init_state))
+out_state, trajectory = jax.block_until_ready(integrate_fn(raw_init_state))
 ds_out_unfiltered = trajectory_to_xarray(trajectory)
 
 ds_out

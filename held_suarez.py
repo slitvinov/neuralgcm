@@ -1,5 +1,3 @@
-! pip install -q -U dinosaur
-
 import functools
 import jax
 import dinosaur
@@ -95,7 +93,7 @@ integrate_fn = jax.jit(dinosaur.time_integration.trajectory_from_step(
 times = save_every * np.arange(0, outer_steps)
 
 # Unrolling trajectory
-%time final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
+final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 
 # Formatting trajectory to xarray.Dataset
 def trajectory_to_xarray(coords, trajectory, times):
@@ -253,7 +251,7 @@ integrate_fn = jax.jit(dinosaur.time_integration.trajectory_from_step(
 # Define trajectory times, expects start_with_input=False
 times = save_every * np.arange(1, outer_steps+1)
 
-%time final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
+final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 
 ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
 
@@ -371,7 +369,7 @@ integrate_fn = jax.jit(dinosaur.time_integration.trajectory_from_step(
 
 times = save_every * np.arange(1, outer_steps+1)
 
-%time final_2, trajectory_2 = jax.block_until_ready(integrate_fn(final))
+final_2, trajectory_2 = jax.block_until_ready(integrate_fn(final))
 
 ds = trajectory_to_xarray(coords, trajectory_2, times)
 

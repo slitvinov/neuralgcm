@@ -63,9 +63,7 @@ class HeldSuarezForcing:
             self.dThz * jnp.log(p_over_p0) * np.cos(self.lat)**2)
         return jnp.maximum(self.minT, temperature)
 
-    def explicit_terms(
-            self,
-            state: primitive_equations.State) -> primitive_equations.State:
+    def explicit_terms(self, state: primitive_equations.State):
         aux_state = primitive_equations.compute_diagnostic_state(
             state=state, coords=self.coords)
         nodal_velocity_tendency = jax.tree.map(

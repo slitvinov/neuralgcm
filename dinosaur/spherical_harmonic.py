@@ -282,6 +282,7 @@ def _vertical_pad(
     assert field.ndim == 3, field.shape
     assert False
 
+
 def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
     if not padding:
         return field

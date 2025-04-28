@@ -14,6 +14,7 @@ import numpy as np
 Array = typing.Array
 InterpolateFn = Callable[[Array, Array, Array], Array]
 
+
 @dataclasses.dataclass(frozen=True)
 class PressureCoordinates:
     centers: np.ndarray
@@ -88,11 +89,13 @@ class HybridCoordinates:
                              surface_pressure: typing.Numeric) -> typing.Array:
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
+
 SigmaOrPressure = TypeVar(
     'SigmaOrPressure',
     sigma_coordinates.SigmaCoordinates,
     PressureCoordinates,
 )
+
 
 def _interval_overlap(source_bounds: typing.Array,
                       target_bounds: typing.Array) -> jnp.ndarray:

@@ -10,9 +10,7 @@ import numpy as np
 
 
 @jax.named_call
-def _single_device_dot_cumsum(x: jax.Array,
-                              axis: int,
-                              reverse: bool = False):
+def _single_device_dot_cumsum(x: jax.Array, axis: int, reverse: bool = False):
     if axis < 0:
         axis = axis + x.ndim
     size = x.shape[axis]

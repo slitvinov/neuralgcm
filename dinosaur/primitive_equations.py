@@ -34,7 +34,7 @@ class State:
     sim_time: Union[float, None] = None
 
 
-def _asdict(state: State) -> dict[str, Any]:
+def _asdict(state: State):
     return {
         field.name: getattr(state, field.name)
         for field in state.fields
@@ -62,7 +62,7 @@ class DiagnosticState:
 def compute_diagnostic_state(
     state: State,
     coords: coordinate_systems.CoordinateSystem,
-) -> DiagnosticState:
+):
 
     def to_nodal_fn(x):
         return coords.horizontal.to_nodal(x)
@@ -110,9 +110,8 @@ def compute_diagnostic_state(
     )
 
 
-def compute_vertical_velocity(
-        state: State,
-        coords: coordinate_systems.CoordinateSystem) -> jax.Array:
+def compute_vertical_velocity(state: State,
+                              coords: coordinate_systems.CoordinateSystem):
     sigma_dot_boundaries = compute_diagnostic_state(state,
                                                     coords).sigma_dot_full
     assert sigma_dot_boundaries.ndim == 3
@@ -132,17 +131,17 @@ class PrimitiveEquationsSpecs:
     scale: scales.ScaleProtocol
 
     @property
-    def R(self) -> float:
+    def R(self):
         return self.ideal_gas_constant
 
     @property
-    def g(self) -> float:
+    def g(self):
         return self.gravity_acceleration
 
-    def nondimensionalize(self, quantity: Quantity) -> Numeric:
+    def nondimensionalize(self, quantity: Quantity):
         return self.scale.nondimensionalize(quantity)
 
-    def dimensionalize(self, value: Numeric, unit: units.Unit) -> Quantity:
+    def dimensionalize(self, value: Numeric, unit: units.Unit):
         return self.scale.dimensionalize(value, unit)
 
     @classmethod
@@ -157,7 +156,7 @@ class PrimitiveEquationsSpecs:
         WATER_VAPOR_CP,
         kappa_si: Quantity = scales.KAPPA,
         scale: scales.ScaleProtocol = scales.DEFAULT_SCALE,
-    ) -> PrimitiveEquationsSpecs:
+    ):
         return cls(
             scale.nondimensionalize(radius_si),
             scale.nondimensionalize(angular_velocity_si),
@@ -170,8 +169,7 @@ class PrimitiveEquationsSpecs:
         )
 
 
-def get_sigma_ratios(
-    coordinates: sigma_coordinates.SigmaCoordinates, ) -> np.ndarray:
+def get_sigma_ratios(coordinates: sigma_coordinates.SigmaCoordinates, ):
     alpha = np.diff(np.log(coordinates.centers), append=0) / 2
     alpha[-1] = -np.log(coordinates.centers[-1])
     return alpha
@@ -180,7 +178,7 @@ def get_sigma_ratios(
 def get_geopotential_weights(
     coordinates: sigma_coordinates.SigmaCoordinates,
     ideal_gas_constant: float,
-) -> np.ndarray:
+):
     alpha = get_sigma_ratios(coordinates)
     weights = np.zeros([coordinates.layers, coordinates.layers])
     for j in range(coordinates.layers):
@@ -196,7 +194,7 @@ def get_geopotential_diff(
     ideal_gas_constant: float,
     method: str = 'dense',
     sharding: Union[jax.sharding.NamedSharding, None] = None,
-) -> jax.Array:
+):
     if method == 'dense':
         weights = get_geopotential_weights(coordinates, ideal_gas_constant)
         return _vertical_matvec(weights, temperature)
@@ -212,7 +210,7 @@ def get_geopotential(
     gravity_acceleration: float,
     ideal_gas_constant: float,
     sharding: Union[jax.sharding.NamedSharding, None] = None,
-) -> jnp.ndarray:
+):
     surface_geopotential = orography * gravity_acceleration
     temperature = spherical_harmonic.add_constant(temperature_variation,
                                                   reference_temperature)
@@ -227,7 +225,7 @@ def get_temperature_implicit_weights(
     coordinates: sigma_coordinates.SigmaCoordinates,
     reference_temperature: np.ndarray,
     kappa: float,
-) -> np.ndarray:
+):
     if (reference_temperature.ndim != 1
             or reference_temperature.shape[-1] != coordinates.layers):
         raise ValueError(
@@ -263,7 +261,7 @@ def get_temperature_implicit(
     kappa: float,
     method: str = 'dense',
     sharding: Union[jax.sharding.NamedSharding, None] = None,
-) -> jax.Array:
+):
     weights = -get_temperature_implicit_weights(coordinates,
                                                 reference_temperature, kappa)
     if method == 'dense':
@@ -275,17 +273,17 @@ def get_temperature_implicit(
 
 
 @jax.named_call
-def _vertical_matvec(a: Array, x: Array) -> jax.Array:
+def _vertical_matvec(a: Array, x: Array):
     return einsum('gh,...hml->...gml', a, x)
 
 
 @jax.named_call
-def _vertical_matvec_per_wavenumber(a: Array, x: Array) -> jax.Array:
+def _vertical_matvec_per_wavenumber(a: Array, x: Array):
     return einsum('lgh,...hml->...gml', a, x)
 
 
 def _get_implicit_term_matrix(eta, coords, reference_temperature, kappa,
-                              ideal_gas_constant) -> np.ndarray:
+                              ideal_gas_constant):
     eye = np.eye(coords.vertical.layers)[np.newaxis]
     lam = coords.horizontal.laplacian_eigenvalues
     g = get_geopotential_weights(coords.vertical, ideal_gas_constant)
@@ -324,7 +322,7 @@ def _get_implicit_term_matrix(eta, coords, reference_temperature, kappa,
 
 
 def div_sec_lat(m_component: Array, n_component: Array,
-                grid: spherical_harmonic.Grid) -> Array:
+                grid: spherical_harmonic.Grid):
     m_component = grid.to_modal(m_component * grid.sec2_lat)
     n_component = grid.to_modal(n_component * grid.sec2_lat)
     return grid.div_cos_lat((m_component, n_component), clip=False)
@@ -334,7 +332,7 @@ def truncated_modal_orography(
     orography: Array,
     coords: coordinate_systems.CoordinateSystem,
     wavenumbers_to_clip: int = 1,
-) -> Array:
+):
     grid = coords.horizontal
     expected_shape = grid.nodal_shape
     if orography.shape != expected_shape:
@@ -366,21 +364,21 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             )
 
     @property
-    def coriolis_parameter(self) -> Array:
+    def coriolis_parameter(self):
         _, sin_lat = self.coords.horizontal.nodal_mesh
         return 2 * self.physics_specs.angular_velocity * sin_lat
 
     @property
-    def T_ref(self) -> Array:
+    def T_ref(self):
         return self.reference_temperature[..., np.newaxis, np.newaxis]
 
     @jax.named_call
-    def _vertical_tendency(self, w: Array, x: Array) -> Array:
+    def _vertical_tendency(self, w: Array, x: Array):
         return self.vertical_advection(w, x, self.coords.vertical)
 
     @jax.named_call
     def _t_omega_over_sigma_sp(self, temperature_field: Array, g_term: Array,
-                               v_dot_grad_log_sp: Array) -> Array:
+                               v_dot_grad_log_sp: Array):
         f = sigma_coordinates.cumulative_sigma_integral(
             g_term, self.coords.vertical, sharding=self.coords.dycore_sharding)
         alpha = get_sigma_ratios(self.coords.vertical)
@@ -392,14 +390,14 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         return temperature_field * (v_dot_grad_log_sp - g_part)
 
     @jax.named_call
-    def kinetic_energy_tendency(self, aux_state: DiagnosticState) -> Array:
+    def kinetic_energy_tendency(self, aux_state: DiagnosticState):
         nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
         kinetic = nodal_cos_lat_u2.sum(0) * self.coords.horizontal.sec2_lat / 2
         return -self.coords.horizontal.laplacian(
             self.coords.horizontal.to_modal(kinetic))
 
     @jax.named_call
-    def orography_tendency(self) -> Array:
+    def orography_tendency(self):
         return -self.physics_specs.g * self.coords.horizontal.laplacian(
             self.orography)
 
@@ -407,7 +405,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     def curl_and_div_tendencies(
         self,
         aux_state: DiagnosticState,
-    ) -> tuple[Array, Array]:
+    ):
         sec2_lat = self.coords.horizontal.sec2_lat
         u, v = aux_state.cos_lat_u
         total_vorticity = aux_state.vorticity + self.coriolis_parameter
@@ -438,7 +436,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     def nodal_temperature_vertical_tendency(
         self,
         aux_state: DiagnosticState,
-    ) -> Union[Array, float]:
+    ):
         sigma_dot_explicit = aux_state.sigma_dot_explicit
         sigma_dot_full = aux_state.sigma_dot_full
         temperature_variation = aux_state.temperature_variation
@@ -456,7 +454,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         self,
         scalar: Array,
         aux_state: DiagnosticState,
-    ) -> tuple[Array, Array]:
+    ):
         u, v = aux_state.cos_lat_u
         nodal_terms = scalar * aux_state.divergence
         modal_terms = -div_sec_lat(u * scalar, v * scalar,
@@ -464,8 +462,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         return nodal_terms, modal_terms
 
     @jax.named_call
-    def nodal_temperature_adiabatic_tendency(
-            self, aux_state: DiagnosticState) -> Array:
+    def nodal_temperature_adiabatic_tendency(self, aux_state: DiagnosticState):
         g_explicit = aux_state.u_dot_grad_log_sp
         g_full = g_explicit + aux_state.divergence
         mean_t_part = self._t_omega_over_sigma_sp(self.T_ref, g_explicit,
@@ -476,12 +473,12 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         return self.physics_specs.kappa * (mean_t_part + variation_t_part)
 
     @jax.named_call
-    def nodal_log_pressure_tendency(self, aux_state: DiagnosticState) -> Array:
+    def nodal_log_pressure_tendency(self, aux_state: DiagnosticState):
         g = aux_state.u_dot_grad_log_sp
         return -sigma_coordinates.sigma_integral(g, self.coords.vertical)
 
     @jax.named_call
-    def explicit_terms(self, state: State) -> State:
+    def explicit_terms(self, state: State):
         aux_state = compute_diagnostic_state(state, self.coords)
         vorticity_tendency, divergence_dot = self.curl_and_div_tendencies(
             aux_state)
@@ -527,7 +524,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         return self.coords.horizontal.clip_wavenumbers(tendency)
 
     @jax.named_call
-    def implicit_terms(self, state: State) -> State:
+    def implicit_terms(self, state: State):
         method = self.vertical_matmul_method
         if method is None:
             mesh = self.coords.spmd_mesh
@@ -567,7 +564,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         )
 
     @jax.named_call
-    def implicit_inverse(self, state: State, step_size: float) -> State:
+    def implicit_inverse(self, state: State, step_size: float):
         if isinstance(step_size, jax.core.Tracer):
             raise TypeError(
                 f'`step_size` must be concrete but a Tracer was passed: {step_size}. '

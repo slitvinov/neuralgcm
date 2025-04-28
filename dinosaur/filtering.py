@@ -37,7 +37,7 @@ def horizontal_diffusion_filter(
     grid: spherical_harmonic.Grid,
     scale: Union[float, typing.Array],
     order: int = 1,
-) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
+):
     eigenvalues = grid.laplacian_eigenvalues
     scaling = jnp.exp(-scale * (-eigenvalues)**order)
     return _make_filter_fn(scaling, "horizontal_diffusion_filter")

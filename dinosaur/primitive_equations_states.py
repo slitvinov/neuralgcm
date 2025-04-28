@@ -22,7 +22,7 @@ def isothermal_rest_atmosphere(
     p0: QuantityOrStr = 1e5 * units.pascal,
     p1: QuantityOrStr = 0. * units.pascal,
     surface_height: Union[Quantity, None] = None,
-) -> tuple[Callable[..., primitive_equations.State], typing.AuxFeatures]:
+):
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
     tref = physics_specs.nondimensionalize(units.Quantity(tref))

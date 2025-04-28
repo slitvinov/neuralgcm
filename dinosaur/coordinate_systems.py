@@ -11,6 +11,7 @@ import numpy as np
 
 P = jax.sharding.PartitionSpec
 
+
 def _with_sharding_constraint(
     x: typing.Pytree,
     sharding: Union[jax.sharding.NamedSharding, None],
@@ -39,9 +40,7 @@ class CoordinateSystem:
                                          spmd_mesh=self.spmd_mesh)
         object.__setattr__(self, 'horizontal', horizontal)
 
-    def _get_sharding(
-        self, partition_spec: jax.sharding.PartitionSpec
-    ):
+    def _get_sharding(self, partition_spec: jax.sharding.PartitionSpec):
         if self.spmd_mesh is None:
             return None
         return jax.sharding.NamedSharding(self.spmd_mesh, partition_spec)
@@ -50,24 +49,20 @@ class CoordinateSystem:
     def physics_sharding(self):
         return self._get_sharding(self.physics_partition_spec)
 
-    def with_physics_sharding(self,
-                              x: typing.PyTreeState):
+    def with_physics_sharding(self, x: typing.PyTreeState):
         return _with_sharding_constraint(x, self.physics_sharding)
 
     @property
     def dycore_sharding(self):
         return self._get_sharding(self.dycore_partition_spec)
 
-    def with_dycore_sharding(self,
-                             x: typing.PyTreeState):
+    def with_dycore_sharding(self, x: typing.PyTreeState):
         return _with_sharding_constraint(x, self.dycore_sharding)
 
-    def dycore_to_physics_sharding(
-            self, x: typing.PyTreeState):
+    def dycore_to_physics_sharding(self, x: typing.PyTreeState):
         return self.with_physics_sharding(self.with_dycore_sharding(x))
 
-    def physics_to_dycore_sharding(
-            self, x: typing.PyTreeState):
+    def physics_to_dycore_sharding(self, x: typing.PyTreeState):
         return self.with_dycore_sharding(self.with_physics_sharding(x))
 
     def asdict(self) ->...:

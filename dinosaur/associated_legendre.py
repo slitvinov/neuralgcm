@@ -3,10 +3,7 @@ import numpy as np
 import scipy.special as sps
 
 
-def _evaluate_rhombus(n_l: int,
-                      n_m: int,
-                      x: np.ndarray,
-                      truncation='rhombus'):
+def _evaluate_rhombus(n_l: int, n_m: int, x: np.ndarray, truncation='rhombus'):
     y = np.sqrt(1 - x * x)
     p = np.zeros((n_l, n_m, len(x)))
     p[0, 0] = p[0, 0] + 1 / np.sqrt(2)

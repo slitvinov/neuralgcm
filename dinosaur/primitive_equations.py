@@ -158,24 +158,6 @@ def compute_vertical_velocity(
     return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
 
 
-def semi_lagrangian_vertical_advection_step(
-        state: State, coords: coordinate_systems.CoordinateSystem,
-        dt: float) -> State:
-    velocity = compute_vertical_velocity(state, coords)
-    target = coords.vertical.centers
-    source = target[:, jnp.newaxis, jnp.newaxis] - dt * velocity
-
-    def interpolate(x):
-        if x.ndim < 3 or x.shape[0] == 1:
-            return x  # not a 3D variable
-        x = coords.horizontal.to_nodal(x)
-        x = _vertical_interp(target, source, x)
-        x = coords.horizontal.to_modal(x)
-        return x
-
-    return jax.tree_util.tree_map(interpolate, state)
-
-
 @dataclasses.dataclass(frozen=True)
 class PrimitiveEquationsSpecs:
     radius: float

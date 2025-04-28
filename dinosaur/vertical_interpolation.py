@@ -14,15 +14,6 @@ import numpy as np
 Array = typing.Array
 InterpolateFn = Callable[[Array, Array, Array], Array]
 
-
-def vectorize_vertical_interpolation(
-    interpolate_fn: InterpolateFn, ) -> InterpolateFn:
-    interpolate_fn = jax.vmap(interpolate_fn, (-1, None, -1), out_axes=-1)
-    interpolate_fn = jax.vmap(interpolate_fn, (-1, None, -1), out_axes=-1)
-    interpolate_fn = jax.vmap(interpolate_fn, (0, None, None), out_axes=0)
-    return jnp.vectorize(interpolate_fn,
-                         signature='(a,x,y),(b),(b,x,y)->(a,x,y)')
-
 @dataclasses.dataclass(frozen=True)
 class PressureCoordinates:
     centers: np.ndarray

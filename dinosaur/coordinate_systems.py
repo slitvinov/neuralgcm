@@ -174,29 +174,6 @@ def get_spectral_upsample_fn(
     return upsample_fn
 
 
-def get_spectral_interpolate_fn(
-    source_coords: CoordinateSystem,
-    target_coords: CoordinateSystem,
-    expect_same_vertical: bool = True,
-) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
-    if (source_coords.horizontal.total_wavenumbers
-            < target_coords.horizontal.total_wavenumbers) and (
-                source_coords.horizontal.longitude_wavenumbers
-                < target_coords.horizontal.longitude_wavenumbers):
-        return get_spectral_upsample_fn(source_coords, target_coords,
-                                        expect_same_vertical)
-    elif (source_coords.horizontal.total_wavenumbers
-          >= target_coords.horizontal.total_wavenumbers) and (
-              source_coords.horizontal.longitude_wavenumbers
-              >= target_coords.horizontal.longitude_wavenumbers):
-        return get_spectral_downsample_fn(source_coords, target_coords,
-                                          expect_same_vertical)
-    else:
-        raise ValueError('Incompatible horizontal coordinates with shapes '
-                         f'{source_coords.horizontal.modal_shape}, '
-                         f'{target_coords.horizontal.modal_shape}')
-
-
 def get_nodal_shapes(
     inputs: typing.Pytree,
     coords: CoordinateSystem,

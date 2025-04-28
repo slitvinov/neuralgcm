@@ -23,44 +23,6 @@ def vectorize_vertical_interpolation(
     return jnp.vectorize(interpolate_fn,
                          signature='(a,x,y),(b),(b,x,y)->(a,x,y)')
 
-
-def _extrapolate_left(y):
-    delta = y[1] - y[0]
-    return jnp.concatenate([jnp.array([y[0] - delta]), y])
-
-
-def _extrapolate_right(y):
-    delta = y[-1] - y[-2]
-    return jnp.concatenate([y, jnp.array([y[-1] + delta])])
-
-
-def _extrapolate_both(y):
-    return _extrapolate_left(_extrapolate_right(y))
-
-
-def _linear_interp_with_safe_extrap(x, xp, fp, n=1):
-    for _ in range(n):
-        xp = _extrapolate_both(xp)
-        fp = _extrapolate_both(fp)
-    return jnp.interp(x, xp, fp, left=np.nan, right=np.nan)
-
-
-@jax.jit
-def linear_interp_with_linear_extrap(x: typing.Numeric, xp: typing.Array,
-                                     fp: typing.Array) -> jnp.ndarray:
-    n = len(xp)
-    i = jnp.arange(n)
-    dx = xp[1:] - xp[:-1]
-    delta = x - xp[:-1]
-    w = delta / dx
-    w_left = jnp.pad(1 - w, [(0, 1)])
-    w_right = jnp.pad(w, [(1, 0)])
-    u = jnp.searchsorted(xp, x, side='right', method='compare_all')
-    u = jnp.clip(u, 1, n - 1)
-    weights = w_left * (i == (u - 1)) + w_right * (i == u)
-    return jnp.dot(weights, fp, precision='highest')
-
-
 @dataclasses.dataclass(frozen=True)
 class PressureCoordinates:
     centers: np.ndarray
@@ -135,10 +97,6 @@ class HybridCoordinates:
                              surface_pressure: typing.Numeric) -> typing.Array:
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
-    def get_sigma_centers(self,
-                          surface_pressure: typing.Numeric) -> typing.Array:
-        boundaries = self.get_sigma_boundaries(surface_pressure)
-        return (boundaries[1:] + boundaries[:-1]) / 2
 
     def to_approx_sigma_coords(self,
                                layers: int,
@@ -261,29 +219,6 @@ def _interp_centers_to_centers(
 
 interp_sigma_to_sigma = _interp_centers_to_centers
 interp_pressure_to_pressure = _interp_centers_to_centers
-
-
-@functools.partial(jax.jit, static_argnums=(1, 2))
-def interp_hybrid_to_sigma(
-    fields: typing.Pytree,
-    hybrid_coords: HybridCoordinates,
-    sigma_coords: sigma_coordinates.SigmaCoordinates,
-    surface_pressure: typing.Array,
-) -> typing.Pytree:
-
-    @jax.jit
-    @functools.partial(jnp.vectorize, signature='(x,y),(a),(b,x,y)->(a,x,y)')
-    @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
-    @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
-    def regrid(surface_pressure, target_sigmas, field):
-        source_sigmas = hybrid_coords.get_sigma_centers(surface_pressure)
-        return jax.vmap(_linear_interp_with_safe_extrap,
-                        in_axes=(0, None, None))(target_sigmas, source_sigmas,
-                                                 field)
-
-    return pytree_utils.tree_map_over_nonscalars(
-        lambda x: regrid(surface_pressure, sigma_coords.centers, x), fields)
-
 
 def _interval_overlap(source_bounds: typing.Array,
                       target_bounds: typing.Array) -> jnp.ndarray:

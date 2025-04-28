@@ -59,16 +59,6 @@ SOIL_TEMPERATURE_LEVEL_4 = (  # Soil temperature level 4, stl4, K
     'soil_temperature_level_4')
 VOLUMETRIC_SOIL_WATER_LAYER_4 = (  # Volumetric soil water layer 4, swvl4, m**3 m**-3
     'volumetric_soil_water_layer_4')
-single_level_dynamic_vars = [
-    ICE_TEMPERATURE_LAYER_4,
-    LAKE_ICE_DEPTH,
-    LAKE_ICE_TEMPERATURE,
-    SEA_ICE_COVER,
-    SEA_SURFACE_TEMPERATURE,
-    SNOW_DEPTH,
-    SOIL_TEMPERATURE_LEVEL_4,
-    VOLUMETRIC_SOIL_WATER_LAYER_4,
-]
 NODAL_AXES_NAMES = (
     XR_LON_NAME,
     XR_LAT_NAME,

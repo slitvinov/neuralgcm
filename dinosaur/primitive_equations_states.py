@@ -89,33 +89,6 @@ def isothermal_rest_atmosphere(
     return random_state_fn, aux_features
 
 
-def isothermal_rest_atmosphere_with_orography_path(
-    coords: coordinate_systems.CoordinateSystem,
-    physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-    path_to_orography_data: str,
-    tref: QuantityOrStr = 288. * units.degK,
-    p0: QuantityOrStr = 1e5 * units.pascal,
-    p1: QuantityOrStr = 0. * units.pascal,
-) -> tuple[Callable[..., primitive_equations.State], typing.AuxFeatures]:
-    ds = xarray_utils.open_dataset(path_to_orography_data)
-    input_coords = xarray_utils.coordinate_system_from_dataset(
-        ds, spmd_mesh=coords.spmd_mesh)
-    filter_fns = [filtering.exponential_filter(coords.horizontal)]
-    orography_key = xarray_utils.OROGRAPHY
-    nodal_orography = ds[orography_key].transpose('lon', 'lat').values
-    orography = primitive_equations.filtered_modal_orography(
-        nodal_orography, coords, input_coords, filter_fns)
-    nodal_orography_filtered = coords.horizontal.to_nodal(orography)
-    nodal_orography_filtered = np.asarray(nodal_orography_filtered)
-    return isothermal_rest_atmosphere(
-        coords=coords,
-        physics_specs=physics_specs,
-        tref=tref,
-        p0=p0,
-        p1=p1,
-        surface_height=(nodal_orography_filtered * units.meters))
-
-
 def steady_state_jw(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,

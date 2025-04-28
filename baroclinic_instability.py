@@ -46,6 +46,8 @@ initial_state_ds = initial_state_ds.assign(
 phi = initial_state_ds['z_surf'] * physics_specs.g
 phi_si = dimensionalize(phi, units.m**2 / units.s**2)
 phi_si.isel(lon=0).plot(x='lat')
+plt.savefig("0.png")
+plt.close()
 
 # Zonal wind vizualization
 u_array = initial_state_ds['u']
@@ -54,6 +56,8 @@ levels = [3 * i for i in range(1, 12)]
 u_array_si.isel(lon=0).plot.contour(x='lat', y='level', levels=levels)
 ax = plt.gca()
 ax.set_ylim((1, 0))
+plt.savefig("1.png")
+plt.close()
 
 # Temperature vizualization
 t_array = initial_state_ds['temperature']
@@ -62,6 +66,8 @@ levels = np.linspace(210, 305, 1 + (305 - 210) // 5)
 t_array_si.isel(lon=0).plot.contour(x='lat', y='level', levels=levels)
 ax = plt.gca()
 ax.set_ylim((1, 0))
+plt.savefig("2.png")
+plt.close()
 
 # Relative vorticity vizualization
 voriticty_array = initial_state_ds['vorticity']
@@ -70,6 +76,8 @@ levels = np.linspace(-1.75e-5, 1.75e-5, 15)
 voriticty_array_si.isel(lon=0).plot.contour(x='lat', y='level', levels=levels)
 ax = plt.gca()
 ax.set_ylim((1, 0))
+plt.savefig("3.png")
+plt.close()
 
 # Setting up primitivie equations solver
 primitive = dinosaur.primitive_equations.PrimitiveEquations(
@@ -114,6 +122,8 @@ temperature = dinosaur.xarray_utils.temperature_variation_to_absolute(
     trajectory_ds.temperature_variation.data, ref_temps)
 trajectory_ds = trajectory_ds.assign(
     temperature=(trajectory_ds.temperature_variation.dims, temperature))
+plt.savefig("4.png")
+plt.close()
 
 data_array = trajectory_ds['vorticity']
 
@@ -129,6 +139,9 @@ data_array = (trajectory_ds['surface_pressure'] /
 data_array.max(['lon']).plot(x='time', hue='lat')
 ax = plt.gca()
 ax.legend().remove()
+plt.savefig("5.png")
+plt.close()
+
 
 t_array = trajectory_ds['temperature']
 t_array_si = dimensionalize(t_array, units.degK)
@@ -139,12 +152,16 @@ t_array_si.isel(lon=0).thin(time=12).plot.contour(x='lat',
                                                   col='time')
 ax = plt.gca()
 ax.set_ylim((1, 0))
+plt.savefig("6.png")
+plt.close()
 
 # Divergence is expected to be very close to 0 throughout
 data_array = trajectory_ds['divergence']
 data_array.mean(['lat', 'lon']).plot(x='time', hue='level')
 ax = plt.gca()
 ax.legend().remove()
+plt.savefig("7.png")
+plt.close()
 
 perturbation = dinosaur.primitive_equations_states.baroclinic_perturbation_jw(
     coords, physics_specs)
@@ -201,6 +218,9 @@ data_array.sel({
 
 fig = plt.gcf()
 fig.set_figwidth(10)
+plt.savefig("8.png")
+plt.close()
+
 
 # Contour plots of log-surface pressure at 8 and 10 days
 data_array = (trajectory_ds['surface_pressure'] /
@@ -221,6 +241,8 @@ levels = [(930 + 10 * i) / 1000 for i in range(10)]
 
 fig = plt.gcf()
 fig.set_figwidth(10)
+plt.savefig("9.png")
+plt.close()
 
 # Temperature at days 4, 6, 8, 10 (note we do not interpolate to exactly 850hPa)
 temp_array = trajectory_ds['temperature']
@@ -242,6 +264,8 @@ target_pressure = 0.85 * physics_specs.nondimensionalize(
                                 cmap=plt.cm.Spectral_r))
 fig = plt.gcf()
 fig.set_figwidth(12)
+plt.savefig("10.png")
+plt.close()
 
 # Vorticity features
 voriticty_array = trajectory_ds['vorticity']
@@ -265,6 +289,8 @@ levels = [-10e-5 + 5e-5 * i for i in range(11)]
     'time': (9 * units.day).to(units.s).m
 }).isel(level=22).plot.contourf(x='lon', y='lat', levels=levels, ax=ax2))
 fig.set_figwidth(25)
+plt.savefig("11.png")
+plt.close()
 
 # Daily vertical slices of temperature.
 times = np.cast[np.int32]((np.arange(12) * units.day).to(units.second))
@@ -272,3 +298,5 @@ data = (temp_array.sel(lat=slice(54, 56), lon=slice(120, 270),
                        time=times).isel(lat=0))
 data.attrs['units'] = 'seconds'
 data.plot.contourf(x='lon', y='level', row='time', aspect=2, col_wrap=3)
+plt.savefig("12.png")
+plt.close()

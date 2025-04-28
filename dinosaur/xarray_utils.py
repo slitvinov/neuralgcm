@@ -7,7 +7,6 @@ from dinosaur import horizontal_interpolation
 from dinosaur import layer_coordinates
 from dinosaur import primitive_equations
 from dinosaur import scales
-from dinosaur import shallow_water
 from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
 from dinosaur import typing
@@ -416,18 +415,6 @@ def xarray_to_data_dict(
             v = np.expand_dims(v, axis=-3)  # singleton dim for level
         data[k] = v
     return data
-
-
-def xarray_to_shallow_water_eq_data(
-    dataset: xarray.Dataset,
-    *,
-    values: str = 'values',
-) -> dict[str, Any]:
-    return shallow_water.State(
-        vorticity=getattr(dataset['vorticity'], values),
-        divergence=getattr(dataset['divergence'], values),
-        potential=getattr(dataset['potential'], values),
-    ).asdict()
 
 
 def xarray_to_primitive_eq_data(

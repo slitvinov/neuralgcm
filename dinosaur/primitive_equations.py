@@ -138,16 +138,6 @@ def compute_diagnostic_state(
     )
 
 
-def _vertical_interp(x, xp, fp):
-    assert x.ndim in {1, 3} and xp.ndim in {1, 3}
-    interpolate_fn = vertical_interpolation.interp
-    in_axes = (-1 if x.ndim == 3 else None, -1 if xp.ndim == 3 else None, -1)
-    interpolate_fn = jax.vmap(interpolate_fn, in_axes, out_axes=-1)  # y
-    interpolate_fn = jax.vmap(interpolate_fn, in_axes, out_axes=-1)  # x
-    interpolate_fn = jax.vmap(interpolate_fn, (0, None, None), out_axes=0)
-    return interpolate_fn(x, xp, fp)
-
-
 def compute_vertical_velocity(
         state: State,
         coords: coordinate_systems.CoordinateSystem) -> jax.Array:

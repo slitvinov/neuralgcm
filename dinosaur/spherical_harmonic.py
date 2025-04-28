@@ -442,6 +442,7 @@ class FastSphericalHarmonics(SphericalHarmonics):
 
 @dataclasses.dataclass(frozen=True)
 class RealSphericalHarmonicsWithZeroImag(FastSphericalHarmonics):
+  """Deprecated alias for `FastSphericalHarmonics`."""
 
 def _vertical_pad(
         field: jax.Array,

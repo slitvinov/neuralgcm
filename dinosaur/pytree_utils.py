@@ -9,41 +9,6 @@ import numpy as np
 
 tree_map = jax.tree_util.tree_map
 
-
-def pack_pytree(pytree: typing.Pytree, axis: int = -3) -> typing.Array:
-    flat, _ = jax.tree_util.tree_flatten(pytree)
-    if not flat:
-        return None  # pytype: disable=bad-return-type  # jax-ndarray
-    packed = jnp.concatenate(flat, axis)
-    return packed
-
-
-def unpack_to_pytree(array: typing.Array,
-                     pytree_of_shapes: typing.Pytree,
-                     axis: int = -3) -> typing.Pytree:
-    shapes, tree_def = jax.tree_util.tree_flatten(pytree_of_shapes)
-    splits = np.cumsum(np.array([x[axis] for x in shapes]))[:-1]
-    split = jnp.split(array, splits, axis)
-    return jax.tree_util.tree_unflatten(tree_def, split)
-
-
-def stack_pytree(pytree: typing.Pytree, axis: int = 0) -> typing.Array:
-    flat, _ = jax.tree_util.tree_flatten(pytree)
-    if not flat:
-        return None  # pytype: disable=bad-return-type  # jax-ndarray
-    stacked = jnp.stack(flat, axis)
-    return stacked
-
-
-def unstack_to_pytree(array: typing.Array,
-                      pytree_of_shapes: typing.Pytree,
-                      axis: int = 0) -> typing.Pytree:
-    _, tree_def = jax.tree_util.tree_flatten(pytree_of_shapes)
-    split = jnp.split(array, array.shape[axis], axis)
-    split = tree_map(lambda x: jnp.squeeze(x, axis=axis), split)
-    return jax.tree_util.tree_unflatten(tree_def, split)
-
-
 def tree_map_where(
     condition_fn: Callable[[typing.Array], typing.Array],
     f: Callable[[typing.Array], typing.Array],
@@ -71,10 +36,6 @@ def tree_map_over_nonscalars(
         return f(x) if x.ndim else scalar_fn(x)
 
     return tree_map(g, x)
-
-
-def shape_structure(inputs):
-    return tree_map(lambda x: np.asarray(x.shape), inputs)
 
 
 def _normalize_axis(axis: int, ndim: int) -> int:

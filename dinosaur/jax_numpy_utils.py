@@ -12,7 +12,7 @@ import numpy as np
 @jax.named_call
 def _single_device_dot_cumsum(x: jax.Array,
                               axis: int,
-                              reverse: bool = False) -> jax.Array:
+                              reverse: bool = False):
     if axis < 0:
         axis = axis + x.ndim
     size = x.shape[axis]
@@ -37,7 +37,7 @@ def _dot_cumsum(
     axis: int,
     sharding: jax.sharding.NamedSharding | None,
     reverse: bool = False,
-) -> jax.Array:
+):
     return _single_device_dot_cumsum(x, axis, reverse=reverse)
 
 
@@ -46,12 +46,12 @@ def cumsum(
     axis: int,
     method: str = 'dot',
     sharding: jax.sharding.NamedSharding | None = None,
-) -> jax.Array:
+):
     return _dot_cumsum(x, axis, sharding=sharding)
 
 
 def pad_in_dim(x: np.ndarray | jax.Array, pad_width: tuple[int, int],
-               axis: int) -> jax.Array:
+               axis: int):
     padding_value = jnp.array(0, dtype=x.dtype)
     padding_config = [(0, 0, 0)] * x.ndim
     padding_config[axis] = pad_width + (0,
@@ -59,7 +59,7 @@ def pad_in_dim(x: np.ndarray | jax.Array, pad_width: tuple[int, int],
     return lax.pad(x, padding_value, padding_config)
 
 
-def shift(x: np.ndarray | jax.Array, offset: int, axis: int) -> jax.Array:
+def shift(x: np.ndarray | jax.Array, offset: int, axis: int):
     if abs(offset) >= x.shape[axis]:
         return jnp.zeros_like(x)
     if offset > 0:

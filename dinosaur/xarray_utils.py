@@ -21,6 +21,8 @@ MODAL_AXES_NAMES = (
     'longitudinal_mode',
     'total_wavenumber',
 )
+
+
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape,
     dims,
@@ -103,8 +105,7 @@ def data_to_xarray(
                        if 'diagnostics' in data else set())
     if additional_coords is None:
         additional_coords = {}
-    if (coords.vertical.layers != 1) and ('surface'
-                                          not in additional_coords):
+    if (coords.vertical.layers != 1) and ('surface' not in additional_coords):
         additional_coords['surface'] = np.ones(1)
     all_coords, shape_to_dims = _infer_dims_shape_and_coords(
         coords, times, sample_ids, additional_coords)

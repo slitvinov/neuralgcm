@@ -43,7 +43,6 @@ def _asdict(state: State) -> dict[str, Any]:
 
 
 State.asdict = _asdict
-StateWithTime = State  # deprecated alias
 
 @tree_math.struct
 class DiagnosticState:

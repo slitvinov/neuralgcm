@@ -139,11 +139,7 @@ def cumulative_sigma_integral(
                                       method=cumsum_method,
                                       sharding=sharding)
     else:
-        return jax_numpy_utils.reverse_cumsum(xd𝜎,
-                                              axis,
-                                              method=cumsum_method,
-                                              sharding=sharding)
-
+        assert False
 
 @jax.named_call
 def sigma_integral(

@@ -65,18 +65,6 @@ class SigmaCoordinates:
         boundaries = np.linspace(0, 1, layers + 1, dtype=dtype)
         return cls(boundaries)
 
-    @classmethod
-    def from_centers(cls, centers: np.typing.ArrayLike):
-
-        def centers_to_boundaries(centers):
-            layers = len(centers)
-            bounds_to_centers = 0.5 * (np.eye(layers) + np.eye(layers, k=-1))
-            unpadded_bounds = np.linalg.solve(bounds_to_centers, centers)
-            return np.pad(unpadded_bounds, [(1, 0)])
-
-        boundaries = _with_f64_math(centers_to_boundaries)(centers)
-        return cls(boundaries)
-
     def asdict(self):
         return {k: v.tolist() for k, v in dataclasses.asdict(self).items()}
 

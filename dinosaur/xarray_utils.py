@@ -137,6 +137,7 @@ LINEAR_SHAPE_TO_GRID_DICT = {
     Grid.TL1279().nodal_shape: Grid.TL1279,
 }
 
+
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape: tuple[int, ...],
     dims: tuple[str, ...],
@@ -216,6 +217,7 @@ def _infer_dims_shape_and_coords(
         full_shape, full_dims = update_shape_dims_fn(shape, dims)
         shape_to_dims[full_shape] = full_dims
     return all_xr_coords, shape_to_dims  # pytype: disable=bad-return-type
+
 
 def data_to_xarray(
     data: dict,

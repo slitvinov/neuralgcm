@@ -24,30 +24,7 @@ def _with_sharding_constraint(
 ) -> typing.Pytree:
     if sharding is None:
         return x  # unsharded
-    if len(sharding.spec) != 3:
-        raise ValueError(
-            f'partition spec does not have length 3: {sharding.spec}')
-
-    def f(y: jax.Array) -> jax.Array:
-        if y.ndim == 1 and y.dtype == jnp.uint32:
-            return y  # prng key
-        if y.ndim not in {2, 3}:
-            raise ValueError(f'can only shard 2D or 3D arrays: {y.shape=}')
-        if y.ndim == 2:
-            spec = P(*sharding.spec[1:])
-            sharding_ = jax.sharding.NamedSharding(sharding.mesh, spec)
-        elif y.shape[0] == 1:
-            spec = P(None, *sharding.spec[1:])
-            sharding_ = jax.sharding.NamedSharding(sharding.mesh, spec)
-        else:
-            sharding_ = sharding
-        return jax.lax.with_sharding_constraint(y, sharding_)
-
-    try:
-        return pytree_utils.tree_map_over_nonscalars(f, x)
-    except ValueError as e:
-        shapes = jax.tree_util.tree_map(jnp.shape, x)
-        raise ValueError(f'failed to shard pytree with shapes {shapes}') from e
+    assert False
 
 
 @dataclasses.dataclass(frozen=True)

@@ -7,6 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 from sklearn import neighbors
 
+
 @dataclasses.dataclass(frozen=True)
 class Regridder:
     source_grid: spherical_harmonic.Grid
@@ -14,5 +15,3 @@ class Regridder:
 
     def __call__(self, field: typing.Array) -> jnp.ndarray:
         raise NotImplementedError
-
-

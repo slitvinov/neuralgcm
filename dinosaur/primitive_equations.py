@@ -642,4 +642,3 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             inverted_tracers,
             sim_time=state.sim_time,
         )
-

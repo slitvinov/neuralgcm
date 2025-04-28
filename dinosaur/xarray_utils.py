@@ -13,9 +13,6 @@ import jax
 import numpy as np
 import xarray
 
-XR_INIT_TIME_NAME = 'initial_time'
-XR_TIMEDELTA_NAME = 'prediction_timedelta'
-XR_LEVEL_NAME = 'level'
 XR_LON_NAME = 'lon'
 XR_LAT_NAME = 'lat'
 NODAL_AXES_NAMES = (
@@ -53,7 +50,7 @@ def _infer_dims_shape_and_coords(
         XR_LAT_NAME: np.arcsin(sin_lat) * 180 / np.pi,
         'longitudinal_mode': lon_k,
         'total_wavenumber': lat_k,
-        XR_LEVEL_NAME: coords.vertical.centers,
+        'level': coords.vertical.centers,
         **additional_coords,
     }
     if times is not None:
@@ -65,24 +62,15 @@ def _infer_dims_shape_and_coords(
     modal_shape = coords.horizontal.modal_shape
     nodal_shape = coords.horizontal.nodal_shape
     basic_shape_to_dims[(coords.vertical.layers, ) +
-                        modal_shape] = (XR_LEVEL_NAME, ) + MODAL_AXES_NAMES
+                        modal_shape] = ('level', ) + MODAL_AXES_NAMES
     basic_shape_to_dims[(coords.vertical.layers, ) +
-                        nodal_shape] = (XR_LEVEL_NAME, ) + NODAL_AXES_NAMES
+                        nodal_shape] = ('level', ) + NODAL_AXES_NAMES
     basic_shape_to_dims[nodal_shape] = NODAL_AXES_NAMES
     basic_shape_to_dims[modal_shape] = MODAL_AXES_NAMES
     basic_shape_to_dims[coords.surface_nodal_shape] = NODAL_AXES_NAMES
     for dim, value in additional_coords.items():
         if dim == 'realization':
             continue
-        if value.ndim != 1:
-            raise ValueError(
-                '`additional_coords` must be 1d vectors, but got: '
-                f'{value.shape=} for {dim=}')
-        if value.shape == (coords.vertical.layers, ):
-            raise ValueError(
-                f'`additional_coords` {dim=} has shape={value.shape} that collides '
-                f'with {XR_LEVEL_NAME=}. Since matching of axes is done using shape, '
-                'consider renaming after the fact.')
         basic_shape_to_dims[value.shape +
                             modal_shape] = (dim, ) + MODAL_AXES_NAMES
         basic_shape_to_dims[value.shape +

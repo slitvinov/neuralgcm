@@ -46,17 +46,6 @@ TYPE_OF_HIGH_VEGETATION = (  # Type of high vegetation, tvh, ~
     'type_of_high_vegetation')
 TYPE_OF_LOW_VEGETATION = (  # Type of low vegetation, tvl, ~
     'type_of_low_vegetation')
-single_level_static_vars = [
-    GEOPOTENTIAL_AT_SURFACE,
-    HIGH_VEGETATION_COVER,
-    LAKE_COVER,
-    LAKE_DEPTH,
-    LAND_SEA_MASK,
-    LOW_VEGETATION_COVER,
-    SOIL_TYPE,
-    TYPE_OF_HIGH_VEGETATION,
-    TYPE_OF_LOW_VEGETATION,
-]
 ICE_TEMPERATURE_LAYER_4 = (  # Ice temperature layer 4, istl4, K
     'ice_temperature_layer_4')
 LAKE_ICE_DEPTH = 'lake_ice_depth'  # Lake ice total depth, licd, m

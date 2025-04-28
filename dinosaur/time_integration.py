@@ -110,67 +110,6 @@ def compose_equations(
         implicit_explicit_equation.implicit_inverse)
 
 
-def backward_forward_euler(
-    equation: ImplicitExplicitODE,
-    time_step: float,
-) -> TimeStepFn:
-    dt = time_step
-    F = tree_math.unwrap(equation.explicit_terms)
-    G_inv = tree_math.unwrap(equation.implicit_inverse, vector_argnums=0)
-
-    @tree_math.wrap
-    def step_fn(u0):
-        g = u0 + dt * F(u0)
-        u1 = G_inv(g, dt)
-        return u1
-
-    return step_fn
-
-
-def semi_implicit_leapfrog(
-    equation: ImplicitExplicitODE,
-    time_step: float,
-    alpha: float = 0.5,
-) -> TimeStepFn:
-    explicit_fn = tree_math.unwrap(equation.explicit_terms)
-    implicit_fn = tree_math.unwrap(equation.implicit_terms)
-    inverse_fn = tree_math.unwrap(equation.implicit_inverse, vector_argnums=0)
-
-    def step_fn(u: PyTreeState) -> PyTreeState:
-        previous, current = u
-        previous, current = tree_math.Vector(previous), tree_math.Vector(
-            current)
-        explicit_current = explicit_fn(current)
-        implicit_previous = implicit_fn(previous)
-        intermediate = previous + 2 * time_step * (
-            explicit_current + (1 - alpha) * implicit_previous)
-        eta = 2 * time_step * alpha
-        future = inverse_fn(intermediate, eta)
-        return (current.tree, future.tree)
-
-    return step_fn
-
-
-def crank_nicolson_rk2(
-    equation: ImplicitExplicitODE,
-    time_step: float,
-) -> TimeStepFn:
-    dt = time_step
-    F = tree_math.unwrap(equation.explicit_terms)
-    G = tree_math.unwrap(equation.implicit_terms)
-    G_inv = tree_math.unwrap(equation.implicit_inverse, vector_argnums=0)
-
-    @tree_math.wrap
-    def step_fn(u0):
-        g = u0 + 0.5 * dt * G(u0)
-        h1 = F(u0)
-        u1 = G_inv(g + dt * h1, 0.5 * dt)
-        h2 = 0.5 * (F(u1) + h1)
-        u2 = G_inv(g + dt * h2, 0.5 * dt)
-        return u2
-
-    return step_fn
-
 @dataclasses.dataclass
 class ImExButcherTableau:
     a_ex: Sequence[Sequence[float]]

@@ -44,24 +44,6 @@ class ModelState(Generic[PyTreeState]):
         default_factory=RandomnessState)
 
 
-@tree_math.struct
-class TrajectoryRepresentations:
-    data_nodal_trajectory: Pytree
-    data_modal_trajectory: Pytree
-    model_nodal_trajectory: Pytree
-    model_modal_trajectory: Pytree
-
-    def get_representation(self, *, is_nodal: bool,
-                           is_encoded: bool) -> Pytree:
-        binary_nodal_encoded_dict = {
-            (True, True): self.model_nodal_trajectory,
-            (True, False): self.data_nodal_trajectory,
-            (False, True): self.model_modal_trajectory,
-            (False, False): self.data_modal_trajectory,
-        }
-        return binary_nodal_encoded_dict[(is_nodal, is_encoded)]
-
-
 State = TypeVar('State')
 StateFn = Callable[[State], State]
 InverseFn = Callable[[State, jnp.ndarray], State]

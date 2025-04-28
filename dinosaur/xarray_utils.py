@@ -70,32 +70,6 @@ MODAL_AXES_NAMES = (
 LINEAR = 'LINEAR'
 CUBIC = 'CUBIC'
 Grid = spherical_harmonic.Grid
-CUBIC_SHAPE_TO_GRID_DICT = {
-    Grid.T21().nodal_shape: Grid.T21,
-    Grid.T31().nodal_shape: Grid.T31,
-    Grid.T42().nodal_shape: Grid.T42,
-    Grid.T85().nodal_shape: Grid.T85,
-    Grid.T106().nodal_shape: Grid.T106,
-    Grid.T119().nodal_shape: Grid.T119,
-    Grid.T170().nodal_shape: Grid.T170,
-    Grid.T213().nodal_shape: Grid.T213,
-    Grid.T340().nodal_shape: Grid.T340,
-    Grid.T425().nodal_shape: Grid.T425,
-}
-LINEAR_SHAPE_TO_GRID_DICT = {
-    Grid.TL31().nodal_shape: Grid.TL31,
-    Grid.TL47().nodal_shape: Grid.TL47,
-    Grid.TL63().nodal_shape: Grid.TL63,
-    Grid.TL95().nodal_shape: Grid.TL95,
-    Grid.TL127().nodal_shape: Grid.TL127,
-    Grid.TL159().nodal_shape: Grid.TL159,
-    Grid.TL179().nodal_shape: Grid.TL179,
-    Grid.TL255().nodal_shape: Grid.TL255,
-    Grid.TL639().nodal_shape: Grid.TL639,
-    Grid.TL1279().nodal_shape: Grid.TL1279,
-}
-
-
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape: tuple[int, ...],
     dims: tuple[str, ...],

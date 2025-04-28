@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, Sequence, TypeVar, Union
 import dinosaur
 from dinosaur import pytree_utils
 from dinosaur import sigma_coordinates
-from dinosaur import typing
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -44,7 +43,7 @@ class HybridCoordinates:
         return hash((tuple(self.a_boundaries.tolist()),
                      tuple(self.b_boundaries.tolist())))
 
-    def get_sigma_boundaries(self, surface_pressure: typing.Numeric):
+    def get_sigma_boundaries(self, surface_pressure):
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
 

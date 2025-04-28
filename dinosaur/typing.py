@@ -14,7 +14,7 @@
 """Defined commonly used types in the codebase."""
 
 import dataclasses
-from typing import Any, Callable, Generic, Mapping, TypeVar
+from typing import Any, Callable, Generic, Mapping, TypeVar, Union
 
 from dinosaur import scales
 
@@ -22,9 +22,9 @@ import jax.numpy as jnp
 import numpy as np
 import tree_math
 
-Array = np.ndarray | jnp.ndarray
-ArrayOrArrayTuple = Array | tuple[Array, ...]
-Numeric = float | int | Array
+Array = Union[np.ndarray, jnp.ndarray]
+ArrayOrArrayTuple = Union[Array,tuple[Array, ...]]
+Numeric = Union[float, int, Array]
 Quantity = scales.Quantity
 PRNGKeyArray = Any
 

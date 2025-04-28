@@ -7,6 +7,8 @@ from jax import lax
 from jax.experimental import shard_map
 import jax.numpy as jnp
 import numpy as np
+
+
 @jax.named_call
 def _single_device_dot_cumsum(x: jax.Array,
                               axis: int,
@@ -30,6 +32,8 @@ def _single_device_dot_cumsum(x: jax.Array,
         out_axes,
         precision=('bfloat16', 'highest'),
     )
+
+
 def _parallel_dot_cumsum(x: jax.Array, axis: int, reverse: bool,
                          axis_name: str) -> jax.Array:
     partials = _single_device_dot_cumsum(x, axis=axis, reverse=reverse)
@@ -43,6 +47,8 @@ def _parallel_dot_cumsum(x: jax.Array, axis: int, reverse: bool,
     for i, term in enumerate(terms, start=start):
         total += op(i, axis_index) * term
     return total
+
+
 def _dot_cumsum(
     x: jax.Array,
     axis: int,
@@ -53,6 +59,7 @@ def _dot_cumsum(
         return _single_device_dot_cumsum(x, axis, reverse=reverse)
     mesh = sharding.mesh
     spec = sharding.spec
+
     @jax.jit
     @functools.partial(
         shard_map.shard_map,
@@ -66,7 +73,10 @@ def _dot_cumsum(
                                     axis=axis,
                                     reverse=reverse,
                                     axis_name=sharding.spec[axis])
+
     return dot_cumsum(x)
+
+
 def cumsum(
     x: np.ndarray | jax.Array,
     axis: int,
@@ -79,6 +89,8 @@ def cumsum(
         return jnp.cumsum(x, axis)
     else:
         raise ValueError(f'invalid {method=}')
+
+
 def reverse_cumsum(
     x: np.ndarray | jax.Array,
     axis: int,
@@ -91,6 +103,8 @@ def reverse_cumsum(
         return jnp.flip(jnp.cumsum(jnp.flip(x, axis), axis), axis)
     else:
         raise ValueError(f'invalid {method=}')
+
+
 def pad_in_dim(x: np.ndarray | jax.Array, pad_width: tuple[int, int],
                axis: int) -> jax.Array:
     padding_value = jnp.array(0, dtype=x.dtype)
@@ -98,6 +112,8 @@ def pad_in_dim(x: np.ndarray | jax.Array, pad_width: tuple[int, int],
     padding_config[axis] = pad_width + (0,
                                         )  # add "interior" padding for lax.pad
     return lax.pad(x, padding_value, padding_config)
+
+
 def shift(x: np.ndarray | jax.Array, offset: int, axis: int) -> jax.Array:
     if abs(offset) >= x.shape[axis]:
         return jnp.zeros_like(x)
@@ -107,16 +123,22 @@ def shift(x: np.ndarray | jax.Array, offset: int, axis: int) -> jax.Array:
     else:
         sliced = lax.slice_in_dim(x, -offset, x.shape[axis], axis=axis)
         return pad_in_dim(sliced, (0, -offset), axis=axis)
+
+
 def diff(x, axis=-1):
     upper = lax.slice_in_dim(x, 1, None, axis=axis)
     lower = lax.slice_in_dim(x, 0, -1, axis=axis)
     return upper - lower
+
+
 def _reversed_arg_order_einsum(subscripts: str, x: jax.Array, y: jax.Array,
                                **kwargs: ...) -> jax.Array:
     in_subscripts, out_subscripts = subscripts.split('->')
     lhs_subscripts, rhs_subscripts = in_subscripts.split(',')
     new_subscripts = f'{rhs_subscripts},{lhs_subscripts}->{out_subscripts}'
     return jnp.einsum(new_subscripts, y, x, **kwargs)
+
+
 def _allgather_matmul_twoway(
     einsum_spec: str,
     lhs: jax.Array,
@@ -138,6 +160,7 @@ def _allgather_matmul_twoway(
         raise ValueError(f'axis_size must be 1 or even: {axis_size}')
     axis_index = lax.axis_index(axis_name)
     chunk_size = lhs.shape[split_axis] // axis_size
+
     def get_lhs_chunk(i):
         chunk_index = (axis_index + i) % axis_size
         lhs_chunk = lax.dynamic_slice_in_dim(lhs,
@@ -145,18 +168,22 @@ def _allgather_matmul_twoway(
                                              chunk_size,
                                              axis=split_axis)
         return lhs_chunk
+
     def indexed_computation(i, rhs_fwd, rhs_bwd):
         lhs_fwd = get_lhs_chunk(-i)
         lhs_bwd = get_lhs_chunk(i + 1)
         return matmul(lhs_fwd, rhs_fwd) + matmul(lhs_bwd, rhs_bwd)
+
     perm_fwd = [(j, (j + 1) % axis_size) for j in range(axis_size)]
     perm_bwd = [(j, (j - 1) % axis_size) for j in range(axis_size)]
+
     def collective_matmul(i, carrys):
         accum, rhs_fwd, rhs_bwd = carrys
         rhs_fwd = lax.ppermute(rhs_fwd, axis_name, perm=perm_fwd)
         rhs_bwd = lax.ppermute(rhs_bwd, axis_name, perm=perm_bwd)
         accum += indexed_computation(i, rhs_fwd, rhs_bwd)
         return accum, rhs_fwd, rhs_bwd
+
     rhs_fwd = rhs
     rhs_bwd = lax.ppermute(rhs, axis_name, perm=perm_bwd)
     accum = indexed_computation(0, rhs_fwd, rhs_bwd)
@@ -164,6 +191,8 @@ def _allgather_matmul_twoway(
                                             collective_matmul,
                                             (accum, rhs_fwd, rhs_bwd))
     return accum
+
+
 def _matmul_reducescatter_twoway(
     einsum_spec: str,
     lhs: jax.Array,
@@ -185,6 +214,7 @@ def _matmul_reducescatter_twoway(
         raise ValueError(f'axis_size must be 1 or even: {axis_size}')
     axis_index = lax.axis_index(axis_name)
     chunk_size = lhs.shape[scatter_axis] // axis_size
+
     def indexed_computation(i):
         chunk_index = (axis_index + axis_size // 2 + i) % axis_size
         lhs_chunk = lax.dynamic_slice_in_dim(lhs,
@@ -192,8 +222,10 @@ def _matmul_reducescatter_twoway(
                                              chunk_size,
                                              axis=scatter_axis)
         return matmul(lhs_chunk, rhs)
+
     perm_fwd = [(j, (j + 1) % axis_size) for j in range(axis_size)]
     perm_bwd = [(j, (j - 1) % axis_size) for j in range(axis_size)]
+
     def collective_matmul(i, carrays):
         accum_fwd, accum_bwd = carrays
         accum_fwd = lax.ppermute(accum_fwd, axis_name, perm=perm_fwd)
@@ -201,6 +233,7 @@ def _matmul_reducescatter_twoway(
         accum_fwd += indexed_computation(-i)
         accum_bwd += indexed_computation(i + 1)
         return accum_fwd, accum_bwd
+
     accum_fwd = indexed_computation(0)
     accum_bwd = indexed_computation(1)
     (accum_fwd, accum_bwd) = lax.fori_loop(1, axis_size // 2,
@@ -209,6 +242,8 @@ def _matmul_reducescatter_twoway(
     accum_fwd = lax.ppermute(accum_fwd, axis_name, perm=perm_fwd)
     accum = accum_fwd + accum_bwd
     return accum
+
+
 def _parse_einsum_subscripts(subscripts: str) -> tuple[str, str, str]:
     if '...' in subscripts:
         raise ValueError(
@@ -218,6 +253,8 @@ def _parse_einsum_subscripts(subscripts: str) -> tuple[str, str, str]:
         raise ValueError(f'{subscripts=} does not match the expected pattern')
     lhs_subscripts, rhs_subscripts, out_subscripts = matches.groups()
     return lhs_subscripts, rhs_subscripts, out_subscripts
+
+
 def _determine_reduce_subscript(
     lhs_subscripts: str,
     rhs_subscripts: str,
@@ -234,6 +271,8 @@ def _determine_reduce_subscript(
             f'multiple sharded axes are reduced over: {subscripts}')
     (subscript, ) = subscripts  # pylint: disable=unbalanced-tuple-unpacking
     return subscript
+
+
 def _determine_transfer_subscript(
     lhs_subscripts: str,
     rhs_subscripts: str,
@@ -250,6 +289,8 @@ def _determine_transfer_subscript(
             f'multiple sharded axes are transferred over: {subscripts}')
     (subscript, ) = subscripts  # pylint: disable=unbalanced-tuple-unpacking
     return subscript
+
+
 @jax.named_call
 def sharded_einsum(
     subscripts: str,
@@ -294,6 +335,7 @@ def sharded_einsum(
                                         scatter_axis=scatter_axis)
     lhs_spec = jax.sharding.PartitionSpec(*lhs_partitions)
     in_specs = (lhs_spec, rhs_spec)
+
     @functools.partial(
         shard_map.shard_map,
         mesh=mesh,
@@ -311,4 +353,5 @@ def sharded_einsum(
             precision=precision,
             reverse_arg_order=reverse_arg_order,
         )
+
     return distributed_matmul(lhs, rhs)

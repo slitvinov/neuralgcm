@@ -4,6 +4,8 @@ import jax.numpy as jnp
 import numpy as np
 import scipy.linalg
 from typing import Union
+
+
 def real_basis(wavenumbers: int, nodes: int) -> np.ndarray:
     if nodes < wavenumbers:
         raise ValueError('`real_basis` requires nodes >= wavenumbers; '
@@ -16,6 +18,8 @@ def real_basis(wavenumbers: int, nodes: int) -> np.ndarray:
     f[:, 1::2] = cos
     f[:, 2::2] = sin
     return f
+
+
 def real_basis_derivative(u: Union[jnp.ndarray, jax.Array],
                           /,
                           axis: int = -1) -> jax.Array:
@@ -28,6 +32,8 @@ def real_basis_derivative(u: Union[jnp.ndarray, jax.Array],
     u_down = jax_numpy_utils.shift(u, -1, axis)
     u_up = jax_numpy_utils.shift(u, +1, axis)
     return j * jnp.where(i % 2, u_down, -u_up)
+
+
 def real_basis_with_zero_imag(wavenumbers: int, nodes: int) -> np.ndarray:
     if nodes < wavenumbers:
         raise ValueError('`real_basis` requires nodes >= wavenumbers; '
@@ -41,6 +47,8 @@ def real_basis_with_zero_imag(wavenumbers: int, nodes: int) -> np.ndarray:
     f[:, 2::2] = cos
     f[:, 3::2] = sin
     return f
+
+
 def real_basis_derivative_with_zero_imag(
         u: Union[jnp.ndarray, jax.Array],
         axis: int = -1,
@@ -54,6 +62,8 @@ def real_basis_derivative_with_zero_imag(
     u_down = jax_numpy_utils.shift(u, -1, axis)
     u_up = jax_numpy_utils.shift(u, +1, axis)
     return j * jnp.where((i + 1) % 2, u_down, -u_up)
+
+
 def quadrature_nodes(nodes: int) -> tuple[np.ndarray, np.ndarray]:
     xs = np.linspace(0, 2 * np.pi, nodes, endpoint=False)
     weights = 2 * np.pi / nodes

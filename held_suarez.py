@@ -336,7 +336,6 @@ ax.set_ylim((1, 0))
 plt.savefig("11.png")
 plt.close()
 
-
 start_time = 200  # days
 
 # Mean Temperature

@@ -3,6 +3,7 @@ from typing import Iterator, Protocol, Union
 import jax.numpy as jnp
 import numpy as np
 import pint
+
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 Quantity = units.Quantity
 Unit = units.Unit
@@ -20,22 +21,33 @@ LATENT_HEAT_OF_VAPORIZATION = 2.501e6 * units.J / units.kilogram
 IDEAL_GAS_CONSTANT = ISOBARIC_HEAT_CAPACITY * KAPPA
 IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
 WATER_DENSITY = 997 * units.kg / units.m**3
+
+
 def parse_units(units_str: str) -> Quantity:
     if units_str in {'(0 - 1)', '%', '~'}:
         units_str = 'dimensionless'
     return units.parse_expression(units_str)
+
+
 def _get_dimension(quantity: Quantity) -> str:
     exponents = list(quantity.dimensionality.values())
     if len(quantity.dimensionality) != 1 or exponents[0] != 1:
         raise ValueError('All scales must describe a single dimension;'
                          f'got dimensionality {quantity.dimensionality}')
     return str(quantity.dimensionality)
+
+
 class ScaleProtocol(Protocol):
+
     def nondimensionalize(self, quantity: Quantity) -> Numeric:
         ...
+
     def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
         ...
+
+
 class Scale(abc.Mapping):
+
     def __init__(self, *scales: Quantity):
         self._scales = dict()
         for quantity in scales:
@@ -44,15 +56,20 @@ class Scale(abc.Mapping):
                 raise ValueError(
                     f'Got duplicate scales for dimension {dimension}.')
             self._scales[_get_dimension(quantity)] = quantity.to_base_units()
+
     def __getitem__(self, key: str) -> Quantity:
         return self._scales[key]
+
     def __iter__(self) -> Iterator[str]:
         return iter(self._scales)
+
     def __len__(self) -> int:
         return len(self._scales)
+
     def __repr__(self) -> str:
         return '\n'.join(f'{dimension}: {quantity}'
                          for dimension, quantity in self._scales.items())
+
     def _scaling_factor(self,
                         dimensionality: pint.util.UnitsContainer) -> Quantity:
         factor = Quantity(1)
@@ -63,15 +80,19 @@ class Scale(abc.Mapping):
             factor *= quantity**exponent
         assert factor.check(dimensionality)
         return factor
+
     def nondimensionalize(self, quantity: Quantity) -> Numeric:
         scaling_factor = self._scaling_factor(quantity.dimensionality)
         nondimensionalized = (quantity / scaling_factor).to(
             units.dimensionless)
         return nondimensionalized.magnitude
+
     def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
         scaling_factor = self._scaling_factor(unit.dimensionality)
         dimensionalized = value * scaling_factor
         return dimensionalized.to(unit)  # pytype: disable=attribute-error  # jax-ndarray
+
+
 NEURALGCM_V1_SCALE = Scale(
     RADIUS,  # length
     1 / 2 / OMEGA,  # time

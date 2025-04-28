@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import tree_math
+
 units = scales.units
 Array = typing.Array
 Numeric = typing.Numeric
@@ -20,16 +21,24 @@ PERIHELION = 3 * 2 * jnp.pi / DAYS_PER_YEAR  # radians
 SPRING_EQUINOX = 79 * 2 * jnp.pi / DAYS_PER_YEAR  # radians
 EARTH_AXIS_INCLINATION = 23.45 * jnp.pi / 180  # radians
 WB_REFERENCE_DATETIME = datetime.datetime(1979, 1, 1, 0, 0)
+
+
 @tree_math.struct
 class OrbitalTime:
     orbital_phase: float
     synodic_phase: float
+
+
 def datetime64_to_datetime(when: np.datetime64) -> datetime.datetime:
     ts = (when - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's')
     return datetime.datetime.utcfromtimestamp(ts)
+
+
 def days_in_year(when: datetime.datetime) -> int:
     return datetime.datetime(year=when.year, month=12,
                              day=31).timetuple().tm_yday
+
+
 def datetime_to_orbital_time(when: datetime.datetime) -> OrbitalTime:
     days_this_year = days_in_year(when)
     full_days = when.timetuple().tm_yday - 1
@@ -39,6 +48,8 @@ def datetime_to_orbital_time(when: datetime.datetime) -> OrbitalTime:
         orbital_phase=2 * jnp.pi * fraction_of_year,
         synodic_phase=2 * jnp.pi * fraction_of_day,
     )
+
+
 def datetime_to_time(
     when: datetime.datetime | np.datetime64,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
@@ -51,6 +62,8 @@ def datetime_to_time(
     difference = when - reference_datetime
     days = difference.days + difference.seconds / SECONDS_PER_DAY
     return physics_specs.nondimensionalize(days * units.day)  # pytype: disable=bad-return-type  # jax-ndarray
+
+
 def get_direct_solar_irradiance(
     orbital_phase: Numeric,
     mean_irradiance: Numeric = TOTAL_SOLAR_IRRADIANCE,
@@ -58,17 +71,25 @@ def get_direct_solar_irradiance(
     perihelion: Numeric = PERIHELION,
 ) -> jnp.ndarray:
     return mean_irradiance + variation * jnp.cos(orbital_phase - perihelion)
+
+
 def get_declination(orbital_phase: Numeric) -> jnp.ndarray:
     return EARTH_AXIS_INCLINATION * jnp.sin(orbital_phase - SPRING_EQUINOX)
+
+
 def equation_of_time(orbital_phase: Numeric) -> jnp.ndarray:
     b = orbital_phase - SPRING_EQUINOX
     added_minutes = 9.87 * jnp.sin(
         2 * b) - 7.53 * jnp.cos(b) - 1.5 * jnp.sin(b)
     return 2 * jnp.pi * added_minutes / MINUTES_PER_DAY
+
+
 def get_hour_angle(orbital_phase: Numeric, synodic_phase: Numeric,
                    longitude: Array) -> jnp.ndarray:
     solar_time = synodic_phase + equation_of_time(orbital_phase) + longitude
     return solar_time - jnp.pi
+
+
 def get_solar_sin_altitude(
     orbital_phase: Numeric,
     synodic_phase: Numeric,
@@ -80,6 +101,8 @@ def get_solar_sin_altitude(
     first_term = jnp.cos(latitude) * jnp.cos(declination) * jnp.cos(hour_angle)
     second_term = jnp.sin(latitude) * jnp.sin(declination)
     return first_term + second_term
+
+
 def get_radiation_flux(
     orbital_time: OrbitalTime,
     longitude: Array,
@@ -100,6 +123,8 @@ def get_radiation_flux(
         variation=variation,
     )
     return flux * is_daytime * sin_altitude
+
+
 def get_normalized_radiation_flux(
     orbital_time: OrbitalTime,
     longitude: Array,
@@ -115,7 +140,10 @@ def get_normalized_radiation_flux(
         mean_irradiance=mean_irradiance / scale,
         variation=variation / scale,
     )
+
+
 class SolarRadiation:
+
     def __init__(
         self,
         coords: coordinate_systems.CoordinateSystem,
@@ -139,14 +167,17 @@ class SolarRadiation:
         self.solar_irradiance_variation = physics_specs.nondimensionalize(
             SOLAR_IRRADIANCE_VARIATION)
         self.physics_specs = physics_specs
+
     def datetime_to_time(self,
                          when: datetime.datetime | np.datetime64) -> float:
         return datetime_to_time(when, self.physics_specs,
                                 self.reference_datetime)
+
     def time_to_orbital_time(self, time: Numeric) -> OrbitalTime:
         orbital_time = self.reference_orbital_time + self.orbital_rate * time
         orbital_time -= orbital_time // (2 * jnp.pi) * (2 * jnp.pi)
         return orbital_time
+
     def solar_hour_angle(self, time: Numeric) -> jnp.ndarray:
         now = self.time_to_orbital_time(time)
         return get_hour_angle(
@@ -154,6 +185,7 @@ class SolarRadiation:
             synodic_phase=now.synodic_phase,
             longitude=self.lon,
         )
+
     def radiation_flux(self, time: Numeric) -> jnp.ndarray:
         now = self.time_to_orbital_time(time)
         return get_radiation_flux(
@@ -163,6 +195,7 @@ class SolarRadiation:
             mean_irradiance=self.total_solar_irradiance,
             variation=self.solar_irradiance_variation,
         )
+
     @classmethod
     def normalized(
         cls,

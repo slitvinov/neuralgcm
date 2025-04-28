@@ -6,12 +6,18 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from sklearn import neighbors
+
+
 def _assert_increasing(x: typing.Array):
     if isinstance(x, np.ndarray) and not (np.diff(x) > 0).all():
         raise ValueError(f'array is not increasing: {x}')
+
+
 def _latitude_cell_bounds(x):
     pi_over_2 = jnp.array([np.pi / 2])
     return jnp.concatenate([-pi_over_2, (x[:-1] + x[1:]) / 2, pi_over_2])
+
+
 def _latitude_overlap(
     source_points: typing.Array,
     target_points: typing.Array,
@@ -23,6 +29,8 @@ def _latitude_overlap(
     lower = jnp.maximum(target_bounds[:-1, jnp.newaxis],
                         source_bounds[jnp.newaxis, :-1])
     return (upper > lower) * (jnp.sin(upper) - jnp.sin(lower))
+
+
 def conservative_latitude_weights(source_points: typing.Array,
                                   target_points: typing.Array) -> jnp.ndarray:
     _assert_increasing(source_points)
@@ -31,22 +39,32 @@ def conservative_latitude_weights(source_points: typing.Array,
     weights /= jnp.sum(weights, axis=1, keepdims=True)
     assert weights.shape == (target_points.size, source_points.size)
     return weights
+
+
 def _align_phase_with(x, target, period):
     shift_down = x > target + period / 2
     shift_up = x < target - period / 2
     return x + period * shift_up - period * shift_down
+
+
 def _periodic_upper_bounds(x, period):
     x_plus = _align_phase_with(jnp.roll(x, -1), x, period)
     return (x + x_plus) / 2
+
+
 def _periodic_lower_bounds(x, period):
     x_minus = _align_phase_with(jnp.roll(x, +1), x, period)
     return (x_minus + x) / 2
+
+
 def _periodic_overlap(x0, x1, y0, y1, period):
     y0 = _align_phase_with(y0, x0, period)
     y1 = _align_phase_with(y1, x0, period)
     upper = jnp.minimum(x1, y1)
     lower = jnp.maximum(x0, y0)
     return jnp.maximum(upper - lower, 0)
+
+
 def _longitude_overlap(
     first_points: typing.Array,
     second_points: typing.Array,
@@ -64,6 +82,8 @@ def _longitude_overlap(
         second_lower[jnp.newaxis, :],
         second_upper[jnp.newaxis, :],
     )
+
+
 def conservative_longitude_weights(source_points: typing.Array,
                                    target_points: typing.Array) -> jnp.ndarray:
     _assert_increasing(source_points)
@@ -72,6 +92,8 @@ def conservative_longitude_weights(source_points: typing.Array,
     weights /= jnp.sum(weights, axis=1, keepdims=True)
     assert weights.shape == (target_points.size, source_points.size)
     return weights
+
+
 def nearest_neighbor_indices(source_grid, target_grid):
     lon_source, sin_lat_source = source_grid.nodal_mesh
     lat_source = np.arcsin(sin_lat_source)
@@ -82,14 +104,20 @@ def nearest_neighbor_indices(source_grid, target_grid):
     tree = neighbors.BallTree(index_coords, metric='haversine')
     indices = tree.query(query_coords, return_distance=False).squeeze(axis=-1)
     return indices
+
+
 @dataclasses.dataclass(frozen=True)
 class Regridder:
     source_grid: spherical_harmonic.Grid
     target_grid: spherical_harmonic.Grid
+
     def __call__(self, field: typing.Array) -> jnp.ndarray:
         raise NotImplementedError
+
+
 @dataclasses.dataclass(frozen=True)
 class BilinearRegridder(Regridder):
+
     @functools.partial(jax.jit, static_argnums=0)
     def __call__(self, field: typing.Array) -> jnp.ndarray:
         batch_interp = jax.vmap(jnp.interp, in_axes=(0, None, None))
@@ -105,11 +133,15 @@ class BilinearRegridder(Regridder):
         )
         field = lon_interp(lon_target, lon_source, field)
         return field
+
+
 @dataclasses.dataclass(frozen=True)
 class NearestRegridder(Regridder):
+
     @functools.cached_property
     def indices(self):
         return nearest_neighbor_indices(self.source_grid, self.target_grid)
+
     @functools.partial(jax.jit, static_argnums=0)
     def nearest_neighbor_2d(self, array: typing.Array) -> jnp.ndarray:
         if array.shape != self.source_grid.nodal_shape:
@@ -118,22 +150,28 @@ class NearestRegridder(Regridder):
             )
         array = array.ravel().take(self.indices)
         return array.reshape(self.target_grid.nodal_shape)
+
     @functools.partial(jax.jit, static_argnums=0)
     def __call__(self, field: typing.Array) -> jnp.ndarray:
         interp = jnp.vectorize(self.nearest_neighbor_2d,
                                signature='(a,b)->(c,d)')
         return interp(field)
+
+
 @dataclasses.dataclass(frozen=True)
 class ConservativeRegridder(Regridder):
     skipna: bool = False
+
     @functools.cached_property
     def lat_weights(self):
         return conservative_latitude_weights(self.source_grid.latitudes,
                                              self.target_grid.latitudes)
+
     @functools.cached_property
     def lon_weights(self):
         return conservative_longitude_weights(self.source_grid.longitudes,
                                               self.target_grid.longitudes)
+
     @functools.partial(jax.jit, static_argnums=0)
     def _mean(self, field: typing.Array) -> jnp.ndarray:
         lon_weights = conservative_longitude_weights(
@@ -147,6 +185,7 @@ class ConservativeRegridder(Regridder):
             field,
             precision='float32',
         )
+
     def __call__(self, field: typing.Array) -> jnp.ndarray:
         not_nulls = jnp.logical_not(jnp.isnan(field))
         mean = self._mean(jnp.where(not_nulls, field, 0))

@@ -331,7 +331,6 @@ ds_out.specific_humidity.thin(time=4 * 24).isel(sigma=1).plot.imshow(
 plt.savefig("01.png")
 plt.close()
 
-
 ds_out.specific_cloud_liquid_water_content.thin(time=4 *
                                                 24).isel(sigma=2).plot.imshow(
                                                     col='time',

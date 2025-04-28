@@ -139,7 +139,6 @@ ax.legend().remove()
 plt.savefig("04.png")
 plt.close()
 
-
 t_array = trajectory_ds['temperature']
 t_array_si = dimensionalize(t_array, units.degK)
 levels = np.linspace(210, 305, 1 + (305 - 210) // 5)
@@ -216,7 +215,6 @@ fig = plt.gcf()
 fig.set_figwidth(10)
 plt.savefig("07.png")
 plt.close()
-
 
 # Contour plots of log-surface pressure at 8 and 10 days
 data_array = (trajectory_ds['surface_pressure'] /

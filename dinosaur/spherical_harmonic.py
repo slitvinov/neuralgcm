@@ -13,6 +13,7 @@ from jax import lax
 from jax.experimental import shard_map
 import jax.numpy as jnp
 import numpy as np
+
 Array = typing.Array
 ArrayOrArrayTuple = typing.ArrayOrArrayTuple
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
@@ -21,6 +22,8 @@ LATITUDE_SPACINGS = dict(
     equiangular=associated_legendre.equiangular_nodes,
     equiangular_with_poles=associated_legendre.equiangular_nodes_with_poles,
 )
+
+
 def get_latitude_nodes(n: int, spacing: str) -> tuple[np.ndarray, np.ndarray]:
     get_nodes = LATITUDE_SPACINGS.get(spacing)
     if get_nodes is None:
@@ -28,11 +31,15 @@ def get_latitude_nodes(n: int, spacing: str) -> tuple[np.ndarray, np.ndarray]:
             f'Unknown spacing: {spacing}'
             f'available spacings are {list(LATITUDE_SPACINGS.keys())}')
     return get_nodes(n)
+
+
 @dataclasses.dataclass
 class _SphericalHarmonicBasis:
     f: np.ndarray
     p: np.ndarray
     w: np.ndarray
+
+
 @dataclasses.dataclass(frozen=True)
 class SphericalHarmonics:
     longitude_wavenumbers: int = 0
@@ -40,52 +47,70 @@ class SphericalHarmonics:
     longitude_nodes: int = 0
     latitude_nodes: int = 0
     latitude_spacing: str = 'gauss'
+
     @property
     def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError
+
     @property
     def nodal_shape(self) -> tuple[int, int]:
         raise NotImplementedError
+
     @property
     def nodal_padding(self) -> tuple[int, int]:
         raise NotImplementedError
+
     @property
     def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError
+
     @property
     def modal_shape(self) -> tuple[int, int]:
         raise NotImplementedError
+
     @property
     def modal_padding(self) -> tuple[int, int]:
         raise NotImplementedError
+
     @property
     def modal_dtype(self) -> np.dtype:
         raise NotImplementedError
+
     @property
     def mask(self) -> np.ndarray:
         raise NotImplementedError
+
     @property
     def basis(self) -> _SphericalHarmonicBasis:
         raise NotImplementedError
+
     def inverse_transform(self, x: jax.Array) -> jax.Array:
         raise NotImplementedError
+
     def transform(self, x: jax.Array) -> jax.Array:
         raise NotImplementedError
+
     def longitudinal_derivative(self, x: Array) -> Array:
         raise NotImplementedError
+
+
 class RealSphericalHarmonics(SphericalHarmonics):
+
     @functools.cached_property
     def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         longitude, _ = fourier.quadrature_nodes(self.longitude_nodes)
         sin_latitude, _ = get_latitude_nodes(self.latitude_nodes,
                                              self.latitude_spacing)
         return longitude, sin_latitude
+
     @functools.cached_property
     def nodal_shape(self) -> tuple[int, int]:
         return (self.longitude_nodes, self.latitude_nodes)
+
     @functools.cached_property
     def nodal_padding(self) -> tuple[int, int]:
         return (0, 0)
+
     @functools.cached_property
     def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         m_pos = np.arange(1, self.longitude_wavenumbers)
@@ -94,19 +119,24 @@ class RealSphericalHarmonics(SphericalHarmonics):
                                           m_pos_neg])  # [0, 1, -1, 2, -2, ...]
         tot_wavenumbers = np.arange(self.total_wavenumbers)
         return lon_wavenumbers, tot_wavenumbers
+
     @functools.cached_property
     def modal_shape(self) -> tuple[int, int]:
         return (2 * self.longitude_wavenumbers - 1, self.total_wavenumbers)
+
     @functools.cached_property
     def modal_padding(self) -> tuple[int, int]:
         return (0, 0)
+
     @functools.cached_property
     def modal_dtype(self) -> np.dtype:
         return np.dtype(np.float32)
+
     @functools.cached_property
     def mask(self) -> np.ndarray:
         m, l = np.meshgrid(*self.modal_axes, indexing='ij')
         return abs(m) <= l
+
     @functools.cached_property
     def basis(self) -> _SphericalHarmonicBasis:
         f = fourier.real_basis(
@@ -122,6 +152,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
         p = np.repeat(p, 2, axis=0)
         p = p[1:]
         return _SphericalHarmonicBasis(f=f, p=p, w=w)
+
     def inverse_transform(self, x):
         p = self.basis.p
         f = self.basis.f
@@ -130,6 +161,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
         fpx = jax.named_call(einsum, name='inv_fourier')('im,...mj->...ij', f,
                                                          px)
         return fpx
+
     def transform(self, x):
         w = self.basis.w
         f = self.basis.f
@@ -140,17 +172,26 @@ class RealSphericalHarmonics(SphericalHarmonics):
         pfwx = jax.named_call(einsum, name='fwd_legendre')('mjl,...mj->...ml',
                                                            p, fwx)
         return pfwx
+
     def longitudinal_derivative(self, x: Array) -> Array:
         return fourier.real_basis_derivative(x, axis=-2)
+
+
 def _round_to_multiple(x: int, multiple: int) -> int:
     return multiple * math.ceil(x / multiple)
+
+
 P = jax.sharding.PartitionSpec
 shmap = shard_map.shard_map
+
+
 @jax.named_call
 def _unstack_m(x: jax.Array, /, mesh: jax.sharding.Mesh | None) -> jax.Array:
+
     def unstack(x):
         shape = x.shape[:-2] + (2, x.shape[-2] // 2) + x.shape[-1:]
         return jnp.reshape(x, shape, order='F')
+
     if mesh is None:
         return unstack(x)
     assert x.ndim in {2, 3}, x.shape
@@ -158,11 +199,15 @@ def _unstack_m(x: jax.Array, /, mesh: jax.sharding.Mesh | None) -> jax.Array:
     in_spec = P(z, 'x', 'y') if x.ndim == 3 else P('x', 'y')
     out_spec = P(z, None, 'x', 'y') if x.ndim == 3 else P(None, 'x', 'y')
     return shmap(unstack, mesh, (in_spec, ), out_spec)(x)
+
+
 @jax.named_call
 def _stack_m(x: jax.Array, /, mesh: jax.sharding.Mesh | None) -> jax.Array:
+
     def stack(x):
         shape = x.shape[:-3] + (-1, ) + x.shape[-1:]
         return jnp.reshape(x, shape, order='F')
+
     if mesh is None:
         return stack(x)
     assert x.ndim in {3, 4}, x.shape
@@ -170,20 +215,26 @@ def _stack_m(x: jax.Array, /, mesh: jax.sharding.Mesh | None) -> jax.Array:
     in_spec = P(z, None, 'x', 'y') if x.ndim == 4 else P(None, 'x', 'y')
     out_spec = P(z, 'x', 'y') if x.ndim == 4 else P('x', 'y')
     return shmap(stack, mesh, (in_spec, ), out_spec)(x)
+
+
 @jax.named_call
 def _fourier_derivative_for_real_basis_with_zero_imag(
         x: jax.Array, /, mesh: jax.sharding.Mesh | None) -> jax.Array:
     if mesh is None:
         return fourier.real_basis_derivative_with_zero_imag(x, axis=-2)
+
     def differentiate(u):
         axis = -2
         frequency_offset = u.shape[axis] // 2 * lax.axis_index('x')
         return fourier.real_basis_derivative_with_zero_imag(
             u, axis, frequency_offset)
+
     assert x.ndim in {2, 3}, x.shape
     z = None if x.shape[0] == 1 else 'z'
     spec = P(z, 'x', 'y') if x.ndim == 3 else P('x', 'y')
     return shmap(differentiate, mesh, (spec, ), spec, check_rep=False)(x)
+
+
 def _transform_einsum(
     subscripts: str,
     lhs: np.ndarray | jax.Array,
@@ -222,6 +273,8 @@ def _transform_einsum(
         reverse_arg_order=bool(reverse_einsum_arg_order),
         precision=precision,
     )
+
+
 @dataclasses.dataclass(frozen=True)
 class FastSphericalHarmonics(SphericalHarmonics):
     spmd_mesh: jax.sharding.Mesh | None = None
@@ -229,6 +282,7 @@ class FastSphericalHarmonics(SphericalHarmonics):
     reverse_einsum_arg_order: bool | None = None
     stacked_fourier_transforms: bool | None = None
     transform_precision: str = 'tensorfloat32'
+
     def __post_init__(self):
         model_parallelism = self.spmd_mesh is not None and any(
             self.spmd_mesh.shape[dim] > 1 for dim in 'zxy')
@@ -243,17 +297,21 @@ class FastSphericalHarmonics(SphericalHarmonics):
             stacked_matmuls = 2 * math.ceil(self.longitude_wavenumbers / 256)
             stack = stacked_matmuls <= unstacked_matmuls
             object.__setattr__(self, 'stacked_fourier_transforms', stack)
+
     @functools.cached_property
     def nodal_limits(self) -> tuple[int, int]:
         return (self.longitude_nodes, self.latitude_nodes)
+
     @functools.cached_property
     def modal_limits(self) -> tuple[int, int]:
         return (2 * self.longitude_wavenumbers, self.total_wavenumbers)
+
     def _mesh_shape(self) -> tuple[int, int]:
         if self.spmd_mesh is not None:
             return (self.spmd_mesh.shape['x'], self.spmd_mesh.shape['y'])
         else:
             return (1, 1)
+
     @functools.cached_property
     def nodal_shape(self) -> tuple[int, int]:
         base = self.base_shape_multiple or 1
@@ -261,6 +319,7 @@ class FastSphericalHarmonics(SphericalHarmonics):
         shape_multiples = (base * x_shards, base * y_shards)
         return tuple(
             map(_round_to_multiple, self.nodal_limits, shape_multiples))
+
     @functools.cached_property
     def modal_shape(self) -> tuple[int, int]:
         base = self.base_shape_multiple or 1
@@ -268,14 +327,17 @@ class FastSphericalHarmonics(SphericalHarmonics):
         shape_multiples = (2 * base * x_shards, base * y_shards)
         return tuple(
             map(_round_to_multiple, self.modal_limits, shape_multiples))
+
     @functools.cached_property
     def nodal_padding(self) -> tuple[int, int]:
         return tuple(x - y
                      for x, y in zip(self.nodal_shape, self.nodal_limits))
+
     @functools.cached_property
     def modal_padding(self) -> tuple[int, int]:
         return tuple(x - y
                      for x, y in zip(self.modal_shape, self.modal_limits))
+
     @functools.cached_property
     def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         nodal_pad_x, nodal_pad_y = self.nodal_padding
@@ -285,6 +347,7 @@ class FastSphericalHarmonics(SphericalHarmonics):
                                              self.latitude_spacing)
         sin_latitude = np.pad(sin_latitude, [(0, nodal_pad_y)])
         return longitude, sin_latitude
+
     @functools.cached_property
     def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         modal_pad_x, modal_pad_y = self.modal_padding
@@ -295,9 +358,11 @@ class FastSphericalHarmonics(SphericalHarmonics):
         tot_wavenumbers = np.pad(np.arange(self.total_wavenumbers),
                                  [(0, modal_pad_y)])
         return lon_wavenumbers, tot_wavenumbers
+
     @functools.cached_property
     def modal_dtype(self) -> np.dtype:
         return np.dtype(np.float32)
+
     @functools.cached_property
     def mask(self) -> np.ndarray:
         m, l = np.meshgrid(*self.modal_axes, indexing='ij')
@@ -305,6 +370,7 @@ class FastSphericalHarmonics(SphericalHarmonics):
                            indexing='ij')
         i_lim, j_lim = self.modal_limits
         return (abs(m) <= l) & (i != 1) & (i < i_lim) & (j < j_lim)
+
     @functools.cached_property
     def basis(self) -> _SphericalHarmonicBasis:
         nodal_pad_x, nodal_pad_y = self.nodal_padding
@@ -326,6 +392,7 @@ class FastSphericalHarmonics(SphericalHarmonics):
         p = np.pad(p, [(0, modal_pad_x // 2), (0, nodal_pad_y),
                        (0, modal_pad_y)])
         return _SphericalHarmonicBasis(f=f, p=p, w=w)
+
     def inverse_transform(self, x):
         p = self.basis.p
         f = self.basis.f
@@ -345,6 +412,7 @@ class FastSphericalHarmonics(SphericalHarmonics):
                                name='inv_fourier')('im,...mj->...ij', f, x,
                                                    mesh, *einsum_args)
         return x
+
     def transform(self, x):
         w = self.basis.w
         f = self.basis.f
@@ -366,35 +434,48 @@ class FastSphericalHarmonics(SphericalHarmonics):
                                                 mesh, *einsum_args)
         x = _stack_m(x, mesh)
         return x
+
     def longitudinal_derivative(self, x: Array) -> Array:
         return _fourier_derivative_for_real_basis_with_zero_imag(
             x, self.spmd_mesh)
+
+
 @dataclasses.dataclass(frozen=True)
 class RealSphericalHarmonicsWithZeroImag(FastSphericalHarmonics):
-def _vertical_pad(
-        field: jax.Array,
-        mesh: jax.sharding.Mesh | None) -> tuple[jax.Array, int | None]:
-    if field.ndim < 3 or field.shape[0] == 1 or mesh is None:
-        return field, None
-    assert field.ndim == 3, field.shape
-    z_multiple = mesh.shape['z']
-    z_padding = _round_to_multiple(field.shape[0], z_multiple) - field.shape[0]
-    return jnp.pad(field, [(0, z_padding), (0, 0), (0, 0)]), z_padding
-def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
-    if not padding:
-        return field
-    assert field.ndim == 3, field.shape
-    return jax.lax.slice_in_dim(field, 0, -padding, axis=0)
-def _with_vertical_padding(
-        f: Callable[[jax.Array], jax.Array],
-        mesh: jax.sharding.Mesh | None) -> Callable[[jax.Array], jax.Array]:
-    def g(x):
-        x, padding = _vertical_pad(x, mesh)
-        return _vertical_crop(f(x), padding)
-    return g
+
+    def _vertical_pad(
+            field: jax.Array,
+            mesh: jax.sharding.Mesh | None) -> tuple[jax.Array, int | None]:
+        if field.ndim < 3 or field.shape[0] == 1 or mesh is None:
+            return field, None
+        assert field.ndim == 3, field.shape
+        z_multiple = mesh.shape['z']
+        z_padding = _round_to_multiple(field.shape[0],
+                                       z_multiple) - field.shape[0]
+        return jnp.pad(field, [(0, z_padding), (0, 0), (0, 0)]), z_padding
+
+    def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
+        if not padding:
+            return field
+        assert field.ndim == 3, field.shape
+        return jax.lax.slice_in_dim(field, 0, -padding, axis=0)
+
+    def _with_vertical_padding(
+            f: Callable[[jax.Array], jax.Array], mesh: jax.sharding.Mesh | None
+    ) -> Callable[[jax.Array], jax.Array]:
+
+        def g(x):
+            x, padding = _vertical_pad(x, mesh)
+            return _vertical_crop(f(x), padding)
+
+        return g
+
+
 SPHERICAL_HARMONICS_IMPL_KEY = 'spherical_harmonics_impl'
 SPMD_MESH_KEY = 'spmd_mesh'
 SphericalHarmonicsImpl = Callable[..., SphericalHarmonics]
+
+
 @dataclasses.dataclass(frozen=True)
 class Grid:
     longitude_wavenumbers: int = 0
@@ -406,6 +487,7 @@ class Grid:
     radius: float | None = None
     spherical_harmonics_impl: SphericalHarmonicsImpl = RealSphericalHarmonics
     spmd_mesh: jax.sharding.Mesh | None = None
+
     def __post_init__(self):
         if self.radius is None:
             object.__setattr__(self, 'radius', 1.0)
@@ -419,6 +501,7 @@ class Grid:
                     "mesh is missing one or more of the required axis names 'x' and "
                     f"'y': {self.spmd_mesh}")
             assert isinstance(self.spherical_harmonics, FastSphericalHarmonics)
+
     @classmethod
     def with_wavenumbers(
         cls,
@@ -443,6 +526,7 @@ class Grid:
             spherical_harmonics_impl=spherical_harmonics_impl,
             radius=radius,
         )
+
     @classmethod
     def construct(
         cls,
@@ -464,66 +548,87 @@ class Grid:
             spherical_harmonics_impl=spherical_harmonics_impl,
             radius=radius,
         )
+
     @classmethod
     def T21(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=21, gaussian_nodes=16, **kwargs)
+
     @classmethod
     def T31(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=31, gaussian_nodes=24, **kwargs)
+
     @classmethod
     def T42(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=42, gaussian_nodes=32, **kwargs)
+
     @classmethod
     def T85(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=85, gaussian_nodes=64, **kwargs)
+
     @classmethod
     def T106(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=106, gaussian_nodes=80, **kwargs)
+
     @classmethod
     def T119(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=119, gaussian_nodes=90, **kwargs)
+
     @classmethod
     def T170(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=170, gaussian_nodes=128, **kwargs)
+
     @classmethod
     def T213(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=213, gaussian_nodes=160, **kwargs)
+
     @classmethod
     def T340(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=340, gaussian_nodes=256, **kwargs)
+
     @classmethod
     def T425(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=425, gaussian_nodes=320, **kwargs)
+
     @classmethod
     def TL31(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=31, gaussian_nodes=16, **kwargs)
+
     @classmethod
     def TL47(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=47, gaussian_nodes=24, **kwargs)
+
     @classmethod
     def TL63(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=63, gaussian_nodes=32, **kwargs)
+
     @classmethod
     def TL95(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=95, gaussian_nodes=48, **kwargs)
+
     @classmethod
     def TL127(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=127, gaussian_nodes=64, **kwargs)
+
     @classmethod
     def TL159(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=159, gaussian_nodes=80, **kwargs)
+
     @classmethod
     def TL179(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=179, gaussian_nodes=90, **kwargs)
+
     @classmethod
     def TL255(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=255, gaussian_nodes=128, **kwargs)
+
     @classmethod
     def TL639(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=639, gaussian_nodes=320, **kwargs)
+
     @classmethod
     def TL1279(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=1279, gaussian_nodes=640, **kwargs)
+
     def asdict(self) -> dict[str, Any]:
         items = dataclasses.asdict(self)
         items[
@@ -534,6 +639,7 @@ class Grid:
         else:
             items[SPMD_MESH_KEY] = ''
         return items
+
     @functools.cached_property
     def spherical_harmonics(self) -> SphericalHarmonics:
         if self.spmd_mesh is not None:
@@ -548,65 +654,83 @@ class Grid:
             latitude_spacing=self.latitude_spacing,
             **kwargs,
         )
+
     @property
     def longitudes(self) -> np.ndarray:
         return self.nodal_axes[0]
+
     @property
     def latitudes(self) -> np.ndarray:
         return np.arcsin(self.nodal_axes[1])
+
     @functools.cached_property
     def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         lon, sin_lat = self.spherical_harmonics.nodal_axes
         return lon + self.longitude_offset, sin_lat
+
     @functools.cached_property
     def nodal_shape(self) -> tuple[int, int]:
         return self.spherical_harmonics.nodal_shape
+
     @functools.cached_property
     def nodal_padding(self) -> tuple[int, int]:
         return self.spherical_harmonics.nodal_padding
+
     @functools.cached_property
     def nodal_mesh(self) -> tuple[np.ndarray, np.ndarray]:
         return np.meshgrid(*self.nodal_axes, indexing='ij')
+
     @functools.cached_property
     def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         return self.spherical_harmonics.modal_axes
+
     @functools.cached_property
     def modal_shape(self) -> tuple[int, int]:
         return self.spherical_harmonics.modal_shape
+
     @functools.cached_property
     def modal_padding(self) -> tuple[int, int]:
         return self.spherical_harmonics.modal_padding
+
     @functools.cached_property
     def mask(self) -> np.ndarray:
         return self.spherical_harmonics.mask
+
     @functools.cached_property
     def modal_mesh(self) -> tuple[np.ndarray, np.ndarray]:
         return np.meshgrid(*self.spherical_harmonics.modal_axes, indexing='ij')
+
     @functools.cached_property
     def cos_lat(self) -> jnp.ndarray:
         _, sin_lat = self.nodal_axes
         return np.sqrt(1 - sin_lat**2)
+
     @functools.cached_property
     def sec2_lat(self) -> jnp.ndarray:
         _, sin_lat = self.nodal_axes
         return 1 / (1 - sin_lat**2)  # pytype: disable=bad-return-type  # jnp-array
+
     @functools.cached_property
     def laplacian_eigenvalues(self) -> np.ndarray:
         _, l = self.modal_axes
         return -l * (l + 1) / (self.radius**2)
+
     @jax.named_call
     def to_nodal(self, x: typing.Pytree) -> typing.Pytree:
         f = _with_vertical_padding(self.spherical_harmonics.inverse_transform,
                                    self.spmd_mesh)
         return pytree_utils.tree_map_over_nonscalars(f, x)
+
     @jax.named_call
     def to_modal(self, z: typing.Pytree) -> typing.Pytree:
         f = _with_vertical_padding(self.spherical_harmonics.transform,
                                    self.spmd_mesh)
         return pytree_utils.tree_map_over_nonscalars(f, z)
+
     @jax.named_call
     def laplacian(self, x: Array) -> jnp.ndarray:
         return x * self.laplacian_eigenvalues
+
     @jax.named_call
     def inverse_laplacian(self, x: Array) -> jnp.ndarray:
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -615,16 +739,20 @@ class Grid:
         inverse_eigenvalues[self.total_wavenumbers:] = 0
         assert not np.isnan(inverse_eigenvalues).any()
         return x * inverse_eigenvalues
+
     @jax.named_call
     def clip_wavenumbers(self, x: typing.Pytree, n: int = 1) -> typing.Pytree:
         if n <= 0:
             raise ValueError(f'`n` must be >= 0; got {n}.')
+
         def clip(x):
             num_zeros = n + self.modal_padding[-1]
             mask = jnp.ones(self.modal_shape[-1],
                             x.dtype).at[-num_zeros:].set(0)
             return x * mask
+
         return pytree_utils.tree_map_over_nonscalars(clip, x)
+
     @functools.cached_property
     def _derivative_recurrence_weights(self) -> tuple[np.ndarray, np.ndarray]:
         m, l = self.modal_mesh
@@ -633,11 +761,13 @@ class Grid:
         b = np.sqrt(self.mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
         b[:, -1] = 0
         return a, b
+
     @jax.named_call
     def d_dlon(self, x: Array) -> Array:
         return _with_vertical_padding(
             self.spherical_harmonics.longitudinal_derivative,
             self.spmd_mesh)(x)
+
     @jax.named_call
     def cos_lat_d_dlat(self, x: Array) -> Array:
         _, l = self.modal_mesh
@@ -645,6 +775,7 @@ class Grid:
         x_lm1 = jax_numpy_utils.shift(((l + 1) * a) * x, -1, axis=-1)
         x_lp1 = jax_numpy_utils.shift((-l * b) * x, +1, axis=-1)
         return x_lm1 + x_lp1
+
     @jax.named_call
     def sec_lat_d_dlat_cos2(self, x: Array) -> Array:
         _, l = self.modal_mesh
@@ -652,6 +783,7 @@ class Grid:
         x_lm1 = jax_numpy_utils.shift(((l - 1) * a) * x, -1, axis=-1)
         x_lp1 = jax_numpy_utils.shift((-(l + 2) * b) * x, +1, axis=-1)
         return x_lm1 + x_lp1
+
     @jax.named_call
     def cos_lat_grad(self, x: Array, clip: bool = True) -> Array:
         raw = self.d_dlon(x) / self.radius, self.cos_lat_d_dlat(
@@ -659,9 +791,11 @@ class Grid:
         if clip:
             return self.clip_wavenumbers(raw)
         return raw  # pytype: disable=bad-return-type  # jnp-array
+
     @jax.named_call
     def k_cross(self, v: ArrayOrArrayTuple) -> Array:
         return -v[1], v[0]  # pytype: disable=bad-return-type  # jnp-array
+
     @jax.named_call
     def div_cos_lat(
         self,
@@ -673,6 +807,7 @@ class Grid:
         if clip:
             return self.clip_wavenumbers(raw)
         return raw
+
     @jax.named_call
     def curl_cos_lat(
         self,
@@ -684,17 +819,25 @@ class Grid:
         if clip:
             return self.clip_wavenumbers(raw)
         return raw
+
     @property
     def quadrature_weights(self) -> np.ndarray:
         return np.broadcast_to(self.spherical_harmonics.basis.w,
                                self.nodal_shape)
+
     @jax.named_call
     def integrate(self, z: Array) -> Array:
         w = self.spherical_harmonics.basis.w * self.radius**2
         return einsum('y,...xy->...', w, z)
+
+
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
+
+
 def add_constant(x: jnp.ndarray, c: float | Array) -> jnp.ndarray:
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
+
+
 @jax.named_call
 def get_cos_lat_vector(
     vorticity: Array,
@@ -709,6 +852,8 @@ def get_cos_lat_vector(
         grid.cos_lat_grad(velocity_potential, clip=clip),
         grid.k_cross(grid.cos_lat_grad(stream_function, clip=clip)),
     )
+
+
 @functools.partial(jax.jit, static_argnames=('grid', 'clip'))
 def uv_nodal_to_vor_div_modal(
     grid: Grid,
@@ -721,6 +866,8 @@ def uv_nodal_to_vor_div_modal(
     vorticity = grid.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
     divergence = grid.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
     return vorticity, divergence
+
+
 @functools.partial(jax.jit, static_argnames=('grid', 'clip'))
 def vor_div_to_uv_nodal(
     grid: Grid,

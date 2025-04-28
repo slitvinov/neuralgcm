@@ -9,11 +9,16 @@ from dinosaur import xarray_utils
 import jax
 import jax.numpy as jnp
 import numpy as np
+
 units = scales.units
 Array = typing.Array
 Numeric = typing.Numeric
+
+
 def subtract_longitudes(a, b):
     return jnp.mod(a - b + jnp.pi, 2 * jnp.pi) - jnp.pi
+
+
 def one_layer(u: Array, grid: spherical_harmonic.Grid) -> shallow_water.State:
     sec_lat = 1 / grid.cos_lat
     lon, _ = grid.nodal_axes
@@ -29,6 +34,8 @@ def one_layer(u: Array, grid: spherical_harmonic.Grid) -> shallow_water.State:
     return shallow_water.State(vorticity=vorticity,
                                divergence=jnp.zeros_like(vorticity),
                                potential=potential)
+
+
 def multi_layer(
     u: Array,
     density: Array,
@@ -45,6 +52,8 @@ def multi_layer(
             jnp.linalg.solve(density_ratios, flat_potential),
             s.potential.shape)
     return shallow_water.State(s.vorticity, s.divergence, potential)
+
+
 class BarotropicInstabilityParameters(NamedTuple):
     jet_northern_lat: Numeric
     jet_southern_lat: Numeric
@@ -55,6 +64,8 @@ class BarotropicInstabilityParameters(NamedTuple):
     bump_lat_location: Numeric
     bump_lat_scale: Numeric
     bump_height_scale: Numeric
+
+
 def get_default_parameters() -> BarotropicInstabilityParameters:
     return BarotropicInstabilityParameters(
         jet_northern_lat=np.array(np.pi / 2 - np.pi / 7) * units.radian,
@@ -66,6 +77,8 @@ def get_default_parameters() -> BarotropicInstabilityParameters:
         bump_lat_location=np.array(np.pi / 4) * units.radian,
         bump_lat_scale=np.array(1 / 15) * units.radian,
         bump_height_scale=np.array(120.) * units.m)
+
+
 def get_random_parameters(
     key: jnp.ndarray,
     default_parameters: BarotropicInstabilityParameters,
@@ -75,6 +88,8 @@ def get_random_parameters(
     random_bump_lat = (default_parameters.jet_southern_lat +
                        jax.random.beta(key, 4, 4) * jet_width)
     return default_parameters._replace(bump_lat_location=random_bump_lat)
+
+
 def get_zonal_velocity(
     latitude: Numeric,
     parameters: BarotropicInstabilityParameters,
@@ -88,6 +103,8 @@ def get_zonal_velocity(
     velocity_inside_jet = (parameters.jet_max_velocity / normalizer *
                            velocity_shape)
     return jnp.where(inside_jet, velocity_inside_jet, 0)
+
+
 def get_height(longitude: Numeric, latitude: Numeric,
                parameters: BarotropicInstabilityParameters):
     bump_shape = jnp.cos(latitude) * jnp.exp(
@@ -96,6 +113,8 @@ def get_height(longitude: Numeric, latitude: Numeric,
         ((parameters.bump_lat_location - latitude) /
          parameters.bump_lat_scale)**2)
     return parameters.bump_height_scale * bump_shape
+
+
 def barotropic_instability_tc(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: Any,
@@ -103,6 +122,7 @@ def barotropic_instability_tc(
     _, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
     default_parameters = get_default_parameters()
+
     def random_state_fn(rng_key: jnp.ndarray) -> shallow_water.State:
         parameters = get_random_parameters(rng_key, default_parameters)
         parameters = jax.tree.map(physics_specs.nondimensionalize, parameters)
@@ -119,6 +139,7 @@ def barotropic_instability_tc(
                                                        bump_potential),
                                             divergence=steady.divergence)
         return initial_state
+
     top_potential = physics_specs.nondimensionalize(
         default_parameters.mean_height) * physics_specs.g
     reference_potential = np.linspace(0,

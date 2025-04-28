@@ -4,8 +4,9 @@ from dinosaur import scales
 import jax.numpy as jnp
 import numpy as np
 import tree_math
+
 Array = Union[np.ndarray, jnp.ndarray]
-ArrayOrArrayTuple = Union[Array,tuple[Array, ...]]
+ArrayOrArrayTuple = Union[Array, tuple[Array, ...]]
 Numeric = Union[float, int, Array]
 Quantity = scales.Quantity
 PRNGKeyArray = Any
@@ -16,11 +17,15 @@ PyTreeDiagnostics = Pytree
 AuxFeatures = dict[str, Any]
 DataState = dict[str, Any]
 ForcingData = dict[str, Any]
+
+
 @dataclasses.dataclass(eq=True, order=True, frozen=True)
 class KeyWithCosLatFactor:
     name: str
     factor_order: int
     filter_strength: float = 0.0
+
+
 @tree_math.struct
 class RandomnessState:
     core: Union[Pytree, None] = None
@@ -28,6 +33,8 @@ class RandomnessState:
     modal_value: Union[Pytree, None] = None
     prng_key: Union[PRNGKeyArray, None] = None
     prng_step: Union[int, None] = None
+
+
 @tree_math.struct
 class ModelState(Generic[PyTreeState]):
     state: PyTreeState
@@ -35,12 +42,15 @@ class ModelState(Generic[PyTreeState]):
     diagnostics: Pytree = dataclasses.field(default_factory=dict)
     randomness: RandomnessState = dataclasses.field(
         default_factory=RandomnessState)
+
+
 @tree_math.struct
 class TrajectoryRepresentations:
     data_nodal_trajectory: Pytree
     data_modal_trajectory: Pytree
     model_nodal_trajectory: Pytree
     model_modal_trajectory: Pytree
+
     def get_representation(self, *, is_nodal: bool,
                            is_encoded: bool) -> Pytree:
         binary_nodal_encoded_dict = {
@@ -50,6 +60,8 @@ class TrajectoryRepresentations:
             (False, False): self.data_modal_trajectory,
         }
         return binary_nodal_encoded_dict[(is_nodal, is_encoded)]
+
+
 State = TypeVar('State')
 StateFn = Callable[[State], State]
 InverseFn = Callable[[State, jnp.ndarray], State]
@@ -70,8 +82,8 @@ PostProcessFn = Callable[..., Any]
 Params = Union[Mapping[str, Mapping[str, Array]], None]
 StepFn = Callable[[PyTreeState, Union[Forcing, None]], PyTreeState]
 StepModule = Callable[..., StepFn]
-CorrectorFn = Callable[[PyTreeState, Union[PyTreeState, None], Union[Forcing, None]],
-                       PyTreeState]
+CorrectorFn = Callable[
+    [PyTreeState, Union[PyTreeState, None], Union[Forcing, None]], PyTreeState]
 CorrectorModule = Callable[..., CorrectorFn]
 ParameterizationFn = Callable[
     [

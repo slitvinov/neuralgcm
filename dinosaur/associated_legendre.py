@@ -1,6 +1,8 @@
 import functools
 import numpy as np
 import scipy.special as sps
+
+
 def _evaluate_rhombus(n_l: int,
                       n_m: int,
                       x: np.ndarray,
@@ -22,6 +24,8 @@ def _evaluate_rhombus(n_l: int,
         b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
         p[k, :m_max] = a * (x * p[k - 1, :m_max] - b * p[k - 2, :m_max])
     return p
+
+
 def evaluate(n_m: int, n_l: int, x: np.ndarray) -> np.ndarray:
     if n_m > n_l:
         raise ValueError(
@@ -33,8 +37,12 @@ def evaluate(n_m: int, n_l: int, x: np.ndarray) -> np.ndarray:
     for m in range(n_m):
         p[m, :, m:n_l] = r[m, :, 0:n_l - m]
     return p
+
+
 def gauss_legendre_nodes(n: int) -> tuple[np.ndarray, np.ndarray]:
     return sps.roots_legendre(n)
+
+
 @functools.lru_cache(maxsize=128)
 def equiangular_nodes(n: int) -> tuple[np.ndarray, np.ndarray]:
     spacing = np.pi / n
@@ -42,12 +50,16 @@ def equiangular_nodes(n: int) -> tuple[np.ndarray, np.ndarray]:
     x = np.sin(theta)
     w = _compute_weights(x)
     return x, w
+
+
 @functools.lru_cache(maxsize=128)
 def equiangular_nodes_with_poles(n: int) -> tuple[np.ndarray, np.ndarray]:
     theta = np.linspace(-np.pi / 2, np.pi / 2, n)
     x = np.sin(theta)
     w = _compute_weights(x)
     return x, w
+
+
 def _compute_weights(x: np.ndarray) -> np.ndarray:
     legendre = evaluate(n_m=1, n_l=x.shape[0], x=x)[0].T
     z = np.zeros_like(x)

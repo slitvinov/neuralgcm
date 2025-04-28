@@ -1,6 +1,8 @@
 import dataclasses
 from dinosaur import typing
 import tree_math
+
+
 @tree_math.struct
 class State:
     u: typing.Array

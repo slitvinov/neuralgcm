@@ -11,6 +11,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import tree_math
+
 units = scales.units
 Array = typing.Array
 Numeric = typing.Numeric
@@ -21,11 +22,15 @@ StateFn = typing.StateFn
 StepFn = typing.StepFn
 SCALE = scales.DEFAULT_SCALE
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
+
+
 @tree_math.struct
 class State:
     vorticity: Array
     divergence: Array
     potential: Array
+
+
 @dataclasses.dataclass(frozen=True)
 class ShallowWaterSpecs:
     densities: Array
@@ -33,16 +38,21 @@ class ShallowWaterSpecs:
     angular_velocity: float
     gravity_acceleration: float
     scale: scales.ScaleProtocol
+
     @property
     def g(self) -> float:
         return self.gravity_acceleration
+
     @property
     def num_layers(self) -> int:
         return self.densities.size
+
     def nondimensionalize(self, quantity: Quantity) -> Numeric:
         return self.scale.nondimensionalize(quantity)
+
     def dimensionalize(self, value: Numeric, unit: units.Unit) -> Quantity:
         return self.scale.dimensionalize(value, unit)
+
     @classmethod
     def from_si(
         cls,
@@ -56,34 +66,48 @@ class ShallowWaterSpecs:
                    scale.nondimensionalize(radius_si),
                    scale.nondimensionalize(angular_velocity_si),
                    scale.nondimensionalize(gravity_acceleration_si), scale)
+
+
 def state_to_nodal(state: State, grid: spherical_harmonic.Grid) -> State:
     return jax.tree.map(lambda x: grid.to_nodal(grid.clip_wavenumbers(x)),
                         state)
+
+
 def state_to_modal(state: State, grid: spherical_harmonic.Grid) -> State:
     return jax.tree.map(grid.to_modal, state)
+
+
 def get_density_ratios(density: Array) -> np.ndarray:
     ratios = np.minimum(density / density[..., np.newaxis], 1)
     np.fill_diagonal(ratios, 0)
     return ratios
+
+
 def get_coriolis(grid: spherical_harmonic.Grid) -> np.ndarray:
     _, sin_lat = grid.nodal_mesh
     return sin_lat
+
+
 @dataclasses.dataclass
 class ShallowWaterEquations(time_integration.ImplicitExplicitODE):
     coords: coordinate_systems.CoordinateSystem
     physics_specs: ShallowWaterSpecs
     orography: Array
     reference_potential: Array
+
     @property
     def coriolis_parameter(self) -> Array:
         _, sin_lat = self.coords.horizontal.nodal_mesh
         return 2 * self.physics_specs.angular_velocity * sin_lat
+
     @property
     def density_ratios(self) -> Array:
         return get_density_ratios(self.physics_specs.densities)
+
     @property
     def ref_potential(self) -> Array:
         return self.reference_potential[..., np.newaxis, np.newaxis]
+
     def explicit_terms(self, state: State) -> State:
         u = jnp.stack(
             spherical_harmonic.get_cos_lat_vector(state.vorticity,
@@ -114,12 +138,14 @@ class ShallowWaterEquations(time_integration.ImplicitExplicitODE):
             -self.coords.horizontal.div_cos_lat(g))
         return State(explicit_vorticity, explicit_divergence,
                      explicit_potential)
+
     def implicit_terms(self, state: State) -> State:
         return State(
             vorticity=jnp.zeros_like(state.vorticity),
             divergence=-self.coords.horizontal.laplacian(state.potential),
             potential=-self.ref_potential * state.divergence,
         )
+
     def implicit_inverse(self, state: State, step_size: float) -> State:
         inverse_schur_complement = 1 / (
             1 - step_size**2 * self.ref_potential *
@@ -133,6 +159,8 @@ class ShallowWaterEquations(time_integration.ImplicitExplicitODE):
             (-step_size * self.ref_potential * state.divergence +
              state.potential),
         )
+
+
 def shallow_water_leapfrog_step(
     coords: coordinate_systems.CoordinateSystem,
     dt: float,
@@ -145,6 +173,8 @@ def shallow_water_leapfrog_step(
                                               mean_potential)
     return time_integration.semi_implicit_leapfrog(shallow_water_ode, dt,
                                                    alpha)
+
+
 def shallow_water_leapfrog_trajectory(
     coords: coordinate_systems.CoordinateSystem,
     dt: float,
@@ -163,6 +193,8 @@ def shallow_water_leapfrog_trajectory(
     trajectory_fn = time_integration.trajectory_from_step(
         step_fn, outer_steps, inner_steps, post_process_fn=post_process_fn)
     return trajectory_fn
+
+
 def default_filters(
     grid: spherical_harmonic.Grid,
     dt: float,

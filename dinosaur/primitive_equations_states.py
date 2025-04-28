@@ -8,10 +8,13 @@ from dinosaur import xarray_utils
 import jax
 import jax.numpy as jnp
 import numpy as np
+
 units = scales.units
 Array = typing.Array
 Quantity = typing.Quantity
 QuantityOrStr = Union[Quantity, str]
+
+
 def isothermal_rest_atmosphere(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
@@ -33,10 +36,13 @@ def isothermal_rest_atmosphere(
             raise ValueError(
                 f'Expected surface_height to have shape {lat.shape}, '
                 f'got {surface_height.shape}')
+
     def _get_vorticity(sigma, lon, lat):
         del sigma, lon  # unused.
         return jnp.zeros_like(lat)
+
     def _get_surface_pressure(lon, lat, rng_key):
+
         def relative_pressure(altitude_m):
             g = 9.80665  # m/s2
             cp = 1004.68506  # J/(kg·K)
@@ -44,6 +50,7 @@ def isothermal_rest_atmosphere(
             M = 0.02896968  # kg/mol
             R0 = 8.314462618  # J/(mol·K)
             return (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
+
         altitude_m = physics_specs.dimensionalize(orography,
                                                   units.meter).magnitude
         surface_pressure = (p0 * np.ones(coords.surface_nodal_shape) *
@@ -59,6 +66,7 @@ def isothermal_rest_atmosphere(
                         jnp.exp(-(lat - lat0)**2 /
                                 (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
         return surface_pressure + p1 * perturbation
+
     def random_state_fn(rng_key: jnp.ndarray) -> primitive_equations.State:
         nodal_vorticity = jnp.stack([
             _get_vorticity(sigma, lon, lat)
@@ -73,11 +81,14 @@ def isothermal_rest_atmosphere(
             log_surface_pressure=(coords.horizontal.to_modal(
                 jnp.log(nodal_surface_pressure))),
         )
+
     aux_features = {
         xarray_utils.OROGRAPHY: orography,
         xarray_utils.REF_TEMP_KEY: np.full((coords.vertical.layers, ), tref)
     }
     return random_state_fn, aux_features
+
+
 def isothermal_rest_atmosphere_with_orography_path(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
@@ -103,6 +114,8 @@ def isothermal_rest_atmosphere_with_orography_path(
         p0=p0,
         p1=p1,
         surface_height=(nodal_orography_filtered * units.meters))
+
+
 def steady_state_jw(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
@@ -123,12 +136,14 @@ def steady_state_jw(
     g = physics_specs.g
     r_gas = physics_specs.R
     omega = physics_specs.angular_velocity
+
     def _get_reference_temperature(sigma):
         top_mean_t = t0 * sigma**(r_gas * gamma / g)
         if sigma < sigma_tropo:
             return top_mean_t + delta_t * (sigma_tropo - sigma)**5
         else:
             return top_mean_t
+
     def _get_reference_geopotential(sigma):
         top_mean_potential = (t0 * g / gamma) * (1 -
                                                  sigma**(r_gas * gamma / g))
@@ -140,6 +155,7 @@ def steady_state_jw(
                 (5 / 4) * sigma_tropo * sigma**4 - (sigma**5) / 5)
         else:
             return top_mean_potential
+
     def _get_geopotential(lat, lon, sigma):
         del lon  # unused.
         sigma_nu = (sigma - sigma0) * np.pi / 2
@@ -150,6 +166,7 @@ def steady_state_jw(
                  (3 / 2)) +
                 ((1.6 * (np.cos(lat)**3) *
                   (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * a * omega))
+
     def _get_temperature_variation(lat, lon, sigma):
         del lon  # unused.
         sigma_nu = (sigma - sigma0) * np.pi / 2
@@ -161,21 +178,26 @@ def steady_state_jw(
                  2 * u0 * cos_𝜎ν**(3 / 2)) +
                 ((1.6 * (np.cos(lat)**3) *
                   (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * a * omega))
+
     def _get_vorticity(lat, lon, sigma):
         del lon  # unused.
         sigma_nu = (sigma - sigma0) * np.pi / 2
         return ((-4 * u0 / a) * (np.cos(sigma_nu)**(3 / 2)) * np.sin(lat) *
                 np.cos(lat) * (2 - 5 * np.sin(lat)**2))
+
     def _get_surface_pressure(
         lat,
         lon,
     ):
         del lon  # unused.
         return p0 * np.ones(lat.shape)[np.newaxis, ...]
+
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
+
     def initial_state_fn(
-            rng_key: Union[jnp.ndarray, None] = None) -> primitive_equations.State:
+            rng_key: Union[jnp.ndarray,
+                           None] = None) -> primitive_equations.State:
         del rng_key  # unused.
         nodal_vorticity = np.stack([
             _get_vorticity(lat, lon, sigma)
@@ -195,6 +217,7 @@ def steady_state_jw(
             log_surface_pressure=coords.horizontal.to_modal(
                 log_nodal_surface_pressure))
         return state
+
     orography = _get_geopotential(lat, lon, 1.) / g
     geopotential = np.stack([
         _get_geopotential(lat, lon, sigma) for sigma in coords.vertical.centers
@@ -208,6 +231,8 @@ def steady_state_jw(
         xarray_utils.REF_TEMP_KEY: reference_temperatures,
     }
     return initial_state_fn, aux_features
+
+
 def baroclinic_perturbation_jw(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
@@ -218,6 +243,7 @@ def baroclinic_perturbation_jw(
 ) -> primitive_equations.State:
     u_p = physics_specs.nondimensionalize(u_perturb)
     a = physics_specs.radius
+
     def _get_vorticity_perturbation(lat, lon, sigma):
         del sigma  # unused.
         x = (np.sin(lat_location) * np.sin(lat) +
@@ -229,6 +255,7 @@ def baroclinic_perturbation_jw(
             (np.sin(lat_location) * np.cos(lat) -
              np.cos(lat_location) * np.sin(lat) * np.cos(lon - lon_location)) /
             (np.sqrt(1 - x**2)))
+
     def _get_divergence_perturbation(lat, lon, sigma):
         del sigma  # unused.
         x = (np.sin(lat_location) * np.sin(lat) +
@@ -238,6 +265,7 @@ def baroclinic_perturbation_jw(
         return (-2 * u_p * a / (R**2)) * np.exp(-(r / R)**2) * np.arccos(x) * (
             (np.cos(lat_location) * np.sin(lon - lon_location)) /
             (np.sqrt(1 - x**2)))
+
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
     nodal_vorticity = np.stack([
@@ -257,6 +285,8 @@ def baroclinic_perturbation_jw(
         log_surface_pressure=np.zeros_like(modal_vorticity[:1, ...]),
     )
     return state
+
+
 def gaussian_scalar(coords: coordinate_systems.CoordinateSystem,
                     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
                     lon_location: float = np.pi / 9,
@@ -264,6 +294,7 @@ def gaussian_scalar(coords: coordinate_systems.CoordinateSystem,
                     perturbation_radius: float = 0.2,
                     amplitude: float = 1.) -> Array:
     a = physics_specs.radius
+
     def _get_field_values(lat, lon, sigma):
         del sigma  # unused.
         x = (np.sin(lat_location) * np.sin(lat) +
@@ -271,6 +302,7 @@ def gaussian_scalar(coords: coordinate_systems.CoordinateSystem,
         r = a * np.arccos(x)
         R = a * perturbation_radius  # pylint: disable=invalid-name
         return amplitude * np.exp(-(r / R)**2)
+
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
     return coords.horizontal.to_modal(

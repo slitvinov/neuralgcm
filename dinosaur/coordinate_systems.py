@@ -9,13 +9,15 @@ from dinosaur import typing
 import jax
 import jax.numpy as jnp
 import numpy as np
+
 HORIZONTAL_COORD_TYPE_KEY = 'horizontal_grid_type'
 VERTICAL_COORD_TYPE_KEY = 'vertical_grid_type'
 HorizontalGridTypes = spherical_harmonic.Grid
 VerticalCoordinateTypes = Union[layer_coordinates.LayerCoordinates,
-                                sigma_coordinates.SigmaCoordinates,
-                                Any]
+                                sigma_coordinates.SigmaCoordinates, Any]
 P = jax.sharding.PartitionSpec
+
+
 def _with_sharding_constraint(
     x: typing.Pytree,
     sharding: Union[jax.sharding.NamedSharding, None],
@@ -25,6 +27,7 @@ def _with_sharding_constraint(
     if len(sharding.spec) != 3:
         raise ValueError(
             f'partition spec does not have length 3: {sharding.spec}')
+
     def f(y: jax.Array) -> jax.Array:
         if y.ndim == 1 and y.dtype == jnp.uint32:
             return y  # prng key
@@ -39,11 +42,14 @@ def _with_sharding_constraint(
         else:
             sharding_ = sharding
         return jax.lax.with_sharding_constraint(y, sharding_)
+
     try:
         return pytree_utils.tree_map_over_nonscalars(f, x)
     except ValueError as e:
         shapes = jax.tree_util.tree_map(jnp.shape, x)
         raise ValueError(f'failed to shard pytree with shapes {shapes}') from e
+
+
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
     horizontal: HorizontalGridTypes
@@ -52,6 +58,7 @@ class CoordinateSystem:
     dycore_partition_spec: jax.sharding.PartitionSpec = P('z', 'x', 'y')
     physics_partition_spec: jax.sharding.PartitionSpec = P(
         None, ('x', 'z'), 'y')
+
     def __post_init__(self):
         if self.spmd_mesh is not None:
             if not {'x', 'y', 'z'} <= set(self.spmd_mesh.axis_names):
@@ -61,30 +68,38 @@ class CoordinateSystem:
         horizontal = dataclasses.replace(self.horizontal,
                                          spmd_mesh=self.spmd_mesh)
         object.__setattr__(self, 'horizontal', horizontal)
+
     def _get_sharding(
         self, partition_spec: jax.sharding.PartitionSpec
     ) -> Union[jax.sharding.NamedSharding, None]:
         if self.spmd_mesh is None:
             return None
         return jax.sharding.NamedSharding(self.spmd_mesh, partition_spec)
+
     @property
     def physics_sharding(self) -> Union[jax.sharding.NamedSharding, None]:
         return self._get_sharding(self.physics_partition_spec)
+
     def with_physics_sharding(self,
                               x: typing.PyTreeState) -> typing.PyTreeState:
         return _with_sharding_constraint(x, self.physics_sharding)
+
     @property
     def dycore_sharding(self) -> Union[jax.sharding.NamedSharding, None]:
         return self._get_sharding(self.dycore_partition_spec)
+
     def with_dycore_sharding(self,
                              x: typing.PyTreeState) -> typing.PyTreeState:
         return _with_sharding_constraint(x, self.dycore_sharding)
+
     def dycore_to_physics_sharding(
             self, x: typing.PyTreeState) -> typing.PyTreeState:
         return self.with_physics_sharding(self.with_dycore_sharding(x))
+
     def physics_to_dycore_sharding(
             self, x: typing.PyTreeState) -> typing.PyTreeState:
         return self.with_dycore_sharding(self.with_physics_sharding(x))
+
     def asdict(self) ->...:
         horizontal_keys = set(self.horizontal.asdict().keys())
         vertical_keys = set(self.vertical.asdict().keys())
@@ -94,18 +109,24 @@ class CoordinateSystem:
         out[HORIZONTAL_COORD_TYPE_KEY] = type(self.horizontal).__name__
         out[VERTICAL_COORD_TYPE_KEY] = type(self.vertical).__name__
         return out
+
     @property
     def nodal_shape(self) -> tuple[int, int, int]:
         return (self.vertical.layers, ) + self.horizontal.nodal_shape
+
     @property
     def modal_shape(self) -> tuple[int, int, int]:
         return (self.vertical.layers, ) + self.horizontal.modal_shape
+
     @property
     def surface_nodal_shape(self) -> tuple[int, int, int]:
         return (1, ) + self.horizontal.nodal_shape
+
     @property
     def surface_modal_shape(self) -> tuple[int, int, int]:
         return (1, ) + self.horizontal.modal_shape
+
+
 def get_spectral_downsample_fn(
     coords: CoordinateSystem,
     save_coords: CoordinateSystem,
@@ -121,11 +142,15 @@ def get_spectral_downsample_fn(
                 < save_coords.horizontal.longitude_wavenumbers):
         raise ValueError(
             'save_coords.horizontal larger than coords.horizontal')
+
     def downsample_fn(state: typing.PyTreeState) -> typing.PyTreeState:
         slice_fn = lambda x: x[..., lon_wavenumber_slice,
                                total_wavenumber_slice]
         return pytree_utils.tree_map_over_nonscalars(slice_fn, state)
+
     return downsample_fn
+
+
 def get_spectral_upsample_fn(
     coords: CoordinateSystem,
     save_coords: CoordinateSystem,
@@ -141,10 +166,14 @@ def get_spectral_upsample_fn(
         raise ValueError(
             'save_coords.horizontal smaller than coords.horizontal')
     tail_pad = (lon_wavenumber_pad, total_wavenumber_pad)
+
     def upsample_fn(state: typing.PyTreeState) -> typing.PyTreeState:
         pad_fn = lambda x: jnp.pad(x, ((0, 0), ) * (x.ndim - 2) + tail_pad)
         return pytree_utils.tree_map_over_nonscalars(pad_fn, state)
+
     return upsample_fn
+
+
 def get_spectral_interpolate_fn(
     source_coords: CoordinateSystem,
     target_coords: CoordinateSystem,
@@ -166,6 +195,8 @@ def get_spectral_interpolate_fn(
         raise ValueError('Incompatible horizontal coordinates with shapes '
                          f'{source_coords.horizontal.modal_shape}, '
                          f'{target_coords.horizontal.modal_shape}')
+
+
 def get_nodal_shapes(
     inputs: typing.Pytree,
     coords: CoordinateSystem,
@@ -176,6 +207,8 @@ def get_nodal_shapes(
     return pytree_utils.tree_map_over_nonscalars(array_shape_fn,
                                                  inputs,
                                                  scalar_fn=scalar_shape_fn)
+
+
 def get_modal_shapes(
     inputs: typing.Pytree,
     coords: CoordinateSystem,
@@ -186,26 +219,36 @@ def get_modal_shapes(
     return pytree_utils.tree_map_over_nonscalars(array_shape_fn,
                                                  inputs,
                                                  scalar_fn=scalar_shape_fn)
+
+
 def maybe_to_nodal(
     fields: typing.Pytree,
     coords: CoordinateSystem,
 ) -> typing.Pytree:
     nodal_shapes = get_nodal_shapes(fields, coords)
+
     def to_nodal_fn(x):
         return coords.with_dycore_sharding(
             coords.horizontal.to_nodal(coords.with_dycore_sharding(x)))
+
     fn = lambda x, nodal: x if x.shape == tuple(nodal) else to_nodal_fn(x)
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)
+
+
 def maybe_to_modal(
     fields: typing.Pytree,
     coords: CoordinateSystem,
 ) -> typing.Pytree:
     modal_shapes = get_modal_shapes(fields, coords)
+
     def to_modal_fn(x):
         return coords.with_dycore_sharding(
             coords.horizontal.to_modal(coords.with_dycore_sharding(x)))
+
     fn = lambda x, modal: x if x.shape == tuple(modal) else to_modal_fn(x)
     return jax.tree_util.tree_map(fn, fields, modal_shapes)
+
+
 def _map_over_matching_keys(
     inputs: dict[str, Any],
     fn: Callable[[typing.Array], typing.Array],
@@ -218,6 +261,8 @@ def _map_over_matching_keys(
         else:
             outputs[k] = _map_over_matching_keys(v, fn, keys_to_map_over)
     return outputs
+
+
 def scale_levels_for_matching_keys(
         inputs: typing.Pytree,
         scales: typing.Array,

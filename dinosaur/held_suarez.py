@@ -6,9 +6,13 @@ from dinosaur import typing
 import jax
 import jax.numpy as jnp
 import numpy as np
+
 units = scales.units
 Quantity = units.Quantity
+
+
 class HeldSuarezForcing(time_integration.ExplicitODE):
+
     def __init__(
         self,
         coords: coordinate_systems.CoordinateSystem,
@@ -39,15 +43,18 @@ class HeldSuarezForcing(time_integration.ExplicitODE):
         self.sigma = self.coords.vertical.centers
         _, sin_lat = self.coords.horizontal.nodal_mesh
         self.lat = np.arcsin(sin_lat)
+
     def kv(self):
         kv_coeff = self.kf * (np.maximum(0, (self.sigma - self.sigma_b) /
                                          (1 - self.sigma_b)))
         return kv_coeff[:, np.newaxis, np.newaxis]
+
     def kt(self):
         cutoff = np.maximum(0,
                             (self.sigma - self.sigma_b) / (1 - self.sigma_b))
         return self.ka + (self.ks - self.ka) * (
             cutoff[:, np.newaxis, np.newaxis] * np.cos(self.lat)**4)
+
     def equilibrium_temperature(self, nodal_surface_pressure):
         p_over_p0 = (self.sigma[:, np.newaxis, np.newaxis] *
                      nodal_surface_pressure / self.p0)
@@ -55,6 +62,7 @@ class HeldSuarezForcing(time_integration.ExplicitODE):
             self.maxT - self.dTy * np.sin(self.lat)**2 -
             self.dThz * jnp.log(p_over_p0) * np.cos(self.lat)**2)
         return jnp.maximum(self.minT, temperature)
+
     def explicit_terms(
             self,
             state: primitive_equations.State) -> primitive_equations.State:

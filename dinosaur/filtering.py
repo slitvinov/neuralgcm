@@ -13,7 +13,7 @@
 # limitations under the License.
 """Filters for GCM models."""
 import functools
-from typing import Callable
+from typing import Callable, Union
 
 from dinosaur import spherical_harmonic
 from dinosaur import typing
@@ -36,8 +36,8 @@ def _make_filter_fn(scaling, name=None):
 
 def exponential_filter(
     grid: spherical_harmonic.Grid,
-    attenuation: float | typing.Array = 16,
-    order: int | typing.Array = 18,
+    attenuation: Union[float, typing.Array] = 16,
+    order: Union[int, typing.Array] = 18,
     cutoff: float = 0,
 ) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
     """Returns a filter that attenuates modes with high total wavenumber.
@@ -90,7 +90,7 @@ def exponential_filter(
 
 def horizontal_diffusion_filter(
     grid: spherical_harmonic.Grid,
-    scale: float | typing.Array,
+    scale: Union[float, typing.Array],
     order: int = 1,
 ) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
     """Returns a filter that applies a horizontal diffusion step."""

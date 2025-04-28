@@ -435,44 +435,6 @@ Input = TypeVar('Input')
 Output = TypeVar('Output')
 Func = TypeVar('Func', bound=Callable)
 
-
-def nested_checkpoint_scan(
-    f: Callable[[Carry, Input], tuple[Carry, Output]],
-    init: Carry,
-    xs: Input,
-    length: Optional[int] = None,
-    *,
-    nested_lengths: Sequence[int],
-    scan_fn: typing.ScanFn = jax.lax.scan,
-    checkpoint_fn: Callable[[Func], Func] = jax.checkpoint,
-) -> tuple[Carry, Output]:
-    if length is not None and length != math.prod(nested_lengths):
-        raise ValueError(f'inconsistent {length=} and {nested_lengths=}')
-
-    def nested_reshape(x):
-        x = jnp.asarray(x)
-        new_shape = tuple(nested_lengths) + x.shape[1:]
-        return x.reshape(new_shape)
-
-    sub_xs = tree_map(nested_reshape, xs)
-    return _inner_nested_scan(f, init, sub_xs, nested_lengths, scan_fn,
-                              checkpoint_fn)
-
-
-def _inner_nested_scan(f, init, xs, lengths, scan_fn, checkpoint_fn):
-    if len(lengths) == 1:
-        return scan_fn(f, init, xs, lengths[0])
-
-    @checkpoint_fn
-    def sub_scans(carry, xs):
-        return _inner_nested_scan(f, carry, xs, lengths[1:], scan_fn,
-                                  checkpoint_fn)
-
-    carry, out = scan_fn(sub_scans, init, xs, lengths[0])
-    stacked_out = tree_map(jnp.concatenate, out)
-    return carry, stacked_out
-
-
 def accumulate_repeated(
     step_fn: StateFn,
     weights: jnp.ndarray,

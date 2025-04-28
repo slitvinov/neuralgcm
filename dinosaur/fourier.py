@@ -27,7 +27,7 @@ def real_basis_derivative(u: Union[jnp.ndarray, jax.Array],
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
-def quadrature_nodes(nodes: int) -> tuple[np.ndarray, np.ndarray]:
+def quadrature_nodes(nodes):
     xs = np.linspace(0, 2 * np.pi, nodes, endpoint=False)
     weights = 2 * np.pi / nodes
     return xs, weights

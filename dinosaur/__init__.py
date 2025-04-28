@@ -2,7 +2,6 @@ import dinosaur.coordinate_systems
 import dinosaur.filtering
 import dinosaur.held_suarez
 import dinosaur.jax_numpy_utils
-import dinosaur.layer_coordinates
 import dinosaur.primitive_equations
 import dinosaur.primitive_equations_states
 import dinosaur.pytree_utils

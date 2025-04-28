@@ -3,7 +3,6 @@ import functools
 from typing import Any, Callable, Mapping, MutableMapping, Sequence, TypeVar, Union
 import dask.array
 from dinosaur import coordinate_systems
-from dinosaur import layer_coordinates
 from dinosaur import primitive_equations
 from dinosaur import scales
 from dinosaur import sigma_coordinates

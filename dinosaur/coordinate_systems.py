@@ -1,7 +1,6 @@
 from __future__ import annotations
 import dataclasses
 from typing import Any, Callable, Sequence, Union
-from dinosaur import layer_coordinates
 from dinosaur import pytree_utils
 from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
@@ -13,8 +12,6 @@ import numpy as np
 HORIZONTAL_COORD_TYPE_KEY = 'horizontal_grid_type'
 VERTICAL_COORD_TYPE_KEY = 'vertical_grid_type'
 HorizontalGridTypes = spherical_harmonic.Grid
-VerticalCoordinateTypes = Union[layer_coordinates.LayerCoordinates,
-                                sigma_coordinates.SigmaCoordinates, Any]
 P = jax.sharding.PartitionSpec
 
 

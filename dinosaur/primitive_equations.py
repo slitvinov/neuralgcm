@@ -746,63 +746,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
                     inverse[:, logp, temp], state.temperature_variation) +
                 named_vertical_matvec('logp_from_logp')(
                     inverse[:, logp, logp], state.log_surface_pressure))
-        elif self.implicit_inverse_method == 'stacked':
-            inverse = np.linalg.inv(implicit_matrix)
-            assert not np.isnan(inverse).any()
-            stacked_state = jnp.concatenate([
-                state.divergence,
-                state.temperature_variation,
-                state.log_surface_pressure,
-            ])
-            stacked_inverse = named_vertical_matvec('inverse')(inverse,
-                                                               stacked_state)
-            inverted_divergence = stacked_inverse[div]
-            inverted_temperature_variation = stacked_inverse[temp]
-            inverted_log_surface_pressure = stacked_inverse[logp]
-        elif self.implicit_inverse_method == 'blockwise':
-            GH = (implicit_matrix[:, div, temp_logp]
-                  @ implicit_matrix[:, temp_logp, div])
-            div_inverse = np.linalg.inv(np.eye(layers) - GH)
-            η = step_size
-            λ = self.coords.horizontal.laplacian_eigenvalues
-            gt = get_geopotential_diff(
-                state.temperature_variation,
-                self.coords.vertical,
-                self.physics_specs.R,
-                method='sparse',
-                sharding=self.coords.dycore_sharding,
-            )
-            div_from_temp = η * λ[np.newaxis, np.newaxis, :] * gt
-            div_from_logp = named_vertical_matvec('div_from_logp')(
-                implicit_matrix[:, div, logp], state.log_surface_pressure)
-            inverted_divergence = named_vertical_matvec('div_solve')(
-                div_inverse, state.divergence - div_from_temp - div_from_logp)
-            HG = (implicit_matrix[:, temp_logp, div]
-                  @ implicit_matrix[:, div, temp_logp])
-            temp_logp_inverse = np.linalg.inv(np.eye(layers + 1) - HG)
-            hd = -get_temperature_implicit(
-                state.divergence,
-                self.coords.vertical,
-                self.reference_temperature,
-                self.physics_specs.kappa,
-                method='sparse',
-                sharding=self.coords.dycore_sharding,
-            )
-            temp_from_div = η * hd
-            temp_part = state.temperature_variation - temp_from_div
-            logp_from_div = named_vertical_matvec('logp_from_div')(
-                implicit_matrix[:, logp, div], state.divergence)
-            logp_part = state.log_surface_pressure - logp_from_div
-            inverted_temperature_variation = named_vertical_matvec(
-                'temp_solve_from_temp')(
-                    temp_logp_inverse[:, :-1, :-1],
-                    temp_part) + named_vertical_matvec('temp_solve_from_logp')(
-                        temp_logp_inverse[:, :-1:, -1:], logp_part)
-            inverted_log_surface_pressure = named_vertical_matvec(
-                'logp_solve_from_temp')(
-                    temp_logp_inverse[:, -1:, :-1],
-                    temp_part) + named_vertical_matvec('logp_solve_from_temp')(
-                        temp_logp_inverse[:, -1:, -1:], logp_part)
         else:
             raise ValueError(
                 f'invalid implicit_inverse_method {self.implicit_inverse_method}'

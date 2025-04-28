@@ -684,5 +684,3 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             sim_time=state.sim_time,
         )
 
-
-PrimitiveEquationsWithTime = PrimitiveEquations  # deprecated alias

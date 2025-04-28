@@ -14,33 +14,6 @@ import numpy as np
 Array = typing.Array
 InterpolateFn = Callable[[Array, Array, Array], Array]
 
-
-@dataclasses.dataclass(frozen=True)
-class PressureCoordinates:
-    centers: np.ndarray
-
-    def __init__(self, centers: Union[Sequence[float], np.ndarray]):
-        object.__setattr__(self, 'centers', np.asarray(centers))
-        if not all(np.diff(self.centers) > 0):
-            raise ValueError(
-                'Expected `centers` to be monotonically increasing, '
-                f'got centers = {self.centers}')
-
-    @property
-    def layers(self) -> int:
-        return len(self.centers)
-
-    def asdict(self) -> Dict[str, Any]:
-        return {k: v.tolist() for k, v in dataclasses.asdict(self).items()}
-
-    def __hash__(self):
-        return hash(tuple(self.centers.tolist()))
-
-    def __eq__(self, other):
-        return isinstance(other, PressureCoordinates) and np.array_equal(
-            self.centers, other.centers)
-
-
 @dataclasses.dataclass(frozen=True)
 class HybridCoordinates:
     a_boundaries: np.ndarray

@@ -155,7 +155,6 @@ plt.close()
 data_array = trajectory_ds['divergence']
 data_array.mean(['lat', 'lon']).plot(x='time', hue='level')
 ax = plt.gca()
-ax.legend().remove()
 plt.savefig("06.png")
 plt.close()
 

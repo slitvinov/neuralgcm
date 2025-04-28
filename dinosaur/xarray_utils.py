@@ -61,7 +61,7 @@ def _infer_dims_shape_and_coords(
     sample_ids,
     additional_coords,
 ):
-    lon_k, lat_k = coords.horizontal.modal_axes  # k stands for wavenumbers
+    lon_k, lat_k = coords.horizontal.modal_axes
     lon, sin_lat = coords.horizontal.nodal_axes
     all_xr_coords = {
         XR_LON_NAME: lon * 180 / np.pi,
@@ -76,7 +76,7 @@ def _infer_dims_shape_and_coords(
     if sample_ids is not None:
         all_xr_coords[XR_SAMPLE_NAME] = sample_ids
     basic_shape_to_dims = {}
-    basic_shape_to_dims[tuple()] = tuple()  # scalar variables
+    basic_shape_to_dims[tuple()] = tuple()
     modal_shape = coords.horizontal.modal_shape
     nodal_shape = coords.horizontal.nodal_shape
     basic_shape_to_dims[(coords.vertical.layers, ) +
@@ -88,7 +88,7 @@ def _infer_dims_shape_and_coords(
     basic_shape_to_dims[coords.surface_nodal_shape] = NODAL_AXES_NAMES
     for dim, value in additional_coords.items():
         if dim == XR_REALIZATION_NAME:
-            continue  # Handled in _maybe_update_shape_and_dim_with_time_sample
+            continue
         if value.ndim != 1:
             raise ValueError(
                 '`additional_coords` must be 1d vectors, but got: '
@@ -113,7 +113,7 @@ def _infer_dims_shape_and_coords(
     for shape, dims in basic_shape_to_dims.items():
         full_shape, full_dims = update_shape_dims_fn(shape, dims)
         shape_to_dims[full_shape] = full_dims
-    return all_xr_coords, shape_to_dims  # pytype: disable=bad-return-type
+    return all_xr_coords, shape_to_dims
 
 
 def data_to_xarray(
@@ -137,7 +137,7 @@ def data_to_xarray(
         additional_coords[XR_SURFACE_NAME] = np.ones(1)
     all_coords, shape_to_dims = _infer_dims_shape_and_coords(
         coords, times, sample_ids, additional_coords)
-    dims_in_state = set()  # keep track which coordinates should be included.
+    dims_in_state = set()
     data_vars = {}
     for key in prognostic_keys:
         value = data[key]

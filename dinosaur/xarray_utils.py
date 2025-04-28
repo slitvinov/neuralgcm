@@ -9,7 +9,6 @@ from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
 from dinosaur import typing
 from dinosaur import vertical_interpolation
-from dinosaur import weatherbench_utils
 import fsspec
 import jax
 import numpy as np

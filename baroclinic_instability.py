@@ -138,7 +138,6 @@ data_array = (trajectory_ds['surface_pressure'] /
               physics_specs.nondimensionalize(1e5 * units.pascal))
 data_array.max(['lon']).plot(x='time', hue='lat')
 ax = plt.gca()
-ax.legend().remove()
 plt.savefig("05.png")
 plt.close()
 
@@ -159,7 +158,6 @@ plt.close()
 data_array = trajectory_ds['divergence']
 data_array.mean(['lat', 'lon']).plot(x='time', hue='level')
 ax = plt.gca()
-ax.legend().remove()
 plt.savefig("07.png")
 plt.close()
 
@@ -293,7 +291,7 @@ plt.savefig("11.png")
 plt.close()
 
 # Daily vertical slices of temperature.
-times = np.cast[np.int32]((np.arange(12) * units.day).to(units.second))
+times = ((np.arange(12) * units.day).to(units.second)).astype(np.int32)
 data = (temp_array.sel(lat=slice(54, 56), lon=slice(120, 270),
                        time=times).isel(lat=0))
 data.attrs['units'] = 'seconds'

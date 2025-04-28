@@ -164,33 +164,6 @@ def sigma_integral(
 
 
 @jax.named_call
-def cumulative_log_sigma_integral(
-    x: Array,
-    coordinates: SigmaCoordinates,
-    axis: int = -3,
-    downward: bool = True,
-    cumsum_method: str = 'dot',
-) -> jax.Array:
-    if coordinates.layers != x.shape[axis]:
-        raise ValueError(
-            '`x.shape[axis]` must be equal to `coordinates.layers`;'
-            f'got {x.shape[axis]} and {coordinates.layers}.')
-    x_last = lax.slice_in_dim(x, -1, None, axis=axis)
-    x_interpolated = (lax.slice_in_dim(x, 1, None, axis=axis) +
-                      lax.slice_in_dim(x, 0, -1, axis=axis)) / 2
-    integrand = jnp.concatenate([x_interpolated, x_last], axis=axis)
-    integrand_axes = range(integrand.ndim)
-    log𝜎 = jnp.log(coordinates.centers)
-    dlog𝜎 = jnp.diff(log𝜎, append=0)
-    dlog𝜎_axes = [integrand_axes[axis]]
-    xd𝜎 = einsum(integrand, integrand_axes, dlog𝜎, dlog𝜎_axes, integrand_axes)
-    if downward:
-        return jax_numpy_utils.cumsum(xd𝜎, axis, method=cumsum_method)
-    else:
-        return jax_numpy_utils.reverse_cumsum(xd𝜎, axis, method=cumsum_method)
-
-
-@jax.named_call
 def centered_vertical_advection(
     w: Array,
     x: Array,

@@ -29,9 +29,7 @@ def as_dict(inputs: typing.Pytree) -> typing.Pytree:
     if dataclasses.is_dataclass(inputs):
         inputs = inputs.asdict()
     else:
-        if return_type != dict:
-            raise ValueError(
-                f'Inputs of type {return_type} are not supported.')
+        assert 0
     from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
     return inputs, from_dict_fn
 

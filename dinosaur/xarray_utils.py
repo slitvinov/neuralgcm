@@ -870,36 +870,6 @@ def ensure_ascending_latitude(data: DatasetOrDataArray) -> DatasetOrDataArray:
         raise ValueError(f'non-monotonic latitude: {latitude.data}')
 
 
-def regrid_horizontal(
-    data: DatasetOrDataArray,
-    regridder: horizontal_interpolation.Regridder,
-    latlon_tolerance: float = 1e-3,
-) -> DatasetOrDataArray:
-    data = ensure_ascending_latitude(data)
-    old_lon = np.rad2deg(regridder.source_grid.longitudes)
-    old_lat = np.rad2deg(regridder.source_grid.latitudes)
-    if abs(old_lon - data.longitude.data).max() > latlon_tolerance:
-        raise ValueError('inconsistent longitude between data and source grid:'
-                         f' {data.longitude.data} vs {old_lon}')
-    if abs(old_lat - data.latitude.data).max() > latlon_tolerance:
-        raise ValueError('inconsistent latitude between data and source grid:'
-                         f' {data.latitude.data} vs {old_lat}')
-    data = xarray.apply_ufunc(
-        regridder,
-        data,
-        input_core_dims=[['longitude', 'latitude']],
-        output_core_dims=[['longitude', 'latitude']],
-        exclude_dims={'longitude', 'latitude'},
-        vectorize=True,  # loop over time & level, for lower memory usage
-    )
-    data.coords['longitude'] = np.rad2deg(regridder.target_grid.longitudes)
-    data.coords['latitude'] = np.rad2deg(regridder.target_grid.latitudes)
-    return data
-
-
-regrid = regrid_horizontal  # deprecated alias
-
-
 def regrid_vertical(
     data: DatasetOrDataArray,
     surface_pressure: Union[xarray.DataArray, None],

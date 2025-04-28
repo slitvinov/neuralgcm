@@ -18,14 +18,6 @@ AuxFeatures = dict[str, Any]
 DataState = dict[str, Any]
 ForcingData = dict[str, Any]
 
-
-@dataclasses.dataclass(eq=True, order=True, frozen=True)
-class KeyWithCosLatFactor:
-    name: str
-    factor_order: int
-    filter_strength: float = 0.0
-
-
 @tree_math.struct
 class RandomnessState:
     core: Union[Pytree, None] = None
@@ -33,15 +25,6 @@ class RandomnessState:
     modal_value: Union[Pytree, None] = None
     prng_key: Union[PRNGKeyArray, None] = None
     prng_step: Union[int, None] = None
-
-
-@tree_math.struct
-class ModelState(Generic[PyTreeState]):
-    state: PyTreeState
-    memory: Pytree = dataclasses.field(default=None)
-    diagnostics: Pytree = dataclasses.field(default_factory=dict)
-    randomness: RandomnessState = dataclasses.field(
-        default_factory=RandomnessState)
 
 
 State = TypeVar('State')

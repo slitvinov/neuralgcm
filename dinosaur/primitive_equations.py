@@ -251,31 +251,6 @@ def get_geopotential(
     return surface_geopotential + geopotential_diff
 
 
-def get_geopotential_with_moisture(
-    temperature: typing.Array,
-    specific_humidity: typing.Array,
-    nodal_orography: typing.Array,
-    coordinates: sigma_coordinates.SigmaCoordinates,
-    gravity_acceleration: float,
-    ideal_gas_constant: float,
-    water_vapor_gas_constant: float,
-    sharding: Union[jax.sharding.NamedSharding, None] = None,
-    clouds: Union[typing.Array, None] = None,
-) -> jnp.ndarray:
-    gas_const_ratio = water_vapor_gas_constant / ideal_gas_constant
-    surface_geopotential = nodal_orography * gravity_acceleration
-    if clouds is None:
-        clouds = 0.0
-    virtual_temp = temperature * (1 +
-                                  (gas_const_ratio - 1) * specific_humidity -
-                                  clouds)
-    geopotential_diff = get_geopotential_diff(virtual_temp,
-                                              coordinates,
-                                              ideal_gas_constant,
-                                              sharding=sharding)
-    return surface_geopotential + geopotential_diff
-
-
 def get_temperature_implicit_weights(
     coordinates: sigma_coordinates.SigmaCoordinates,
     reference_temperature: np.ndarray,

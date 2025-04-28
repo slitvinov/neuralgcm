@@ -797,14 +797,11 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     coords: coordinate_systems.CoordinateSystem
     physics_specs: PrimitiveEquationsSpecs
 
-    vertical_matmul_method: Union[str, None] = dataclasses.field(default=None,
-                                                           kw_only=True)
-    implicit_inverse_method: str = dataclasses.field(default='split',
-                                                     kw_only=True)
+    vertical_matmul_method: Union[str, None] = dataclasses.field(default=None)
+    implicit_inverse_method: str = dataclasses.field(default='split')
     vertical_advection: Callable[..., jax.Array] = dataclasses.field(
-        default=sigma_coordinates.centered_vertical_advection, kw_only=True)
-    include_vertical_advection: bool = dataclasses.field(default=True,
-                                                         kw_only=True)
+        default=sigma_coordinates.centered_vertical_advection)
+    include_vertical_advection: bool = dataclasses.field(default=True)
 
     def __post_init__(self):
         if not np.allclose(self.coords.horizontal.radius,

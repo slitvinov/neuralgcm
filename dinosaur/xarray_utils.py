@@ -861,7 +861,7 @@ def verify_grid_consistency(
 def selective_temporal_shift(
     dataset: xarray.Dataset,
     variables: Sequence[str] = tuple(),
-    time_shift: str | np.timedelta64 | pd.Timedelta = '0 hour',
+    time_shift: Union[str, np.timedelta64, pd.Timedelta] = '0 hour',
     time_name: str = 'time',
 ) -> xarray.Dataset:
     """Shifts specified variables in time and truncates associated time values.
@@ -992,7 +992,7 @@ def with_sim_time(
 ds_with_sim_time = with_sim_time  # deprecated alias
 
 
-def infer_longitude_offset(lon: np.ndarray | xarray.DataArray) -> float:
+def infer_longitude_offset(lon: Union[np.ndarray, xarray.DataArray]) -> float:
     """Infers the longitude offset in radians given the longitude values in degrees."""
     if isinstance(lon, xarray.DataArray):
         lon = lon.data
@@ -1001,7 +1001,7 @@ def infer_longitude_offset(lon: np.ndarray | xarray.DataArray) -> float:
     return lon[0] * np.pi / 180
 
 
-def infer_latitude_spacing(lat: np.ndarray | xarray.DataArray) -> str:
+def infer_latitude_spacing(lat: Union[np.ndarray, xarray.DataArray]) -> str:
     """Infers the type of latitude spacing given the latitude values."""
     if np.allclose(np.diff(lat), lat[1] - lat[0]):
         if np.isclose(max(lat), 90.0):
@@ -1058,8 +1058,8 @@ def coordinate_system_from_dataset(
     ds: xarray.Dataset,
     truncation: str = CUBIC,
     spherical_harmonics_impl: (
-        Callable[..., spherical_harmonic.SphericalHarmonics] | None) = None,
-    spmd_mesh: jax.sharding.Mesh | None = None,
+        Union[Callable[..., spherical_harmonic.SphericalHarmonics], None]) = None,
+    spmd_mesh: Union[jax.sharding.Mesh, None] = None,
 ) -> coordinate_systems.CoordinateSystem:
     """Creates a `CoordinateSystem` object based on `dataset`.
 
@@ -1247,11 +1247,11 @@ regrid = regrid_horizontal  # deprecated alias
 
 def regrid_vertical(
     data: DatasetOrDataArray,
-    surface_pressure: xarray.DataArray | None,
+    surface_pressure: Union[xarray.DataArray, None],
     regridder: vertical_interpolation.Regridder,
     in_dim: str = 'level',
     out_dim: str = 'level',
-    compute_chunks: dict[str, int] | None = None,
+    compute_chunks: Union[dict[str, int], None] = None,
 ):
     """Vertically regrid a dataset.
 

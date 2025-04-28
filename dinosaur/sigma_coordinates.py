@@ -71,10 +71,6 @@ class SigmaCoordinates:
     def __hash__(self):
         return hash(tuple(self.centers.tolist()))
 
-    def __eq__(self, other):
-        return isinstance(other, SigmaCoordinates) and np.array_equal(
-            self.centers, other.centers)
-
 
 @jax.named_call
 def centered_difference(x: np.ndarray,

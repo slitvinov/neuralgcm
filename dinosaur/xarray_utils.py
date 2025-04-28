@@ -15,7 +15,7 @@
 
 import dataclasses
 import functools
-from typing import Any, Callable, Mapping, MutableMapping, Sequence, TypeVar
+from typing import Any, Callable, Mapping, MutableMapping, Sequence, TypeVar, Union
 
 import dask.array
 from dinosaur import coordinate_systems

@@ -56,10 +56,6 @@ class RealSphericalHarmonics(SphericalHarmonics):
         return (self.longitude_nodes, self.latitude_nodes)
 
     @functools.cached_property
-    def nodal_padding(self) -> tuple[int, int]:
-        return (0, 0)
-
-    @functools.cached_property
     def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         m_pos = np.arange(1, self.longitude_wavenumbers)
         m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()

@@ -91,22 +91,6 @@ MODAL_AXES_NAMES = (
     XR_LON_MODE_NAME,
     XR_LAT_MODE_NAME,
 )
-GRID_REGISTRY = {
-    'SigmaCoordinates':
-    sigma_coordinates.SigmaCoordinates,
-    'LayerCoordinates':
-    layer_coordinates.LayerCoordinates,
-    'PressureCoordinates':
-    vertical_interpolation.PressureCoordinates,
-    'Grid':
-    spherical_harmonic.Grid,
-    'RealSphericalHarmonics':
-    spherical_harmonic.RealSphericalHarmonics,
-    'RealSphericalHarmonicsWithZeroImag':
-    (spherical_harmonic.RealSphericalHarmonicsWithZeroImag),
-    'FastSphericalHarmonics':
-    spherical_harmonic.FastSphericalHarmonics,
-}
 LINEAR = 'LINEAR'
 CUBIC = 'CUBIC'
 Grid = spherical_harmonic.Grid

@@ -14,7 +14,6 @@ from dinosaur import weatherbench_utils
 import fsspec
 import jax
 import numpy as np
-from sklearn import neighbors
 import xarray
 
 XR_SAMPLE_NAME = 'sample'

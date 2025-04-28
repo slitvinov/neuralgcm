@@ -264,30 +264,6 @@ def nodal_land_sea_mask_from_ds(ds: xarray.Dataset) -> typing.Array:
     return ds[land_sea_mask_key].transpose(*lon_lat_order).values
 
 
-def coordinate_system_from_attrs(
-    attrs: ..., ) -> coordinate_systems.CoordinateSystem:
-    horizontal_coordinate_cls = GRID_REGISTRY[attrs[
-        coordinate_systems.HORIZONTAL_COORD_TYPE_KEY]]
-    horizontal_attrs = {
-        f.name: attrs[f.name]
-        for f in dataclasses.fields(horizontal_coordinate_cls)
-    }
-    horizontal_attrs.pop(spherical_harmonic.SPHERICAL_HARMONICS_IMPL_KEY, None)
-    horizontal_attrs.pop(spherical_harmonic.SPMD_MESH_KEY, None)
-    horizontal = horizontal_coordinate_cls(**horizontal_attrs)
-    if coordinate_systems.VERTICAL_COORD_TYPE_KEY in attrs:
-        vertical_coordinate_cls = GRID_REGISTRY[attrs[
-            coordinate_systems.VERTICAL_COORD_TYPE_KEY]]
-        vertical_attrs = {
-            f.name: attrs[f.name]
-            for f in dataclasses.fields(vertical_coordinate_cls)
-        }
-        vertical = vertical_coordinate_cls(**vertical_attrs)
-    else:
-        vertical = None  # no vertical coordinate has been specified.
-    return coordinate_systems.CoordinateSystem(horizontal, vertical)
-
-
 def data_to_xarray(
     data: dict,
     *,

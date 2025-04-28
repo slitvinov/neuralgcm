@@ -147,12 +147,6 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
     if times is not None:
         shape = times.shape + shape
         dims = (XR_TIME_NAME, ) + dims
-    if sample_ids is not None:
-        shape = sample_ids.shape + shape
-        dims = (XR_SAMPLE_NAME, ) + dims
-    if not_scalar and include_realization:
-        shape = (1, ) + shape
-        dims = (XR_REALIZATION_NAME, ) + dims
     return shape, dims
 
 

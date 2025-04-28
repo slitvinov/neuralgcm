@@ -35,14 +35,6 @@ class SigmaCoordinates:
 
     def __init__(self, boundaries: np.typing.ArrayLike):
         boundaries = np.asarray(boundaries)
-        if not (np.isclose(boundaries[0], 0)
-                and np.isclose(boundaries[-1], 1)):
-            raise ValueError('Expected boundaries[0] = 0, boundaries[-1] = 1, '
-                             f'got boundaries = {boundaries}')
-        if not all(np.diff(boundaries) > 0):
-            raise ValueError(
-                'Expected `boundaries` to be monotonically increasing, '
-                f'got boundaries = {boundaries}')
         object.__setattr__(self, 'boundaries', boundaries)
 
     @property
@@ -100,10 +92,6 @@ class SigmaCoordinates:
 def centered_difference(x: np.ndarray,
                         coordinates: SigmaCoordinates,
                         axis: int = -3) -> np.ndarray:
-    if coordinates.layers != x.shape[axis]:
-        raise ValueError(
-            '`x.shape[axis]` must be equal to `coordinates.layers`; '
-            f'got {x.shape[axis]} and {coordinates.layers}.')
     dx = jax_numpy_utils.diff(x, axis=axis)
     dx_axes = range(dx.ndim)
     inv_d𝜎 = 1 / coordinates.center_to_center
@@ -125,10 +113,6 @@ def cumulative_sigma_integral(
     cumsum_method: str = 'dot',
     sharding: jax.sharding.NamedSharding | None = None,
 ) -> jax.Array:
-    if coordinates.layers != x.shape[axis]:
-        raise ValueError(
-            '`x.shape[axis]` must be equal to `coordinates.layers`;'
-            f'got {x.shape[axis]} and {coordinates.layers}.')
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
     d𝜎_axes = [x_axes[axis]]
@@ -148,10 +132,6 @@ def sigma_integral(
     axis: int = -3,
     keepdims: bool = True,
 ) -> jax.Array:
-    if coordinates.layers != x.shape[axis]:
-        raise ValueError(
-            '`x.shape[axis]` must be equal to `coordinates.layers`;'
-            f'got {x.shape[axis]} and {coordinates.layers}.')
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
     d𝜎_axes = [x_axes[axis]]

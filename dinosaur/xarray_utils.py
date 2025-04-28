@@ -102,7 +102,7 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
     times: typing.Array,
     sample_ids: typing.Array,
     include_realization: bool,
-) -> tuple[Sequence[int], Sequence[str]]:
+):
     not_scalar = bool(shape)
     if times is not None:
         shape = times.shape + shape
@@ -115,7 +115,7 @@ def _infer_dims_shape_and_coords(
     times: Union[typing.Array, None],
     sample_ids: typing.Array,
     additional_coords: Mapping[str, typing.Array],
-) -> tuple[dict[str, typing.Array], dict[tuple[int, ...], tuple[int, ...]]]:
+):
     lon_k, lat_k = coords.horizontal.modal_axes  # k stands for wavenumbers
     lon, sin_lat = coords.horizontal.nodal_axes
     all_xr_coords = {
@@ -180,7 +180,7 @@ def data_to_xarray(
     additional_coords: Union[MutableMapping[str, typing.Array], None] = None,
     attrs: Union[Mapping[str, Any], None] = None,
     serialize_coords_to_attrs: bool = True,
-) -> xarray.Dataset:
+):
     prognostic_keys = set(data.keys()) - {'tracers'} - {'diagnostics'}
     tracer_keys = data['tracers'].keys() if 'tracers' in data else set()
     diagnostic_keys = (data['diagnostics'].keys()
@@ -207,5 +207,5 @@ def data_to_xarray(
 def temperature_variation_to_absolute(
     temperature_variation: np.ndarray,
     ref_temperature: np.ndarray,
-) -> np.ndarray:
+):
     return temperature_variation + ref_temperature[:, np.newaxis, np.newaxis]

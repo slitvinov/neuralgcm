@@ -51,19 +51,6 @@ class Scale(abc.Mapping):
                     f'Got duplicate scales for dimension {dimension}.')
             self._scales[_get_dimension(quantity)] = quantity.to_base_units()
 
-    def __getitem__(self, key: str) -> Quantity:
-        return self._scales[key]
-
-    def __iter__(self) -> Iterator[str]:
-        return iter(self._scales)
-
-    def __len__(self) -> int:
-        return len(self._scales)
-
-    def __repr__(self) -> str:
-        return '\n'.join(f'{dimension}: {quantity}'
-                         for dimension, quantity in self._scales.items())
-
     def _scaling_factor(self,
                         dimensionality: pint.util.UnitsContainer) -> Quantity:
         factor = Quantity(1)

@@ -140,21 +140,6 @@ def vertical_interpolation(
     return interp(x, jnp.asarray(xp), fp)
 
 
-@functools.partial(jax.jit, static_argnums=(1, 2, 4))
-def interp_sigma_to_pressure(
-    fields: typing.Pytree,
-    pressure_coords: PressureCoordinates,
-    sigma_coords: sigma_coordinates.SigmaCoordinates,
-    surface_pressure: typing.Array,
-    interpolate_fn: InterpolateFn = (
-        vectorize_vertical_interpolation(_linear_interp_with_safe_extrap)),
-) -> typing.Pytree:
-    desired = (pressure_coords.centers[:, np.newaxis, np.newaxis] /
-               surface_pressure)
-    regrid = lambda x: interpolate_fn(desired, sigma_coords.centers, x)
-    return pytree_utils.tree_map_over_nonscalars(regrid, fields)
-
-
 SigmaOrPressure = TypeVar(
     'SigmaOrPressure',
     sigma_coordinates.SigmaCoordinates,

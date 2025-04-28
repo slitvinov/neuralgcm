@@ -3,7 +3,6 @@ import dataclasses
 import functools
 import math
 from typing import Any, Callable
-from dinosaur import associated_legendre
 from dinosaur import jax_numpy_utils
 from dinosaur import pytree_utils
 from dinosaur import typing
@@ -13,11 +12,50 @@ from jax.experimental import shard_map
 import jax.numpy as jnp
 import numpy as np
 import scipy
+import scipy.special as sps
+
+
+def _evaluate_rhombus(n_l, n_m, x, truncation='rhombus'):
+    y = np.sqrt(1 - x * x)
+    p = np.zeros((n_l, n_m, len(x)))
+    p[0, 0] = p[0, 0] + 1 / np.sqrt(2)
+    for m in range(1, n_m):
+        p[0, m] = -np.sqrt(1 + 1 / (2 * m)) * y * p[0, m - 1]
+    m_max = n_m
+    for k in range(1, n_l):
+        if truncation == 'triangle':
+            m_max = min(n_m, n_l - k)
+        else:
+            assert False
+        m = np.arange(m_max).reshape((-1, 1))
+        m2 = np.square(m)
+        mk2 = np.square(m + k)
+        mkp2 = np.square(m + k - 1)
+        a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
+        b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
+        p[k, :m_max] = a * (x * p[k - 1, :m_max] - b * p[k - 2, :m_max])
+    return p
+
+
+def evaluate(n_m, n_l, x):
+    r = np.transpose(
+        _evaluate_rhombus(n_l=n_l, n_m=n_m, x=x, truncation='triangle'),
+        (1, 2, 0))
+    p = np.zeros((n_m, len(x), n_l))
+    for m in range(n_m):
+        p[m, :, m:n_l] = r[m, :, 0:n_l - m]
+    return p
+
+
+def gauss_legendre_nodes(n):
+    return sps.roots_legendre(n)
+
 
 Array = typing.Array
 ArrayOrArrayTuple = typing.ArrayOrArrayTuple
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-LATITUDE_SPACINGS = dict(gauss=associated_legendre.gauss_legendre_nodes, )
+LATITUDE_SPACINGS = dict(gauss=gauss_legendre_nodes, )
+
 
 def real_basis(wavenumbers, nodes):
     dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
@@ -109,9 +147,9 @@ class RealSphericalHarmonics(SphericalHarmonics):
         _, wf = quadrature_nodes(self.longitude_nodes)
         x, wp = get_latitude_nodes(self.latitude_nodes, self.latitude_spacing)
         w = wf * wp
-        p = associated_legendre.evaluate(n_m=self.longitude_wavenumbers,
-                                         n_l=self.total_wavenumbers,
-                                         x=x)
+        p = evaluate(n_m=self.longitude_wavenumbers,
+                     n_l=self.total_wavenumbers,
+                     x=x)
         p = np.repeat(p, 2, axis=0)
         p = p[1:]
         return _SphericalHarmonicBasis(f=f, p=p, w=w)

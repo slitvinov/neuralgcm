@@ -192,39 +192,3 @@ def flatten_dict(
         raise ValueError(f'got duplicate keys {unique_empty_keys[counts > 1]}')
     return dict(items), tuple(empty_keys)
 
-
-def unflatten_dict(
-        flat_dict: dict[str, Any],
-        empty_keys: tuple[str, ...] = tuple(),
-        sep: str = '&',
-) -> dict[str, Any]:
-    result = dict()
-    empty_key_dict = {k: {} for k in empty_keys}
-    for key, value in (flat_dict | empty_key_dict).items():
-        sub_keys = key.split(sep)
-        sub_dict = result
-        for sub_key in sub_keys[:-1]:
-            if sub_key in sub_dict:
-                sub_dict = sub_dict[sub_key]
-            else:
-                sub_dict[sub_key] = dict()
-                sub_dict = sub_dict[sub_key]
-        sub_dict[sub_keys[-1]] = value
-    return result
-
-
-def replace_with_matching_or_default(
-    x: dict[str, Any],
-    replace: dict[str, Any],
-    default: Any = None,
-    check_used_all_replace_keys: bool = True,
-) -> dict[str, Any]:
-    flat_x, empty_keys = flatten_dict(x)
-    flat_replace, _ = flatten_dict(replace)
-    if check_used_all_replace_keys:
-        unused_replace_keys = set(flat_replace.keys()) - set(flat_x.keys())
-        if unused_replace_keys:
-            raise ValueError(
-                f'Keys {unused_replace_keys} not present in {x.keys()=}')
-    flat_result = {k: flat_replace.get(k, default) for k in flat_x.keys()}
-    return unflatten_dict(flat_result, empty_keys)

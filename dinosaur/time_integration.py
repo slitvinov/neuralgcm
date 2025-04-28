@@ -26,17 +26,17 @@ PostProcessFn = typing.PostProcessFn
 
 class ImplicitExplicitODE:
 
-    def explicit_terms(self, state: PyTreeState) -> PyTreeState:
+    def explicit_terms(self, state: PyTreeState):
         raise NotImplementedError
 
-    def implicit_terms(self, state: PyTreeState) -> PyTreeState:
+    def implicit_terms(self, state: PyTreeState):
         raise NotImplementedError
 
     def implicit_inverse(
         self,
         state: PyTreeState,
         step_size: float,
-    ) -> PyTreeState:
+    ):
         raise NotImplementedError
 
     @classmethod
@@ -45,7 +45,7 @@ class ImplicitExplicitODE:
         explicit_terms: PyTreeTermsFn,
         implicit_terms: PyTreeTermsFn,
         implicit_inverse: PyTreeInverseFn,
-    ) -> ImplicitExplicitODE:
+    ):
         explicit_implicit_ode = cls()
         explicit_implicit_ode.explicit_terms = explicit_terms
         explicit_implicit_ode.implicit_terms = implicit_terms
@@ -57,11 +57,11 @@ class ImplicitExplicitODE:
 class TimeReversedImExODE(ImplicitExplicitODE):
     forward_eq: ImplicitExplicitODE
 
-    def explicit_terms(self, state: PyTreeState) -> PyTreeState:
+    def explicit_terms(self, state: PyTreeState):
         forward_term = self.forward_eq.explicit_terms(state)
         return tree_map(jnp.negative, forward_term)
 
-    def implicit_terms(self, state: PyTreeState) -> PyTreeState:
+    def implicit_terms(self, state: PyTreeState):
         forward_term = self.forward_eq.implicit_terms(state)
         return tree_map(jnp.negative, forward_term)
 
@@ -69,13 +69,13 @@ class TimeReversedImExODE(ImplicitExplicitODE):
         self,
         state: PyTreeState,
         step_size: float,
-    ) -> PyTreeState:
+    ):
         return self.forward_eq.implicit_inverse(state, -step_size)
 
 
 def compose_equations(
     equations: Sequence[Union[ImplicitExplicitODE, ExplicitODE]],
-) -> ImplicitExplicitODE:
+):
     implicit_explicit_eqs = list(
         filter(lambda x: isinstance(x, ImplicitExplicitODE), equations))
     if len(implicit_explicit_eqs) != 1:
@@ -85,7 +85,7 @@ def compose_equations(
     (implicit_explicit_equation, ) = implicit_explicit_eqs
     assert isinstance(implicit_explicit_equation, ImplicitExplicitODE)
 
-    def explicit_fn(x: PyTreeState) -> PyTreeState:
+    def explicit_fn(x: PyTreeState):
         explicit_tendencies = [fn.explicit_terms(x) for fn in equations]
         return tree_map(lambda *args: sum([x for x in args if x is not None]),
                         *explicit_tendencies)
@@ -116,7 +116,7 @@ def imex_runge_kutta(
     tableau: ImExButcherTableau,
     equation: ImplicitExplicitODE,
     time_step: float,
-) -> TimeStepFn:
+):
     dt = time_step
     F = tree_math.unwrap(equation.explicit_terms)
     G = tree_math.unwrap(equation.implicit_terms)
@@ -157,7 +157,7 @@ def imex_runge_kutta(
 def imex_rk_sil3(
     equation: ImplicitExplicitODE,
     time_step: float,
-) -> TimeStepFn:
+):
     return imex_runge_kutta(
         tableau=ImExButcherTableau(
             a_ex=[[1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]],
@@ -171,9 +171,9 @@ def imex_rk_sil3(
 
 
 def runge_kutta_step_filter(
-    state_filter: PyTreeTermsFn, ) -> PyTreeStepFilterFn:
+    state_filter: PyTreeTermsFn, ):
 
-    def _filter(u: PyTreeState, u_next: PyTreeState) -> PyTreeState:
+    def _filter(u: PyTreeState, u_next: PyTreeState):
         del u  # unused
         return state_filter(u_next)
 
@@ -206,9 +206,9 @@ def horizontal_diffusion_step_filter(
 def step_with_filters(
     step_fn: TimeStepFn,
     filters: Sequence[PyTreeStepFilterFn],
-) -> TimeStepFn:
+):
 
-    def _step_fn(u: PyTreeState) -> PyTreeState:
+    def _step_fn(u: PyTreeState):
         u_next = step_fn(u)
         for filter_fn in filters:
             u_next = filter_fn(u, u_next)
@@ -219,11 +219,11 @@ def step_with_filters(
 
 def repeated(fn: TimeStepFn,
              steps: int,
-             scan_fn: typing.ScanFn = jax.lax.scan) -> TimeStepFn:
+             scan_fn: typing.ScanFn = jax.lax.scan):
     if steps == 1:
         return fn
 
-    def f_repeated(x_initial: PyTreeState) -> PyTreeState:
+    def f_repeated(x_initial: PyTreeState):
         g = lambda x, _: (fn(x), None)
         x_final, _ = scan_fn(g, x_initial, xs=None, length=steps)
         return x_final
@@ -240,7 +240,7 @@ def trajectory_from_step(
     post_process_fn: PostProcessFn = lambda x: x,
     outer_scan_fn: typing.ScanFn = jax.lax.scan,
     inner_scan_fn: typing.ScanFn = jax.lax.scan,
-) -> Callable[[PyTreeState], tuple[PyTreeState, Any]]:
+):
     if inner_steps != 1:
         step_fn = repeated(step_fn, inner_steps, inner_scan_fn)
 
@@ -266,7 +266,7 @@ def accumulate_repeated(
     weights: jnp.ndarray,
     state: State,
     scan_fn: typing.ScanFn = jax.lax.scan,
-) -> State:
+):
 
     def f(carry, weight):
         state, averaged = carry
@@ -284,7 +284,7 @@ def _dfi_lanczos_weights(
     time_span: float,
     cutoff_period: float,
     dt: float,
-) -> np.ndarray:
+):
     N = round(time_span / (2 * dt))
     n = np.arange(1, N + 1)
     w = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
@@ -298,7 +298,7 @@ def digital_filter_initialization(
     time_span: float,
     cutoff_period: float,
     dt: float,
-) -> StateFn:
+):
 
     def f(state):
         forward_step = step_with_filters(ode_solver(equation, dt), filters)

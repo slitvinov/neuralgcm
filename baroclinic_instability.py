@@ -4,6 +4,7 @@ import jax
 import numpy as np
 import matplotlib.pyplot as plt
 import xarray
+import dinosaur
 
 units = dinosaur.scales.units
 layers = 24

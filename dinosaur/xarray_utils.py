@@ -1,22 +1,6 @@
-# Copyright 2023 Google LLC
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-#     https://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""Functions for converting trajectories to xarray datasets."""
-
 import dataclasses
 import functools
 from typing import Any, Callable, Mapping, MutableMapping, Sequence, TypeVar, Union
-
 import dask.array
 from dinosaur import coordinate_systems
 from dinosaur import horizontal_interpolation
@@ -35,12 +19,6 @@ import numpy as np
 import pandas as pd
 from sklearn import neighbors
 import xarray
-# import xarray_tensorstore
-
-# pylint: disable=g-bare-generic
-# pylint: disable=line-too-long
-
-# Axes and coordinate names
 XR_SAMPLE_NAME = 'sample'
 XR_TIME_NAME = 'time'
 XR_INIT_TIME_NAME = 'initial_time'
@@ -53,9 +31,6 @@ XR_LON_MODE_NAME = 'longitudinal_mode'
 XR_LAT_MODE_NAME = 'total_wavenumber'
 XR_AUX_FEATURES_LIST_KEY = 'aux_features_key'
 XR_REALIZATION_NAME = 'realization'
-
-# Key names for auxiliary features
-# LAND_SEA_MASK defined in static single-level variables section
 OROGRAPHY = 'orography'  # key for referring to orography.
 GEOPOTENTIAL_KEY = 'geopotential'  # key for referring to geopotential.
 GEOPOTENTIAL_AT_SURFACE_KEY = 'geopotential_at_surface'
@@ -63,9 +38,6 @@ REF_TEMP_KEY = 'ref_temperatures'  # key for referring to reference temperature.
 REF_POTENTIAL_KEY = 'reference_potential'  # key for referring to ref potential.
 REFERENCE_DATETIME_KEY = 'reference_datetime'  # key for referencing 0-time.
 XARRAY_DS_KEY = 'xarray_dataset'
-
-# Key names for static single-level variables
-# comment line has {long_name, short_name, units} from CDS.
 GEOPOTENTIAL_AT_SURFACE = (  # Geopotential, z, m**2 s**-2
     'geopotential_at_surface')
 HIGH_VEGETATION_COVER = (  # High vegetation cover, cvh, (0 - 1)
@@ -91,9 +63,6 @@ single_level_static_vars = [
     TYPE_OF_HIGH_VEGETATION,
     TYPE_OF_LOW_VEGETATION,
 ]
-
-# Key names for dynamic single-level variables
-# comment line has {long_name, short_name, units} from CDS.
 ICE_TEMPERATURE_LAYER_4 = (  # Ice temperature layer 4, istl4, K
     'ice_temperature_layer_4')
 LAKE_ICE_DEPTH = 'lake_ice_depth'  # Lake ice total depth, licd, m
@@ -117,18 +86,14 @@ single_level_dynamic_vars = [
     SOIL_TEMPERATURE_LEVEL_4,
     VOLUMETRIC_SOIL_WATER_LAYER_4,
 ]
-
-# Axes for `Dataset`s in the nodal/spatial harmonic basis.
 NODAL_AXES_NAMES = (
     XR_LON_NAME,
     XR_LAT_NAME,
 )
-
 MODAL_AXES_NAMES = (
     XR_LON_MODE_NAME,
     XR_LAT_MODE_NAME,
 )
-
 GRID_REGISTRY = {
     'SigmaCoordinates':
     sigma_coordinates.SigmaCoordinates,
@@ -145,11 +110,8 @@ GRID_REGISTRY = {
     'FastSphericalHarmonics':
     spherical_harmonic.FastSphericalHarmonics,
 }
-
-# Types of horizontal grids supported by Dinosaur codebase.
 LINEAR = 'LINEAR'
 CUBIC = 'CUBIC'
-
 Grid = spherical_harmonic.Grid
 CUBIC_SHAPE_TO_GRID_DICT = {
     Grid.T21().nodal_shape: Grid.T21,
@@ -175,40 +137,27 @@ LINEAR_SHAPE_TO_GRID_DICT = {
     Grid.TL639().nodal_shape: Grid.TL639,
     Grid.TL1279().nodal_shape: Grid.TL1279,
 }
-
-
 def is_dir(path: str) -> bool:
     protocol, path = fsspec.core.split_protocol(path)
     fs = fsspec.filesystem(protocol=protocol)
     return fs.isdir(path)
-
-
 def open_dataset(
     path: str,
     **kwargs,
 ) -> xarray.Dataset:  # pylint: disable=redefined-builtin
-    """Load a dataset from either Zarr or NetCDF."""
     if is_dir(path):
         return xarray_tensorstore.open_zarr(path, **kwargs)
     else:
         return open_netcdf(path, **kwargs)
-
-
 def open_netcdf(path: str,
                 max_parallel_reads: Union[int, None] = None,
                 **kwargs) -> xarray.Dataset:
-    """Load a dataset stored in NetCDF format."""
     del max_parallel_reads  # unused.
     with fsspec.open(path, 'rb') as f:
         return xarray.load_dataset(f.read(), **kwargs)
-
-
 def save_netcdf(dataset: xarray.Dataset, path: str):
-    """Save a dataset in the NetCDF file format."""
     with fsspec.open(path, 'wb') as f:
         f.write(dataset.to_netcdf())
-
-
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape: tuple[int, ...],
     dims: tuple[str, ...],
@@ -216,24 +165,7 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
     sample_ids: typing.Array,
     include_realization: bool,
 ) -> tuple[Sequence[int], Sequence[str]]:
-    """Shape and dims with prepended realization/sample/time values if provided.
-
-  Note that we assume that `realization`, `sample`, and `time` dimensions appear
-  in the order `[realization, sample, time, ...]`.
-
-  Args:
-    shape: array shape excluding potential `time` and `sample` axes.
-    dims: names of the axes corresponding to `shape`.
-    times: expected time values. If `None` time shape/dim is not added.
-    sample_ids: expected sample values. If `None` sample shape/dim is not added.
-    include_realization: Whether to prepend a `realization` dim to non-scalars.
-
-  Returns:
-    shape: `shape` with prepended `sample` and `time` shapes if provided.
-    dims: dimension names with prepended `sample` and `time` dims if provided.
-  """
     not_scalar = bool(shape)
-
     if times is not None:
         shape = times.shape + shape
         dims = (XR_TIME_NAME, ) + dims
@@ -244,27 +176,12 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
         shape = (1, ) + shape
         dims = (XR_REALIZATION_NAME, ) + dims
     return shape, dims
-
-
 def _infer_dims_shape_and_coords(
     coords: coordinate_systems.CoordinateSystem,
     times: Union[typing.Array, None],
     sample_ids: typing.Array,
     additional_coords: Mapping[str, typing.Array],
 ) -> tuple[dict[str, typing.Array], dict[tuple[int, ...], tuple[int, ...]]]:
-    """Returns full coordinates for given grids and default shape to dims mapping.
-
-  Args:
-    coords: horizontal and vertical descritization.
-    times: expected time values. If `None` time shape/dim is not added.
-    sample_ids: expected sample values. If `None` sample shape/dim is not added.
-    additional_coords: additional coordinates to include.
-
-  Returns:
-    all_coords: mapping that represents all supported coordinates.
-    shape_to_dims: mapping from array shape to dimensions. `sample` is assumed
-      to come prior to `time`.
-  """
     lon_k, lat_k = coords.horizontal.modal_axes  # k stands for wavenumbers
     lon, sin_lat = coords.horizontal.nodal_axes
     all_xr_coords = {
@@ -289,9 +206,6 @@ def _infer_dims_shape_and_coords(
                         nodal_shape] = (XR_LEVEL_NAME, ) + NODAL_AXES_NAMES
     basic_shape_to_dims[nodal_shape] = NODAL_AXES_NAMES
     basic_shape_to_dims[modal_shape] = MODAL_AXES_NAMES
-    # Add unconventional shape for nodal covariate surface data, which have dim=2
-    # (lon, lat) in xarray. The singleton dimension for level is added when
-    # converting to covariate data.
     basic_shape_to_dims[coords.surface_nodal_shape] = NODAL_AXES_NAMES
     for dim, value in additional_coords.items():
         if dim == XR_REALIZATION_NAME:
@@ -310,7 +224,6 @@ def _infer_dims_shape_and_coords(
         basic_shape_to_dims[value.shape +
                             nodal_shape] = (dim, ) + NODAL_AXES_NAMES
         basic_shape_to_dims[value.shape] = (dim, )
-
     update_shape_dims_fn = functools.partial(
         _maybe_update_shape_and_dim_with_realization_time_sample,
         times=times,
@@ -322,28 +235,19 @@ def _infer_dims_shape_and_coords(
         full_shape, full_dims = update_shape_dims_fn(shape, dims)
         shape_to_dims[full_shape] = full_dims
     return all_xr_coords, shape_to_dims  # pytype: disable=bad-return-type
-
-
 def nodal_orography_from_ds(ds: xarray.Dataset) -> typing.Array:
-    """Returns orography in nodal representation from `ds`."""
     orography_key = OROGRAPHY
     if orography_key not in ds:
         ds[orography_key] = (ds[GEOPOTENTIAL_AT_SURFACE_KEY] /
                              scales.GRAVITY_ACCELERATION.magnitude)
     lon_lat_order = (XR_LON_NAME, XR_LAT_NAME)
     return ds[orography_key].transpose(*lon_lat_order).values
-
-
 def nodal_land_sea_mask_from_ds(ds: xarray.Dataset) -> typing.Array:
-    """Returns land_sea_mask in nodal representation from `ds`."""
     land_sea_mask_key = LAND_SEA_MASK
     lon_lat_order = ('longitude', 'latitude')
     return ds[land_sea_mask_key].transpose(*lon_lat_order).values
-
-
 def coordinate_system_from_attrs(
     attrs: ..., ) -> coordinate_systems.CoordinateSystem:
-    """Creates a `CoordinateSystem` object based on `attrs`."""
     horizontal_coordinate_cls = GRID_REGISTRY[attrs[
         coordinate_systems.HORIZONTAL_COORD_TYPE_KEY]]
     horizontal_attrs = {
@@ -364,8 +268,6 @@ def coordinate_system_from_attrs(
     else:
         vertical = None  # no vertical coordinate has been specified.
     return coordinate_systems.CoordinateSystem(horizontal, vertical)
-
-
 def data_to_xarray(
     data: dict,
     *,
@@ -376,21 +278,6 @@ def data_to_xarray(
     attrs: Union[Mapping[str, Any], None] = None,
     serialize_coords_to_attrs: bool = True,
 ) -> xarray.Dataset:
-    """Returns a sample/time referenced xarray.Dataset of primitive equation data.
-
-  Args:
-    data: dictionary representation of the primitive equation states.
-    coords: horizontal and vertical descritization.
-    times: xarray coordinates to use for `time` axis.
-    sample_ids: xarray coordinates to use for `sample` axis.
-    additional_coords: additional coordinates to include.
-    attrs: additional attributes to include in the xarray.Dataset metadata.
-    serialize_coords_to_attrs: whether to save serialized coords to attrs.
-
-  Returns:
-    xarray.Dataset with containing `data`.
-  """
-    # check that prognostic and tracer names do not collide;
     prognostic_keys = set(data.keys()) - {'tracers'} - {'diagnostics'}
     tracer_keys = data['tracers'].keys() if 'tracers' in data else set()
     diagnostic_keys = (data['diagnostics'].keys()
@@ -406,16 +293,13 @@ def data_to_xarray(
             f'Diagnostic: {diagnostic_keys}; ',
             f'prognostics: {prognostic_keys}',
         )
-
     if additional_coords is None:
         additional_coords = {}
-    # if XR_SURFACE_NAME is not specified manually, set by default.
     if (coords.vertical.layers != 1) and (XR_SURFACE_NAME
                                           not in additional_coords):
         additional_coords[XR_SURFACE_NAME] = np.ones(1)
     all_coords, shape_to_dims = _infer_dims_shape_and_coords(
         coords, times, sample_ids, additional_coords)
-
     dims_in_state = set()  # keep track which coordinates should be included.
     data_vars = {}
     for key in prognostic_keys:
@@ -427,7 +311,6 @@ def data_to_xarray(
             dims = shape_to_dims[value.shape]
             data_vars[key] = (dims, value)
             dims_in_state.update(set(dims))
-
     for key in tracer_keys:
         value = data['tracers'][key]
         if value.shape not in shape_to_dims:
@@ -437,7 +320,6 @@ def data_to_xarray(
             dims = shape_to_dims[value.shape]
             data_vars[key] = (dims, value)
             dims_in_state.update(set(dims))
-
     for key in diagnostic_keys:
         value = data['diagnostics'][key]
         if value.shape not in shape_to_dims:
@@ -447,18 +329,14 @@ def data_to_xarray(
             dims = shape_to_dims[value.shape]
             data_vars[key] = (dims, value)
             dims_in_state.update(set(dims))
-
     dataset_attrs = coords.asdict() if serialize_coords_to_attrs else {}
     if attrs is not None:
         for key in dataset_attrs.keys():
             if key in attrs:
                 raise ValueError(f'Key {key} is not allowed in `attrs`.')
         dataset_attrs.update(attrs)
-    # only include coordinates for dimensions that are present in the dataset.
     coords = {k: v for k, v in all_coords.items() if k in dims_in_state}
     return xarray.Dataset(data_vars, coords, attrs=dataset_attrs)
-
-
 def dynamic_covariate_data_to_xarray(
     data: dict,
     *,
@@ -468,25 +346,10 @@ def dynamic_covariate_data_to_xarray(
     additional_coords: Union[MutableMapping[str, typing.Array], None] = None,
     attrs: Union[Mapping[str, Any], None] = None,
 ) -> xarray.Dataset:
-    """Returns an xarray.Dataset of dynamic covariate data.
-
-  Args:
-    data: dictionary representation of the dynamic_covariates.
-    coords: horizontal and vertical descritization.
-    times: xarray coordinates to use for `time` axis.
-    sample_ids: xarray coordinates to use for `sample` axis.
-    additional_coords: additional coordinates to include.
-    attrs: additional attributes to include in the xarray.Dataset metadata.
-
-  Returns:
-    xarray.Dataset containing `data`.
-  """
     if additional_coords is None:
         additional_coords = {}
-
     all_coords, shape_to_dims = _infer_dims_shape_and_coords(
         coords, times, sample_ids, additional_coords)
-
     dims_in_state = set()  # keep track which coordinates should be included.
     data_vars = {}
     for key in data.keys():
@@ -498,34 +361,26 @@ def dynamic_covariate_data_to_xarray(
             dims = shape_to_dims[value.shape]
             data_vars[key] = (dims, np.squeeze(value))  # remove singleton dims
             dims_in_state.update(set(dims))
-
     dataset_attrs = coords.asdict()
     if attrs is not None:
         for key in dataset_attrs.keys():
             if key in attrs:
                 raise ValueError(f'Key {key} is not allowed in `attrs`.')
         dataset_attrs.update(attrs)
-
-    # only include coordinates for dimensions that are present in the dataset.
     xr_coords = {k: v for k, v in all_coords.items() if k in dims_in_state}
     return xarray.Dataset(data_vars, xr_coords, attrs=dataset_attrs)
-
-
 def xarray_to_data_dict(
     dataset: xarray.Dataset,
     *,
     values: str = 'values',
 ) -> dict[str, Any]:
-    """Convert an xarray.Dataset into a data dictionary."""
     expected_dims = (XR_TIME_NAME, XR_LEVEL_NAME, XR_LON_NAME, XR_LAT_NAME)
     for dim in dataset.dims:
         if dim not in expected_dims:
             raise ValueError(
                 f'unexpected dimension {dim} not in {expected_dims}')
-
     dims = tuple(dim for dim in expected_dims if dim in dataset.dims)
     dataset = dataset.transpose(*dims)
-
     data = {}
     for k in dataset:
         assert isinstance(k, str)  # satisfy pytype
@@ -533,54 +388,25 @@ def xarray_to_data_dict(
         dims = dataset[k].dims
         if XR_LEVEL_NAME not in dims and dims[-2:] == (XR_LON_NAME,
                                                        XR_LAT_NAME):
-            # surface quantity
             v = np.expand_dims(v, axis=-3)  # singleton dim for level
         data[k] = v
     return data
-
-
 def xarray_to_shallow_water_eq_data(
     dataset: xarray.Dataset,
     *,
     values: str = 'values',
 ) -> dict[str, Any]:
-    """Returns `values` attribute of shallow water equation data from `dataset`.
-
-  Args:
-    dataset: dataset from which to extract a dictionary representation of the
-      `shallow_water.State`.
-    values: attribute to extract. Typically is `values` or `dtype`.
-
-  Returns:
-    Dictionary that contains atmosphere state variables in a format compatible
-    with `shallow_water.State`.
-  """
     return shallow_water.State(
         vorticity=getattr(dataset['vorticity'], values),
         divergence=getattr(dataset['divergence'], values),
         potential=getattr(dataset['potential'], values),
     ).asdict()
-
-
 def xarray_to_primitive_eq_data(
         dataset: xarray.Dataset,
         *,
         values: str = 'values',
         tracers_to_include: Sequence[str] = tuple(),
 ) -> dict:
-    """Returns `values` attribute of primitive equation data from `dataset`.
-
-  Args:
-    dataset: dataset from which to extract a dictionary representation of the
-      `primitive_equations.State`.
-    values: attribute to extract. Typically is `values` or `dtype`.
-    tracers_to_include: names of tracers present in the `dataset` to include in
-      the `State`.
-
-  Returns:
-    Dictionary that contains atmosphere state variables in a format compatible
-    with `primitive_equations.State`.
-  """
     return primitive_equations.State(
         vorticity=getattr(dataset['vorticity'], values),
         divergence=getattr(dataset['divergence'], values),
@@ -592,27 +418,12 @@ def xarray_to_primitive_eq_data(
             for k in tracers_to_include
         },
     ).asdict()
-
-
 def xarray_to_primitive_equations_with_time_data(
         dataset: xarray.Dataset,
         *,
         values: str = 'values',
         tracers_to_include: Sequence[str] = tuple(),
 ) -> dict:
-    """Returns `values` of primitive equation data with time from `dataset`.
-
-  Args:
-    dataset: dataset from which to extract `values` attributes of the
-      `primitive_equations.State` in dict representation.
-    values: attribute to extract. Typically is `values`, `dtype` or `shape`.
-    tracers_to_include: names of tracers present in the `dataset` to include in
-      the `State`.
-
-  Returns:
-    Dictionary that contains atmosphere state variables in a format compatible
-    with `primitive_equations.State`.
-  """
     return primitive_equations.State(
         vorticity=getattr(dataset['vorticity'], values),
         divergence=getattr(dataset['divergence'], values),
@@ -625,8 +436,6 @@ def xarray_to_primitive_equations_with_time_data(
             for k in tracers_to_include
         },
     ).asdict()
-
-
 def xarray_to_weatherbench_data(
         dataset: xarray.Dataset,
         *,
@@ -634,21 +443,6 @@ def xarray_to_weatherbench_data(
         tracers_to_include: Sequence[str] = tuple(),
         diagnostics_to_include: Sequence[str] = tuple(),
 ) -> dict:
-    """Returns `values` of weatherbench data with time from `dataset`.
-
-  Args:
-    dataset: dataset from which to extract `values` attributes of the
-      `weatherbench.State` in dict representation.
-    values: attribute to extract. Typically is `values`, `dtype` or `shape`.
-    tracers_to_include: names of tracers present in the `dataset` to include in
-      the `weatherbench.State`.
-    diagnostics_to_include: names of diagnostics present in the `dataset` to
-      include in the `weatherbench.State`.
-
-  Returns:
-    Dictionary that contains atmosphere state variables in a format compatible
-    with `weatherbench.State`.
-  """
     level_index = dataset['u'].dims.index('level')
     diagnostics = {
         k: (getattr(dataset[k], values) if 'level' in dataset[k].dims else
@@ -667,39 +461,21 @@ def xarray_to_weatherbench_data(
         },
         diagnostics=diagnostics,
     ).asdict()
-
-
 def xarray_to_dynamic_covariate_data(
         dataset: xarray.Dataset,
         *,
         values: str = 'values',
         covariates_to_include: Sequence[str] = tuple(),
 ) -> dict:
-    """Returns `values` of dynamic covariate data with time from `dataset`.
-
-  Args:
-    dataset: dataset from which to extract `values` attributes of the dynamic
-      covariates in dict representation.
-    values: attribute to extract. Typically is `values`, `dtype` or `shape`.
-    covariates_to_include: names of covariates present in the `dataset` to
-      include in the `dynamic_covariate_data`.
-
-  Returns:
-    Dictionary that contains time-varying covariate variables, and also the
-    array `sim_time` that specifies the nondimensionalized time_axis.
-  """
     data = {}
     for k in covariates_to_include:
         v = getattr(dataset[k], values)
         dims = dataset[k].dims
         if 'level' not in dims and dims[-3:] == ('time', 'lon', 'lat'):
-            # surface quantity
             v = np.expand_dims(v, axis=-3)  # singleton dim for level
         data[k] = v
     data['sim_time'] = getattr(dataset['sim_time'], values)
     return data
-
-
 def xarray_to_state_and_dynamic_covariate_data(
     dataset: xarray.Dataset,
     *,
@@ -707,22 +483,6 @@ def xarray_to_state_and_dynamic_covariate_data(
     xarray_to_state_data_fn: Callable[..., dict],
     xarray_to_dynamic_covariate_data_fn: Union[Callable[..., dict], None] = None,
 ) -> tuple[dict, dict]:
-    """Returns `values` of state and dynamic covariate data from `dataset`.
-
-  Args:
-    dataset: dataset from which to extract `values` attributes of the
-      `weatherbench.State` in dict representation.
-    values: attribute to extract. Typically is `values`, `dtype` or `shape`.
-    xarray_to_state_data_fn: function converting xarray.Dataset to state dict.
-    xarray_to_dynamic_covariate_data_fn: function converting xarray.Dataset to
-      dynamic covariates dictionary. If None, function returns an empty
-      dictionary for the dynamic covariate data.
-
-  Returns:
-    Tuple (state, dynamic_covariates), where state is a dict that contains
-    atmosphere state variables, and dynamic_covariates is a dict that contains
-    time-varying covariate variables.
-  """
     state_data = xarray_to_state_data_fn(dataset, values=values)
     if xarray_to_dynamic_covariate_data_fn is None:
         covariate_data = {}
@@ -730,8 +490,6 @@ def xarray_to_state_and_dynamic_covariate_data(
         covariate_data = xarray_to_dynamic_covariate_data_fn(dataset,
                                                              values=values)
     return (state_data, covariate_data)
-
-
 def xarray_to_data_with_renaming(
     dataset: xarray.Dataset,
     *,
@@ -739,10 +497,7 @@ def xarray_to_data_with_renaming(
     xarray_to_data_fn: Callable[..., dict],
     renaming_dict: dict[str, str],
 ) -> dict:
-    """Adapts naming convention before calling `xarray_to_data_fn`."""
     return xarray_to_data_fn(dataset.rename(renaming_dict), values=values)
-
-
 def data_to_xarray_with_renaming(
     data: dict,
     *,
@@ -754,22 +509,6 @@ def data_to_xarray_with_renaming(
     additional_coords: Union[MutableMapping[str, typing.Array], None] = None,
     attrs: Union[Mapping[str, Any], None] = None,
 ) -> xarray.Dataset:
-    """Adapts naming convention after calling `to_xarray_fn`.
-
-  Args:
-    data: dictionary representation of the data states.
-    to_xarray_fn: wrapped function converting `data` to xarray.Dataset.
-    renaming_dict: dictionary that maps desired variable names to our defaults.
-    coords: horizontal and vertical descritization.
-    times: xarray coordinates to use for `time` axis.
-    sample_ids: xarray coordinates to use for `sample` axis.
-    additional_coords: additional coordinates to include.
-    attrs: additional attributes to include in the xarray.Dataset metadata.
-
-  Returns:
-    xarray.Dataset that stores `data` using external naming convention specified
-    in `renaming_dict`.
-  """
     inverse_ranaming_dict = {v: k for k, v in renaming_dict.items()}
     ds = to_xarray_fn(
         data,
@@ -780,29 +519,13 @@ def data_to_xarray_with_renaming(
         attrs=attrs,
     )
     return ds.rename(inverse_ranaming_dict)
-
-
 def aux_features_from_xarray(ds: xarray.Dataset) -> typing.AuxFeatures:
-    """Reads `aux_features` from an Xarray dataset."""
-    # we split string on `,` because some file formats (e.g. netcdf) do not
-    # support lists of strings in the attrs.
     aux_keys = ds.attrs[XR_AUX_FEATURES_LIST_KEY].split(',')
     return {k: ds[k].values for k in aux_keys}
-
-
 def aux_features_to_xarray(
     aux_features: typing.AuxFeatures,
     xr_coords: Union[Mapping[str, np.ndarray], None] = None,
 ) -> xarray.Dataset:
-    """Creates an Xarray dataset containing aux_features.
-
-  Args:
-    aux_features: dictionary holding auxiliary features.
-    xr_coords: coordinates for the dataset.
-
-  Returns:
-    xarray.Dataset that holds `aux_features`.
-  """
     if xr_coords is None:
         xr_coords = {}
     data_vars = {}
@@ -821,8 +544,6 @@ def aux_features_to_xarray(
             raise ValueError(f'Got unrecognized aux_feature {k}')
     attrs = {XR_AUX_FEATURES_LIST_KEY: ','.join(list(aux_features.keys()))}
     return xarray.Dataset(data_vars=data_vars, coords=xr_coords, attrs=attrs)
-
-
 def attach_data_array_units(array: xarray.DataArray) -> xarray.DataArray:
     attrs = dict(array.attrs)
     units = attrs.pop('units', None)
@@ -831,68 +552,38 @@ def attach_data_array_units(array: xarray.DataArray) -> xarray.DataArray:
     else:
         data = scales.units.dimensionless * array.data
     return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
-
-
 def attach_xarray_units(ds: xarray.Dataset) -> xarray.Dataset:
     return ds.map(attach_data_array_units)
-
-
 def xarray_nondimensionalize(
     ds: xarray.Dataset,
     physics_specs: Any,
 ) -> xarray.Dataset:
     return xarray.apply_ufunc(physics_specs.nondimensionalize, ds)
-
-
 def verify_grid_consistency(
     longitude: Union[np.ndarray, xarray.DataArray],
     latitude: Union[np.ndarray, xarray.DataArray],
     grid: spherical_harmonic.Grid,
 ):
-    """Verifies that longitude and latitude axes are compatible with `grid`."""
     np.testing.assert_allclose(180 / np.pi * grid.longitudes,
                                longitude,
                                atol=1e-3)
     np.testing.assert_allclose(180 / np.pi * grid.latitudes,
                                latitude,
                                atol=1e-3)
-
-
 def selective_temporal_shift(
     dataset: xarray.Dataset,
     variables: Sequence[str] = tuple(),
     time_shift: Union[str, np.timedelta64, pd.Timedelta] = '0 hour',
     time_name: str = 'time',
 ) -> xarray.Dataset:
-    """Shifts specified variables in time and truncates associated time values.
-
-  As with `xarray.Dataset.shift()`, positive values of the shift move values
-  "to the right", negative values "to the left" relative to the original dataset
-  time coordinates. This implies that specifying a positive `time_shift` will
-  produce a dataset where for each time the values of `variables` are from an
-  earlier time in the original dataset. See unit tests for examples.
-
-  Args:
-    dataset: Input dataset.
-    variables: Variables to which shift is applied.
-    time_shift: Timedelta by which to shift `variables.`
-    time_name: Name of the time coordinate.
-
-  Returns:
-    Dataset where every DataArray in `variables` have been shifted on the
-    `time_name` coordinate by `time_shift`.  The head or tail times associated
-    with the shifted indices are truncated.
-  """
     time_shift = pd.Timedelta(time_shift)
     time_spacing = dataset[time_name][1] - dataset[time_name][0]
-
     shift, remainder = divmod(time_shift, time_spacing)
     shift = int(shift)  # convert from xarray value
     if shift == 0 or not variables:
         return dataset
     if remainder:
         raise ValueError(f'Does not divide evenly, got {remainder=}')
-
     ds = dataset.copy()
     if shift > 0:
         ds = ds.isel({time_name: slice(shift, None)})
@@ -905,39 +596,27 @@ def selective_temporal_shift(
             ds[var] = dataset.variables[var].isel(
                 {time_name: slice(-shift, None)})
     return ds
-
-
 xarray_selective_shift = selective_temporal_shift  # deprecated alias
-
-
 def datetime64_to_nondim_time(
     time: np.ndarray,
     physics_specs: Any,
     reference_datetime: np.datetime64,
 ) -> np.ndarray:
-    """Converts `time` in datetime64 format to nondimensional sim_time."""
     return physics_specs.nondimensionalize(
         ((time - reference_datetime) / np.timedelta64(1, 'h')) *
         scales.units.hour)
-
-
 def nondim_time_to_datetime64(
     time: np.ndarray,
     physics_specs: Any,
     reference_datetime: np.datetime64,
 ) -> np.ndarray:
-    """Converts `time` in datetime64 format to nondimensional sim_time."""
     minutes = physics_specs.dimensionalize(time, scales.units.minute).magnitude
     delta = np.array(np.round(minutes).astype(int), 'timedelta64[m]')
     return reference_datetime + delta
-
-
 def ds_from_path_or_aux(
     path: str,
     aux_features: typing.AuxFeatures,
 ) -> xarray.Dataset:
-    """Loads dataset from CNS `path` or returns aux_features[XARRAY_DS_KEY]."""
-    # If more flexibility is needed, consider adaptors http://shortn/_whtT6Nk74p.
     aux_xarray_ds = aux_features.get(XARRAY_DS_KEY, None)
     if path is not None:
         if aux_xarray_ds is not None:
@@ -951,27 +630,21 @@ def ds_from_path_or_aux(
         keys = aux_features.keys()
         raise ValueError(
             f'{path} can be `None` only if {XARRAY_DS_KEY} in {keys=}')
-
-
 def nondim_time_delta_from_time_axis(
     time: np.ndarray,
     physics_specs: Any,
 ) -> float:
-    """Infers time delta along `time` axis in nondimensional units."""
     time_delta = time[1] - time[0]
     if not np.issubdtype(time.dtype, np.floating):
         time_delta = np.timedelta64(time_delta, 's') / np.timedelta64(1, 's')
         return physics_specs.nondimensionalize(time_delta *
                                                scales.units.second)
     return float(time_delta)
-
-
 def with_sim_time(
     ds: xarray.Dataset,
     physics_specs: Any,
     reference_datetime: np.datetime64,
 ) -> xarray.Dataset:
-    """Returns `ds` with nondimensional time added as `sim_time` if absent."""
     if 'sim_time' in ds:
         return ds
     if np.issubdtype(ds.time.dtype, np.floating):
@@ -979,7 +652,6 @@ def with_sim_time(
     else:
         nondim_time = datetime64_to_nondim_time(ds.time.data, physics_specs,
                                                 reference_datetime)
-    # if dataset contains `sample` axis, sim_time should have it as well.
     if XR_SAMPLE_NAME in ds.coords:
         nondim_time = nondim_time[np.newaxis, ...]
         nondim_time = np.repeat(nondim_time, ds.sizes[XR_SAMPLE_NAME], 0)
@@ -987,22 +659,14 @@ def with_sim_time(
     else:
         sim_time = (ds.time.dims, nondim_time)
     return ds.assign(sim_time=sim_time)
-
-
 ds_with_sim_time = with_sim_time  # deprecated alias
-
-
 def infer_longitude_offset(lon: Union[np.ndarray, xarray.DataArray]) -> float:
-    """Infers the longitude offset in radians given the longitude values in degrees."""
     if isinstance(lon, xarray.DataArray):
         lon = lon.data
     if lon.max() < 2 * np.pi:
         raise ValueError(f'Expected longitude values in degrees, got {lon=}')
     return lon[0] * np.pi / 180
-
-
 def infer_latitude_spacing(lat: Union[np.ndarray, xarray.DataArray]) -> str:
-    """Infers the type of latitude spacing given the latitude values."""
     if np.allclose(np.diff(lat), lat[1] - lat[0]):
         if np.isclose(max(lat), 90.0):
             spacing = 'equiangular_with_poles'
@@ -1011,21 +675,10 @@ def infer_latitude_spacing(lat: Union[np.ndarray, xarray.DataArray]) -> str:
     else:
         spacing = 'gauss'
     return spacing
-
-
 def coordinate_system_from_dataset_shape(
     ds: xarray.Dataset,
     truncation: str = CUBIC,
 ) -> coordinate_systems.CoordinateSystem:
-    """Creates a `CoordinateSystem` object based on `dataset`.
-
-  Args:
-    ds: dataset with data axes that specify a compatible coordinate system.
-    truncation: enum indicating the type of spectral grid to construct.
-
-  Returns:
-    coordinate system infered from the shape of the data axes of the dataset.
-  """
     if truncation == CUBIC:
         shape_to_grid_dict = CUBIC_SHAPE_TO_GRID_DICT
     elif truncation == LINEAR:
@@ -1046,14 +699,11 @@ def coordinate_system_from_dataset_shape(
     )
     verify_grid_consistency(lon, lat, horizontal)
     if XR_LEVEL_NAME in ds:
-        # we assume the default pressure coordinates for vertical discretization.
         vertical_centers = ds.level.values
         vertical = vertical_interpolation.PressureCoordinates(vertical_centers)
     else:
         vertical = None  # no vertical discretization provided.
     return coordinate_systems.CoordinateSystem(horizontal, vertical)
-
-
 def coordinate_system_from_dataset(
     ds: xarray.Dataset,
     truncation: str = CUBIC,
@@ -1061,20 +711,6 @@ def coordinate_system_from_dataset(
         Union[Callable[..., spherical_harmonic.SphericalHarmonics], None]) = None,
     spmd_mesh: Union[jax.sharding.Mesh, None] = None,
 ) -> coordinate_systems.CoordinateSystem:
-    """Creates a `CoordinateSystem` object based on `dataset`.
-
-  Tries to extract coordinate system metadata from attrs first, falling back to
-  a shape-based method.
-
-  Args:
-    ds: dataset with data axes that specify a compatible coordinate system.
-    truncation: enum indicating the type of spectral grid to construct.
-    spherical_harmonics_impl: non-default implementation of spherical harmonics.
-    spmd_mesh: optional SPMD mesh to set.
-
-  Returns:
-    coordinate system infered from the shape of the data axes of the dataset.
-  """
     try:
         coords = coordinate_system_from_attrs(ds.attrs)
     except KeyError:
@@ -1089,13 +725,10 @@ def coordinate_system_from_dataset(
         )
     coords = dataclasses.replace(coords, spmd_mesh=spmd_mesh)
     return coords
-
-
 def temperature_variation_to_absolute(
     temperature_variation: np.ndarray,
     ref_temperature: np.ndarray,
 ) -> np.ndarray:
-    """Computes absolute temperature from nodal `temperature variation`."""
     ndim = temperature_variation.ndim
     if ndim == 3 or ndim == 4:
         return temperature_variation + ref_temperature[:, np.newaxis,
@@ -1103,58 +736,38 @@ def temperature_variation_to_absolute(
     else:
         raise ValueError(
             f'{temperature_variation.ndim=}, while expecting 3|4.')
-
-
 DatasetOrDataArray = TypeVar('DatasetOrDataArray', xarray.Dataset,
                              xarray.DataArray)
-
-
 def fill_nan_with_nearest(data: DatasetOrDataArray) -> DatasetOrDataArray:
-    """Replaces NaN values with nearest horizontal values."""
-
     def fill_nan_for_array(array: xarray.DataArray) -> xarray.DataArray:
-
         if 'latitude' not in array.dims and 'longitude' not in array.dims:
             return array  # no interpolation needed for this variable
-
         if array.chunks:
             raise ValueError(
                 f'Expected data to be loaded in memory, got chunks = {array.chunks}. '
                 'Consider calling .compute() first.')
-
         extra_dims = list(set(array.dims) - {'latitude', 'longitude'})
         isnan_mask = array.isnull().any(extra_dims)
         allnan_mask = array.isnull().all(extra_dims)
-
         if not isnan_mask.any():
             return array  # shortcut
-
         if allnan_mask.all():
             raise ValueError('all values are NaN')
-
         if not isnan_mask.equals(allnan_mask):
             raise ValueError(
                 'NaN mask is not fixed across non-spatial dimensions')
-
         lat, lon = xarray.broadcast(array.latitude, array.longitude)
-        # Shape lat, lon to match order of dims in data var
         lat = lat.transpose(*isnan_mask.dims)
         lon = lon.transpose(*isnan_mask.dims)
-
-        # index_coords store have non-nan values, query_coords have nan values
         index_coords = np.deg2rad(
             np.stack([lat.data[~isnan_mask.data], lon.data[~isnan_mask.data]],
                      axis=-1))
         query_coords = np.deg2rad(
             np.stack([lat.data[isnan_mask.data], lon.data[isnan_mask.data]],
                      axis=-1))
-
-        # construct a BallTree to find nearest neighbor on the surface of a sphere
         tree = neighbors.BallTree(index_coords, metric='haversine')
         indices = tree.query(query_coords,
                              return_distance=False).squeeze(axis=-1)
-
-        # Replace nan values (target) with nearest non-nan value (source)
         source_lats = xarray.DataArray(lat.data[~isnan_mask.data][indices],
                                        dims=['query'])
         source_lons = xarray.DataArray(lon.data[~isnan_mask.data][indices],
@@ -1163,7 +776,6 @@ def fill_nan_with_nearest(data: DatasetOrDataArray) -> DatasetOrDataArray:
                                        dims=['query'])
         target_lons = xarray.DataArray(lon.data[isnan_mask.data],
                                        dims=['query'])
-
         array = array.copy(deep=True)
         array.loc[{
             'latitude': target_lats,
@@ -1173,21 +785,16 @@ def fill_nan_with_nearest(data: DatasetOrDataArray) -> DatasetOrDataArray:
             'longitude': source_lons
         }]
         return array
-
     if 'latitude' not in data.dims or 'longitude' not in data.dims:
         raise ValueError(
             f'did not find latitude and longitude dimensions: {data}')
-
     if isinstance(data, xarray.DataArray):
         return fill_nan_for_array(data)
     elif isinstance(data, xarray.Dataset):
         return data.map(fill_nan_for_array)
     else:
         raise TypeError(f'data must be a DataArray or Dataset: {data}')
-
-
 def ensure_ascending_latitude(data: DatasetOrDataArray) -> DatasetOrDataArray:
-    """Returns a copy of `dataset` with ascending latitude, if possible."""
     latitude = data.coords['latitude']
     if (latitude.diff('latitude') > 0).all():
         return data  # already ascending
@@ -1195,39 +802,20 @@ def ensure_ascending_latitude(data: DatasetOrDataArray) -> DatasetOrDataArray:
         return data.isel(latitude=slice(None, None, -1))  # reverse
     else:
         raise ValueError(f'non-monotonic latitude: {latitude.data}')
-
-
 def regrid_horizontal(
     data: DatasetOrDataArray,
     regridder: horizontal_interpolation.Regridder,
     latlon_tolerance: float = 1e-3,
 ) -> DatasetOrDataArray:
-    """Horizontally regrid a dataset.
-
-  Args:
-    data: source data to regrid.
-    regridder: horizontal regridder to use. Must be consistent with the data
-      coordinates.
-    latlon_tolerance: maximum absolute difference (in degreees) between the
-      latitude and longitude coordinates of `data` and `regridder.source_grid`.
-
-  Returns:
-    Regridded data with the same variables and dimensions as `data`, but new
-    "latitude" and "longitude" coordinates.
-  """
-
     data = ensure_ascending_latitude(data)
-
     old_lon = np.rad2deg(regridder.source_grid.longitudes)
     old_lat = np.rad2deg(regridder.source_grid.latitudes)
-
     if abs(old_lon - data.longitude.data).max() > latlon_tolerance:
         raise ValueError('inconsistent longitude between data and source grid:'
                          f' {data.longitude.data} vs {old_lon}')
     if abs(old_lat - data.latitude.data).max() > latlon_tolerance:
         raise ValueError('inconsistent latitude between data and source grid:'
                          f' {data.latitude.data} vs {old_lat}')
-
     data = xarray.apply_ufunc(
         regridder,
         data,
@@ -1238,13 +826,8 @@ def regrid_horizontal(
     )
     data.coords['longitude'] = np.rad2deg(regridder.target_grid.longitudes)
     data.coords['latitude'] = np.rad2deg(regridder.target_grid.latitudes)
-
     return data
-
-
 regrid = regrid_horizontal  # deprecated alias
-
-
 def regrid_vertical(
     data: DatasetOrDataArray,
     surface_pressure: Union[xarray.DataArray, None],
@@ -1253,48 +836,17 @@ def regrid_vertical(
     out_dim: str = 'level',
     compute_chunks: Union[dict[str, int], None] = None,
 ):
-    """Vertically regrid a dataset.
-
-  Supports:
-    - Hybrid coordinates to Sigma coordinates (requires surface_pressure).
-    - Pressure coordinates to Pressure coordinates (surface_pressure is ignored).
-
-  Args:
-    data: source data to regrid.
-    surface_pressure: Optional array of surface pressure. Required only when
-      regridding from HybridCoordinates source. Units must match the 'a'
-      coefficients in the HybridCoordinates (typically hPa).
-    regridder: vertical regridder to use. Defines source and target grids.
-      For hybrid-to-sigma, pressure units must be consistent with
-      `surface_pressure`.
-    in_dim: name of the vertical dimension in `data` to regrid.
-    out_dim: name of the vertical dimension in the output.
-    compute_chunks: optional dict of chunk sizes to use for intermediate
-      chunking of the computation with dask.
-
-  Returns:
-    Regridded data.
-  """
     source_grid = regridder.source_grid
     target_grid = regridder.target_grid
-
     if in_dim not in data.dims:
         raise ValueError(
             f"Vertical dimension {in_dim!r} not found in data: {data.dims}")
-
     if source_grid.layers != data.sizes[in_dim]:
         raise ValueError(
             'inconsistent vertical dimension size between data and source grid:'
             f' {data.sizes[in_dim]} vs {source_grid.layers}')
-
-    # We parallelize vertical regridding with dask in order to reduce peak memory
-    # usage and better utilize multiple cores. In practice the precise chunk size
-    # doesn't matter so much. The default of 32x32 chunking reduces memory usage
-    # by a factor of ~1000 for full resolution ERA5 data (1440x721) and still gets
-    # high CPU utilization.
     if compute_chunks is None:
         compute_chunks = {'latitude': 32, 'longitude': 32}
-
     if (source_grid, target_grid) == (
             vertical_interpolation.HybridCoordinates(),
             sigma_coordinates.SigmaCoordinates(),
@@ -1302,7 +854,6 @@ def regrid_vertical(
         if surface_pressure is None:
             raise ValueError(
                 'surface_pressure is required for hybrid to sigma regridding')
-
         def regrid_chunk_hybrid_to_sigma(field, surface_pressure):
             chunks = list(field.chunks)
             chunks[-3] = (target_grid.layers, )
@@ -1315,7 +866,6 @@ def regrid_vertical(
                 chunks=chunks,
                 meta=np.array((), dtype=np.float32),
             )
-
         data = xarray.apply_ufunc(
             regrid_chunk_hybrid_to_sigma,
             data.chunk(compute_chunks),
@@ -1339,7 +889,6 @@ def regrid_vertical(
             raise ValueError(
                 'inconsistent vertical dimension between data and source grid:'
                 f' {data.coords[in_dim]} vs {source_grid.centers}')
-
         def regrid_chunk_pressure_to_pressure(field):
             chunks = list(field.chunks)
             chunks[-3] = (target_grid.layers, )
@@ -1351,7 +900,6 @@ def regrid_vertical(
                 chunks=chunks,
                 meta=np.array((), dtype=np.float32),
             )
-
         data = xarray.apply_ufunc(
             regrid_chunk_pressure_to_pressure,
             data.chunk(compute_chunks),
@@ -1362,7 +910,5 @@ def regrid_vertical(
             exclude_dims={in_dim},
             dask='allowed',
         )
-
     data.coords[out_dim] = regridder.target_grid.centers
-
     return data.compute()

@@ -23,7 +23,7 @@ def exponential_filter(
     attenuation: Union[float, typing.Array] = 16,
     order: Union[int, typing.Array] = 18,
     cutoff: float = 0,
-) -> Callable[[typing.PyTreeState], typing.PyTreeState]:
+):
     _, total_wavenumber = grid.modal_axes
     k = total_wavenumber / total_wavenumber.max()
     a = attenuation

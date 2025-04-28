@@ -14,7 +14,7 @@ P = jax.sharding.PartitionSpec
 def _with_sharding_constraint(
     x: typing.Pytree,
     sharding: Union[jax.sharding.NamedSharding, None],
-) -> typing.Pytree:
+):
     if sharding is None:
         return x  # unsharded
     assert False
@@ -41,33 +41,33 @@ class CoordinateSystem:
 
     def _get_sharding(
         self, partition_spec: jax.sharding.PartitionSpec
-    ) -> Union[jax.sharding.NamedSharding, None]:
+    ):
         if self.spmd_mesh is None:
             return None
         return jax.sharding.NamedSharding(self.spmd_mesh, partition_spec)
 
     @property
-    def physics_sharding(self) -> Union[jax.sharding.NamedSharding, None]:
+    def physics_sharding(self):
         return self._get_sharding(self.physics_partition_spec)
 
     def with_physics_sharding(self,
-                              x: typing.PyTreeState) -> typing.PyTreeState:
+                              x: typing.PyTreeState):
         return _with_sharding_constraint(x, self.physics_sharding)
 
     @property
-    def dycore_sharding(self) -> Union[jax.sharding.NamedSharding, None]:
+    def dycore_sharding(self):
         return self._get_sharding(self.dycore_partition_spec)
 
     def with_dycore_sharding(self,
-                             x: typing.PyTreeState) -> typing.PyTreeState:
+                             x: typing.PyTreeState):
         return _with_sharding_constraint(x, self.dycore_sharding)
 
     def dycore_to_physics_sharding(
-            self, x: typing.PyTreeState) -> typing.PyTreeState:
+            self, x: typing.PyTreeState):
         return self.with_physics_sharding(self.with_dycore_sharding(x))
 
     def physics_to_dycore_sharding(
-            self, x: typing.PyTreeState) -> typing.PyTreeState:
+            self, x: typing.PyTreeState):
         return self.with_dycore_sharding(self.with_physics_sharding(x))
 
     def asdict(self) ->...:
@@ -81,26 +81,26 @@ class CoordinateSystem:
         return out
 
     @property
-    def nodal_shape(self) -> tuple[int, int, int]:
+    def nodal_shape(self):
         return (self.vertical.layers, ) + self.horizontal.nodal_shape
 
     @property
-    def modal_shape(self) -> tuple[int, int, int]:
+    def modal_shape(self):
         return (self.vertical.layers, ) + self.horizontal.modal_shape
 
     @property
-    def surface_nodal_shape(self) -> tuple[int, int, int]:
+    def surface_nodal_shape(self):
         return (1, ) + self.horizontal.nodal_shape
 
     @property
-    def surface_modal_shape(self) -> tuple[int, int, int]:
+    def surface_modal_shape(self):
         return (1, ) + self.horizontal.modal_shape
 
 
 def get_nodal_shapes(
     inputs: typing.Pytree,
     coords: CoordinateSystem,
-) -> typing.Pytree:
+):
     nodal_shape = coords.horizontal.nodal_shape
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + nodal_shape)
     scalar_shape_fn = lambda x: np.array([], dtype=int)
@@ -112,7 +112,7 @@ def get_nodal_shapes(
 def maybe_to_nodal(
     fields: typing.Pytree,
     coords: CoordinateSystem,
-) -> typing.Pytree:
+):
     nodal_shapes = get_nodal_shapes(fields, coords)
 
     def to_nodal_fn(x):

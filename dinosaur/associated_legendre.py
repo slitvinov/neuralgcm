@@ -6,7 +6,7 @@ import scipy.special as sps
 def _evaluate_rhombus(n_l: int,
                       n_m: int,
                       x: np.ndarray,
-                      truncation='rhombus') -> np.ndarray:
+                      truncation='rhombus'):
     y = np.sqrt(1 - x * x)
     p = np.zeros((n_l, n_m, len(x)))
     p[0, 0] = p[0, 0] + 1 / np.sqrt(2)
@@ -26,7 +26,7 @@ def _evaluate_rhombus(n_l: int,
     return p
 
 
-def evaluate(n_m: int, n_l: int, x: np.ndarray) -> np.ndarray:
+def evaluate(n_m: int, n_l: int, x: np.ndarray):
     r = np.transpose(
         _evaluate_rhombus(n_l=n_l, n_m=n_m, x=x, truncation='triangle'),
         (1, 2, 0))
@@ -36,5 +36,5 @@ def evaluate(n_m: int, n_l: int, x: np.ndarray) -> np.ndarray:
     return p
 
 
-def gauss_legendre_nodes(n: int) -> tuple[np.ndarray, np.ndarray]:
+def gauss_legendre_nodes(n: int):
     return sps.roots_legendre(n)

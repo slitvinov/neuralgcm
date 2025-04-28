@@ -27,7 +27,7 @@ Unit = units.Unit
 UnitsContainer = pint.util.UnitsContainer
 
 Array = Union[np.ndarray, jnp.ndarray]
-Numeric = Array | float | int
+Numeric = Union[Array, float, int]
 
 #
 # Physical constants.

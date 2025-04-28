@@ -18,15 +18,13 @@ XR_TIMEDELTA_NAME = 'prediction_timedelta'
 XR_LEVEL_NAME = 'level'
 XR_LON_NAME = 'lon'
 XR_LAT_NAME = 'lat'
-XR_LON_MODE_NAME = 'longitudinal_mode'
-XR_LAT_MODE_NAME = 'total_wavenumber'
 NODAL_AXES_NAMES = (
     XR_LON_NAME,
     XR_LAT_NAME,
 )
 MODAL_AXES_NAMES = (
-    XR_LON_MODE_NAME,
-    XR_LAT_MODE_NAME,
+    'longitudinal_mode',
+    'total_wavenumber',
 )
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape,
@@ -53,8 +51,8 @@ def _infer_dims_shape_and_coords(
     all_xr_coords = {
         XR_LON_NAME: lon * 180 / np.pi,
         XR_LAT_NAME: np.arcsin(sin_lat) * 180 / np.pi,
-        XR_LON_MODE_NAME: lon_k,
-        XR_LAT_MODE_NAME: lat_k,
+        'longitudinal_mode': lon_k,
+        'total_wavenumber': lat_k,
         XR_LEVEL_NAME: coords.vertical.centers,
         **additional_coords,
     }

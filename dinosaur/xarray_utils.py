@@ -40,11 +40,11 @@ MODAL_AXES_NAMES = (
 )
 Grid = spherical_harmonic.Grid
 def _maybe_update_shape_and_dim_with_realization_time_sample(
-    shape: tuple[int, ...],
-    dims: tuple[str, ...],
-    times: typing.Array,
-    sample_ids: typing.Array,
-    include_realization: bool,
+    shape,
+    dims,
+    times,
+    sample_ids,
+    include_realization,
 ):
     not_scalar = bool(shape)
     if times is not None:
@@ -54,10 +54,10 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
 
 
 def _infer_dims_shape_and_coords(
-    coords: coordinate_systems.CoordinateSystem,
-    times: Union[typing.Array, None],
-    sample_ids: typing.Array,
-    additional_coords: Mapping[str, typing.Array],
+    coords,
+    times,
+    sample_ids,
+    additional_coords,
 ):
     lon_k, lat_k = coords.horizontal.modal_axes  # k stands for wavenumbers
     lon, sin_lat = coords.horizontal.nodal_axes
@@ -115,14 +115,14 @@ def _infer_dims_shape_and_coords(
 
 
 def data_to_xarray(
-    data: dict,
+    data,
     *,
-    coords: coordinate_systems.CoordinateSystem,
-    times: Union[typing.Array, None],
-    sample_ids: Union[typing.Array, None] = None,
-    additional_coords: Union[MutableMapping[str, typing.Array], None] = None,
-    attrs: Union[Mapping[str, Any], None] = None,
-    serialize_coords_to_attrs: bool = True,
+    coords,
+    times,
+    sample_ids=None,
+    additional_coords=None,
+    attrs=None,
+    serialize_coords_to_attrs= True,
 ):
     prognostic_keys = set(data.keys()) - {'tracers'} - {'diagnostics'}
     tracer_keys = data['tracers'].keys() if 'tracers' in data else set()

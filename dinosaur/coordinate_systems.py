@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, Union
 
 from dinosaur import layer_coordinates
 from dinosaur import pytree_utils
@@ -32,16 +32,16 @@ import numpy as np
 HORIZONTAL_COORD_TYPE_KEY = 'horizontal_grid_type'
 VERTICAL_COORD_TYPE_KEY = 'vertical_grid_type'
 HorizontalGridTypes = spherical_harmonic.Grid
-VerticalCoordinateTypes = (layer_coordinates.LayerCoordinates
-                           | sigma_coordinates.SigmaCoordinates
-                           | Any)
+VerticalCoordinateTypes = Union[layer_coordinates.LayerCoordinates,
+                                sigma_coordinates.SigmaCoordinates,
+                                Any]
 
 P = jax.sharding.PartitionSpec
 
 
 def _with_sharding_constraint(
     x: typing.Pytree,
-    sharding: jax.sharding.NamedSharding | None,
+    sharding: Union[jax.sharding.NamedSharding, None],
 ) -> typing.Pytree:
     """Ensure a sharing constraint on all non-scalar arrays in a pytree."""
     if sharding is None:
@@ -99,7 +99,7 @@ class CoordinateSystem:
 
     horizontal: HorizontalGridTypes
     vertical: VerticalCoordinateTypes
-    spmd_mesh: jax.sharding.Mesh | None = None
+    spmd_mesh: Union[jax.sharding.Mesh, None] = None
 
     # In principle, these partition spec arguments can be customized, but it is
     # not recommended.
@@ -131,13 +131,13 @@ class CoordinateSystem:
 
     def _get_sharding(
         self, partition_spec: jax.sharding.PartitionSpec
-    ) -> jax.sharding.NamedSharding | None:
+    ) -> Union[jax.sharding.NamedSharding, None]:
         if self.spmd_mesh is None:
             return None
         return jax.sharding.NamedSharding(self.spmd_mesh, partition_spec)
 
     @property
-    def physics_sharding(self) -> jax.sharding.NamedSharding | None:
+    def physics_sharding(self) -> Union[jax.sharding.NamedSharding, None]:
         """How to shard arrays for "physics" calculations."""
         return self._get_sharding(self.physics_partition_spec)
 
@@ -147,7 +147,7 @@ class CoordinateSystem:
         return _with_sharding_constraint(x, self.physics_sharding)
 
     @property
-    def dycore_sharding(self) -> jax.sharding.NamedSharding | None:
+    def dycore_sharding(self) -> Union[jax.sharding.NamedSharding, None]:
         """How to shard arrays for nodal or modal dycore calculations."""
         return self._get_sharding(self.dycore_partition_spec)
 

@@ -530,10 +530,3 @@ def digital_filter_initialization(
     return f
 
 
-def maybe_fix_sim_time_roundoff(
-    state: typing.PyTreeState,
-    dt: float,
-) -> typing.PyTreeState:
-    if hasattr(state, 'sim_time') and state.sim_time is not None:
-        state.sim_time = dt * jnp.round(state.sim_time / dt)
-    return state

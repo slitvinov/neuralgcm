@@ -13,7 +13,7 @@
 # limitations under the License.
 """Resting and perturbed initial states for primitive equations atmosphere."""
 
-from typing import Callable
+from typing import Callable, Union
 
 from dinosaur import coordinate_systems
 from dinosaur import filtering
@@ -30,7 +30,7 @@ units = scales.units
 
 Array = typing.Array
 Quantity = typing.Quantity
-QuantityOrStr = Quantity | str
+QuantityOrStr = Union[Quantity, str]
 
 
 def isothermal_rest_atmosphere(
@@ -39,7 +39,7 @@ def isothermal_rest_atmosphere(
     tref: QuantityOrStr = 288. * units.degK,
     p0: QuantityOrStr = 1e5 * units.pascal,
     p1: QuantityOrStr = 0. * units.pascal,
-    surface_height: Quantity | None = None,
+    surface_height: Union[Quantity, None] = None,
 ) -> tuple[Callable[..., primitive_equations.State], typing.AuxFeatures]:
     """Returns a function that generates random states and static features.
 
@@ -301,7 +301,7 @@ def steady_state_jw(
     lat = np.arcsin(sin_lat)
 
     def initial_state_fn(
-            rng_key: jnp.ndarray | None = None) -> primitive_equations.State:
+            rng_key: Union[jnp.ndarray, None] = None) -> primitive_equations.State:
         del rng_key  # unused.
         nodal_vorticity = np.stack([
             _get_vorticity(lat, lon, sigma)

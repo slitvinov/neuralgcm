@@ -13,11 +13,9 @@ import jax
 import numpy as np
 import xarray
 
-XR_LON_NAME = 'lon'
-XR_LAT_NAME = 'lat'
 NODAL_AXES_NAMES = (
-    XR_LON_NAME,
-    XR_LAT_NAME,
+    'lon',
+    'lat',
 )
 MODAL_AXES_NAMES = (
     'longitudinal_mode',
@@ -46,8 +44,8 @@ def _infer_dims_shape_and_coords(
     lon_k, lat_k = coords.horizontal.modal_axes
     lon, sin_lat = coords.horizontal.nodal_axes
     all_xr_coords = {
-        XR_LON_NAME: lon * 180 / np.pi,
-        XR_LAT_NAME: np.arcsin(sin_lat) * 180 / np.pi,
+        'lon': lon * 180 / np.pi,
+        'lat': np.arcsin(sin_lat) * 180 / np.pi,
         'longitudinal_mode': lon_k,
         'total_wavenumber': lat_k,
         'level': coords.vertical.centers,

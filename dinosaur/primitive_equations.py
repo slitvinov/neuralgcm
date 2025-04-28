@@ -136,20 +136,8 @@ class PrimitiveEquationsSpecs:
         return self.ideal_gas_constant
 
     @property
-    def R_vapor(self) -> float:
-        return self.water_vapor_gas_constant
-
-    @property
     def g(self) -> float:
         return self.gravity_acceleration
-
-    @property
-    def Cp(self) -> float:
-        return self.ideal_gas_constant / self.kappa
-
-    @property
-    def Cp_vapor(self) -> float:
-        return self.water_vapor_isobaric_heat_capacity
 
     def nondimensionalize(self, quantity: Quantity) -> Numeric:
         return self.scale.nondimensionalize(quantity)

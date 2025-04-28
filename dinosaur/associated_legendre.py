@@ -42,27 +42,3 @@ def evaluate(n_m: int, n_l: int, x: np.ndarray) -> np.ndarray:
 def gauss_legendre_nodes(n: int) -> tuple[np.ndarray, np.ndarray]:
     return sps.roots_legendre(n)
 
-
-@functools.lru_cache(maxsize=128)
-def equiangular_nodes(n: int) -> tuple[np.ndarray, np.ndarray]:
-    spacing = np.pi / n
-    theta = np.linspace(-np.pi / 2 + spacing / 2, np.pi / 2 - spacing / 2, n)
-    x = np.sin(theta)
-    w = _compute_weights(x)
-    return x, w
-
-
-@functools.lru_cache(maxsize=128)
-def equiangular_nodes_with_poles(n: int) -> tuple[np.ndarray, np.ndarray]:
-    theta = np.linspace(-np.pi / 2, np.pi / 2, n)
-    x = np.sin(theta)
-    w = _compute_weights(x)
-    return x, w
-
-
-def _compute_weights(x: np.ndarray) -> np.ndarray:
-    legendre = evaluate(n_m=1, n_l=x.shape[0], x=x)[0].T
-    z = np.zeros_like(x)
-    z[0] = 1
-    w = np.linalg.solve(legendre, z)
-    return w / w.sum() * 2

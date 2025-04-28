@@ -19,8 +19,6 @@ ArrayOrArrayTuple = typing.ArrayOrArrayTuple
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 LATITUDE_SPACINGS = dict(
     gauss=associated_legendre.gauss_legendre_nodes,
-    equiangular=associated_legendre.equiangular_nodes,
-    equiangular_with_poles=associated_legendre.equiangular_nodes_with_poles,
 )
 
 

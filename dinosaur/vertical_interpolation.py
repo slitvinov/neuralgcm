@@ -24,32 +24,6 @@ def vectorize_vertical_interpolation(
                          signature='(a,x,y),(b),(b,x,y)->(a,x,y)')
 
 
-def _dot_interp(x, xp, fp):
-    n = len(xp)
-    i = jnp.arange(n)
-    dx = xp[1:] - xp[:-1]
-    delta = x - xp[:-1]
-    w = delta / dx
-    w_left = jnp.pad(1 - w, [(0, 1)])
-    w_right = jnp.pad(w, [(1, 0)])
-    u = jnp.searchsorted(xp, x, side='right', method='compare_all')
-    u = jnp.clip(u, 1, n - 1)
-    weights = w_left * (i == (u - 1)) + w_right * (i == u)
-    weights = jnp.where(x < xp[0], i == 0, weights)
-    weights = jnp.where(x > xp[-1], i == (n - 1), weights)
-    return jnp.dot(weights, fp, precision='highest')
-
-
-@jax.jit
-def interp(x: typing.Numeric, xp: typing.Array,
-           fp: typing.Array) -> jnp.ndarray:
-    return jax.lax.platform_dependent(x,
-                                      xp,
-                                      fp,
-                                      tpu=_dot_interp,
-                                      default=jnp.interp)
-
-
 def _extrapolate_left(y):
     delta = y[1] - y[0]
     return jnp.concatenate([jnp.array([y[0] - delta]), y])

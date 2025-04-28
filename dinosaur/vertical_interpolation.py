@@ -89,22 +89,6 @@ class HybridCoordinates:
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
 
-    def to_approx_sigma_coords(self,
-                               layers: int,
-                               surface_pressure: float = 1013.25
-                               ) -> sigma_coordinates.SigmaCoordinates:
-        original_bounds = self.get_sigma_boundaries(surface_pressure)
-        interpolated_bounds = jax.vmap(jnp.interp, (0, None, None))(
-            jnp.linspace(0, 1, num=layers + 1),
-            jnp.linspace(0, 1, num=self.layers + 1),
-            original_bounds,
-        )
-        interpolated_bounds = np.array(interpolated_bounds)
-        interpolated_bounds[0] = 0.0
-        interpolated_bounds[-1] = 1.0
-        return sigma_coordinates.SigmaCoordinates(interpolated_bounds)
-
-
 @functools.partial(jax.jit, static_argnums=0)
 def get_surface_pressure(
     pressure_levels: PressureCoordinates,

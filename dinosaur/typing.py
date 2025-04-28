@@ -129,7 +129,7 @@ ForcingFn = Callable[[ForcingData, float], Forcing]
 ForcingModule = Callable[..., ForcingFn]
 
 PostProcessFn = Callable[..., Any]
-Params = Mapping[str, Mapping[str, Array]] | None
+Params = Union[Mapping[str, Mapping[str, Array]], None]
 
 StepFn = Callable[[PyTreeState, Forcing | None], PyTreeState]
 StepModule = Callable[..., StepFn]

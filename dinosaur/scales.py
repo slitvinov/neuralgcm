@@ -63,10 +63,9 @@ class Scale:
         return dimensionalized.to(unit)  # pytype: disable=attribute-error  # jax-ndarray
 
 
-NEURALGCM_V1_SCALE = Scale(
+DEFAULT_SCALE = Scale(
     RADIUS,  # length
     1 / 2 / OMEGA,  # time
     1 * units.kilogram,  # mass
     1 * units.degK,  # temperature
 )
-DEFAULT_SCALE = NEURALGCM_V1_SCALE

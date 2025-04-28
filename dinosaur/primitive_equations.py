@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import dataclasses
 import functools
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence, Union
 
 from dinosaur import coordinate_systems
 from dinosaur import jax_numpy_utils
@@ -64,7 +64,7 @@ class State:
     temperature_variation: Array
     log_surface_pressure: Array
     tracers: Mapping[str, Array] = dataclasses.field(default_factory=dict)
-    sim_time: float | None = None
+    sim_time: Union[float, None] = None
 
 
 def _asdict(state: State) -> dict[str, Any]:
@@ -427,7 +427,7 @@ def get_geopotential_diff(
     coordinates: sigma_coordinates.SigmaCoordinates,
     ideal_gas_constant: float,
     method: str = 'dense',
-    sharding: jax.sharding.NamedSharding | None = None,
+    sharding: Union[jax.sharding.NamedSharding, None] = None,
 ) -> jax.Array:
     """Calculate the implicit geopotential term."""
     if method == 'dense':
@@ -452,7 +452,7 @@ def get_geopotential(
     coordinates: sigma_coordinates.SigmaCoordinates,
     gravity_acceleration: float,
     ideal_gas_constant: float,
-    sharding: jax.sharding.NamedSharding | None = None,
+    sharding: Union[jax.sharding.NamedSharding, None] = None,
 ) -> jnp.ndarray:
     """Computes geopotential at sigma values determined by `coordinates`.
 
@@ -493,8 +493,8 @@ def get_geopotential_with_moisture(
     gravity_acceleration: float,
     ideal_gas_constant: float,
     water_vapor_gas_constant: float,
-    sharding: jax.sharding.NamedSharding | None = None,
-    clouds: typing.Array | None = None,
+    sharding: Union[jax.sharding.NamedSharding, None] = None,
+    clouds: Union[typing.Array, None] = None,
 ) -> jnp.ndarray:
     """Computes geopotential in nodal space using nodal temperature and `q`."""
     gas_const_ratio = water_vapor_gas_constant / ideal_gas_constant
@@ -598,7 +598,7 @@ def get_temperature_implicit(
     reference_temperature: np.ndarray,
     kappa: float,
     method: str = 'dense',
-    sharding: jax.sharding.NamedSharding | None = None,
+    sharding: Union[jax.sharding.NamedSharding, None] = None,
 ) -> jax.Array:
     """Calculate the implicit temperature term."""
     weights = -get_temperature_implicit_weights(coordinates,
@@ -740,7 +740,7 @@ def truncated_modal_orography(
 def filtered_modal_orography(
         orography: Array,
         coords: coordinate_systems.CoordinateSystem,
-        input_coords: coordinate_systems.CoordinateSystem | None = None,
+        input_coords: Union[coordinate_systems.CoordinateSystem, None] = None,
         filter_fns: Sequence[typing.PostProcessFn] = tuple(),
 ) -> Array:
     """Returns modal `orography` interpolated to `coords` and filtered."""
@@ -797,7 +797,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     coords: coordinate_systems.CoordinateSystem
     physics_specs: PrimitiveEquationsSpecs
 
-    vertical_matmul_method: str | None = dataclasses.field(default=None,
+    vertical_matmul_method: Union[str, None] = dataclasses.field(default=None,
                                                            kw_only=True)
     implicit_inverse_method: str = dataclasses.field(default='split',
                                                      kw_only=True)
@@ -938,7 +938,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     def nodal_temperature_vertical_tendency(
         self,
         aux_state: DiagnosticState,
-    ) -> Array | float:
+    ) -> Union[Array, float]:
         """Computes explicit vertical tendency of the temperature."""
         # two types of terms of sigma_dot * ∂T/∂𝜎
         # second term is zero if T_ref does not depend on layer_id.

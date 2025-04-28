@@ -38,10 +38,6 @@ class SigmaCoordinates:
         object.__setattr__(self, 'boundaries', boundaries)
 
     @property
-    def internal_boundaries(self) -> np.ndarray:
-        return self.boundaries[1:-1]
-
-    @property
     def centers(self) -> np.ndarray:
         return _with_f64_math(lambda x: (x[1:] + x[:-1]) / 2)(self.boundaries)
 

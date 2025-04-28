@@ -138,36 +138,6 @@ LINEAR_SHAPE_TO_GRID_DICT = {
     Grid.TL1279().nodal_shape: Grid.TL1279,
 }
 
-
-def is_dir(path: str) -> bool:
-    protocol, path = fsspec.core.split_protocol(path)
-    fs = fsspec.filesystem(protocol=protocol)
-    return fs.isdir(path)
-
-
-def open_dataset(
-    path: str,
-    **kwargs,
-) -> xarray.Dataset:  # pylint: disable=redefined-builtin
-    if is_dir(path):
-        return xarray_tensorstore.open_zarr(path, **kwargs)
-    else:
-        return open_netcdf(path, **kwargs)
-
-
-def open_netcdf(path: str,
-                max_parallel_reads: Union[int, None] = None,
-                **kwargs) -> xarray.Dataset:
-    del max_parallel_reads  # unused.
-    with fsspec.open(path, 'rb') as f:
-        return xarray.load_dataset(f.read(), **kwargs)
-
-
-def save_netcdf(dataset: xarray.Dataset, path: str):
-    with fsspec.open(path, 'wb') as f:
-        f.write(dataset.to_netcdf())
-
-
 def _maybe_update_shape_and_dim_with_realization_time_sample(
     shape: tuple[int, ...],
     dims: tuple[str, ...],
@@ -247,22 +217,6 @@ def _infer_dims_shape_and_coords(
         full_shape, full_dims = update_shape_dims_fn(shape, dims)
         shape_to_dims[full_shape] = full_dims
     return all_xr_coords, shape_to_dims  # pytype: disable=bad-return-type
-
-
-def nodal_orography_from_ds(ds: xarray.Dataset) -> typing.Array:
-    orography_key = OROGRAPHY
-    if orography_key not in ds:
-        ds[orography_key] = (ds[GEOPOTENTIAL_AT_SURFACE_KEY] /
-                             scales.GRAVITY_ACCELERATION.magnitude)
-    lon_lat_order = (XR_LON_NAME, XR_LAT_NAME)
-    return ds[orography_key].transpose(*lon_lat_order).values
-
-
-def nodal_land_sea_mask_from_ds(ds: xarray.Dataset) -> typing.Array:
-    land_sea_mask_key = LAND_SEA_MASK
-    lon_lat_order = ('longitude', 'latitude')
-    return ds[land_sea_mask_key].transpose(*lon_lat_order).values
-
 
 def data_to_xarray(
     data: dict,

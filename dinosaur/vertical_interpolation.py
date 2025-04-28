@@ -11,9 +11,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-Array = typing.Array
-InterpolateFn = Callable[[Array, Array, Array], Array]
-
 
 @dataclasses.dataclass(frozen=True)
 class HybridCoordinates:
@@ -47,13 +44,11 @@ class HybridCoordinates:
         return hash((tuple(self.a_boundaries.tolist()),
                      tuple(self.b_boundaries.tolist())))
 
-    def get_sigma_boundaries(self,
-                             surface_pressure: typing.Numeric) -> typing.Array:
+    def get_sigma_boundaries(self, surface_pressure: typing.Numeric):
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
 
-def _interval_overlap(source_bounds: typing.Array,
-                      target_bounds: typing.Array) -> jnp.ndarray:
+def _interval_overlap(source_bounds, target_bounds) -> jnp.ndarray:
     upper = jnp.minimum(target_bounds[1:, jnp.newaxis],
                         source_bounds[jnp.newaxis, 1:])
     lower = jnp.maximum(target_bounds[:-1, jnp.newaxis],
@@ -61,8 +56,7 @@ def _interval_overlap(source_bounds: typing.Array,
     return jnp.maximum(upper - lower, 0)
 
 
-def conservative_regrid_weights(source_bounds: typing.Array,
-                                target_bounds: typing.Array) -> jnp.ndarray:
+def conservative_regrid_weights(source_bounds, target_bounds) -> jnp.ndarray:
     weights = _interval_overlap(source_bounds, target_bounds)
     weights /= jnp.sum(weights, axis=1, keepdims=True)
     assert weights.shape == (target_bounds.size - 1, source_bounds.size - 1)
@@ -71,11 +65,11 @@ def conservative_regrid_weights(source_bounds: typing.Array,
 
 @functools.partial(jax.jit, static_argnums=(1, 2))
 def regrid_hybrid_to_sigma(
-    fields: typing.Pytree,
-    hybrid_coords: HybridCoordinates,
-    sigma_coords: sigma_coordinates.SigmaCoordinates,
-    surface_pressure: typing.Array,
-) -> typing.Pytree:
+    fields,
+    hybrid_coords,
+    sigma_coords,
+    surface_pressure,
+):
 
     @jax.jit
     @functools.partial(jnp.vectorize, signature='(x,y),(a),(b,x,y)->(c,x,y)')

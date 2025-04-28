@@ -64,6 +64,7 @@ class CoordinateSystem:
     def surface_nodal_shape(self):
         return (1, ) + self.horizontal.nodal_shape
 
+
 def get_nodal_shapes(
     inputs: typing.Pytree,
     coords: CoordinateSystem,

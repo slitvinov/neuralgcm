@@ -12,5 +12,3 @@ import dinosaur.time_integration
 import dinosaur.typing
 import dinosaur.vertical_interpolation
 import dinosaur.xarray_utils
-
-__version__ = "1.3.2"  # keep sync with pyproject.toml

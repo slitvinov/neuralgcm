@@ -24,10 +24,6 @@ LATITUDE_SPACINGS = dict(
 
 def get_latitude_nodes(n: int, spacing: str) -> tuple[np.ndarray, np.ndarray]:
     get_nodes = LATITUDE_SPACINGS.get(spacing)
-    if get_nodes is None:
-        raise ValueError(
-            f'Unknown spacing: {spacing}'
-            f'available spacings are {list(LATITUDE_SPACINGS.keys())}')
     return get_nodes(n)
 
 

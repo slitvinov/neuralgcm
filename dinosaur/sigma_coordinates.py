@@ -226,29 +226,3 @@ def centered_vertical_advection(
                    lax.slice_in_dim(w_times_x_diff, 0, -1, axis=axis))
 
 
-@jax.named_call
-def upwind_vertical_advection(
-    w: Array,
-    x: Array,
-    coordinates: SigmaCoordinates,
-    axis: int = -3,
-) -> jnp.ndarray:
-    w_slc_shape = _slice_shape_along_axis(w, axis)
-    w_boundary_values = (
-        jnp.zeros(w_slc_shape, dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
-        jnp.zeros(w_slc_shape, dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
-    )
-    x_slc_shape = _slice_shape_along_axis(x, axis)
-    dx_dsigma_boundary_values = (
-        jnp.zeros(x_slc_shape, dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
-        jnp.zeros(x_slc_shape, dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
-    )
-    x_diff = centered_difference(x, coordinates, axis)
-    w_boundary_top, w_boundary_bot = w_boundary_values
-    w_up = jnp.concatenate([w_boundary_top, w], axis=axis)
-    w_down = jnp.concatenate([w, w_boundary_bot], axis=axis)
-    x_diff_boundary_top, x_diff_boundary_bot = dx_dsigma_boundary_values
-    x_diff_up = jnp.concatenate([x_diff_boundary_top, x_diff], axis=axis)
-    x_diff_down = jnp.concatenate([x_diff, x_diff_boundary_bot], axis=axis)
-    return -(jnp.maximum(w_up, 0) * x_diff_up +
-             jnp.minimum(w_down, 0) * x_diff_down)

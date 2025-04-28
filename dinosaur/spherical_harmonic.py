@@ -124,97 +124,6 @@ def _round_to_multiple(x: int, multiple: int) -> int:
 P = jax.sharding.PartitionSpec
 shmap = shard_map.shard_map
 
-
-@jax.named_call
-def _unstack_m(x: jax.Array, /, mesh: jax.sharding.Mesh | None) -> jax.Array:
-
-    def unstack(x):
-        shape = x.shape[:-2] + (2, x.shape[-2] // 2) + x.shape[-1:]
-        return jnp.reshape(x, shape, order='F')
-
-    if mesh is None:
-        return unstack(x)
-    assert x.ndim in {2, 3}, x.shape
-    z = None if x.shape[0] == 1 else 'z'
-    in_spec = P(z, 'x', 'y') if x.ndim == 3 else P('x', 'y')
-    out_spec = P(z, None, 'x', 'y') if x.ndim == 3 else P(None, 'x', 'y')
-    return shmap(unstack, mesh, (in_spec, ), out_spec)(x)
-
-
-@jax.named_call
-def _stack_m(x: jax.Array, /, mesh: jax.sharding.Mesh | None) -> jax.Array:
-
-    def stack(x):
-        shape = x.shape[:-3] + (-1, ) + x.shape[-1:]
-        return jnp.reshape(x, shape, order='F')
-
-    if mesh is None:
-        return stack(x)
-    assert x.ndim in {3, 4}, x.shape
-    z = None if x.shape[0] == 1 else 'z'
-    in_spec = P(z, None, 'x', 'y') if x.ndim == 4 else P(None, 'x', 'y')
-    out_spec = P(z, 'x', 'y') if x.ndim == 4 else P('x', 'y')
-    return shmap(stack, mesh, (in_spec, ), out_spec)(x)
-
-
-@jax.named_call
-def _fourier_derivative_for_real_basis_with_zero_imag(
-        x: jax.Array, /, mesh: jax.sharding.Mesh | None) -> jax.Array:
-    if mesh is None:
-        return fourier.real_basis_derivative_with_zero_imag(x, axis=-2)
-
-    def differentiate(u):
-        axis = -2
-        frequency_offset = u.shape[axis] // 2 * lax.axis_index('x')
-        return fourier.real_basis_derivative_with_zero_imag(
-            u, axis, frequency_offset)
-
-    assert x.ndim in {2, 3}, x.shape
-    z = None if x.shape[0] == 1 else 'z'
-    spec = P(z, 'x', 'y') if x.ndim == 3 else P('x', 'y')
-    return shmap(differentiate, mesh, (spec, ), spec, check_rep=False)(x)
-
-
-def _transform_einsum(
-    subscripts: str,
-    lhs: np.ndarray | jax.Array,
-    rhs: jax.Array,
-    mesh: jax.sharding.Mesh | None,
-    reverse_einsum_arg_order: bool | None,
-    precision: str,
-) -> jax.Array:
-    if mesh is None:
-        return jnp.einsum(subscripts, lhs, rhs, precision=precision)
-    out_ndim = len(
-        jax.eval_shape(functools.partial(jnp.einsum, subscripts), lhs,
-                       rhs).shape)
-    in_subscripts, _ = subscripts.split('->')
-    _, rhs_subscripts = in_subscripts.split(',')
-    if rhs.ndim == len(rhs_subscripts.replace('...', '')):
-        subscripts = subscripts.replace('...', '')
-        in_spec = P(None, 'x', 'y') if rhs.ndim == 3 else P('x', 'y')
-        out_spec = P(None, 'x', 'y') if out_ndim == 3 else P('x', 'y')
-    elif rhs.ndim == len(rhs_subscripts.replace('...', 'z')):
-        subscripts = subscripts.replace('...', 'z')
-        z = None if rhs.shape[0] == 1 else 'z'
-        in_spec = P(z, None, 'x', 'y') if rhs.ndim == 4 else P(z, 'x', 'y')
-        out_spec = P(z, None, 'x', 'y') if out_ndim == 4 else P(z, 'x', 'y')
-    else:
-        raise ValueError(
-            'only 0 or 1 dimensions supported for ... when using a mesh:'
-            f' {subscripts}')
-    return jax_numpy_utils.sharded_einsum(
-        subscripts,
-        lhs,
-        rhs,
-        mesh=mesh,
-        rhs_spec=in_spec,
-        out_spec=out_spec,
-        reverse_arg_order=bool(reverse_einsum_arg_order),
-        precision=precision,
-    )
-
-
 @dataclasses.dataclass(frozen=True)
 class FastSphericalHarmonics(SphericalHarmonics):
     spmd_mesh: jax.sharding.Mesh | None = None
@@ -378,7 +287,6 @@ class FastSphericalHarmonics(SphericalHarmonics):
     def longitudinal_derivative(self, x: Array) -> Array:
         return _fourier_derivative_for_real_basis_with_zero_imag(
             x, self.spmd_mesh)
-
 
 @dataclasses.dataclass(frozen=True)
 class RealSphericalHarmonicsWithZeroImag(FastSphericalHarmonics):

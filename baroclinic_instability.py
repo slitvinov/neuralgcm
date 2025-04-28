@@ -18,7 +18,7 @@ initial_state_fn, aux_features = dinosaur.primitive_equations_states.steady_stat
 steady_state = initial_state_fn()
 ref_temps = aux_features['ref_temperatures']
 orography = dinosaur.primitive_equations.truncated_modal_orography(
-    aux_features[dinosaur.xarray_utils.OROGRAPHY], coords)
+    aux_features['orography'], coords)
 
 
 def dimensionalize(x: xarray.DataArray, unit: units.Unit) -> xarray.DataArray:

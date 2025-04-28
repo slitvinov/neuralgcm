@@ -33,9 +33,7 @@ initial_state_fn, aux_features = dinosaur.primitive_equations_states.isothermal_
 initial_state = initial_state_fn(rng_key)
 ref_temps = aux_features['ref_temperatures']
 orography = dinosaur.primitive_equations.truncated_modal_orography(
-    aux_features[dinosaur.xarray_utils.OROGRAPHY], coords)
-
-#@test {"skip": true}
+    aux_features['orography'], coords)
 
 initial_state_dict, _ = dinosaur.pytree_utils.as_dict(initial_state)
 u, v = dinosaur.spherical_harmonic.vor_div_to_uv_nodal(

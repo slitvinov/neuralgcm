@@ -3,10 +3,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import scipy.linalg
-from typing import Union
 
 
-def real_basis(wavenumbers: int, nodes: int) -> np.ndarray:
+def real_basis(wavenumbers, nodes):
     dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
     cos = np.real(dft[:, 1:])
     sin = -np.imag(dft[:, 1:])
@@ -17,9 +16,7 @@ def real_basis(wavenumbers: int, nodes: int) -> np.ndarray:
     return f
 
 
-def real_basis_derivative(u: Union[jnp.ndarray, jax.Array],
-                          /,
-                          axis: int = -1) -> jax.Array:
+def real_basis_derivative(u, /, axis=-1):
     i = jnp.arange(u.shape[axis]).reshape((-1, ) + (1, ) * (-1 - axis))
     j = (i + 1) // 2
     u_down = jax_numpy_utils.shift(u, -1, axis)

@@ -263,16 +263,3 @@ def _map_over_matching_keys(
     return outputs
 
 
-def scale_levels_for_matching_keys(
-        inputs: typing.Pytree,
-        scales: typing.Array,
-        keys_to_scale: Sequence[str] = tuple(),
-) -> typing.Pytree:
-    if scales.ndim != 1:
-        raise ValueError('scales must be 1d array of weights per level, got '
-                         f'array with shape {scales.shape}')
-    scales = scales[:, np.newaxis, np.newaxis]  # broadcasting shape.
-    inputs, from_dict_fn = pytree_utils.as_dict(inputs)
-    scale_fn = lambda x: x * scales
-    inputs = _map_over_matching_keys(inputs, scale_fn, keys_to_scale)
-    return from_dict_fn(inputs)

@@ -249,17 +249,3 @@ def maybe_to_modal(
     return jax.tree_util.tree_map(fn, fields, modal_shapes)
 
 
-def _map_over_matching_keys(
-    inputs: dict[str, Any],
-    fn: Callable[[typing.Array], typing.Array],
-    keys_to_map_over: Sequence[str],
-) -> dict[str, Any]:
-    outputs = {}
-    for k, v in inputs.items():
-        if not isinstance(v, dict):
-            outputs[k] = fn(v) if k in keys_to_map_over else v
-        else:
-            outputs[k] = _map_over_matching_keys(v, fn, keys_to_map_over)
-    return outputs
-
-

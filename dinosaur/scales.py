@@ -23,12 +23,6 @@ IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
 WATER_DENSITY = 997 * units.kg / units.m**3
 
 
-def parse_units(units_str: str) -> Quantity:
-    if units_str in {'(0 - 1)', '%', '~'}:
-        units_str = 'dimensionless'
-    return units.parse_expression(units_str)
-
-
 def _get_dimension(quantity: Quantity) -> str:
     exponents = list(quantity.dimensionality.values())
     if len(quantity.dimensionality) != 1 or exponents[0] != 1:

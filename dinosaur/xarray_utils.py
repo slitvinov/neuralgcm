@@ -579,16 +579,6 @@ def aux_features_to_xarray(
     return xarray.Dataset(data_vars=data_vars, coords=xr_coords, attrs=attrs)
 
 
-def attach_data_array_units(array: xarray.DataArray) -> xarray.DataArray:
-    attrs = dict(array.attrs)
-    units = attrs.pop('units', None)
-    if units is not None:
-        data = scales.parse_units(units) * array.data
-    else:
-        data = scales.units.dimensionless * array.data
-    return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
-
-
 def attach_xarray_units(ds: xarray.Dataset) -> xarray.Dataset:
     return ds.map(attach_data_array_units)
 

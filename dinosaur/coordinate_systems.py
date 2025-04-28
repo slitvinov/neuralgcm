@@ -197,3 +197,15 @@ def get_spectral_interpolate_fn(
                          f'{target_coords.horizontal.modal_shape}')
 
 
+def maybe_to_nodal(
+    fields: typing.Pytree,
+    coords: CoordinateSystem,
+) -> typing.Pytree:
+    nodal_shapes = get_nodal_shapes(fields, coords)
+
+    def to_nodal_fn(x):
+        return coords.with_dycore_sharding(
+            coords.horizontal.to_nodal(coords.with_dycore_sharding(x)))
+
+    fn = lambda x, nodal: x if x.shape == tuple(nodal) else to_nodal_fn(x)
+    return jax.tree_util.tree_map(fn, fields, nodal_shapes)

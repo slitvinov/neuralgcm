@@ -20,7 +20,6 @@ units = scales.units
 Array = typing.Array
 Numeric = typing.Numeric
 Quantity = typing.Quantity
-OrographyInitFn = Callable[..., Array]
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 
 

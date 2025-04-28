@@ -40,7 +40,7 @@ class ScaleProtocol(Protocol):
         ...
 
 
-class Scale(abc.Mapping):
+class Scale:
 
     def __init__(self, *scales: Quantity):
         self._scales = dict()

@@ -8,7 +8,6 @@ from dinosaur import scales
 from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
 from dinosaur import time_integration
-from dinosaur import typing
 from dinosaur import vertical_interpolation
 import jax
 from jax import lax

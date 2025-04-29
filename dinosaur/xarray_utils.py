@@ -8,7 +8,6 @@ from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
 from dinosaur import typing
 from dinosaur import vertical_interpolation
-import fsspec
 import jax
 import numpy as np
 import xarray

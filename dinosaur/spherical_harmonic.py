@@ -4,7 +4,6 @@ import functools
 from typing import Any, Callable
 from dinosaur import jax_numpy_utils
 from dinosaur import pytree_utils
-from dinosaur import typing
 import jax
 from jax import lax
 import jax.numpy as jnp
@@ -44,7 +43,6 @@ def gauss_legendre_nodes(n):
     return sps.roots_legendre(n)
 
 
-Array = typing.Array
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 LATITUDE_SPACINGS = dict(gauss=gauss_legendre_nodes, )
 
@@ -165,22 +163,22 @@ class RealSphericalHarmonics(SphericalHarmonics):
                                                            p, fwx)
         return pfwx
 
-    def longitudinal_derivative(self, x: Array):
+    def longitudinal_derivative(self, x):
         return real_basis_derivative(x, axis=-2)
 
 
 P = jax.sharding.PartitionSpec
 
 
-def _vertical_pad(field: jax.Array, mesh: jax.sharding.Mesh | None):
+def _vertical_pad(field, mesh: jax.sharding.Mesh | None):
     return field, None
 
 
-def _vertical_crop(field: jax.Array, padding: int | None):
+def _vertical_crop(field, padding: int | None):
     return field
 
 
-def _with_vertical_padding(f: Callable[[jax.Array], jax.Array],
+def _with_vertical_padding(f,
                            mesh: jax.sharding.Mesh | None):
 
     def g(x):
@@ -319,11 +317,11 @@ class Grid:
         return pytree_utils.tree_map_over_nonscalars(f, z)
 
     @jax.named_call
-    def laplacian(self, x: Array):
+    def laplacian(self, x):
         return x * self.laplacian_eigenvalues
 
     @jax.named_call
-    def inverse_laplacian(self, x: Array):
+    def inverse_laplacian(self, x):
         with np.errstate(divide="ignore", invalid="ignore"):
             inverse_eigenvalues = 1 / self.laplacian_eigenvalues
         inverse_eigenvalues[0] = 0
@@ -352,13 +350,13 @@ class Grid:
         return a, b
 
     @jax.named_call
-    def d_dlon(self, x: Array):
+    def d_dlon(self, x):
         return _with_vertical_padding(
             self.spherical_harmonics.longitudinal_derivative,
             self.spmd_mesh)(x)
 
     @jax.named_call
-    def cos_lat_d_dlat(self, x: Array):
+    def cos_lat_d_dlat(self, x):
         _, l = self.modal_mesh
         a, b = self._derivative_recurrence_weights
         x_lm1 = jax_numpy_utils.shift(((l + 1) * a) * x, -1, axis=-1)
@@ -366,7 +364,7 @@ class Grid:
         return x_lm1 + x_lp1
 
     @jax.named_call
-    def sec_lat_d_dlat_cos2(self, x: Array):
+    def sec_lat_d_dlat_cos2(self, x):
         _, l = self.modal_mesh
         a, b = self._derivative_recurrence_weights
         x_lm1 = jax_numpy_utils.shift(((l - 1) * a) * x, -1, axis=-1)
@@ -374,7 +372,7 @@ class Grid:
         return x_lm1 + x_lp1
 
     @jax.named_call
-    def cos_lat_grad(self, x: Array, clip: bool = True):
+    def cos_lat_grad(self, x, clip: bool = True):
         raw = self.d_dlon(x) / self.radius, self.cos_lat_d_dlat(
             x) / self.radius
         if clip:
@@ -410,7 +408,7 @@ class Grid:
         return raw
 
     @jax.named_call
-    def integrate(self, z: Array):
+    def integrate(self, z):
         w = self.spherical_harmonics.basis.w * self.radius**2
         return einsum("y,...xy->...", w, z)
 
@@ -418,14 +416,14 @@ class Grid:
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 
-def add_constant(x: jnp.ndarray, c: float | Array):
+def add_constant(x: jnp.ndarray, c):
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
 
 
 @jax.named_call
 def get_cos_lat_vector(
-    vorticity: Array,
-    divergence: Array,
+    vorticity,
+    divergence,
     grid: Grid,
     clip: bool = True,
 ):
@@ -441,8 +439,8 @@ def get_cos_lat_vector(
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
 def uv_nodal_to_vor_div_modal(
     grid: Grid,
-    u_nodal: Array,
-    v_nodal: Array,
+    u_nodal,
+    v_nodal,
     clip: bool = True,
 ):
     u_over_cos_lat = grid.to_modal(u_nodal / grid.cos_lat)
@@ -455,8 +453,8 @@ def uv_nodal_to_vor_div_modal(
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
 def vor_div_to_uv_nodal(
     grid: Grid,
-    vorticity: Array,
-    divergence: Array,
+    vorticity,
+    divergence,
     clip: bool = True,
 ):
     u_cos_lat, v_cos_lat = get_cos_lat_vector(vorticity,

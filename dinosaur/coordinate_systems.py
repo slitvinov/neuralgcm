@@ -10,11 +10,6 @@ import numpy as np
 
 P = jax.sharding.PartitionSpec
 
-
-def _with_sharding_constraint(x, sharding):
-    return x
-
-
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
     horizontal: Any
@@ -28,9 +23,6 @@ class CoordinateSystem:
         horizontal = dataclasses.replace(self.horizontal,
                                          spmd_mesh=self.spmd_mesh)
         object.__setattr__(self, "horizontal", horizontal)
-
-    def with_dycore_sharding(self, x):
-        return _with_sharding_constraint(x, None)
 
     def asdict(self):
         out = {**self.horizontal.asdict(), **self.vertical.asdict()}
@@ -62,8 +54,7 @@ def maybe_to_nodal(
     nodal_shapes = get_nodal_shapes(fields, coords)
 
     def to_nodal_fn(x):
-        return coords.with_dycore_sharding(
-            coords.horizontal.to_nodal(coords.with_dycore_sharding(x)))
+        return coords.horizontal.to_nodal(x)
 
     fn = lambda x, nodal: x if x.shape == tuple(nodal) else to_nodal_fn(x)
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)

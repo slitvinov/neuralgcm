@@ -1052,15 +1052,15 @@ class PrimitiveEquationsSpecs:
         )
 
 
-def get_sigma_ratios(coordinates: SigmaCoordinates, ):
+def get_sigma_ratios(coordinates):
     alpha = np.diff(np.log(coordinates.centers), append=0) / 2
     alpha[-1] = -np.log(coordinates.centers[-1])
     return alpha
 
 
 def get_geopotential_weights(
-    coordinates: SigmaCoordinates,
-    ideal_gas_constant: float,
+    coordinates,
+    ideal_gas_constant,
 ):
     alpha = get_sigma_ratios(coordinates)
     weights = np.zeros([coordinates.layers, coordinates.layers])
@@ -1101,9 +1101,9 @@ def get_geopotential(
 
 
 def get_temperature_implicit_weights(
-    coordinates: SigmaCoordinates,
-    reference_temperature: np.ndarray,
-    kappa: float,
+    coordinates,
+    reference_temperature,
+    kappa,
 ):
     p = np.tril(np.ones([coordinates.layers, coordinates.layers]))
     alpha = get_sigma_ratios(coordinates)[..., np.newaxis]
@@ -1129,11 +1129,11 @@ def get_temperature_implicit_weights(
 
 
 def get_temperature_implicit(
-    divergence: Any,
-    coordinates: SigmaCoordinates,
-    reference_temperature: np.ndarray,
-    kappa: float,
-    sharding: Any = None,
+    divergence,
+    coordinates,
+    reference_temperature,
+    kappa,
+    sharding=None,
 ):
     weights = -get_temperature_implicit_weights(coordinates,
                                                 reference_temperature, kappa)
@@ -1207,13 +1207,13 @@ def truncated_modal_orography(
 class PrimitiveEquations(ImplicitExplicitODE):
     reference_temperature: np.ndarray
     orography: Any
-    coords: coordinate_systems.CoordinateSystem
-    physics_specs: PrimitiveEquationsSpecs
+    coords: Any
+    physics_specs: Any
     vertical_matmul_method: Any = dataclasses.field(default=None)
-    implicit_inverse_method: str = dataclasses.field(default="split")
+    implicit_inverse_method: Any = dataclasses.field(default="split")
     vertical_advection: Any = dataclasses.field(
         default=centered_vertical_advection)
-    include_vertical_advection: bool = dataclasses.field(default=True)
+    include_vertical_advection: Any = dataclasses.field(default=True)
 
     @property
     def coriolis_parameter(self):
@@ -1386,7 +1386,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
             sim_time=None if state.sim_time is None else 0.0,
         )
 
-    def implicit_inverse(self, state: State, step_size: float):
+    def implicit_inverse(self, state, step_size):
         implicit_matrix = _get_implicit_term_matrix(
             step_size,
             self.coords,

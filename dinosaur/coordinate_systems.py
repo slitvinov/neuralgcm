@@ -13,11 +13,6 @@ class CoordinateSystem:
     horizontal: Any
     vertical: Any
 
-    def __post_init__(self):
-        horizontal = dataclasses.replace(self.horizontal,
-                                         spmd_mesh=None)
-        object.__setattr__(self, "horizontal", horizontal)
-
     def asdict(self):
         out = {**self.horizontal.asdict(), **self.vertical.asdict()}
         out["horizontal_grid_type"] = type(self.horizontal).__name__

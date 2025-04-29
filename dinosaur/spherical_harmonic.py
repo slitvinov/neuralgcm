@@ -178,7 +178,7 @@ def _vertical_crop(field, padding: int | None):
     return field
 
 
-def _with_vertical_padding(f, mesh: jax.sharding.Mesh | None):
+def _with_vertical_padding(f, mesh):
 
     def g(x):
         x, padding = _vertical_pad(x, mesh)
@@ -200,7 +200,6 @@ class Grid:
     longitude_offset: float = 0.0
     radius: float | None = None
     spherical_harmonics_impl: SphericalHarmonicsImpl = RealSphericalHarmonics
-    spmd_mesh: jax.sharding.Mesh | None = None
 
     def __post_init__(self):
         if self.radius is None:
@@ -240,7 +239,6 @@ class Grid:
         items = dataclasses.asdict(self)
         items[
             'spherical_harmonics_impl'] = self.spherical_harmonics_impl.__name__
-        items['spmd_mesh'] = ""
         return items
 
     @functools.cached_property
@@ -304,13 +302,11 @@ class Grid:
         return -l * (l + 1) / (self.radius**2)
 
     def to_nodal(self, x):
-        f = _with_vertical_padding(self.spherical_harmonics.inverse_transform,
-                                   self.spmd_mesh)
+        f = _with_vertical_padding(self.spherical_harmonics.inverse_transform, None)
         return pytree_utils.tree_map_over_nonscalars(f, x)
 
     def to_modal(self, z):
-        f = _with_vertical_padding(self.spherical_harmonics.transform,
-                                   self.spmd_mesh)
+        f = _with_vertical_padding(self.spherical_harmonics.transform, None)
         return pytree_utils.tree_map_over_nonscalars(f, z)
 
     def laplacian(self, x):
@@ -346,7 +342,7 @@ class Grid:
     def d_dlon(self, x):
         return _with_vertical_padding(
             self.spherical_harmonics.longitudinal_derivative,
-            self.spmd_mesh)(x)
+            None)(x)
 
     def cos_lat_d_dlat(self, x):
         _, l = self.modal_mesh

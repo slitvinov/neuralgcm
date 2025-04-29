@@ -71,7 +71,7 @@ def quadrature_nodes(nodes):
     return xs, weights
 
 
-def get_latitude_nodes(n, spacing):
+def get_latitude_nodes(n):
     return sps.roots_legendre(n)
 
 
@@ -93,8 +93,7 @@ class RealSphericalHarmonics:
     @functools.cached_property
     def nodal_axes(self):
         longitude, _ = quadrature_nodes(self.longitude_nodes)
-        sin_latitude, _ = get_latitude_nodes(self.latitude_nodes,
-                                             self.latitude_spacing)
+        sin_latitude, _ = get_latitude_nodes(self.latitude_nodes)
         return longitude, sin_latitude
 
     @functools.cached_property
@@ -129,7 +128,7 @@ class RealSphericalHarmonics:
             nodes=self.longitude_nodes,
         )
         _, wf = quadrature_nodes(self.longitude_nodes)
-        x, wp = get_latitude_nodes(self.latitude_nodes, self.latitude_spacing)
+        x, wp = get_latitude_nodes(self.latitude_nodes)
         w = wf * wp
         p = evaluate(n_m=self.longitude_wavenumbers,
                      n_l=self.total_wavenumbers,

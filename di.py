@@ -130,7 +130,7 @@ def _slice_shape_along_axis(x, axis, slice_width = 1):
     return tuple(x_shape)
 
 
-def _with_f64_math(f: Callable[[np.ndarray], np.ndarray], ):
+def _with_f64_math(f):
     return lambda x: f(x.astype(np.float64)).astype(x.dtype)
 
 

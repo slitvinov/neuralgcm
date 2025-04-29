@@ -1037,7 +1037,6 @@ class PrimitiveEquationsSpecs:
     water_vapor_gas_constant: Any
     water_vapor_isobaric_heat_capacity: Any
     kappa: Any
-    scale: Any
 
     @property
     def R(self):
@@ -1063,7 +1062,6 @@ class PrimitiveEquationsSpecs:
         water_vapor_gas_constant_si=IDEAL_GAS_CONSTANT_H20,
         water_vapor_isobaric_heat_capacity_si=WATER_VAPOR_CP,
         kappa_si=KAPPA,
-        scale=DEFAULT_SCALE,
     ):
         return cls(
             scale.nondimensionalize(radius_si),

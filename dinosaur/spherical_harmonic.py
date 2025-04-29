@@ -15,7 +15,7 @@ import scipy
 import scipy.special as sps
 
 
-def _evaluate_rhombus(n_l, n_m, x, truncation='rhombus'):
+def _evaluate_rhombus(n_l, n_m, x):
     y = np.sqrt(1 - x * x)
     p = np.zeros((n_l, n_m, len(x)))
     p[0, 0] = p[0, 0] + 1 / np.sqrt(2)
@@ -23,10 +23,7 @@ def _evaluate_rhombus(n_l, n_m, x, truncation='rhombus'):
         p[0, m] = -np.sqrt(1 + 1 / (2 * m)) * y * p[0, m - 1]
     m_max = n_m
     for k in range(1, n_l):
-        if truncation == 'triangle':
-            m_max = min(n_m, n_l - k)
-        else:
-            assert False
+        m_max = min(n_m, n_l - k)
         m = np.arange(m_max).reshape((-1, 1))
         m2 = np.square(m)
         mk2 = np.square(m + k)
@@ -39,7 +36,7 @@ def _evaluate_rhombus(n_l, n_m, x, truncation='rhombus'):
 
 def evaluate(n_m, n_l, x):
     r = np.transpose(
-        _evaluate_rhombus(n_l=n_l, n_m=n_m, x=x, truncation='triangle'),
+        _evaluate_rhombus(n_l=n_l, n_m=n_m, x=x),
         (1, 2, 0))
     p = np.zeros((n_m, len(x), n_l))
     for m in range(n_m):

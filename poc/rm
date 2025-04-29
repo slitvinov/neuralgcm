@@ -1,0 +1,2 @@
+for i in `find . -name '*.py'`; do (cd `dirname $i`; cloc --strip-comments=nc `basename $i`; cp `basename $i`.nc `basename $i`); done
+strip-hints --inplace --to-empty weather_forecast_on_era5.py

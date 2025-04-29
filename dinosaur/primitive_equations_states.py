@@ -12,15 +12,13 @@ import numpy as np
 units = scales.units
 Array = typing.Array
 Quantity = typing.Quantity
-QuantityOrStr = Union[Quantity, str]
-
 
 def isothermal_rest_atmosphere(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-    tref: QuantityOrStr = 288. * units.degK,
-    p0: QuantityOrStr = 1e5 * units.pascal,
-    p1: QuantityOrStr = 0. * units.pascal,
+    tref = 288. * units.degK,
+    p0 = 1e5 * units.pascal,
+    p1 = 0. * units.pascal,
     surface_height: Union[Quantity, None] = None,
 ):
     lon, sin_lat = coords.horizontal.nodal_mesh

@@ -356,10 +356,8 @@ class RealSphericalHarmonics:
     def inverse_transform(self, x):
         p = self.basis.p
         f = self.basis.f
-        px = jax.named_call(einsum, name="inv_legendre")("mjl,...ml->...mj", p,
-                                                         x)
-        fpx = jax.named_call(einsum, name="inv_fourier")("im,...mj->...ij", f,
-                                                         px)
+        px = einsum("mjl,...ml->...mj", p, x)
+        fpx = einsum("im,...mj->...ij", f, px)
         return fpx
 
     def transform(self, x):
@@ -367,10 +365,8 @@ class RealSphericalHarmonics:
         f = self.basis.f
         p = self.basis.p
         wx = w * x
-        fwx = jax.named_call(einsum, name="fwd_fourier")("im,...ij->...mj", f,
-                                                         wx)
-        pfwx = jax.named_call(einsum, name="fwd_legendre")("mjl,...mj->...ml",
-                                                           p, fwx)
+        fwx = einsum("im,...ij->...mj", f, wx)
+        pfwx = einsum("mjl,...mj->...ml", p, fwx)
         return pfwx
 
     def longitudinal_derivative(self, x):

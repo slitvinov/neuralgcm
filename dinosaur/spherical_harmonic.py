@@ -38,14 +38,7 @@ def evaluate(n_m, n_l, x):
         p[m, :, m:n_l] = r[m, :, 0:n_l - m]
     return p
 
-
-def gauss_legendre_nodes(n):
-    return sps.roots_legendre(n)
-
-
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-
-
 def real_basis(wavenumbers, nodes):
     dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
     cos = np.real(dft[:, 1:])

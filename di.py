@@ -1943,7 +1943,7 @@ class HybridCoordinates:
 
     @classmethod
     def ECMWF137(cls):
-        return cls._from_resource_csv("data/ecmwf137_hybrid_levels.csv")
+        return cls._from_resource_csv("ecmwf137_hybrid_levels.csv")
 
     def __hash__(self):
         return hash((tuple(self.a_boundaries.tolist()),

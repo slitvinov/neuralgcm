@@ -456,11 +456,8 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         dT_dt_adiabatic = self.nodal_temperature_adiabatic_tendency(aux_state)
         log_sp_tendency = self.nodal_log_pressure_tendency(aux_state)
         sigma_dot_full = aux_state.sigma_dot_full
-        if self.include_vertical_advection:
-            vertical_tendency_fn = functools.partial(self._vertical_tendency,
-                                                     sigma_dot_full)
-        else:
-            vertical_tendency_fn = lambda x: 0
+        vertical_tendency_fn = functools.partial(self._vertical_tendency,
+                                                 sigma_dot_full)
         tracers_vertical_nodal = jax.tree_util.tree_map(
             vertical_tendency_fn, aux_state.tracers)
         to_modal_fn = self.coords.horizontal.to_modal

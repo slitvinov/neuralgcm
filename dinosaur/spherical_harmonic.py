@@ -182,10 +182,7 @@ shmap = shard_map.shard_map
 def _vertical_pad(
         field: jax.Array,
         mesh: jax.sharding.Mesh | None) -> tuple[jax.Array, int | None]:
-    if field.ndim < 3 or field.shape[0] == 1 or mesh is None:
-        return field, None
-    assert field.ndim == 3, field.shape
-    assert False
+    return field, None
 
 
 def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:

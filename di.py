@@ -69,6 +69,7 @@ def diff(x, axis=-1):
 
 
 def tree_map_over_nonscalars(f, x, *, scalar_fn=lambda x: x):
+
     def g(x):
         x = jnp.asarray(x)
         return f(x) if x.ndim else scalar_fn(x)
@@ -88,7 +89,8 @@ class Scale:
     def __init__(self, *scales):
         self.scales = dict()
         for quantity in scales:
-            self.scales[str(quantity.dimensionality)] = quantity.to_base_units()
+            self.scales[str(
+                quantity.dimensionality)] = quantity.to_base_units()
 
     def scaling_factor(self, dimensionality):
         factor = units.Quantity(1)
@@ -118,7 +120,7 @@ DEFAULT_SCALE = Scale(
 )
 
 
-def _slice_shape_along_axis(x, axis, slice_width = 1):
+def _slice_shape_along_axis(x, axis, slice_width=1):
     x_shape = list(x.shape)
     x_shape[axis] = slice_width
     return tuple(x_shape)
@@ -164,7 +166,7 @@ class SigmaCoordinates:
         return hash(tuple(self.centers.tolist()))
 
 
-def centered_difference(x, coordinates, axis = -3):
+def centered_difference(x, coordinates, axis=-3):
     dx = diff(x, axis=axis)
     dx_axes = range(dx.ndim)
     inv_d𝜎 = 1 / coordinates.center_to_center
@@ -193,8 +195,8 @@ def cumulative_sigma_integral(
 def sigma_integral(
     x,
     coordinates,
-    axis = -3,
-    keepdims = True,
+    axis=-3,
+    keepdims=True,
 ):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
@@ -207,7 +209,7 @@ def centered_vertical_advection(
     w,
     x,
     coordinates,
-    axis = -3,
+    axis=-3,
     w_boundary_values=None,
     dx_dsigma_boundary_values=None,
 ):
@@ -1218,7 +1220,8 @@ class PrimitiveEquations(ImplicitExplicitODE):
     physics_specs: PrimitiveEquationsSpecs
     vertical_matmul_method: Any = dataclasses.field(default=None)
     implicit_inverse_method: str = dataclasses.field(default="split")
-    vertical_advection: Any = dataclasses.field(default=centered_vertical_advection)
+    vertical_advection: Any = dataclasses.field(
+        default=centered_vertical_advection)
     include_vertical_advection: bool = dataclasses.field(default=True)
 
     @property
@@ -1590,7 +1593,7 @@ def steady_state_jw(
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
 
-    def initial_state_fn(rng_key = None):
+    def initial_state_fn(rng_key=None):
         del rng_key
         nodal_vorticity = np.stack([
             _get_vorticity(lat, lon, sigma)

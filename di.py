@@ -1,6 +1,6 @@
 from __future__ import annotations
 from jax import lax
-from typing import Callable, Mapping, Union, Any
+from typing import Any
 import dataclasses
 import functools
 import jax
@@ -960,12 +960,12 @@ class DiagnosticState:
     vorticity: Any
     divergence: Any
     temperature_variation: Any
-    cos_lat_u: tuple[Any, Any]
+    cos_lat_u: Any
     sigma_dot_explicit: Any
     sigma_dot_full: Any
     cos_lat_grad_log_sp: Any
     u_dot_grad_log_sp: Any
-    tracers: Mapping[str, Any]
+    tracers: Any
 
 
 def compute_diagnostic_state(
@@ -1223,8 +1223,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
     physics_specs: PrimitiveEquationsSpecs
     vertical_matmul_method: Any = dataclasses.field(default=None)
     implicit_inverse_method: str = dataclasses.field(default="split")
-    vertical_advection: Callable[..., jax.Array] = dataclasses.field(
-        default=centered_vertical_advection)
+    vertical_advection: Any = dataclasses.field(default=centered_vertical_advection)
     include_vertical_advection: bool = dataclasses.field(default=True)
 
     @property

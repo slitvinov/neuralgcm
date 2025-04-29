@@ -3,13 +3,11 @@ import dataclasses
 import functools
 from typing import Callable
 from dinosaur import jax_numpy_utils
-from dinosaur import typing
 import jax
 from jax import lax
 import jax.numpy as jnp
 import numpy as np
 
-Array = typing.Array
 einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
 
 
@@ -81,7 +79,7 @@ def centered_difference(x: np.ndarray,
 
 @jax.named_call
 def cumulative_sigma_integral(
-    x: Array,
+    x,
     coordinates: SigmaCoordinates,
     axis: int = -3,
     downward: bool = True,
@@ -100,7 +98,7 @@ def cumulative_sigma_integral(
 
 @jax.named_call
 def sigma_integral(
-    x: Array,
+    x,
     coordinates: SigmaCoordinates,
     axis: int = -3,
     keepdims: bool = True,
@@ -114,12 +112,12 @@ def sigma_integral(
 
 @jax.named_call
 def centered_vertical_advection(
-    w: Array,
-    x: Array,
+    w,
+    x,
     coordinates: SigmaCoordinates,
     axis: int = -3,
-    w_boundary_values: tuple[Array, Array] | None = None,
-    dx_dsigma_boundary_values: tuple[Array, Array] | None = None,
+    w_boundary_values = None,
+    dx_dsigma_boundary_values = None,
 ):
     if w_boundary_values is None:
         w_slc_shape = _slice_shape_along_axis(w, axis)

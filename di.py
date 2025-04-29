@@ -94,9 +94,9 @@ class Scale:
     def __init__(self, *scales):
         self._scales = dict()
         for quantity in scales:
-            self._scales[quantity.dimensionality] = quantity.to_base_units()
+            self._scales[str(quantity.dimensionality)] = quantity.to_base_units()
 
-    def _scaling_factor(self, dimensionality):
+    def scaling_factor(self, dimensionality):
         factor = units.Quantity(1)
         for dimension, exponent in dimensionality.items():
             quantity = self._scales.get(dimension)
@@ -105,13 +105,13 @@ class Scale:
         return factor
 
     def nondimensionalize(self, quantity):
-        scaling_factor = self._scaling_factor(quantity.dimensionality)
+        scaling_factor = self.scaling_factor(quantity.dimensionality)
         nondimensionalized = (quantity / scaling_factor).to(
             units.dimensionless)
         return nondimensionalized.magnitude
 
     def dimensionalize(self, value, unit: Unit):
-        scaling_factor = self._scaling_factor(unit.dimensionality)
+        scaling_factor = self.scaling_factor(unit.dimensionality)
         dimensionalized = value * scaling_factor
         return dimensionalized.to(unit)
 

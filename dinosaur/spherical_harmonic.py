@@ -47,7 +47,6 @@ def gauss_legendre_nodes(n):
 
 
 Array = typing.Array
-ArrayOrArrayTuple = typing.ArrayOrArrayTuple
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 LATITUDE_SPACINGS = dict(gauss=gauss_legendre_nodes, )
 
@@ -390,13 +389,13 @@ class Grid:
         return raw
 
     @jax.named_call
-    def k_cross(self, v: ArrayOrArrayTuple) -> Array:
+    def k_cross(self, v):
         return -v[1], v[0]
 
     @jax.named_call
     def div_cos_lat(
         self,
-        v: ArrayOrArrayTuple,
+        v,
         clip: bool = True,
     ) -> Array:
         raw = (self.d_dlon(v[0]) +
@@ -408,7 +407,7 @@ class Grid:
     @jax.named_call
     def curl_cos_lat(
         self,
-        v: ArrayOrArrayTuple,
+        v,
         clip: bool = True,
     ) -> Array:
         raw = (self.d_dlon(v[1]) -

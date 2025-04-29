@@ -1,7 +1,7 @@
 from __future__ import annotations
 import dataclasses
 import functools
-from typing import Callable, Mapping, Union
+from typing import Callable, Mapping, Union, Any
 from dinosaur import coordinate_systems
 from dinosaur import jax_numpy_utils
 from dinosaur import scales
@@ -17,17 +17,16 @@ import numpy as np
 import tree_math
 
 units = scales.units
-Array = typing.Array
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 
 
 @tree_math.struct
 class State:
-    vorticity: Array
-    divergence: Array
-    temperature_variation: Array
-    log_surface_pressure: Array
-    tracers: Mapping[str, Array] = dataclasses.field(default_factory=dict)
+    vorticity: Any
+    divergence: Any
+    temperature_variation: Any
+    log_surface_pressure: Any
+    tracers: Mapping[str, Any] = dataclasses.field(default_factory=dict)
     sim_time: Union[float, None] = None
 
 
@@ -44,15 +43,15 @@ State.asdict = _asdict
 
 @tree_math.struct
 class DiagnosticState:
-    vorticity: Array
-    divergence: Array
-    temperature_variation: Array
-    cos_lat_u: tuple[Array, Array]
-    sigma_dot_explicit: Array
-    sigma_dot_full: Array
-    cos_lat_grad_log_sp: Array
-    u_dot_grad_log_sp: Array
-    tracers: Mapping[str, Array]
+    vorticity: Any
+    divergence: Any
+    temperature_variation: Any
+    cos_lat_u: tuple[Any, Any]
+    sigma_dot_explicit: Any
+    sigma_dot_full: Any
+    cos_lat_grad_log_sp: Any
+    u_dot_grad_log_sp: Any
+    tracers: Mapping[str, Any]
 
 
 @jax.named_call
@@ -185,7 +184,7 @@ def get_geopotential_weights(
 
 
 def get_geopotential_diff(
-    temperature: Array,
+    temperature: Any,
     coordinates: sigma_coordinates.SigmaCoordinates,
     ideal_gas_constant: float,
     method: str = "dense",
@@ -196,9 +195,9 @@ def get_geopotential_diff(
 
 
 def get_geopotential(
-    temperature_variation: Array,
-    reference_temperature: Array,
-    orography: Array,
+    temperature_variation: Any,
+    reference_temperature: Any,
+    orography: Any,
     coordinates: sigma_coordinates.SigmaCoordinates,
     gravity_acceleration: float,
     ideal_gas_constant: float,
@@ -243,7 +242,7 @@ def get_temperature_implicit_weights(
 
 
 def get_temperature_implicit(
-    divergence: Array,
+    divergence: Any,
     coordinates: sigma_coordinates.SigmaCoordinates,
     reference_temperature: np.ndarray,
     kappa: float,
@@ -256,12 +255,12 @@ def get_temperature_implicit(
 
 
 @jax.named_call
-def _vertical_matvec(a: Array, x: Array):
+def _vertical_matvec(a, x):
     return einsum("gh,...hml->...gml", a, x)
 
 
 @jax.named_call
-def _vertical_matvec_per_wavenumber(a: Array, x: Array):
+def _vertical_matvec_per_wavenumber(a, x):
     return einsum("lgh,...hml->...gml", a, x)
 
 
@@ -304,7 +303,7 @@ def _get_implicit_term_matrix(eta, coords, reference_temperature, kappa,
     return np.concatenate((row0, row1, row2), axis=1)
 
 
-def div_sec_lat(m_component: Array, n_component: Array,
+def div_sec_lat(m_component, n_component,
                 grid: spherical_harmonic.Grid):
     m_component = grid.to_modal(m_component * grid.sec2_lat)
     n_component = grid.to_modal(n_component * grid.sec2_lat)
@@ -312,7 +311,7 @@ def div_sec_lat(m_component: Array, n_component: Array,
 
 
 def truncated_modal_orography(
-    orography: Array,
+    orography: Any,
     coords: coordinate_systems.CoordinateSystem,
     wavenumbers_to_clip: int = 1,
 ):
@@ -324,7 +323,7 @@ def truncated_modal_orography(
 @dataclasses.dataclass
 class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     reference_temperature: np.ndarray
-    orography: Array
+    orography: Any
     coords: coordinate_systems.CoordinateSystem
     physics_specs: PrimitiveEquationsSpecs
     vertical_matmul_method: Union[str, None] = dataclasses.field(default=None)
@@ -343,12 +342,12 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         return self.reference_temperature[..., np.newaxis, np.newaxis]
 
     @jax.named_call
-    def _vertical_tendency(self, w: Array, x: Array):
+    def _vertical_tendency(self, w, x):
         return self.vertical_advection(w, x, self.coords.vertical)
 
     @jax.named_call
-    def _t_omega_over_sigma_sp(self, temperature_field: Array, g_term: Array,
-                               v_dot_grad_log_sp: Array):
+    def _t_omega_over_sigma_sp(self, temperature_field, g_term,
+                               v_dot_grad_log_sp):
         f = sigma_coordinates.cumulative_sigma_integral(
             g_term, self.coords.vertical, sharding=self.coords.dycore_sharding)
         alpha = get_sigma_ratios(self.coords.vertical)
@@ -414,8 +413,8 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     @jax.named_call
     def horizontal_scalar_advection(
         self,
-        scalar: Array,
-        aux_state: DiagnosticState,
+        scalar,
+        aux_state,
     ):
         u, v = aux_state.cos_lat_u
         nodal_terms = scalar * aux_state.divergence

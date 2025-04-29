@@ -533,13 +533,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
 
     @jax.named_call
     def implicit_inverse(self, state: State, step_size: float):
-        if isinstance(step_size, jax.core.Tracer):
-            raise TypeError(
-                f'`step_size` must be concrete but a Tracer was passed: {step_size}. '
-                'This error is likely caused by '
-                '`jax.jit(primitive.inverse_terms)(state, eta). Instead, do '
-                '`jax.jit(lambda s: primitive.inverse_terms(s, eta=eta))(state)`.'
-            )
         implicit_matrix = _get_implicit_term_matrix(
             step_size,
             self.coords,

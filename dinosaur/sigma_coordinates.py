@@ -78,11 +78,11 @@ def centered_difference(x: np.ndarray,
 
 def cumulative_sigma_integral(
     x,
-    coordinates: SigmaCoordinates,
-    axis: int = -3,
-    downward: bool = True,
-    cumsum_method: str = "dot",
-    sharding: jax.sharding.NamedSharding | None = None,
+    coordinates,
+    axis= -3,
+    downward= True,
+    cumsum_method = "dot",
+    sharding,
 ):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness

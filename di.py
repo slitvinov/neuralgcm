@@ -1488,8 +1488,8 @@ def isothermal_rest_atmosphere(
 
 
 def steady_state_jw(
-    coords: coordinate_systems.CoordinateSystem,
-    physics_specs: PrimitiveEquationsSpecs,
+    coords,
+    physics_specs,
     u0=35.0 * units.m / units.s,
     p0=1e5 * units.pascal,
     t0=288.0 * units.degK,
@@ -1604,8 +1604,8 @@ def steady_state_jw(
 
 
 def baroclinic_perturbation_jw(
-    coords: coordinate_systems.CoordinateSystem,
-    physics_specs: PrimitiveEquationsSpecs,
+    coords,
+    physics_specs,
     u_perturb=1.0 * units.m / units.s,
     lon_location=np.pi / 9,
     lat_location=2 * np.pi / 9,

@@ -1,11 +1,5 @@
 import dataclasses
 import functools
-from dinosaur import coordinate_systems
-from dinosaur import primitive_equations
-from dinosaur import scales
-from dinosaur import sigma_coordinates
-from dinosaur import spherical_harmonic
-from dinosaur import vertical_interpolation
 import jax
 import numpy as np
 import xarray

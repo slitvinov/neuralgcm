@@ -28,8 +28,7 @@ class Scale:
         for quantity in scales:
             self._scales[_get_dimension(quantity)] = quantity.to_base_units()
 
-    def _scaling_factor(self,
-                        dimensionality: pint.util.UnitsContainer):
+    def _scaling_factor(self, dimensionality: pint.util.UnitsContainer):
         factor = units.Quantity(1)
         for dimension, exponent in dimensionality.items():
             quantity = self._scales.get(dimension)

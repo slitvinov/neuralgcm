@@ -19,7 +19,7 @@ def isothermal_rest_atmosphere(
     tref=288.0 * units.degK,
     p0=1e5 * units.pascal,
     p1=0.0 * units.pascal,
-    surface_height = None,
+    surface_height=None,
 ):
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)

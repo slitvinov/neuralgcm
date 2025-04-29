@@ -9,6 +9,7 @@ import numpy as np
 
 units = scales.units
 
+
 class HeldSuarezForcing:
 
     def __init__(

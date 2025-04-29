@@ -170,9 +170,7 @@ class SigmaCoordinates:
         return hash(tuple(self.centers.tolist()))
 
 
-def centered_difference(x: np.ndarray,
-                        coordinates: SigmaCoordinates,
-                        axis: int = -3):
+def centered_difference(x, coordinates, axis = -3):
     dx = diff(x, axis=axis)
     dx_axes = range(dx.ndim)
     inv_d𝜎 = 1 / coordinates.center_to_center
@@ -200,9 +198,9 @@ def cumulative_sigma_integral(
 
 def sigma_integral(
     x,
-    coordinates: SigmaCoordinates,
-    axis: int = -3,
-    keepdims: bool = True,
+    coordinates,
+    axis = -3,
+    keepdims = True,
 ):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
@@ -214,8 +212,8 @@ def sigma_integral(
 def centered_vertical_advection(
     w,
     x,
-    coordinates: SigmaCoordinates,
-    axis: int = -3,
+    coordinates,
+    axis = -3,
     w_boundary_values=None,
     dx_dsigma_boundary_values=None,
 ):

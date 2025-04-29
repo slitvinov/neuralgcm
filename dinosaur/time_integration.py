@@ -178,9 +178,6 @@ def step_with_filters(
 
 
 def repeated(fn, steps, scan_fn=jax.lax.scan):
-    if steps == 1:
-        return fn
-
     def f_repeated(x_initial):
         g = lambda x, _: (fn(x), None)
         x_final, _ = scan_fn(g, x_initial, xs=None, length=steps)

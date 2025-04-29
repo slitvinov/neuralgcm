@@ -58,8 +58,6 @@ def _infer_dims_shape_and_coords(
     basic_shape_to_dims[modal_shape] = MODAL_AXES_NAMES
     basic_shape_to_dims[coords.surface_nodal_shape] = NODAL_AXES_NAMES
     for dim, value in additional_coords.items():
-        if dim == "realization":
-            continue
         basic_shape_to_dims[value.shape +
                             modal_shape] = (dim, ) + MODAL_AXES_NAMES
         basic_shape_to_dims[value.shape +

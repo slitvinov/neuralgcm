@@ -257,12 +257,7 @@ def get_temperature_implicit(
 ):
     weights = -get_temperature_implicit_weights(coordinates,
                                                 reference_temperature, kappa)
-    if method == 'dense':
-        return _vertical_matvec(weights, divergence)
-    elif method == 'sparse':
-        assert False
-    else:
-        raise ValueError(f'unknown {method=} for get_temperature_implicit')
+    return _vertical_matvec(weights, divergence)
 
 
 @jax.named_call

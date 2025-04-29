@@ -2,10 +2,7 @@ from __future__ import annotations
 import dataclasses
 from typing import Any, Union
 from dinosaur import pytree_utils
-from dinosaur import sigma_coordinates
-from dinosaur import spherical_harmonic
 import jax
-import jax.numpy as jnp
 import numpy as np
 
 @dataclasses.dataclass(frozen=True)

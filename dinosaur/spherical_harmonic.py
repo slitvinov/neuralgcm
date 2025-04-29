@@ -168,7 +168,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
 
 
 P = jax.sharding.PartitionSpec
-def _with_vertical_padding(f, mesh):
+def _with_vertical_padding(f):
 
     def g(x):
         return f(x)
@@ -291,11 +291,11 @@ class Grid:
         return -l * (l + 1) / (self.radius**2)
 
     def to_nodal(self, x):
-        f = _with_vertical_padding(self.spherical_harmonics.inverse_transform, None)
+        f = _with_vertical_padding(self.spherical_harmonics.inverse_transform)
         return pytree_utils.tree_map_over_nonscalars(f, x)
 
     def to_modal(self, z):
-        f = _with_vertical_padding(self.spherical_harmonics.transform, None)
+        f = _with_vertical_padding(self.spherical_harmonics.transform)
         return pytree_utils.tree_map_over_nonscalars(f, z)
 
     def laplacian(self, x):
@@ -330,8 +330,7 @@ class Grid:
 
     def d_dlon(self, x):
         return _with_vertical_padding(
-            self.spherical_harmonics.longitudinal_derivative,
-            None)(x)
+            self.spherical_harmonics.longitudinal_derivative)(x)
 
     def cos_lat_d_dlat(self, x):
         _, l = self.modal_mesh

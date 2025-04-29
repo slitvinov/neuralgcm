@@ -44,8 +44,6 @@ def _infer_dims_shape_and_coords(
     }
     if times is not None:
         all_xr_coords["time"] = times
-    if sample_ids is not None:
-        all_xr_coords["sample"] = sample_ids
     basic_shape_to_dims = {}
     basic_shape_to_dims[tuple()] = tuple()
     modal_shape = coords.horizontal.modal_shape

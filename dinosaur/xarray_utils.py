@@ -20,7 +20,6 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
     sample_ids,
     include_realization,
 ):
-    bool(shape)
     if times is not None:
         shape = times.shape + shape
         dims = ("time", ) + dims

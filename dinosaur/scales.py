@@ -21,15 +21,6 @@ def _get_dimension(quantity):
     return str(quantity.dimensionality)
 
 
-class ScaleProtocol(Protocol):
-
-    def nondimensionalize(self, quantity):
-        ...
-
-    def dimensionalize(self, value, unit):
-        ...
-
-
 class Scale:
 
     def __init__(self, *scales):

@@ -125,7 +125,6 @@ class PrimitiveEquationsSpecs:
     water_vapor_gas_constant: float
     water_vapor_isobaric_heat_capacity: float
     kappa: float
-    scale: scales.ScaleProtocol
 
     @property
     def R(self):

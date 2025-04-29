@@ -118,7 +118,7 @@ ax = plt.gca()
 ax.legend().remove()
 plt.savefig("03.png")
 plt.close()
-hs = dinosaur.held_suarez.HeldSuarezForcing(coords=coords,
+hs = di.HeldSuarezForcing(coords=coords,
                                             physics_specs=physics_specs,
                                             reference_temperature=ref_temps,
                                             p0=p0)
@@ -209,7 +209,7 @@ inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = physics_specs.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
-hs_forcing = dinosaur.held_suarez.HeldSuarezForcing(
+hs_forcing = di.HeldSuarezForcing(
     coords=coords,
     physics_specs=physics_specs,
     reference_temperature=ref_temps,

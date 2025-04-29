@@ -8,17 +8,11 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-P = jax.sharding.PartitionSpec
-
-
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
     horizontal: Any
     vertical: Any
     spmd_mesh: Union[jax.sharding.Mesh, None] = None
-    dycore_partition_spec: jax.sharding.PartitionSpec = P("z", "x", "y")
-    physics_partition_spec: jax.sharding.PartitionSpec = P(
-        None, ("x", "z"), "y")
 
     def __post_init__(self):
         horizontal = dataclasses.replace(self.horizontal,

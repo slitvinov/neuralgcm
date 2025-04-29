@@ -134,7 +134,7 @@ raw_init_state = di.State(
     tracers=tracers,
 )
 orography = model_coords.horizontal.to_modal(orography_input)
-orography = filtering.exponential_filter(model_coords.horizontal,
+orography = di.exponential_filter(model_coords.horizontal,
                                          order=2)(orography)
 eq = di.PrimitiveEquations(ref_temps, orography, model_coords,
                                             physics_specs)

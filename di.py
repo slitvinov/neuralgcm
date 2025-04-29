@@ -13,7 +13,6 @@ import scipy.special as sps
 import tree_math
 import xarray
 
-MODAL_AXES_NAMES = ("longitudinal_mode", "total_wavenumber")
 tree_map = jax.tree_util.tree_map
 einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
@@ -1940,15 +1939,15 @@ def _infer_dims_shape_and_coords(
     modal_shape = coords.horizontal.modal_shape
     nodal_shape = coords.horizontal.nodal_shape
     basic_shape_to_dims[(coords.vertical.layers, ) +
-                        modal_shape] = ("level", ) + MODAL_AXES_NAMES
+                        modal_shape] = ("level", "longitudinal_mode", "total_wavenumber")
     basic_shape_to_dims[(coords.vertical.layers, ) +
                         nodal_shape] = ("level", "lon", "lat")
     basic_shape_to_dims[nodal_shape] = "lon", "lat"
-    basic_shape_to_dims[modal_shape] = MODAL_AXES_NAMES
+    basic_shape_to_dims[modal_shape] = "longitudinal_mode", "total_wavenumber"
     basic_shape_to_dims[coords.surface_nodal_shape] = "lon", "lat"
     for dim, value in additional_coords.items():
         basic_shape_to_dims[value.shape +
-                            modal_shape] = (dim, ) + MODAL_AXES_NAMES
+                            modal_shape] = (dim, "longitudinal_mode", "total_wavenumber")
         basic_shape_to_dims[value.shape +
                             nodal_shape] = (dim, "lon", "lat")
         basic_shape_to_dims[value.shape] = (dim, )

@@ -41,7 +41,7 @@ class TimeReversedImExODE(ImplicitExplicitODE):
 
     def implicit_inverse(
         self,
-        state: PyTreeState,
+        state,
         step_size: float,
     ):
         return self.forward_eq.implicit_inverse(state, -step_size)
@@ -58,7 +58,7 @@ def compose_equations(equations: Sequence[Union[ImplicitExplicitODE,
     (implicit_explicit_equation, ) = implicit_explicit_eqs
     assert isinstance(implicit_explicit_equation, ImplicitExplicitODE)
 
-    def explicit_fn(x: PyTreeState):
+    def explicit_fn(x):
         explicit_tendencies = [fn.explicit_terms(x) for fn in equations]
         return tree_map(lambda *args: sum([x for x in args if x is not None]),
                         *explicit_tendencies)
@@ -136,9 +136,9 @@ def imex_rk_sil3(
     )
 
 
-def runge_kutta_step_filter(state_filter: PyTreeTermsFn, ):
+def runge_kutta_step_filter(state_filter):
 
-    def _filter(u: PyTreeState, u_next: PyTreeState):
+    def _filter(u, u_next):
         del u
         return state_filter(u_next)
 

@@ -52,8 +52,6 @@ def pad_in_dim(x, pad_width, axis):
 
 
 def shift(x, offset, axis):
-    if abs(offset) >= x.shape[axis]:
-        return jnp.zeros_like(x)
     if offset > 0:
         sliced = lax.slice_in_dim(x, 0, x.shape[axis] - offset, axis=axis)
         return pad_in_dim(sliced, (offset, 0), axis=axis)

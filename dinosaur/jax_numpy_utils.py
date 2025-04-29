@@ -5,14 +5,13 @@ import jax.numpy as jnp
 import numpy as np
 
 
-def _single_device_dot_cumsum(x, axis, reverse=False):
+def _single_device_dot_cumsum(x, axis):
     if axis < 0:
         axis = axis + x.ndim
     size = x.shape[axis]
     i = jnp.arange(size)[:, jnp.newaxis]
     j = jnp.arange(size)[jnp.newaxis, :]
-    op = jnp.greater_equal if reverse else jnp.less_equal
-    w = op(i, j).astype(np.float32)
+    w = jnp.less_equal(i, j).astype(np.float32)
     out_axes = list(range(x.ndim))
     out_axes[axis] = x.ndim
     return jnp.einsum(
@@ -28,19 +27,16 @@ def _single_device_dot_cumsum(x, axis, reverse=False):
 def _dot_cumsum(
     x,
     axis,
-    sharding,
-    reverse=False,
 ):
-    return _single_device_dot_cumsum(x, axis, reverse=reverse)
+    return _single_device_dot_cumsum(x, axis)
 
 
 def cumsum(
     x,
     axis,
     method="dot",
-    sharding=None,
 ):
-    return _dot_cumsum(x, axis, sharding=sharding)
+    return _dot_cumsum(x, axis)
 
 
 def pad_in_dim(x, pad_width, axis):

@@ -378,14 +378,6 @@ class RealSphericalHarmonics:
         return real_basis_derivative(x, axis=-2)
 
 
-def _with_vertical_padding(f):
-
-    def g(x):
-        return f(x)
-
-    return g
-
-
 @dataclasses.dataclass(frozen=True)
 class Grid:
     longitude_wavenumbers: int = 0
@@ -492,11 +484,11 @@ class Grid:
         return -l * (l + 1) / (self.radius**2)
 
     def to_nodal(self, x):
-        f = _with_vertical_padding(self.spherical_harmonics.inverse_transform)
+        f = self.spherical_harmonics.inverse_transform
         return tree_map_over_nonscalars(f, x)
 
     def to_modal(self, z):
-        f = _with_vertical_padding(self.spherical_harmonics.transform)
+        f = self.spherical_harmonics.transform
         return tree_map_over_nonscalars(f, z)
 
     def laplacian(self, x):
@@ -530,8 +522,7 @@ class Grid:
         return a, b
 
     def d_dlon(self, x):
-        return _with_vertical_padding(
-            self.spherical_harmonics.longitudinal_derivative)(x)
+        return self.spherical_harmonics.longitudinal_derivative(x)
 
     def cos_lat_d_dlat(self, x):
         _, l = self.modal_mesh

@@ -305,7 +305,6 @@ class RealSphericalHarmonics:
     total_wavenumbers: int = 0
     longitude_nodes: int = 0
     latitude_nodes: int = 0
-    latitude_spacing: str = "gauss"
 
     @functools.cached_property
     def nodal_axes(self):
@@ -384,7 +383,6 @@ class Grid:
     total_wavenumbers: int = 0
     longitude_nodes: int = 0
     latitude_nodes: int = 0
-    latitude_spacing: str = "gauss"
     longitude_offset: float = 0.0
     radius: float | None = None
 
@@ -397,7 +395,6 @@ class Grid:
         cls,
         max_wavenumber: int,
         gaussian_nodes: int,
-        latitude_spacing: str = "gauss",
         longitude_offset: float = 0.0,
         radius: float | None = None,
     ):
@@ -406,7 +403,6 @@ class Grid:
             total_wavenumbers=max_wavenumber + 2,
             longitude_nodes=4 * gaussian_nodes,
             latitude_nodes=2 * gaussian_nodes,
-            latitude_spacing=latitude_spacing,
             longitude_offset=longitude_offset,
             radius=radius,
         )
@@ -431,7 +427,6 @@ class Grid:
             total_wavenumbers=self.total_wavenumbers,
             longitude_nodes=self.longitude_nodes,
             latitude_nodes=self.latitude_nodes,
-            latitude_spacing=self.latitude_spacing,
             **kwargs,
         )
 

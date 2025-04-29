@@ -1,6 +1,5 @@
 from typing import Union
 from dinosaur import coordinate_systems
-from dinosaur import filtering
 from dinosaur import primitive_equations
 from dinosaur import scales
 from dinosaur import xarray_utils

@@ -1,4 +1,3 @@
-from dinosaur import coordinate_systems
 from dinosaur import primitive_equations
 from dinosaur import scales
 import jax

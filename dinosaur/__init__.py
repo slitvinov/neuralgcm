@@ -9,6 +9,5 @@ import dinosaur.scales
 import dinosaur.sigma_coordinates
 import dinosaur.spherical_harmonic
 import dinosaur.time_integration
-import dinosaur.typing
 import dinosaur.vertical_interpolation
 import dinosaur.xarray_utils

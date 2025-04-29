@@ -1906,12 +1906,10 @@ def data_to_xarray(
     *,
     coords,
     times,
-    sample_ids=None,
     additional_coords=None,
     attrs=None,
     serialize_coords_to_attrs=True,
 ):
-    assert sample_ids is None
     assert additional_coords is None
     assert attrs is None
     # assert serialize_coords_to_attrs is None
@@ -1921,7 +1919,7 @@ def data_to_xarray(
     if (coords.vertical.layers != 1) and ("surface" not in additional_coords):
         additional_coords["surface"] = np.ones(1)
     all_coords, shape_to_dims = _infer_dims_shape_and_coords(
-        coords, times, sample_ids, additional_coords)
+        coords, times, None, additional_coords)
     dims_in_state = set()
     data_vars = {}
     for key in prognostic_keys:

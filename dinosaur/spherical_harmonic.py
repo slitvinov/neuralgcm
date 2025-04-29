@@ -223,31 +223,6 @@ class Grid:
             assert isinstance(self.spherical_harmonics, FastSphericalHarmonics)
 
     @classmethod
-    def with_wavenumbers(
-        cls,
-        longitude_wavenumbers: int,
-        dealiasing: str = 'quadratic',
-        latitude_spacing: str = 'gauss',
-        longitude_offset: float = 0.0,
-        spherical_harmonics_impl:
-        SphericalHarmonicsImpl = RealSphericalHarmonics,
-        radius: float | None = None,
-    ) -> Grid:
-        order = {'linear': 2, 'quadratic': 3, 'cubic': 4}[dealiasing]
-        longitude_nodes = order * longitude_wavenumbers + 1
-        latitude_nodes = math.ceil(longitude_nodes / 2)
-        return cls(
-            longitude_wavenumbers=longitude_wavenumbers,
-            total_wavenumbers=longitude_wavenumbers + 1,
-            longitude_nodes=longitude_nodes,
-            latitude_nodes=latitude_nodes,
-            latitude_spacing=latitude_spacing,
-            longitude_offset=longitude_offset,
-            spherical_harmonics_impl=spherical_harmonics_impl,
-            radius=radius,
-        )
-
-    @classmethod
     def construct(
         cls,
         max_wavenumber: int,
@@ -391,10 +366,6 @@ class Grid:
     @functools.cached_property
     def nodal_shape(self) -> tuple[int, int]:
         return self.spherical_harmonics.nodal_shape
-
-    @functools.cached_property
-    def nodal_padding(self) -> tuple[int, int]:
-        return self.spherical_harmonics.nodal_padding
 
     @functools.cached_property
     def nodal_mesh(self) -> tuple[np.ndarray, np.ndarray]:

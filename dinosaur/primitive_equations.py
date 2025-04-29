@@ -342,7 +342,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     def _t_omega_over_sigma_sp(self, temperature_field, g_term,
                                v_dot_grad_log_sp):
         f = sigma_coordinates.cumulative_sigma_integral(
-            g_term, self.coords.vertical, sharding=self.coords.dycore_sharding)
+            g_term, self.coords.vertical, sharding=None)
         alpha = get_sigma_ratios(self.coords.vertical)
         alpha = alpha[:, np.newaxis, np.newaxis]
         del_𝜎 = self.coords.vertical.layer_thickness[:, np.newaxis, np.newaxis]
@@ -477,7 +477,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             self.coords.vertical,
             self.physics_specs.R,
             method=method,
-            sharding=self.coords.dycore_sharding,
+            sharding=None,
         )
         rt_log_p = (self.physics_specs.ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)
@@ -490,7 +490,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             self.reference_temperature,
             self.physics_specs.kappa,
             method=method,
-            sharding=self.coords.dycore_sharding,
+            sharding=None,
         )
         log_surface_pressure_implicit = -_vertical_matvec(
             self.coords.vertical.layer_thickness[np.newaxis], state.divergence)

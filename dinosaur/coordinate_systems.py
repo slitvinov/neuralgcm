@@ -29,12 +29,8 @@ class CoordinateSystem:
                                          spmd_mesh=self.spmd_mesh)
         object.__setattr__(self, "horizontal", horizontal)
 
-    @property
-    def dycore_sharding(self):
-        return None
-
     def with_dycore_sharding(self, x):
-        return _with_sharding_constraint(x, self.dycore_sharding)
+        return _with_sharding_constraint(x, None)
 
     def asdict(self):
         out = {**self.horizontal.asdict(), **self.vertical.asdict()}

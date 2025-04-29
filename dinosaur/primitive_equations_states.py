@@ -26,10 +26,7 @@ def isothermal_rest_atmosphere(
     tref = physics_specs.nondimensionalize(units.Quantity(tref))
     p0 = physics_specs.nondimensionalize(units.Quantity(p0))
     p1 = physics_specs.nondimensionalize(units.Quantity(p1))
-    if surface_height is None:
-        orography = np.zeros_like(lat)
-    else:
-        assert False
+    orography = np.zeros_like(lat)
 
     def _get_vorticity(sigma, lon, lat):
         del sigma, lon

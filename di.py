@@ -1914,7 +1914,7 @@ def data_to_xarray(
     assert sample_ids is None
     assert additional_coords is None
     assert attrs is None
-    assert serialize_coords_to_attrs is None
+    # assert serialize_coords_to_attrs is None
     prognostic_keys = set(data.keys()) - {"tracers"} - {"diagnostics"}
     if additional_coords is None:
         additional_coords = {}

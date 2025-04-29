@@ -1433,8 +1433,8 @@ class PrimitiveEquations(ImplicitExplicitODE):
 
 
 def isothermal_rest_atmosphere(
-    coords: coordinate_systems.CoordinateSystem,
-    physics_specs: PrimitiveEquationsSpecs,
+    coords,
+    physics_specs,
     tref=288.0 * units.degK,
     p0=1e5 * units.pascal,
     p1=0.0 * units.pascal,

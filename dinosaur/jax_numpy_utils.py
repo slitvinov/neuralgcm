@@ -5,7 +5,6 @@ import jax.numpy as jnp
 import numpy as np
 
 
-@jax.named_call
 def _single_device_dot_cumsum(x, axis, reverse=False):
     if axis < 0:
         axis = axis + x.ndim

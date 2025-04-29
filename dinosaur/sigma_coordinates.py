@@ -61,7 +61,6 @@ class SigmaCoordinates:
         return hash(tuple(self.centers.tolist()))
 
 
-@jax.named_call
 def centered_difference(x: np.ndarray,
                         coordinates: SigmaCoordinates,
                         axis: int = -3):
@@ -77,7 +76,6 @@ def centered_difference(x: np.ndarray,
                   precision="float32")
 
 
-@jax.named_call
 def cumulative_sigma_integral(
     x,
     coordinates: SigmaCoordinates,
@@ -96,7 +94,6 @@ def cumulative_sigma_integral(
                                   sharding=sharding)
 
 
-@jax.named_call
 def sigma_integral(
     x,
     coordinates: SigmaCoordinates,
@@ -110,14 +107,13 @@ def sigma_integral(
     return xd𝜎.sum(axis=axis, keepdims=keepdims)
 
 
-@jax.named_call
 def centered_vertical_advection(
     w,
     x,
     coordinates: SigmaCoordinates,
     axis: int = -3,
-    w_boundary_values = None,
-    dx_dsigma_boundary_values = None,
+    w_boundary_values=None,
+    dx_dsigma_boundary_values=None,
 ):
     if w_boundary_values is None:
         w_slc_shape = _slice_shape_along_axis(w, axis)

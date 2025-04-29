@@ -53,7 +53,6 @@ class DiagnosticState:
     tracers: Mapping[str, Any]
 
 
-@jax.named_call
 def compute_diagnostic_state(
     state: State,
     coords: coordinate_systems.CoordinateSystem,
@@ -253,12 +252,10 @@ def get_temperature_implicit(
     return _vertical_matvec(weights, divergence)
 
 
-@jax.named_call
 def _vertical_matvec(a, x):
     return einsum("gh,...hml->...gml", a, x)
 
 
-@jax.named_call
 def _vertical_matvec_per_wavenumber(a, x):
     return einsum("lgh,...hml->...gml", a, x)
 
@@ -302,8 +299,7 @@ def _get_implicit_term_matrix(eta, coords, reference_temperature, kappa,
     return np.concatenate((row0, row1, row2), axis=1)
 
 
-def div_sec_lat(m_component, n_component,
-                grid: spherical_harmonic.Grid):
+def div_sec_lat(m_component, n_component, grid: spherical_harmonic.Grid):
     m_component = grid.to_modal(m_component * grid.sec2_lat)
     n_component = grid.to_modal(n_component * grid.sec2_lat)
     return grid.div_cos_lat((m_component, n_component), clip=False)
@@ -340,11 +336,9 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     def T_ref(self):
         return self.reference_temperature[..., np.newaxis, np.newaxis]
 
-    @jax.named_call
     def _vertical_tendency(self, w, x):
         return self.vertical_advection(w, x, self.coords.vertical)
 
-    @jax.named_call
     def _t_omega_over_sigma_sp(self, temperature_field, g_term,
                                v_dot_grad_log_sp):
         f = sigma_coordinates.cumulative_sigma_integral(
@@ -356,19 +350,16 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]) / del_𝜎
         return temperature_field * (v_dot_grad_log_sp - g_part)
 
-    @jax.named_call
     def kinetic_energy_tendency(self, aux_state: DiagnosticState):
         nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
         kinetic = nodal_cos_lat_u2.sum(0) * self.coords.horizontal.sec2_lat / 2
         return -self.coords.horizontal.laplacian(
             self.coords.horizontal.to_modal(kinetic))
 
-    @jax.named_call
     def orography_tendency(self):
         return -self.physics_specs.g * self.coords.horizontal.laplacian(
             self.orography)
 
-    @jax.named_call
     def curl_and_div_tendencies(
         self,
         aux_state: DiagnosticState,
@@ -395,7 +386,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             (combined_u, combined_v), clip=False)
         return (dζ_dt, d𝛅_dt)
 
-    @jax.named_call
     def nodal_temperature_vertical_tendency(
         self,
         aux_state: DiagnosticState,
@@ -409,7 +399,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             tendency += self._vertical_tendency(sigma_dot_explicit, self.T_ref)
         return tendency
 
-    @jax.named_call
     def horizontal_scalar_advection(
         self,
         scalar,
@@ -421,7 +410,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
                                    self.coords.horizontal)
         return nodal_terms, modal_terms
 
-    @jax.named_call
     def nodal_temperature_adiabatic_tendency(self, aux_state: DiagnosticState):
         g_explicit = aux_state.u_dot_grad_log_sp
         g_full = g_explicit + aux_state.divergence
@@ -432,12 +420,10 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             aux_state.u_dot_grad_log_sp)
         return self.physics_specs.kappa * (mean_t_part + variation_t_part)
 
-    @jax.named_call
     def nodal_log_pressure_tendency(self, aux_state: DiagnosticState):
         g = aux_state.u_dot_grad_log_sp
         return -sigma_coordinates.sigma_integral(g, self.coords.vertical)
 
-    @jax.named_call
     def explicit_terms(self, state: State):
         aux_state = compute_diagnostic_state(state, self.coords)
         vorticity_tendency, divergence_dot = self.curl_and_div_tendencies(
@@ -480,7 +466,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         )
         return self.coords.horizontal.clip_wavenumbers(tendency)
 
-    @jax.named_call
     def implicit_terms(self, state: State):
         method = self.vertical_matmul_method
         if method is None:
@@ -520,7 +505,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             sim_time=None if state.sim_time is None else 0.0,
         )
 
-    @jax.named_call
     def implicit_inverse(self, state: State, step_size: float):
         implicit_matrix = _get_implicit_term_matrix(
             step_size,

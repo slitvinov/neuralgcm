@@ -178,8 +178,7 @@ def _vertical_crop(field, padding: int | None):
     return field
 
 
-def _with_vertical_padding(f,
-                           mesh: jax.sharding.Mesh | None):
+def _with_vertical_padding(f, mesh: jax.sharding.Mesh | None):
 
     def g(x):
         x, padding = _vertical_pad(x, mesh)
@@ -304,23 +303,19 @@ class Grid:
         _, l = self.modal_axes
         return -l * (l + 1) / (self.radius**2)
 
-    @jax.named_call
     def to_nodal(self, x):
         f = _with_vertical_padding(self.spherical_harmonics.inverse_transform,
                                    self.spmd_mesh)
         return pytree_utils.tree_map_over_nonscalars(f, x)
 
-    @jax.named_call
     def to_modal(self, z):
         f = _with_vertical_padding(self.spherical_harmonics.transform,
                                    self.spmd_mesh)
         return pytree_utils.tree_map_over_nonscalars(f, z)
 
-    @jax.named_call
     def laplacian(self, x):
         return x * self.laplacian_eigenvalues
 
-    @jax.named_call
     def inverse_laplacian(self, x):
         with np.errstate(divide="ignore", invalid="ignore"):
             inverse_eigenvalues = 1 / self.laplacian_eigenvalues
@@ -329,7 +324,6 @@ class Grid:
         assert not np.isnan(inverse_eigenvalues).any()
         return x * inverse_eigenvalues
 
-    @jax.named_call
     def clip_wavenumbers(self, x, n: int = 1):
 
         def clip(x):
@@ -349,13 +343,11 @@ class Grid:
         b[:, -1] = 0
         return a, b
 
-    @jax.named_call
     def d_dlon(self, x):
         return _with_vertical_padding(
             self.spherical_harmonics.longitudinal_derivative,
             self.spmd_mesh)(x)
 
-    @jax.named_call
     def cos_lat_d_dlat(self, x):
         _, l = self.modal_mesh
         a, b = self._derivative_recurrence_weights
@@ -363,7 +355,6 @@ class Grid:
         x_lp1 = jax_numpy_utils.shift((-l * b) * x, +1, axis=-1)
         return x_lm1 + x_lp1
 
-    @jax.named_call
     def sec_lat_d_dlat_cos2(self, x):
         _, l = self.modal_mesh
         a, b = self._derivative_recurrence_weights
@@ -371,7 +362,6 @@ class Grid:
         x_lp1 = jax_numpy_utils.shift((-(l + 2) * b) * x, +1, axis=-1)
         return x_lm1 + x_lp1
 
-    @jax.named_call
     def cos_lat_grad(self, x, clip: bool = True):
         raw = self.d_dlon(x) / self.radius, self.cos_lat_d_dlat(
             x) / self.radius
@@ -379,11 +369,9 @@ class Grid:
             return self.clip_wavenumbers(raw)
         return raw
 
-    @jax.named_call
     def k_cross(self, v):
         return -v[1], v[0]
 
-    @jax.named_call
     def div_cos_lat(
         self,
         v,
@@ -395,7 +383,6 @@ class Grid:
             return self.clip_wavenumbers(raw)
         return raw
 
-    @jax.named_call
     def curl_cos_lat(
         self,
         v,
@@ -407,7 +394,6 @@ class Grid:
             return self.clip_wavenumbers(raw)
         return raw
 
-    @jax.named_call
     def integrate(self, z):
         w = self.spherical_harmonics.basis.w * self.radius**2
         return einsum("y,...xy->...", w, z)
@@ -420,7 +406,6 @@ def add_constant(x: jnp.ndarray, c):
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
 
 
-@jax.named_call
 def get_cos_lat_vector(
     vorticity,
     divergence,

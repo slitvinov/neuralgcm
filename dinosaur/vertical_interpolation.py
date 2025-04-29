@@ -34,10 +34,6 @@ class HybridCoordinates:
     def ECMWF137(cls) -> HybridCoordinates:
         return cls._from_resource_csv("data/ecmwf137_hybrid_levels.csv")
 
-    @property
-    def layers(self) -> int:
-        return len(self.a_boundaries) - 1
-
     def __hash__(self):
         return hash((tuple(self.a_boundaries.tolist()),
                      tuple(self.b_boundaries.tolist())))

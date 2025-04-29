@@ -76,15 +76,6 @@ class ImExButcherTableau:
     b_ex: Sequence[float]
     b_im: Sequence[float]
 
-    def __post_init__(self):
-        if len({
-                len(self.a_ex) + 1,
-                len(self.a_im) + 1,
-                len(self.b_ex),
-                len(self.b_im)
-        }) > 1:
-            raise ValueError('inconsistent Butcher tableau')
-
 
 def imex_runge_kutta(
     tableau: ImExButcherTableau,

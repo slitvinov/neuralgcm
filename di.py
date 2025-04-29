@@ -1,8 +1,30 @@
 from __future__ import annotations
+
 from jax import lax
+from typing import Callable, Mapping, Union, Any
+import dataclasses
+import functools
+import importlib
+import jax
 import jax.numpy as jnp
 import numpy as np
+import pint
+import scipy
+import scipy.special as sps
+import tree_math
+import xarray
 
+NODAL_AXES_NAMES = (
+    "lon",
+    "lat",
+)
+MODAL_AXES_NAMES = (
+    "longitudinal_mode",
+    "total_wavenumber",
+)
+
+tree_map = jax.tree_util.tree_map
+einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
 
 def cumsum(x, axis):
     if axis < 0:
@@ -45,11 +67,8 @@ def diff(x, axis=-1):
     return upper - lower
 
 
-import jax
-import jax.numpy as jnp
-import numpy as np
 
-tree_map = jax.tree_util.tree_map
+
 
 
 def tree_map_over_nonscalars(
@@ -75,10 +94,6 @@ def as_dict(inputs):
     return inputs, from_dict_fn
 
 
-from typing import Union
-import jax.numpy as jnp
-import numpy as np
-import pint
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 Unit = units.Unit
@@ -130,16 +145,8 @@ DEFAULT_SCALE = Scale(
     1 * units.degK,
 )
 
-import dataclasses
-import functools
-from typing import Callable
 
-import jax
-from jax import lax
-import jax.numpy as jnp
-import numpy as np
 
-einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
 
 
 def _slice_shape_along_axis(
@@ -268,14 +275,6 @@ def centered_vertical_advection(
                    lax.slice_in_dim(w_times_x_diff, 0, -1, axis=axis))
 
 
-import dataclasses
-import functools
-
-import jax
-import jax.numpy as jnp
-import numpy as np
-import scipy
-import scipy.special as sps
 
 
 def _evaluate_rhombus(n_l, n_m, x):
@@ -680,11 +679,6 @@ def vor_div_to_uv_nodal(
     return u_nodal, v_nodal
 
 
-import dataclasses
-from typing import Any
-
-import jax
-import numpy as np
 
 
 @dataclasses.dataclass(frozen=True)
@@ -728,12 +722,6 @@ def maybe_to_nodal(
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)
 
 
-import dataclasses
-
-import jax
-import jax.numpy as jnp
-import numpy as np
-import tree_math
 
 tree_map = jax.tree_util.tree_map
 
@@ -995,15 +983,6 @@ def digital_filter_initialization(
     return f
 
 
-import dataclasses
-import functools
-from typing import Callable, Mapping, Union, Any
-
-import jax
-from jax import lax
-import jax.numpy as jnp
-import numpy as np
-import tree_math
 
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 
@@ -1536,11 +1515,6 @@ class PrimitiveEquations(ImplicitExplicitODE):
         )
 
 
-from typing import Union
-
-import jax
-import jax.numpy as jnp
-import numpy as np
 
 
 def isothermal_rest_atmosphere(
@@ -1781,11 +1755,6 @@ def baroclinic_perturbation_jw(
     return state
 
 
-import functools
-import jax
-import jax.numpy as jnp
-import numpy as np
-
 
 def _preserves_shape(target, scaling):
     target_shape = np.shape(target)
@@ -1823,9 +1792,6 @@ def horizontal_diffusion_filter(
     return _make_filter_fn(scaling, "horizontal_diffusion_filter")
 
 
-import jax
-import jax.numpy as jnp
-import numpy as np
 
 
 class HeldSuarezForcing:
@@ -1912,13 +1878,6 @@ class HeldSuarezForcing:
         )
 
 
-import dataclasses
-import functools
-import importlib
-
-import jax
-import jax.numpy as jnp
-import numpy as np
 
 
 @dataclasses.dataclass(frozen=True)
@@ -1992,18 +1951,7 @@ def regrid_hybrid_to_sigma(
         lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
 
 
-import functools
-import numpy as np
-import xarray
 
-NODAL_AXES_NAMES = (
-    "lon",
-    "lat",
-)
-MODAL_AXES_NAMES = (
-    "longitudinal_mode",
-    "total_wavenumber",
-)
 
 
 def _maybe_update_shape_and_dim_with_realization_time_sample(

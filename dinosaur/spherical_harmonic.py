@@ -186,11 +186,7 @@ def _vertical_pad(
 
 
 def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
-    if not padding:
-        return field
-    assert field.ndim == 3, field.shape
-    return jax.lax.slice_in_dim(field, 0, -padding, axis=0)
-
+    return field
 
 def _with_vertical_padding(
         f: Callable[[jax.Array], jax.Array],

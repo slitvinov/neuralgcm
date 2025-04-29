@@ -12,8 +12,8 @@ class HeldSuarezForcing:
 
     def __init__(
         self,
-        coords: coordinate_systems.CoordinateSystem,
-        physics_specs: primitive_equations.PrimitiveEquationsSpecs,
+        coords,
+        physics_specs,
         reference_temperature,
         p0=1e5 * units.pascal,
         sigma_b=0.7,

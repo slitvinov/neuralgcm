@@ -54,8 +54,8 @@ class DiagnosticState:
 
 
 def compute_diagnostic_state(
-    state: State,
-    coords: coordinate_systems.CoordinateSystem,
+    state,
+    coords,
 ):
 
     def to_nodal_fn(x):
@@ -104,8 +104,8 @@ def compute_diagnostic_state(
     )
 
 
-def compute_vertical_velocity(state: State,
-                              coords: coordinate_systems.CoordinateSystem):
+def compute_vertical_velocity(state,
+                              coords):
     sigma_dot_boundaries = compute_diagnostic_state(state,
                                                     coords).sigma_dot_full
     assert sigma_dot_boundaries.ndim == 3
@@ -305,8 +305,8 @@ def div_sec_lat(m_component, n_component, grid: spherical_harmonic.Grid):
 
 
 def truncated_modal_orography(
-    orography: Any,
-    coords: coordinate_systems.CoordinateSystem,
+    orography,
+    coords,
     wavenumbers_to_clip: int = 1,
 ):
     grid = coords.horizontal

@@ -38,7 +38,7 @@ class CoordinateSystem:
 
 def get_nodal_shapes(
     inputs,
-    coords: CoordinateSystem,
+    coords,
 ):
     nodal_shape = coords.horizontal.nodal_shape
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + nodal_shape)
@@ -50,7 +50,7 @@ def get_nodal_shapes(
 
 def maybe_to_nodal(
     fields,
-    coords: CoordinateSystem,
+    coords,
 ):
     nodal_shapes = get_nodal_shapes(fields, coords)
 

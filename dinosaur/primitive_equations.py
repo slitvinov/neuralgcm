@@ -244,7 +244,6 @@ def get_temperature_implicit(
     coordinates: sigma_coordinates.SigmaCoordinates,
     reference_temperature: np.ndarray,
     kappa: float,
-    method: str = "dense",
     sharding: Union[jax.sharding.NamedSharding, None] = None,
 ):
     weights = -get_temperature_implicit_weights(coordinates,
@@ -490,7 +489,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
             self.coords.vertical,
             self.reference_temperature,
             self.physics_specs.kappa,
-            method=method,
             sharding=None,
         )
         log_surface_pressure_implicit = -_vertical_matvec(

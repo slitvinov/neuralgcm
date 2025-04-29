@@ -225,12 +225,6 @@ def get_temperature_implicit_weights(
     reference_temperature: np.ndarray,
     kappa: float,
 ):
-    if (reference_temperature.ndim != 1
-            or reference_temperature.shape[-1] != coordinates.layers):
-        raise ValueError(
-            '`reference_temp` must be a vector of length `coordinates.layers`; '
-            f'got shape {reference_temperature.shape} and '
-            f'{coordinates.layers} layers.')
     p = np.tril(np.ones([coordinates.layers, coordinates.layers]))
     alpha = get_sigma_ratios(coordinates)[..., np.newaxis]
     p_alpha = p * alpha

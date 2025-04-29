@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from jax import lax
 from typing import Callable, Mapping, Union, Any
 import dataclasses
@@ -22,9 +21,9 @@ MODAL_AXES_NAMES = (
     "longitudinal_mode",
     "total_wavenumber",
 )
-
 tree_map = jax.tree_util.tree_map
 einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
+
 
 def cumsum(x, axis):
     if axis < 0:
@@ -67,10 +66,6 @@ def diff(x, axis=-1):
     return upper - lower
 
 
-
-
-
-
 def tree_map_over_nonscalars(
     f,
     x,
@@ -92,7 +87,6 @@ def as_dict(inputs):
     inputs = inputs.asdict()
     from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
     return inputs, from_dict_fn
-
 
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
@@ -144,9 +138,6 @@ DEFAULT_SCALE = Scale(
     1 * units.kilogram,
     1 * units.degK,
 )
-
-
-
 
 
 def _slice_shape_along_axis(
@@ -273,8 +264,6 @@ def centered_vertical_advection(
     w_times_x_diff = w * x_diff
     return -0.5 * (lax.slice_in_dim(w_times_x_diff, 1, None, axis=axis) +
                    lax.slice_in_dim(w_times_x_diff, 0, -1, axis=axis))
-
-
 
 
 def _evaluate_rhombus(n_l, n_m, x):
@@ -679,8 +668,6 @@ def vor_div_to_uv_nodal(
     return u_nodal, v_nodal
 
 
-
-
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
     horizontal: Any
@@ -720,7 +707,6 @@ def maybe_to_nodal(
 
     fn = lambda x, nodal: x if x.shape == tuple(nodal) else to_nodal_fn(x)
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)
-
 
 
 tree_map = jax.tree_util.tree_map
@@ -981,7 +967,6 @@ def digital_filter_initialization(
                         backward_term)
 
     return f
-
 
 
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
@@ -1515,8 +1500,6 @@ class PrimitiveEquations(ImplicitExplicitODE):
         )
 
 
-
-
 def isothermal_rest_atmosphere(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: PrimitiveEquationsSpecs,
@@ -1755,7 +1738,6 @@ def baroclinic_perturbation_jw(
     return state
 
 
-
 def _preserves_shape(target, scaling):
     target_shape = np.shape(target)
     return target_shape == np.broadcast_shapes(target_shape, scaling.shape)
@@ -1790,8 +1772,6 @@ def horizontal_diffusion_filter(
     eigenvalues = grid.laplacian_eigenvalues
     scaling = jnp.exp(-scale * (-eigenvalues)**order)
     return _make_filter_fn(scaling, "horizontal_diffusion_filter")
-
-
 
 
 class HeldSuarezForcing:
@@ -1878,8 +1858,6 @@ class HeldSuarezForcing:
         )
 
 
-
-
 @dataclasses.dataclass(frozen=True)
 class HybridCoordinates:
     a_boundaries: np.ndarray
@@ -1949,9 +1927,6 @@ def regrid_hybrid_to_sigma(
 
     return tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
-
-
-
 
 
 def _maybe_update_shape_and_dim_with_realization_time_sample(

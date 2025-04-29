@@ -4,7 +4,6 @@ from typing import Any, Union
 from dinosaur import pytree_utils
 from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
-from dinosaur import typing
 import jax
 import jax.numpy as jnp
 import numpy as np

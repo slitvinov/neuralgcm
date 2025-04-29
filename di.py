@@ -195,7 +195,7 @@ class SigmaCoordinates:
 def centered_difference(x: np.ndarray,
                         coordinates: SigmaCoordinates,
                         axis: int = -3):
-    dx = jax_numpy_utils.diff(x, axis=axis)
+    dx = diff(x, axis=axis)
     dx_axes = range(dx.ndim)
     inv_d𝜎 = 1 / coordinates.center_to_center
     inv_d𝜎_axes = [dx_axes[axis]]
@@ -217,7 +217,7 @@ def cumulative_sigma_integral(
     d𝜎 = coordinates.layer_thickness
     d𝜎_axes = [x_axes[axis]]
     xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
-    return jax_numpy_utils.cumsum(xd𝜎, axis)
+    return cumsum(xd𝜎, axis)
 
 
 def sigma_integral(
@@ -322,8 +322,8 @@ def real_basis(wavenumbers, nodes):
 def real_basis_derivative(u, /, axis=-1):
     i = jnp.arange(u.shape[axis]).reshape((-1, ) + (1, ) * (-1 - axis))
     j = (i + 1) // 2
-    u_down = jax_numpy_utils.shift(u, -1, axis)
-    u_up = jax_numpy_utils.shift(u, +1, axis)
+    u_down = shift(u, -1, axis)
+    u_up = shift(u, +1, axis)
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
@@ -537,11 +537,11 @@ class Grid:
 
     def to_nodal(self, x):
         f = _with_vertical_padding(self.spherical_harmonics.inverse_transform)
-        return pytree_utils.tree_map_over_nonscalars(f, x)
+        return tree_map_over_nonscalars(f, x)
 
     def to_modal(self, z):
         f = _with_vertical_padding(self.spherical_harmonics.transform)
-        return pytree_utils.tree_map_over_nonscalars(f, z)
+        return tree_map_over_nonscalars(f, z)
 
     def laplacian(self, x):
         return x * self.laplacian_eigenvalues
@@ -562,7 +562,7 @@ class Grid:
                             x.dtype).at[-num_zeros:].set(0)
             return x * mask
 
-        return pytree_utils.tree_map_over_nonscalars(clip, x)
+        return tree_map_over_nonscalars(clip, x)
 
     @functools.cached_property
     def _derivative_recurrence_weights(self):
@@ -580,15 +580,15 @@ class Grid:
     def cos_lat_d_dlat(self, x):
         _, l = self.modal_mesh
         a, b = self._derivative_recurrence_weights
-        x_lm1 = jax_numpy_utils.shift(((l + 1) * a) * x, -1, axis=-1)
-        x_lp1 = jax_numpy_utils.shift((-l * b) * x, +1, axis=-1)
+        x_lm1 = shift(((l + 1) * a) * x, -1, axis=-1)
+        x_lp1 = shift((-l * b) * x, +1, axis=-1)
         return x_lm1 + x_lp1
 
     def sec_lat_d_dlat_cos2(self, x):
         _, l = self.modal_mesh
         a, b = self._derivative_recurrence_weights
-        x_lm1 = jax_numpy_utils.shift(((l - 1) * a) * x, -1, axis=-1)
-        x_lp1 = jax_numpy_utils.shift((-(l + 2) * b) * x, +1, axis=-1)
+        x_lm1 = shift(((l - 1) * a) * x, -1, axis=-1)
+        x_lp1 = shift((-(l + 2) * b) * x, +1, axis=-1)
         return x_lm1 + x_lp1
 
     def cos_lat_grad(self, x, clip: bool = True):
@@ -710,7 +710,7 @@ def get_nodal_shapes(
     nodal_shape = coords.horizontal.nodal_shape
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + nodal_shape)
     scalar_shape_fn = lambda x: np.array([], dtype=int)
-    return pytree_utils.tree_map_over_nonscalars(array_shape_fn,
+    return tree_map_over_nonscalars(array_shape_fn,
                                                  inputs,
                                                  scalar_fn=scalar_shape_fn)
 
@@ -874,7 +874,7 @@ def exponential_step_filter(
     order=18,
     cutoff=0,
 ):
-    filter_fn = filtering.exponential_filter(grid, dt / tau, order, cutoff)
+    filter_fn = exponential_filter(grid, dt / tau, order, cutoff)
     return runge_kutta_step_filter(filter_fn)
 
 
@@ -886,7 +886,7 @@ def horizontal_diffusion_step_filter(
 ):
     eigenvalues = grid.laplacian_eigenvalues
     scale = dt / (tau * abs(eigenvalues[-1])**order)
-    filter_fn = filtering.horizontal_diffusion_filter(grid, scale, order)
+    filter_fn = horizontal_diffusion_filter(grid, scale, order)
     return runge_kutta_step_filter(filter_fn)
 
 
@@ -1056,7 +1056,7 @@ def compute_diagnostic_state(
     tracers = to_nodal_fn(state.tracers)
     nodal_cos_lat_u = jax.tree_util.tree_map(
         to_nodal_fn,
-        spherical_harmonic.get_cos_lat_vector(state.vorticity,
+        get_cos_lat_vector(state.vorticity,
                                               state.divergence,
                                               coords.horizontal,
                                               clip=False),
@@ -1190,7 +1190,7 @@ def get_geopotential(
     sharding: Union[jax.sharding.NamedSharding, None] = None,
 ):
     surface_geopotential = orography * gravity_acceleration
-    temperature = spherical_harmonic.add_constant(temperature_variation,
+    temperature = add_constant(temperature_variation,
                                                   reference_temperature)
     geopotential_diff = get_geopotential_diff(temperature,
                                               coordinates,
@@ -1286,7 +1286,7 @@ def _get_implicit_term_matrix(eta, coords, reference_temperature, kappa,
     return np.concatenate((row0, row1, row2), axis=1)
 
 
-def div_sec_lat(m_component, n_component, grid: spherical_harmonic.Grid):
+def div_sec_lat(m_component, n_component, grid: Grid):
     m_component = grid.to_modal(m_component * grid.sec2_lat)
     n_component = grid.to_modal(n_component * grid.sec2_lat)
     return grid.div_cos_lat((m_component, n_component), clip=False)
@@ -1546,7 +1546,7 @@ import numpy as np
 
 def isothermal_rest_atmosphere(
     coords: coordinate_systems.CoordinateSystem,
-    physics_specs: primitive_equations.PrimitiveEquationsSpecs,
+    physics_specs: PrimitiveEquationsSpecs,
     tref=288.0 * units.degK,
     p0=1e5 * units.pascal,
     p1=0.0 * units.pascal,
@@ -1596,7 +1596,7 @@ def isothermal_rest_atmosphere(
         ])
         modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
         nodal_surface_pressure = _get_surface_pressure(lon, lat, rng_key)
-        return primitive_equations.State(
+        return State(
             vorticity=modal_vorticity,
             divergence=jnp.zeros_like(modal_vorticity),
             temperature_variation=jnp.zeros_like(modal_vorticity),
@@ -1613,7 +1613,7 @@ def isothermal_rest_atmosphere(
 
 def steady_state_jw(
     coords: coordinate_systems.CoordinateSystem,
-    physics_specs: primitive_equations.PrimitiveEquationsSpecs,
+    physics_specs: PrimitiveEquationsSpecs,
     u0=35.0 * units.m / units.s,
     p0=1e5 * units.pascal,
     t0=288.0 * units.degK,
@@ -1702,7 +1702,7 @@ def steady_state_jw(
             for sigma in coords.vertical.centers
         ])
         log_nodal_surface_pressure = np.log(_get_surface_pressure(lat, lon))
-        state = primitive_equations.State(
+        state = State(
             vorticity=modal_vorticity,
             divergence=np.zeros_like(modal_vorticity),
             temperature_variation=coords.horizontal.to_modal(
@@ -1729,7 +1729,7 @@ def steady_state_jw(
 
 def baroclinic_perturbation_jw(
     coords: coordinate_systems.CoordinateSystem,
-    physics_specs: primitive_equations.PrimitiveEquationsSpecs,
+    physics_specs: PrimitiveEquationsSpecs,
     u_perturb=1.0 * units.m / units.s,
     lon_location=np.pi / 9,
     lat_location=2 * np.pi / 9,
@@ -1773,7 +1773,7 @@ def baroclinic_perturbation_jw(
     ])
     modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
     modal_divergence = coords.horizontal.to_modal(nodal_divergence)
-    state = primitive_equations.State(
+    state = State(
         vorticity=modal_vorticity,
         divergence=modal_divergence,
         temperature_variation=np.zeros_like(modal_vorticity),
@@ -1881,8 +1881,8 @@ class HeldSuarezForcing:
             self.dThz * jnp.log(p_over_p0) * np.cos(self.lat)**2)
         return jnp.maximum(self.minT, temperature)
 
-    def explicit_terms(self, state: primitive_equations.State):
-        aux_state = primitive_equations.compute_diagnostic_state(
+    def explicit_terms(self, state: State):
+        aux_state = compute_diagnostic_state(
             state=state, coords=self.coords)
         nodal_velocity_tendency = jax.tree.map(
             lambda x: -self.kv() * x / self.coords.horizontal.cos_lat**2,
@@ -1906,7 +1906,7 @@ class HeldSuarezForcing:
             velocity_tendency)
         log_surface_pressure_tendency = jnp.zeros_like(
             state.log_surface_pressure)
-        return primitive_equations.State(
+        return State(
             vorticity=vorticity_tendency,
             divergence=divergence_tendency,
             temperature_variation=temperature_tendency,
@@ -1990,7 +1990,7 @@ def regrid_hybrid_to_sigma(
         assert result.shape[0] == sigma_coords.layers
         return result
 
-    return pytree_utils.tree_map_over_nonscalars(
+    return tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
 
 

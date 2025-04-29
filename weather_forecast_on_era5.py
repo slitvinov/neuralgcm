@@ -3,22 +3,15 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray
-from dinosaur import coordinate_systems
-from dinosaur import filtering
-from dinosaur import primitive_equations
-from dinosaur import scales
-from dinosaur import sigma_coordinates
-from dinosaur import spherical_harmonic
-from dinosaur import time_integration
-from dinosaur import vertical_interpolation
+import di
 
-units = scales.units
+units = di.units
 
 
 def attach_data_array_units(array):
     attrs = dict(array.attrs)
     units = attrs.pop("units", None)
-    data = scales.units.parse_expression(units) * array.data
+    data = di.units.parse_expression(units) * array.data
     return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
 
 
@@ -27,7 +20,7 @@ def attach_xarray_units(ds):
 
 
 def xarray_nondimensionalize(ds):
-    return xarray.apply_ufunc(scales.DEFAULT_SCALE.nondimensionalize, ds)
+    return xarray.apply_ufunc(di.DEFAULT_SCALE.nondimensionalize, ds)
 
 
 def xarray_to_gcm_dict(ds, var_names=None):
@@ -55,9 +48,9 @@ def slice_levels(output, level_indices):
 
 layers = 32
 ref_temp_si = 250 * units.degK
-model_coords = coordinate_systems.CoordinateSystem(
-    spherical_harmonic.Grid.T170(),
-    sigma_coordinates.SigmaCoordinates.equidistant(layers),
+model_coords = di.CoordinateSystem(
+    di.Grid.T170(),
+    di.SigmaCoordinates.equidistant(layers),
 )
 dt_si = 5 * units.minute
 save_every = 15 * units.minute
@@ -99,7 +92,7 @@ ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
                                                   longitude=desired_lon))
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
-ds_init["orography"] /= scales.GRAVITY_ACCELERATION
+ds_init["orography"] /= di.GRAVITY_ACCELERATION
 source_vertical = vertical_interpolation.HybridCoordinates.ECMWF137()
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)
@@ -117,8 +110,8 @@ nodal_inputs = vertical_interpolation.regrid_hybrid_to_sigma(
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]
-vorticity, divergence = spherical_harmonic.uv_nodal_to_vor_div_modal(
-    model_coords.horizontal, u_nodal, v_nodal)
+vorticity, divergence = di.uv_nodal_to_vor_div_modal(model_coords.horizontal,
+                                                     u_nodal, v_nodal)
 ref_temps = physics_specs.nondimensionalize(ref_temp_si * np.ones(
     (model_coords.vertical.layers, )))
 assert ref_temps.shape == (model_coords.vertical.layers, )
@@ -166,8 +159,8 @@ dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
 
 def nodal_prognostics_and_diagnostics(state):
     coords = model_coords.horizontal
-    u_nodal, v_nodal = spherical_harmonic.vor_div_to_uv_nodal(
-        coords, state.vorticity, state.divergence)
+    u_nodal, v_nodal = di.vor_div_to_uv_nodal(coords, state.vorticity,
+                                              state.divergence)
     geopotential_nodal = coords.to_nodal(
         primitive_equations.get_geopotential(
             state.temperature_variation,

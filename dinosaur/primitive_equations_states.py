@@ -3,14 +3,12 @@ from dinosaur import coordinate_systems
 from dinosaur import filtering
 from dinosaur import primitive_equations
 from dinosaur import scales
-from dinosaur import typing
 from dinosaur import xarray_utils
 import jax
 import jax.numpy as jnp
 import numpy as np
 
 units = scales.units
-Array = typing.Array
 
 
 def isothermal_rest_atmosphere(

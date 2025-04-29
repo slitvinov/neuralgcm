@@ -1,8 +1,6 @@
 from dinosaur import coordinate_systems
 from dinosaur import primitive_equations
 from dinosaur import scales
-from dinosaur import time_integration
-from dinosaur import typing
 import jax
 import jax.numpy as jnp
 import numpy as np

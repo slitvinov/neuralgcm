@@ -1,11 +1,9 @@
 from __future__ import annotations
 import dataclasses
 import functools
-from typing import Callable
 from dinosaur import jax_numpy_utils
 from dinosaur import pytree_utils
 import jax
-from jax import lax
 import jax.numpy as jnp
 import numpy as np
 import scipy

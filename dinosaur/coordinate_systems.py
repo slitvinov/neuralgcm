@@ -1,6 +1,6 @@
 from __future__ import annotations
 import dataclasses
-from typing import Any, Union
+from typing import Any
 from dinosaur import pytree_utils
 import jax
 import numpy as np

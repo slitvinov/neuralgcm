@@ -4,7 +4,6 @@ import functools
 import importlib
 import dinosaur
 from dinosaur import pytree_utils
-from dinosaur import sigma_coordinates
 import jax
 import jax.numpy as jnp
 import numpy as np

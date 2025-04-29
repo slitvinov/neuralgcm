@@ -1,7 +1,6 @@
 from __future__ import annotations
 import dataclasses
 from dinosaur import filtering
-from dinosaur import spherical_harmonic
 import jax
 import jax.numpy as jnp
 import numpy as np

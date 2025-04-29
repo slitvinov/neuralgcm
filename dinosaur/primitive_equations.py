@@ -181,11 +181,11 @@ def get_geopotential_weights(
 
 
 def get_geopotential_diff(
-    temperature: Any,
-    coordinates: sigma_coordinates.SigmaCoordinates,
-    ideal_gas_constant: float,
-    method: str = "dense",
-    sharding: Union[jax.sharding.NamedSharding, None] = None,
+    temperature,
+    coordinates,
+    ideal_gas_constant,
+    method = "dense",
+    sharding = None,
 ):
     weights = get_geopotential_weights(coordinates, ideal_gas_constant)
     return _vertical_matvec(weights, temperature)

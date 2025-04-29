@@ -1033,12 +1033,6 @@ class PrimitiveEquationsSpecs:
     def g(self):
         return self.gravity_acceleration
 
-    def nondimensionalize(self, quantity):
-        return DEFAULT_SCALE.nondimensionalize(quantity)
-
-    def dimensionalize(self, value, unit: units.Unit):
-        return DEFAULT_SCALE.dimensionalize(value, unit)
-
     @classmethod
     def from_si(cls):
         return cls(
@@ -1448,9 +1442,9 @@ def isothermal_rest_atmosphere(
 ):
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
-    tref = physics_specs.nondimensionalize(units.Quantity(tref))
-    p0 = physics_specs.nondimensionalize(units.Quantity(p0))
-    p1 = physics_specs.nondimensionalize(units.Quantity(p1))
+    tref = DEFAULT_SCALE.nondimensionalize(units.Quantity(tref))
+    p0 = DEFAULT_SCALE.nondimensionalize(units.Quantity(p0))
+    p1 = DEFAULT_SCALE.nondimensionalize(units.Quantity(p1))
     orography = np.zeros_like(lat)
 
     def _get_vorticity(sigma, lon, lat):
@@ -1467,7 +1461,7 @@ def isothermal_rest_atmosphere(
             R0 = 8.314462618
             return (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
 
-        altitude_m = physics_specs.dimensionalize(orography,
+        altitude_m = DEFAULT_SCALE.dimensionalize(orography,
                                                   units.meter).magnitude
         surface_pressure = (p0 * np.ones(coords.surface_nodal_shape) *
                             relative_pressure(altitude_m))
@@ -1516,11 +1510,11 @@ def steady_state_jw(
     sigma_tropo: float = 0.2,
     sigma0: float = 0.252,
 ):
-    u0 = physics_specs.nondimensionalize(u0)
-    t0 = physics_specs.nondimensionalize(t0)
-    delta_t = physics_specs.nondimensionalize(delta_t)
-    p0 = physics_specs.nondimensionalize(p0)
-    gamma = physics_specs.nondimensionalize(gamma)
+    u0 = DEFAULT_SCALE.nondimensionalize(u0)
+    t0 = DEFAULT_SCALE.nondimensionalize(t0)
+    delta_t = DEFAULT_SCALE.nondimensionalize(delta_t)
+    p0 = DEFAULT_SCALE.nondimensionalize(p0)
+    gamma = DEFAULT_SCALE.nondimensionalize(gamma)
     a = physics_specs.radius
     g = physics_specs.g
     r_gas = physics_specs.R
@@ -1629,7 +1623,7 @@ def baroclinic_perturbation_jw(
     lat_location=2 * np.pi / 9,
     perturbation_radius=0.1,
 ):
-    u_p = physics_specs.nondimensionalize(u_perturb)
+    u_p = DEFAULT_SCALE.nondimensionalize(u_perturb)
     a = physics_specs.radius
 
     def _get_vorticity_perturbation(lat, lon, sigma):
@@ -1732,15 +1726,15 @@ class HeldSuarezForcing:
         self.coords = coords
         self.physics_specs = physics_specs
         self.reference_temperature = reference_temperature
-        self.p0 = physics_specs.nondimensionalize(p0)
+        self.p0 = DEFAULT_SCALE.nondimensionalize(p0)
         self.sigma_b = sigma_b
-        self.kf = physics_specs.nondimensionalize(kf)
-        self.ka = physics_specs.nondimensionalize(ka)
-        self.ks = physics_specs.nondimensionalize(ks)
-        self.minT = physics_specs.nondimensionalize(minT)
-        self.maxT = physics_specs.nondimensionalize(maxT)
-        self.dTy = physics_specs.nondimensionalize(dTy)
-        self.dThz = physics_specs.nondimensionalize(dThz)
+        self.kf = DEFAULT_SCALE.nondimensionalize(kf)
+        self.ka = DEFAULT_SCALE.nondimensionalize(ka)
+        self.ks = DEFAULT_SCALE.nondimensionalize(ks)
+        self.minT = DEFAULT_SCALE.nondimensionalize(minT)
+        self.maxT = DEFAULT_SCALE.nondimensionalize(maxT)
+        self.dTy = DEFAULT_SCALE.nondimensionalize(dTy)
+        self.dThz = DEFAULT_SCALE.nondimensionalize(dThz)
         self.sigma = self.coords.vertical.centers
         _, sin_lat = self.coords.horizontal.nodal_mesh
         self.lat = np.arcsin(sin_lat)

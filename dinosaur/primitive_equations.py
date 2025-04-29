@@ -118,14 +118,14 @@ def compute_vertical_velocity(state: State,
 
 @dataclasses.dataclass(frozen=True)
 class PrimitiveEquationsSpecs:
-    radius
-    angular_velocity
-    gravity_acceleration
-    ideal_gas_constant
-    water_vapor_gas_constant
-    water_vapor_isobaric_heat_capacity
-    kappa
-    scale
+    radius: Any
+    angular_velocity: Any
+    gravity_acceleration: Any
+    ideal_gas_constant: Any
+    water_vapor_gas_constant: Any
+    water_vapor_isobaric_heat_capacity: Any
+    kappa: Any
+    scale: Any
 
     @property
     def R(self):
@@ -151,7 +151,7 @@ class PrimitiveEquationsSpecs:
         water_vapor_gas_constant_si=scales.IDEAL_GAS_CONSTANT_H20,
         water_vapor_isobaric_heat_capacity_si=scales.WATER_VAPOR_CP,
         kappa_si=scales.KAPPA,
-        scale=scales.DEFAULT_SCALE,
+        scale= scales.DEFAULT_SCALE,
     ):
         return cls(
             scale.nondimensionalize(radius_si),

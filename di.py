@@ -1774,9 +1774,6 @@ class HybridCoordinates:
     a_boundaries: np.ndarray
     b_boundaries: np.ndarray
 
-    def __post_init__(self):
-        pass
-
     @classmethod
     def ECMWF137(cls):
         a_in_pa, b = np.loadtxt("ecmwf137_hybrid_levels.csv",

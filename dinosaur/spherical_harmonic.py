@@ -511,11 +511,6 @@ class Grid:
             return self.clip_wavenumbers(raw)
         return raw
 
-    @property
-    def quadrature_weights(self) -> np.ndarray:
-        return np.broadcast_to(self.spherical_harmonics.basis.w,
-                               self.nodal_shape)
-
     @jax.named_call
     def integrate(self, z: Array) -> Array:
         w = self.spherical_harmonics.basis.w * self.radius**2

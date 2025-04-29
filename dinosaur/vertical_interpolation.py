@@ -76,10 +76,6 @@ def regrid_hybrid_to_sigma(
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     def regrid(surface_pressure, sigma_bounds, field):
         assert sigma_bounds.shape == (sigma_coords.layers + 1, )
-        if field.shape[0] != hybrid_coords.layers:
-            raise ValueError(
-                f'Source has {hybrid_coords.layers} layers, but field has'
-                f' {fields.shape[0]}')
         hybrid_bounds = hybrid_coords.get_sigma_boundaries(surface_pressure)
         weights = conservative_regrid_weights(hybrid_bounds, sigma_bounds)
         result = jnp.einsum('ab,b->a', weights, field, precision='float32')

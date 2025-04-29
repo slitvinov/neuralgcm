@@ -3,12 +3,10 @@ import dataclasses
 import functools
 from typing import Callable, Mapping, Union, Any
 from dinosaur import coordinate_systems
-from dinosaur import jax_numpy_utils
 from dinosaur import scales
 from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
 from dinosaur import time_integration
-from dinosaur import vertical_interpolation
 import jax
 from jax import lax
 import jax.numpy as jnp

@@ -85,8 +85,6 @@ def data_to_xarray(
     serialize_coords_to_attrs=True,
 ):
     prognostic_keys = set(data.keys()) - {"tracers"} - {"diagnostics"}
-    diagnostic_keys = data["diagnostics"].keys(
-    ) if "diagnostics" in data else set()
     if additional_coords is None:
         additional_coords = {}
     if (coords.vertical.layers != 1) and ("surface" not in additional_coords):

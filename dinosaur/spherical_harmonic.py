@@ -184,7 +184,6 @@ class Grid:
     latitude_spacing: str = "gauss"
     longitude_offset: float = 0.0
     radius: float | None = None
-    spherical_harmonics_impl = RealSphericalHarmonics
 
     def __post_init__(self):
         if self.radius is None:
@@ -198,7 +197,6 @@ class Grid:
         latitude_spacing: str = "gauss",
         longitude_offset: float = 0.0,
         radius: float | None = None,
-        spherical_harmonics_impl : None = RealSphericalHarmonics,
     ):
         return cls(
             longitude_wavenumbers=max_wavenumber + 1,
@@ -207,7 +205,6 @@ class Grid:
             latitude_nodes=2 * gaussian_nodes,
             latitude_spacing=latitude_spacing,
             longitude_offset=longitude_offset,
-            spherical_harmonics_impl=spherical_harmonics_impl,
             radius=radius,
         )
 

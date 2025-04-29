@@ -1778,18 +1778,13 @@ class HybridCoordinates:
         pass
 
     @classmethod
-    def _from_resource_csv(cls, path: str):
+    def ECMWF137(cls):
         a_in_pa, b = np.loadtxt("ecmwf137_hybrid_levels.csv",
                                 skiprows=1,
                                 usecols=(1, 2),
                                 delimiter="\t").T
         a = a_in_pa / 100
-        assert 100 < a.max() < 1000
         return cls(a_boundaries=a, b_boundaries=b)
-
-    @classmethod
-    def ECMWF137(cls):
-        return cls._from_resource_csv("ecmwf137_hybrid_levels.csv")
 
     def __hash__(self):
         return hash((tuple(self.a_boundaries.tolist()),

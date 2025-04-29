@@ -12,11 +12,10 @@ import numpy as np
 class CoordinateSystem:
     horizontal: Any
     vertical: Any
-    spmd_mesh: Union[jax.sharding.Mesh, None] = None
 
     def __post_init__(self):
         horizontal = dataclasses.replace(self.horizontal,
-                                         spmd_mesh=self.spmd_mesh)
+                                         spmd_mesh=None)
         object.__setattr__(self, "horizontal", horizontal)
 
     def asdict(self):

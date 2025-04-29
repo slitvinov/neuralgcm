@@ -89,16 +89,12 @@ def as_dict(inputs):
     return inputs, from_dict_fn
 
 
-def _get_dimension(quantity):
-    return str(quantity.dimensionality)
-
-
 class Scale:
 
     def __init__(self, *scales):
         self._scales = dict()
         for quantity in scales:
-            self._scales[_get_dimension(quantity)] = quantity.to_base_units()
+            self._scales[quantity.dimensionality] = quantity.to_base_units()
 
     def _scaling_factor(self, dimensionality):
         factor = units.Quantity(1)

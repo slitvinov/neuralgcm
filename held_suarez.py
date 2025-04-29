@@ -56,7 +56,7 @@ save_every = 10 * units.minute
 total_time = 24 * units.hour
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
-dt = physics_specs.nondimensionalize(dt_si)
+dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
 integrator = di.imex_rk_sil3
 step_fn = integrator(primitive, dt)
@@ -128,7 +128,7 @@ def ds_held_suarez_forcing(coords):
     grid = coords.horizontal
     sigma = coords.vertical.centers
     lon, _ = grid.nodal_mesh
-    surface_pressure = physics_specs.nondimensionalize(p0) * np.ones_like(lon)
+    surface_pressure = di.DEFAULT_SCALE.nondimensionalize(p0) * np.ones_like(lon)
     dims = ("sigma", "lon", "lat")
     return xarray.Dataset(
         data_vars={
@@ -207,7 +207,7 @@ save_every = 10 * units.day
 total_time = 1200 * units.day
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
-dt = physics_specs.nondimensionalize(dt_si)
+dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
 hs_forcing = di.HeldSuarezForcing(coords=coords,
                                   physics_specs=physics_specs,
@@ -323,7 +323,7 @@ save_every = 6 * units.hours
 total_time = 1 * units.week
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
-dt = physics_specs.nondimensionalize(dt_si)
+dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 step_fn = di.imex_rk_sil3(primitive_with_hs, dt)
 filters = [
     di.exponential_step_filter(coords.horizontal,

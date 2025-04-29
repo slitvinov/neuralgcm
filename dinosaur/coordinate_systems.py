@@ -12,14 +12,8 @@ import numpy as np
 P = jax.sharding.PartitionSpec
 
 
-def _with_sharding_constraint(
-    x,
-    sharding: Union[jax.sharding.NamedSharding, None],
-):
-    if sharding is None:
-        return x  # unsharded
-    assert False
-
+def _with_sharding_constraint(x, sharding):
+    return x
 
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
@@ -32,18 +26,12 @@ class CoordinateSystem:
 
     def __post_init__(self):
         if self.spmd_mesh is not None:
-            if not {'x', 'y', 'z'} <= set(self.spmd_mesh.axis_names):
-                raise ValueError(
-                    "mesh is missing one or more of the required axis names 'x', 'y' "
-                    f"and 'z': {self.spmd_mesh}")
         horizontal = dataclasses.replace(self.horizontal,
                                          spmd_mesh=self.spmd_mesh)
         object.__setattr__(self, 'horizontal', horizontal)
 
     def _get_sharding(self, partition_spec: jax.sharding.PartitionSpec):
-        if self.spmd_mesh is None:
-            return None
-        return jax.sharding.NamedSharding(self.spmd_mesh, partition_spec)
+        return None
 
     @property
     def dycore_sharding(self):

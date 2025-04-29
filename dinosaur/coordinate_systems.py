@@ -25,7 +25,6 @@ class CoordinateSystem:
         None, ('x', 'z'), 'y')
 
     def __post_init__(self):
-        if self.spmd_mesh is not None:
         horizontal = dataclasses.replace(self.horizontal,
                                          spmd_mesh=self.spmd_mesh)
         object.__setattr__(self, 'horizontal', horizontal)

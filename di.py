@@ -87,7 +87,7 @@ def as_dict(inputs):
 class Scale:
 
     def __init__(self, *scales):
-        self.scales = dict()
+        self.scales = {}
         for quantity in scales:
             self.scales[str(
                 quantity.dimensionality)] = quantity.to_base_units()
@@ -1065,13 +1065,7 @@ def get_geopotential_weights(
     return ideal_gas_constant * weights
 
 
-def get_geopotential_diff(
-    temperature,
-    coordinates,
-    ideal_gas_constant,
-    method="dense",
-    sharding=None,
-):
+def get_geopotential_diff(temperature, coordinates, ideal_gas_constant):
     weights = get_geopotential_weights(coordinates, ideal_gas_constant)
     return _vertical_matvec(weights, temperature)
 
@@ -1087,10 +1081,8 @@ def get_geopotential(
 ):
     surface_geopotential = orography * gravity_acceleration
     temperature = add_constant(temperature_variation, reference_temperature)
-    geopotential_diff = get_geopotential_diff(temperature,
-                                              coordinates,
-                                              ideal_gas_constant,
-                                              sharding=sharding)
+    geopotential_diff = get_geopotential_diff(temperature, coordinates,
+                                              ideal_gas_constant)
     return surface_geopotential + geopotential_diff
 
 
@@ -1127,7 +1119,6 @@ def get_temperature_implicit(
     coordinates,
     reference_temperature,
     kappa,
-    sharding=None,
 ):
     weights = -get_temperature_implicit_weights(coordinates,
                                                 reference_temperature, kappa)
@@ -1352,8 +1343,6 @@ class PrimitiveEquations(ImplicitExplicitODE):
             state.temperature_variation,
             self.coords.vertical,
             self.physics_specs.R,
-            method="dense",
-            sharding=None,
         )
         rt_log_p = (self.physics_specs.ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)
@@ -1365,7 +1354,6 @@ class PrimitiveEquations(ImplicitExplicitODE):
             self.coords.vertical,
             self.reference_temperature,
             self.physics_specs.kappa,
-            sharding=None,
         )
         log_surface_pressure_implicit = -_vertical_matvec(
             self.coords.vertical.layer_thickness[np.newaxis], state.divergence)

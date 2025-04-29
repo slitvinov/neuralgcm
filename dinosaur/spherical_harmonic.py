@@ -168,21 +168,10 @@ class RealSphericalHarmonics(SphericalHarmonics):
 
 
 P = jax.sharding.PartitionSpec
-
-
-def _vertical_pad(field, mesh):
-    return field, None
-
-
-def _vertical_crop(field):
-    return field
-
-
 def _with_vertical_padding(f, mesh):
 
     def g(x):
-        x, padding = _vertical_pad(x, mesh)
-        return _vertical_crop(f(x), padding)
+        return f(x)
 
     return g
 

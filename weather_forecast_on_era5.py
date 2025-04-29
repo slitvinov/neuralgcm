@@ -134,10 +134,8 @@ raw_init_state = di.State(
     tracers=tracers,
 )
 orography = model_coords.horizontal.to_modal(orography_input)
-orography = di.exponential_filter(model_coords.horizontal,
-                                         order=2)(orography)
-eq = di.PrimitiveEquations(ref_temps, orography, model_coords,
-                                            physics_specs)
+orography = di.exponential_filter(model_coords.horizontal, order=2)(orography)
+eq = di.PrimitiveEquations(ref_temps, orography, model_coords, physics_specs)
 res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = physics_specs.nondimensionalize(dt_si)
 tau = physics_specs.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
@@ -176,8 +174,7 @@ def nodal_prognostics_and_diagnostics(state):
     tracers_nodal = {k: coords.to_nodal(v) for k, v in state.tracers.items()}
     t_nodal = (coords.to_nodal(state.temperature_variation) +
                ref_temps[:, np.newaxis, np.newaxis])
-    vertical_velocity_nodal = di.compute_vertical_velocity(
-        state, model_coords)
+    vertical_velocity_nodal = di.compute_vertical_velocity(state, model_coords)
     state_nodal = {
         "u_component_of_wind": u_nodal,
         "v_component_of_wind": v_nodal,

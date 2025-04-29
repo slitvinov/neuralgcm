@@ -1939,17 +1939,19 @@ def _infer_dims_shape_and_coords(
     modal_shape = coords.horizontal.modal_shape
     nodal_shape = coords.horizontal.nodal_shape
     basic_shape_to_dims[(coords.vertical.layers, ) +
-                        modal_shape] = ("level", "longitudinal_mode", "total_wavenumber")
-    basic_shape_to_dims[(coords.vertical.layers, ) +
-                        nodal_shape] = ("level", "lon", "lat")
+                        modal_shape] = ("level", "longitudinal_mode",
+                                        "total_wavenumber")
+    basic_shape_to_dims[(coords.vertical.layers, ) + nodal_shape] = ("level",
+                                                                     "lon",
+                                                                     "lat")
     basic_shape_to_dims[nodal_shape] = "lon", "lat"
     basic_shape_to_dims[modal_shape] = "longitudinal_mode", "total_wavenumber"
     basic_shape_to_dims[coords.surface_nodal_shape] = "lon", "lat"
     for dim, value in additional_coords.items():
-        basic_shape_to_dims[value.shape +
-                            modal_shape] = (dim, "longitudinal_mode", "total_wavenumber")
-        basic_shape_to_dims[value.shape +
-                            nodal_shape] = (dim, "lon", "lat")
+        basic_shape_to_dims[value.shape + modal_shape] = (dim,
+                                                          "longitudinal_mode",
+                                                          "total_wavenumber")
+        basic_shape_to_dims[value.shape + nodal_shape] = (dim, "lon", "lat")
         basic_shape_to_dims[value.shape] = (dim, )
     update_shape_dims_fn = functools.partial(
         _maybe_update_shape_and_dim_with_realization_time_sample,

@@ -119,9 +119,9 @@ ax.legend().remove()
 plt.savefig("h.03.png")
 plt.close()
 hs = di.HeldSuarezForcing(coords=coords,
-                                            physics_specs=physics_specs,
-                                            reference_temperature=ref_temps,
-                                            p0=p0)
+                          physics_specs=physics_specs,
+                          reference_temperature=ref_temps,
+                          p0=p0)
 
 
 def ds_held_suarez_forcing(coords):
@@ -209,11 +209,10 @@ inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = physics_specs.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
-hs_forcing = di.HeldSuarezForcing(
-    coords=coords,
-    physics_specs=physics_specs,
-    reference_temperature=ref_temps,
-    p0=p0)
+hs_forcing = di.HeldSuarezForcing(coords=coords,
+                                  physics_specs=physics_specs,
+                                  reference_temperature=ref_temps,
+                                  p0=p0)
 primitive_with_hs = di.compose_equations([primitive, hs_forcing])
 step_fn = di.imex_rk_sil3(primitive_with_hs, dt)
 filters = [

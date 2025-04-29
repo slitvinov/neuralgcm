@@ -3,7 +3,6 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray
-
 from dinosaur import coordinate_systems
 from dinosaur import filtering
 from dinosaur import primitive_equations
@@ -42,7 +41,7 @@ def xarray_to_gcm_dict(ds, var_names=None):
     result = {}
     for var_name in var_names:
         data = ds[var_name].transpose(..., 'longitude', 'latitude').data
-        if data.ndim == 2:  # missing level dimension
+        if data.ndim == 2:
             data = data[np.newaxis, ...]
         result[var_name] = data
     return result
@@ -59,21 +58,16 @@ def slice_levels(output, level_indices):
     return jax.tree.map(get_horizontal, output)
 
 
-# simulation grid
 layers = 32
 ref_temp_si = 250 * units.degK
 model_coords = coordinate_systems.CoordinateSystem(
     spherical_harmonic.Grid.T170(),
     sigma_coordinates.SigmaCoordinates.equidistant(layers),
 )
-
-# timescales
 dt_si = 5 * units.minute
 save_every = 15 * units.minute
 total_time = 2 * units.day + save_every
 dfi_timescale = 6 * units.hour
-
-# which levels to output
 output_level_indices = [layers // 4, layers // 2, 3 * layers // 4, -1]
 
 
@@ -92,7 +86,6 @@ ds_arco_era5 = xarray.merge([
         'gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1',
         time='19900501T00'),
 ])
-
 ds = ds_arco_era5[[
     'u_component_of_wind',
     'v_component_of_wind',
@@ -102,33 +95,22 @@ ds = ds_arco_era5[[
     'specific_cloud_ice_water_content',
     'surface_pressure',
 ]]
-
 raw_orography = ds_arco_era5.geopotential_at_surface
-
 desired_lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
 desired_lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
-
 ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
                                                   longitude=desired_lon))
 ds_init['orography'] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init['orography'] /= scales.GRAVITY_ACCELERATION
-
 source_vertical = vertical_interpolation.HybridCoordinates.ECMWF137()
-
-# nondimensionalize
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)
-
 sp_nodal = model_level_inputs.pop('surface_pressure')
 orography_input = model_level_inputs.pop('orography')
-
 sp_init_hpa = ds_init.surface_pressure.transpose(
     'longitude', 'latitude').data.to('hPa').magnitude
-
-# build inputs
 physics_specs = primitive_equations.PrimitiveEquationsSpecs.from_si()
-
 nodal_inputs = vertical_interpolation.regrid_hybrid_to_sigma(
     fields=model_level_inputs,
     hybrid_coords=source_vertical,
@@ -138,19 +120,13 @@ nodal_inputs = vertical_interpolation.regrid_hybrid_to_sigma(
 u_nodal = nodal_inputs['u_component_of_wind']
 v_nodal = nodal_inputs['v_component_of_wind']
 t_nodal = nodal_inputs['temperature']
-
-# calculate vorticity & divergence
 vorticity, divergence = spherical_harmonic.uv_nodal_to_vor_div_modal(
     model_coords.horizontal, u_nodal, v_nodal)
-
-# apply reference temperature
 ref_temps = physics_specs.nondimensionalize(ref_temp_si * np.ones(
     (model_coords.vertical.layers, )))
-
 assert ref_temps.shape == (model_coords.vertical.layers, )
 temperature_variation = model_coords.horizontal.to_modal(
     t_nodal - ref_temps.reshape(-1, 1, 1))
-
 log_sp = model_coords.horizontal.to_modal(np.log(sp_nodal))
 tracers = model_coords.horizontal.to_modal({
     'specific_humidity':
@@ -160,8 +136,6 @@ tracers = model_coords.horizontal.to_modal({
     'specific_cloud_ice_water_content':
     nodal_inputs['specific_cloud_ice_water_content'],
 })
-
-# build initial state
 raw_init_state = primitive_equations.State(
     vorticity=vorticity,
     divergence=divergence,
@@ -169,24 +143,17 @@ raw_init_state = primitive_equations.State(
     log_surface_pressure=log_sp,
     tracers=tracers,
 )
-
 orography = model_coords.horizontal.to_modal(orography_input)
 orography = filtering.exponential_filter(model_coords.horizontal,
                                          order=2)(orography)
-
-# setup a simulation of the dry primitive equations
 eq = primitive_equations.PrimitiveEquations(ref_temps, orography, model_coords,
                                             physics_specs)
-
-# setup hyper-spectral filter for running between dycore time-steps
 res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = physics_specs.nondimensionalize(dt_si)
 tau = physics_specs.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)
 hyperdiffusion_filter = time_integration.horizontal_diffusion_step_filter(
     model_coords.horizontal, dt=dt, tau=tau, order=2)
-
-# digital filter initialization
 time_span = cutoff_period = physics_specs.nondimensionalize(dfi_timescale)
 dfi = jax.jit(
     time_integration.digital_filter_initialization(
@@ -198,8 +165,6 @@ dfi = jax.jit(
         dt=dt,
     ))
 dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
-
-# time integration & post-processing
 
 
 def nodal_prognostics_and_diagnostics(state):
@@ -238,8 +203,6 @@ def nodal_prognostics_and_diagnostics(state):
 
 
 def trajectory_to_xarray(trajectory):
-
-    # convert units back to SI
     target_units = {k: v.data.units for k, v in ds_init.items()}
     target_units |= {
         'vorticity': units('1/s'),
@@ -247,22 +210,17 @@ def trajectory_to_xarray(trajectory):
         'geopotential': units('m^2/s^2'),
         'vertical_velocity': units('1/s'),
     }
-
     orography_nodal = jax.device_put(
         model_coords.horizontal.to_nodal(orography),
         device=jax.devices('cpu')[0])
     trajectory_cpu = jax.device_put(trajectory, device=jax.devices('cpu')[0])
-
     traj_nodal_si = {
         k: physics_specs.dimensionalize(v, target_units[k]).magnitude
         for k, v in trajectory_cpu.items()
     }
-
-    # build xarray
     times = float(save_every / units.hour) * np.arange(outer_steps)
     lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
     lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
-
     dims = ('time', 'sigma', 'longitude', 'latitude')
     ds_result = xarray.Dataset(
         data_vars={
@@ -284,7 +242,6 @@ def trajectory_to_xarray(trajectory):
     return ds_result
 
 
-# temporal integration function
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 step_fn = time_integration.step_with_filters(
@@ -299,15 +256,11 @@ integrate_fn = jax.jit(
         start_with_input=True,
         post_process_fn=nodal_prognostics_and_diagnostics,
     ))
-
 out_state, trajectory = jax.block_until_ready(integrate_fn(dfi_init_state))
 ds_out = trajectory_to_xarray(trajectory)
-
 out_state, trajectory = jax.block_until_ready(integrate_fn(raw_init_state))
 ds_out_unfiltered = trajectory_to_xarray(trajectory)
-
 ds_out
-
 ds_out.surface_pressure.sel(
     latitude=0, longitude=0,
     method='nearest').plot.line(label='digital filter initialization')
@@ -316,7 +269,6 @@ ds_out_unfiltered.surface_pressure.sel(
 plt.legend()
 plt.savefig("00.png")
 plt.close()
-
 ds_out.specific_humidity.thin(time=4 * 24).isel(sigma=1).plot.imshow(
     col='time',
     x='longitude',
@@ -330,7 +282,6 @@ ds_out.specific_humidity.thin(time=4 * 24).isel(sigma=1).plot.imshow(
 )
 plt.savefig("01.png")
 plt.close()
-
 ds_out.specific_cloud_liquid_water_content.thin(time=4 *
                                                 24).isel(sigma=2).plot.imshow(
                                                     col='time',

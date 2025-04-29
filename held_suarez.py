@@ -14,27 +14,21 @@ def dimensionalize(x, unit):
     return xarray.apply_ufunc(dimensionalize, x)
 
 
-# Resolution
-
 units = dinosaur.scales.units
 layers = 24
 coords = dinosaur.coordinate_systems.CoordinateSystem(
     horizontal=dinosaur.spherical_harmonic.Grid.T42(),
     vertical=dinosaur.sigma_coordinates.SigmaCoordinates.equidistant(layers))
 physics_specs = dinosaur.primitive_equations.PrimitiveEquationsSpecs.from_si()
-
 p0 = 100e3 * units.pascal
 p1 = 5e3 * units.pascal
 rng_key = jax.random.PRNGKey(0)
-
-# Smooth Planet (no orography)
 initial_state_fn, aux_features = dinosaur.primitive_equations_states.isothermal_rest_atmosphere(
     coords=coords, physics_specs=physics_specs, p0=p0, p1=p1)
 initial_state = initial_state_fn(rng_key)
 ref_temps = aux_features['ref_temperatures']
 orography = dinosaur.primitive_equations.truncated_modal_orography(
     aux_features['orography'], coords)
-
 initial_state_dict, _ = dinosaur.pytree_utils.as_dict(initial_state)
 u, v = dinosaur.spherical_harmonic.vor_div_to_uv_nodal(
     coords.horizontal, initial_state.vorticity, initial_state.divergence)
@@ -43,7 +37,6 @@ nodal_steady_state_fields = dinosaur.coordinate_systems.maybe_to_nodal(
     initial_state_dict, coords=coords)
 initial_state_ds = dinosaur.xarray_utils.data_to_xarray(
     nodal_steady_state_fields, coords=coords, times=None)
-
 temperature = dinosaur.xarray_utils.temperature_variation_to_absolute(
     initial_state_ds.temperature_variation.data, ref_temps)
 initial_state_ds = initial_state_ds.assign(
@@ -52,29 +45,19 @@ surface_pressure = np.exp(initial_state_ds.log_surface_pressure.data[0, ...])
 initial_state_ds = initial_state_ds.assign(
     surface_pressure=(initial_state_ds.log_surface_pressure.dims[1:],
                       surface_pressure))
-
-#@test {"skip": true}
-#@title Surface Pressure {form-width: "40%"}
 pressure_array = initial_state_ds['surface_pressure']
 pressure_array_si = dimensionalize(pressure_array, units.pascal)
 pressure_array_si.plot.imshow(x='lon', y='lat', size=5)
 plt.savefig("00.png")
 plt.close()
-
-# Integration settings
 dt_si = 5 * units.minute
 save_every = 10 * units.minute
 total_time = 24 * units.hour
-
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = physics_specs.nondimensionalize(dt_si)
-
-# Governing equations
 primitive = dinosaur.primitive_equations.PrimitiveEquations(
     ref_temps, orography, coords, physics_specs)
-
-# Implicit/Explicit integrator
 integrator = dinosaur.time_integration.imex_rk_sil3
 step_fn = integrator(primitive, dt)
 filters = [
@@ -86,17 +69,11 @@ integrate_fn = jax.jit(
                                                    outer_steps=outer_steps,
                                                    inner_steps=inner_steps,
                                                    start_with_input=True))
-
-# Define trajectory times, expects start_with_input=True
 times = save_every * np.arange(0, outer_steps)
-
-# Unrolling trajectory
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 
 
-# Formatting trajectory to xarray.Dataset
 def trajectory_to_xarray(coords, trajectory, times):
-
     trajectory_dict, _ = dinosaur.pytree_utils.as_dict(trajectory)
     u, v = dinosaur.spherical_harmonic.vor_div_to_uv_nodal(
         coords.horizontal, trajectory.vorticity, trajectory.divergence)
@@ -105,14 +82,12 @@ def trajectory_to_xarray(coords, trajectory, times):
         trajectory_dict, coords=coords)
     trajectory_ds = dinosaur.xarray_utils.data_to_xarray(
         nodal_trajectory_fields, coords=coords, times=times)
-
     trajectory_ds['surface_pressure'] = np.exp(
         trajectory_ds.log_surface_pressure[:, 0, :, :])
     temperature = dinosaur.xarray_utils.temperature_variation_to_absolute(
         trajectory_ds.temperature_variation.data, ref_temps)
     trajectory_ds = trajectory_ds.assign(
         temperature=(trajectory_ds.temperature_variation.dims, temperature))
-
     total_layer_ke = coords.horizontal.integrate(u**2 + v**2)
     total_ke_cumulative = dinosaur.sigma_coordinates.cumulative_sigma_integral(
         total_layer_ke, coords.vertical, axis=-1)
@@ -123,8 +98,6 @@ def trajectory_to_xarray(coords, trajectory, times):
 
 
 ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
-
-# Surface Pressure Variation
 data_array = ds['surface_pressure'] - ds['surface_pressure'].isel(time=0)
 data_array_si = dimensionalize(data_array, units.pascal)
 data_array_si.isel(time=slice(0, 18, 4)).plot(x='lon',
@@ -133,8 +106,6 @@ data_array_si.isel(time=slice(0, 18, 4)).plot(x='lon',
                                               col_wrap=6)
 plt.savefig("01.png")
 plt.close()
-
-# Vorticity (near earth surface)
 data_array = ds['vorticity']
 data_array.isel(level=10).isel(time=slice(0, 18, 4)).plot(x='lon',
                                                           y='lat',
@@ -142,15 +113,12 @@ data_array.isel(level=10).isel(time=slice(0, 18, 4)).plot(x='lon',
                                                           col_wrap=6)
 plt.savefig("02.png")
 plt.close()
-
-# Total Kinetic Energy
 data_array = ds['total_kinetic_energy']
 data_array.plot(x='time')
 ax = plt.gca()
 ax.legend().remove()
 plt.savefig("03.png")
 plt.close()
-
 hs = dinosaur.held_suarez.HeldSuarezForcing(coords=coords,
                                             physics_specs=physics_specs,
                                             reference_temperature=ref_temps,
@@ -186,14 +154,11 @@ def linspace_step(start, stop, step):
     return np.linspace(start, stop, num)
 
 
-# Friction coefficient {form-width: "40%"}
 kv = ds['kv']
 kv_si = dimensionalize(kv, 1 / units.day)
 kv_si.plot(size=5)
 plt.savefig("04.png")
 plt.close()
-
-# Thermal relaxation coefficient {form-width: "40%"}
 kt_array = ds['kt']
 levels = linspace_step(0, 0.3, 0.05)
 kt_array_si = dimensionalize(kt_array, 1 / units.day)
@@ -206,9 +171,6 @@ ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.savefig("05.png")
 plt.close()
-#plt.colorbar(p);
-
-# Radiative equilibrium temperature {form-width: "40%"}
 teq_array = ds['eq_temp']
 teq_array_si = dimensionalize(teq_array, units.degK)
 levels = linspace_step(205, 310, 5)
@@ -219,17 +181,13 @@ p = teq_array_si.isel(lon=0).plot.contour(x='lat',
                                           aspect=1.5)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-#plt.colorbar(p);
 plt.savefig("06.png")
 plt.close()
-
-# Radiative equilibrium potential temperature {form-width: "40%"}
 temperature = dimensionalize(ds['eq_temp'], units.degK)
 surface_pressure = dimensionalize(ds['surface_pressure'], units.pascal)
 pressure = ds.sigma * surface_pressure
-kappa = dinosaur.scales.KAPPA  # kappa = R / cp, R = gas constant, cp = specific heat capacity
+kappa = dinosaur.scales.KAPPA
 potential_temperature = temperature * (pressure / p0)**-kappa
-
 levels = linspace_step(260, 325, 5)
 levels = np.concatenate(
     [levels, np.array([350, 400, 450, 500, 550, 600])], axis=0)
@@ -245,29 +203,21 @@ print(potential_temperature.min())
 print(potential_temperature.max())
 plt.savefig("07.png")
 plt.close()
-
-# Integration settings
 dt_si = 10 * units.minute
 save_every = 10 * units.day
 total_time = 1200 * units.day
-
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = physics_specs.nondimensionalize(dt_si)
-
-# Governing equations
 primitive = dinosaur.primitive_equations.PrimitiveEquations(
     ref_temps, orography, coords, physics_specs)
-
 hs_forcing = dinosaur.held_suarez.HeldSuarezForcing(
     coords=coords,
     physics_specs=physics_specs,
     reference_temperature=ref_temps,
     p0=p0)
-
 primitive_with_hs = dinosaur.time_integration.compose_equations(
     [primitive, hs_forcing])
-
 step_fn = dinosaur.time_integration.imex_rk_sil3(primitive_with_hs, dt)
 filters = [
     dinosaur.time_integration.exponential_step_filter(coords.horizontal,
@@ -276,31 +226,21 @@ filters = [
                                                       order=1.5,
                                                       cutoff=0.8),
 ]
-
 step_fn = dinosaur.time_integration.step_with_filters(step_fn, filters)
 integrate_fn = jax.jit(
     dinosaur.time_integration.trajectory_from_step(step_fn,
                                                    outer_steps=outer_steps,
                                                    inner_steps=inner_steps))
-
-# Define trajectory times, expects start_with_input=False
 times = save_every * np.arange(1, outer_steps + 1)
-
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
-
 ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
-
-# Total Kinetic Energy
 data_array = ds['total_kinetic_energy']
-# data_array = dimensionalize(data_array, units.degK)
 data_array.plot(x='time')
 ax = plt.gca()
 ax.legend().remove()
 plt.savefig("08.png")
 plt.close()
-
-# Temperature
-mask = ds['time'] <= 150  # days
+mask = ds['time'] <= 150
 data_array = ds['temperature']
 data_array.isel(level=-1, time=mask).plot(x='lon',
                                           y='lat',
@@ -308,9 +248,7 @@ data_array.isel(level=-1, time=mask).plot(x='lon',
                                           col_wrap=4)
 plt.savefig("09.png")
 plt.close()
-
-# Vorticity
-mask = ds['time'] <= 150  # days
+mask = ds['time'] <= 150
 data_array = ds['vorticity']
 data_array.isel(level=-1, time=mask).plot(x='lon',
                                           y='lat',
@@ -318,9 +256,7 @@ data_array.isel(level=-1, time=mask).plot(x='lon',
                                           col_wrap=4)
 plt.savefig("10.png")
 plt.close()
-
-# Temperature
-mask = ds['time'] <= 100  # days
+mask = ds['time'] <= 100
 data_array = ds['temperature']
 data_array = dimensionalize(data_array, units.degK)
 levels = linspace_step(190, 305, 5)
@@ -333,10 +269,7 @@ ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.savefig("11.png")
 plt.close()
-
-start_time = 200  # days
-
-# Mean Temperature
+start_time = 200
 mask = ds['time'] > start_time
 data_array = ds['temperature']
 data_array = dimensionalize(data_array, units.degK)
@@ -348,15 +281,12 @@ data_array.isel(time=mask).mean(['lon', 'time']).plot.contour(x='lat',
                                                               aspect=1.5)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-
-# Mean Potential Temperature
-mask = ds['time'] > start_time  # start with day=84 (12 weeks)
+mask = ds['time'] > start_time
 temperature = dimensionalize(ds['temperature'], units.degK)
 surface_pressure = dimensionalize(ds['surface_pressure'], units.pascal)
 pressure = ds.level * surface_pressure
-kappa = dinosaur.scales.KAPPA  # kappa = R / cp, R = gas constant, cp = specific heat capacity
+kappa = dinosaur.scales.KAPPA
 potential_temperature = temperature * (pressure / p0)**-kappa
-
 levels = linspace_step(260, 325, 5)
 levels = np.concatenate(
     [levels, np.array([350, 400, 450, 500, 550, 600])], axis=0)
@@ -368,8 +298,6 @@ p = potential_temperature.isel(time=mask).mean(['lon', 'time'
                                                                 aspect=1.5)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-
-# Zonal Mean Wind
 mask = ds['time'] > start_time
 data_array = ds['u']
 data_array = dimensionalize(data_array, units.meter / units.s)
@@ -381,39 +309,25 @@ data_array.isel(time=mask).mean(['lon', 'time']).plot.contour(x='lat',
                                                               aspect=1.5)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-
-# Eddy kinetic energy {form-width: "40%"}
 mask = ds['time'] > start_time
 data_array = ds['u']
-
 data_array2 = ds['v']
 data_array = dimensionalize(data_array, units.meter / units.s)
 data_array2 = dimensionalize(data_array2, units.meter / units.s)
-
 mean_u = data_array.isel(time=mask).mean(['time'])
 zonal_u = data_array.isel(time=mask)
-
 mean_v = data_array2.isel(time=mask).mean(['time'])
 zonal_v = data_array2.isel(time=mask)
-
 eke = (zonal_u - mean_u)**2 + (zonal_v - mean_v)**2
-# levels = linspace_step(5, 45, 5)
-#levels = 30
 p = eke.mean(['time', 'lon']).plot(x='lat', y='level', size=5, aspect=1.5)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-# plt.colorbar(p)
-
-# Integration settings
 dt_si = 10 * units.minute
 save_every = 6 * units.hours
 total_time = 1 * units.week
-
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = physics_specs.nondimensionalize(dt_si)
-
-# Leapfrog integrator
 step_fn = dinosaur.time_integration.imex_rk_sil3(primitive_with_hs, dt)
 filters = [
     dinosaur.time_integration.exponential_step_filter(coords.horizontal,
@@ -429,20 +343,13 @@ integrate_fn = jax.jit(
         outer_steps=outer_steps,
         inner_steps=inner_steps,
     ))
-
 times = save_every * np.arange(1, outer_steps + 1)
-
 final_2, trajectory_2 = jax.block_until_ready(integrate_fn(final))
-
 ds = trajectory_to_xarray(coords, trajectory_2, times)
-
-# Temperature
 data_array = ds['temperature']
 data_array.thin(time=4).isel(level=-10).plot(x='lon', y='lat', col='time')
 plt.savefig("12.png")
 plt.close()
-
-# Vorticity
 data_array = ds['vorticity']
 data_array.thin(time=4).isel(level=-5).plot(x='lon', y='lat', col='time')
 plt.savefig("13.png")

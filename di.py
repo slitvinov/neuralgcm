@@ -92,14 +92,14 @@ def as_dict(inputs):
 class Scale:
 
     def __init__(self, *scales):
-        self._scales = dict()
+        self.scales = dict()
         for quantity in scales:
-            self._scales[str(quantity.dimensionality)] = quantity.to_base_units()
+            self.scales[str(quantity.dimensionality)] = quantity.to_base_units()
 
     def scaling_factor(self, dimensionality):
         factor = units.Quantity(1)
         for dimension, exponent in dimensionality.items():
-            quantity = self._scales.get(dimension)
+            quantity = self.scales.get(dimension)
             factor *= quantity**exponent
         assert factor.check(dimensionality)
         return factor

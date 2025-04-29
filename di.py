@@ -711,8 +711,8 @@ def get_nodal_shapes(
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + nodal_shape)
     scalar_shape_fn = lambda x: np.array([], dtype=int)
     return tree_map_over_nonscalars(array_shape_fn,
-                                                 inputs,
-                                                 scalar_fn=scalar_shape_fn)
+                                    inputs,
+                                    scalar_fn=scalar_shape_fn)
 
 
 def maybe_to_nodal(
@@ -1057,9 +1057,9 @@ def compute_diagnostic_state(
     nodal_cos_lat_u = jax.tree_util.tree_map(
         to_nodal_fn,
         get_cos_lat_vector(state.vorticity,
-                                              state.divergence,
-                                              coords.horizontal,
-                                              clip=False),
+                           state.divergence,
+                           coords.horizontal,
+                           clip=False),
     )
     cos_lat_grad_log_sp = coords.horizontal.cos_lat_grad(
         state.log_surface_pressure, clip=False)
@@ -1190,8 +1190,7 @@ def get_geopotential(
     sharding: Union[jax.sharding.NamedSharding, None] = None,
 ):
     surface_geopotential = orography * gravity_acceleration
-    temperature = add_constant(temperature_variation,
-                                                  reference_temperature)
+    temperature = add_constant(temperature_variation, reference_temperature)
     geopotential_diff = get_geopotential_diff(temperature,
                                               coordinates,
                                               ideal_gas_constant,
@@ -1882,8 +1881,7 @@ class HeldSuarezForcing:
         return jnp.maximum(self.minT, temperature)
 
     def explicit_terms(self, state: State):
-        aux_state = compute_diagnostic_state(
-            state=state, coords=self.coords)
+        aux_state = compute_diagnostic_state(state=state, coords=self.coords)
         nodal_velocity_tendency = jax.tree.map(
             lambda x: -self.kv() * x / self.coords.horizontal.cos_lat**2,
             aux_state.cos_lat_u,

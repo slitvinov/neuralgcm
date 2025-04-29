@@ -1,11 +1,11 @@
 import functools
 import jax
-import dinosaur
 import numpy as np
 import matplotlib.pyplot as plt
 import xarray
+import di
 
-units = dinosaur.scales.units
+units = di.units
 
 
 def dimensionalize(x, unit):
@@ -14,32 +14,31 @@ def dimensionalize(x, unit):
     return xarray.apply_ufunc(dimensionalize, x)
 
 
-units = dinosaur.scales.units
+units = di.units
 layers = 24
-coords = dinosaur.coordinate_systems.CoordinateSystem(
-    horizontal=dinosaur.spherical_harmonic.Grid.T42(),
-    vertical=dinosaur.sigma_coordinates.SigmaCoordinates.equidistant(layers),
+coords = di.CoordinateSystem(
+    horizontal=di.Grid.T42(),
+    vertical=di.SigmaCoordinates.equidistant(layers),
 )
-physics_specs = dinosaur.primitive_equations.PrimitiveEquationsSpecs.from_si()
+physics_specs = di.PrimitiveEquationsSpecs.from_si()
 p0 = 100e3 * units.pascal
 p1 = 5e3 * units.pascal
 rng_key = jax.random.PRNGKey(0)
-initial_state_fn, aux_features = (
-    dinosaur.primitive_equations_states.isothermal_rest_atmosphere(
-        coords=coords, physics_specs=physics_specs, p0=p0, p1=p1))
+initial_state_fn, aux_features = (di.isothermal_rest_atmosphere(
+    coords=coords, physics_specs=physics_specs, p0=p0, p1=p1))
 initial_state = initial_state_fn(rng_key)
 ref_temps = aux_features["ref_temperatures"]
-orography = dinosaur.primitive_equations.truncated_modal_orography(
-    aux_features["orography"], coords)
-initial_state_dict, _ = dinosaur.pytree_utils.as_dict(initial_state)
-u, v = dinosaur.spherical_harmonic.vor_div_to_uv_nodal(
-    coords.horizontal, initial_state.vorticity, initial_state.divergence)
+orography = di.truncated_modal_orography(aux_features["orography"], coords)
+initial_state_dict, _ = di.as_dict(initial_state)
+u, v = di.vor_div_to_uv_nodal(coords.horizontal, initial_state.vorticity,
+                              initial_state.divergence)
 initial_state_dict.update({"u": u, "v": v, "orography": orography})
-nodal_steady_state_fields = dinosaur.coordinate_systems.maybe_to_nodal(
-    initial_state_dict, coords=coords)
-initial_state_ds = dinosaur.xarray_utils.data_to_xarray(
-    nodal_steady_state_fields, coords=coords, times=None)
-temperature = dinosaur.xarray_utils.temperature_variation_to_absolute(
+nodal_steady_state_fields = di.maybe_to_nodal(initial_state_dict,
+                                              coords=coords)
+initial_state_ds = di.data_to_xarray(nodal_steady_state_fields,
+                                     coords=coords,
+                                     times=None)
+temperature = di.temperature_variation_to_absolute(
     initial_state_ds.temperature_variation.data, ref_temps)
 initial_state_ds = initial_state_ds.assign(
     temperature=(initial_state_ds.temperature_variation.dims, temperature))
@@ -58,41 +57,39 @@ total_time = 24 * units.hour
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = physics_specs.nondimensionalize(dt_si)
-primitive = dinosaur.primitive_equations.PrimitiveEquations(
-    ref_temps, orography, coords, physics_specs)
-integrator = dinosaur.time_integration.imex_rk_sil3
+primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
+integrator = di.imex_rk_sil3
 step_fn = integrator(primitive, dt)
-filters = [
-    dinosaur.time_integration.exponential_step_filter(coords.horizontal, dt)
-]
-step_fn = dinosaur.time_integration.step_with_filters(step_fn, filters)
+filters = [di.exponential_step_filter(coords.horizontal, dt)]
+step_fn = di.step_with_filters(step_fn, filters)
 integrate_fn = jax.jit(
-    dinosaur.time_integration.trajectory_from_step(step_fn,
-                                                   outer_steps=outer_steps,
-                                                   inner_steps=inner_steps,
-                                                   start_with_input=True))
+    di.trajectory_from_step(step_fn,
+                            outer_steps=outer_steps,
+                            inner_steps=inner_steps,
+                            start_with_input=True))
 times = save_every * np.arange(0, outer_steps)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 
 
 def trajectory_to_xarray(coords, trajectory, times):
-    trajectory_dict, _ = dinosaur.pytree_utils.as_dict(trajectory)
-    u, v = dinosaur.spherical_harmonic.vor_div_to_uv_nodal(
-        coords.horizontal, trajectory.vorticity, trajectory.divergence)
+    trajectory_dict, _ = di.as_dict(trajectory)
+    u, v = di.vor_div_to_uv_nodal(coords.horizontal, trajectory.vorticity,
+                                  trajectory.divergence)
     trajectory_dict.update({"u": u, "v": v})
-    nodal_trajectory_fields = dinosaur.coordinate_systems.maybe_to_nodal(
-        trajectory_dict, coords=coords)
-    trajectory_ds = dinosaur.xarray_utils.data_to_xarray(
-        nodal_trajectory_fields, coords=coords, times=times)
+    nodal_trajectory_fields = di.maybe_to_nodal(trajectory_dict, coords=coords)
+    trajectory_ds = di.data_to_xarray(nodal_trajectory_fields,
+                                      coords=coords,
+                                      times=times)
     trajectory_ds["surface_pressure"] = np.exp(
         trajectory_ds.log_surface_pressure[:, 0, :, :])
-    temperature = dinosaur.xarray_utils.temperature_variation_to_absolute(
+    temperature = di.temperature_variation_to_absolute(
         trajectory_ds.temperature_variation.data, ref_temps)
     trajectory_ds = trajectory_ds.assign(
         temperature=(trajectory_ds.temperature_variation.dims, temperature))
     total_layer_ke = coords.horizontal.integrate(u**2 + v**2)
-    total_ke_cumulative = dinosaur.sigma_coordinates.cumulative_sigma_integral(
-        total_layer_ke, coords.vertical, axis=-1)
+    total_ke_cumulative = di.cumulative_sigma_integral(total_layer_ke,
+                                                       coords.vertical,
+                                                       axis=-1)
     total_ke = total_ke_cumulative[..., -1]
     trajectory_ds = trajectory_ds.assign(total_kinetic_energy=(("time"),
                                                                total_ke))
@@ -188,7 +185,7 @@ plt.close()
 temperature = dimensionalize(ds["eq_temp"], units.degK)
 surface_pressure = dimensionalize(ds["surface_pressure"], units.pascal)
 pressure = ds.sigma * surface_pressure
-kappa = dinosaur.scales.KAPPA
+kappa = di.KAPPA
 potential_temperature = temperature * (pressure / p0)**-kappa
 levels = linspace_step(260, 325, 5)
 levels = np.concatenate(
@@ -211,28 +208,26 @@ total_time = 1200 * units.day
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = physics_specs.nondimensionalize(dt_si)
-primitive = dinosaur.primitive_equations.PrimitiveEquations(
-    ref_temps, orography, coords, physics_specs)
+primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
 hs_forcing = dinosaur.held_suarez.HeldSuarezForcing(
     coords=coords,
     physics_specs=physics_specs,
     reference_temperature=ref_temps,
     p0=p0)
-primitive_with_hs = dinosaur.time_integration.compose_equations(
-    [primitive, hs_forcing])
-step_fn = dinosaur.time_integration.imex_rk_sil3(primitive_with_hs, dt)
+primitive_with_hs = di.compose_equations([primitive, hs_forcing])
+step_fn = di.imex_rk_sil3(primitive_with_hs, dt)
 filters = [
-    dinosaur.time_integration.exponential_step_filter(coords.horizontal,
-                                                      dt,
-                                                      tau=0.0087504,
-                                                      order=1.5,
-                                                      cutoff=0.8),
+    di.exponential_step_filter(coords.horizontal,
+                               dt,
+                               tau=0.0087504,
+                               order=1.5,
+                               cutoff=0.8),
 ]
-step_fn = dinosaur.time_integration.step_with_filters(step_fn, filters)
+step_fn = di.step_with_filters(step_fn, filters)
 integrate_fn = jax.jit(
-    dinosaur.time_integration.trajectory_from_step(step_fn,
-                                                   outer_steps=outer_steps,
-                                                   inner_steps=inner_steps))
+    di.trajectory_from_step(step_fn,
+                            outer_steps=outer_steps,
+                            inner_steps=inner_steps))
 times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
@@ -287,7 +282,7 @@ mask = ds["time"] > start_time
 temperature = dimensionalize(ds["temperature"], units.degK)
 surface_pressure = dimensionalize(ds["surface_pressure"], units.pascal)
 pressure = ds.level * surface_pressure
-kappa = dinosaur.scales.KAPPA
+kappa = di.KAPPA
 potential_temperature = temperature * (pressure / p0)**-kappa
 levels = linspace_step(260, 325, 5)
 levels = np.concatenate(
@@ -330,17 +325,17 @@ total_time = 1 * units.week
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = physics_specs.nondimensionalize(dt_si)
-step_fn = dinosaur.time_integration.imex_rk_sil3(primitive_with_hs, dt)
+step_fn = di.imex_rk_sil3(primitive_with_hs, dt)
 filters = [
-    dinosaur.time_integration.exponential_step_filter(coords.horizontal,
-                                                      dt,
-                                                      tau=0.0087504,
-                                                      order=1.5,
-                                                      cutoff=0.8),
+    di.exponential_step_filter(coords.horizontal,
+                               dt,
+                               tau=0.0087504,
+                               order=1.5,
+                               cutoff=0.8),
 ]
-step_fn = dinosaur.time_integration.step_with_filters(step_fn, filters)
+step_fn = di.step_with_filters(step_fn, filters)
 integrate_fn = jax.jit(
-    dinosaur.time_integration.trajectory_from_step(
+    di.trajectory_from_step(
         step_fn,
         outer_steps=outer_steps,
         inner_steps=inner_steps,

@@ -11,12 +11,10 @@ grid = di.Grid.T42()
 vertical_grid = di.SigmaCoordinates.equidistant(layers)
 coords = di.CoordinateSystem(grid, vertical_grid)
 physics_specs = di.PrimitiveEquationsSpecs.from_si()
-initial_state_fn, aux_features = di.steady_state_jw(
-    coords, physics_specs)
+initial_state_fn, aux_features = di.steady_state_jw(coords, physics_specs)
 steady_state = initial_state_fn()
 ref_temps = aux_features["ref_temperatures"]
-orography = di.truncated_modal_orography(
-    aux_features["orography"], coords)
+orography = di.truncated_modal_orography(aux_features["orography"], coords)
 
 
 def dimensionalize(x, unit):
@@ -26,14 +24,13 @@ def dimensionalize(x, unit):
 
 
 steady_state_dict, _ = di.as_dict(steady_state)
-u, v = di.vor_div_to_uv_nodal(grid,
-                                                       steady_state.vorticity,
-                                                       steady_state.divergence)
+u, v = di.vor_div_to_uv_nodal(grid, steady_state.vorticity,
+                              steady_state.divergence)
 steady_state_dict.update({"u": u, "v": v, "z_surf": orography})
-nodal_steady_state_fields = di.maybe_to_nodal(
-    steady_state_dict, coords=coords)
-initial_state_ds = di.data_to_xarray(
-    nodal_steady_state_fields, coords=coords, times=None)
+nodal_steady_state_fields = di.maybe_to_nodal(steady_state_dict, coords=coords)
+initial_state_ds = di.data_to_xarray(nodal_steady_state_fields,
+                                     coords=coords,
+                                     times=None)
 temperature = di.temperature_variation_to_absolute(
     initial_state_ds.temperature_variation.data, ref_temps)
 initial_state_ds = initial_state_ds.assign(
@@ -67,8 +64,7 @@ ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.savefig("03.png")
 plt.close()
-primitive = di.PrimitiveEquations(
-    ref_temps, orography, coords, physics_specs)
+primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
 dt_s = 100 * units.s
 dt = physics_specs.nondimensionalize(dt_s)
 step_fn = di.imex_rk_sil3(primitive, dt)
@@ -80,22 +76,19 @@ filters = [
     di.exponential_step_filter(grid, dt),
 ]
 step_fn = di.step_with_filters(step_fn, filters)
-integrate_fn = di.trajectory_from_step(
-    step_fn, outer_steps, inner_steps)
+integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(steady_state))
 trajectory = jax.device_get(trajectory)
 times = save_every * np.arange(outer_steps)
 trajectory_dict, _ = di.as_dict(trajectory)
-u, v = di.vor_div_to_uv_nodal(grid,
-                                                       trajectory.vorticity,
-                                                       trajectory.divergence)
+u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
+                              trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
-nodal_trajectory_fields = di.maybe_to_nodal(
-    trajectory_dict, coords=coords)
+nodal_trajectory_fields = di.maybe_to_nodal(trajectory_dict, coords=coords)
 trajectory_ds = di.data_to_xarray(nodal_trajectory_fields,
-                                                     coords=coords,
-                                                     times=times)
+                                  coords=coords,
+                                  times=times)
 trajectory_ds["surface_pressure"] = np.exp(
     trajectory_ds.log_surface_pressure[:, 0, :, :])
 temperature = di.temperature_variation_to_absolute(
@@ -131,29 +124,25 @@ data_array.mean(["lat", "lon"]).plot(x="time", hue="level")
 ax = plt.gca()
 plt.savefig("06.png")
 plt.close()
-perturbation = di.baroclinic_perturbation_jw(
-    coords, physics_specs)
+perturbation = di.baroclinic_perturbation_jw(coords, physics_specs)
 state = steady_state + perturbation
 save_every = 2 * units.hour
 total_time = 2 * units.week
 inner_steps = int(save_every / dt_s)
 outer_steps = int(total_time / save_every)
-integrate_fn = di.trajectory_from_step(
-    step_fn, outer_steps, inner_steps)
+integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
 times = (save_every * np.arange(outer_steps)).to(units.s)
 trajectory_dict, _ = di.as_dict(trajectory)
-u, v = di.vor_div_to_uv_nodal(grid,
-                                                       trajectory.vorticity,
-                                                       trajectory.divergence)
+u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
+                              trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
-nodal_trajectory_fields = di.maybe_to_nodal(
-    trajectory_dict, coords=coords)
+nodal_trajectory_fields = di.maybe_to_nodal(trajectory_dict, coords=coords)
 trajectory_ds = di.data_to_xarray(nodal_trajectory_fields,
-                                                     coords=coords,
-                                                     times=times)
+                                  coords=coords,
+                                  times=times)
 trajectory_ds["surface_pressure"] = np.exp(
     trajectory_ds.log_surface_pressure[:, 0, :, :])
 temperature = di.temperature_variation_to_absolute(

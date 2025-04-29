@@ -1,5 +1,3 @@
-from dinosaur import primitive_equations
-from dinosaur import scales
 import jax
 import jax.numpy as jnp
 import numpy as np

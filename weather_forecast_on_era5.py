@@ -142,13 +142,13 @@ res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = physics_specs.nondimensionalize(dt_si)
 tau = physics_specs.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)
-hyperdiffusion_filter = time_integration.horizontal_diffusion_step_filter(
+hyperdiffusion_filter = di.horizontal_diffusion_step_filter(
     model_coords.horizontal, dt=dt, tau=tau, order=2)
 time_span = cutoff_period = physics_specs.nondimensionalize(dfi_timescale)
 dfi = jax.jit(
-    time_integration.digital_filter_initialization(
+    di.digital_filter_initialization(
         equation=eq,
-        ode_solver=time_integration.imex_rk_sil3,
+        ode_solver=di.imex_rk_sil3,
         filters=[hyperdiffusion_filter],
         time_span=time_span,
         cutoff_period=cutoff_period,
@@ -234,12 +234,12 @@ def trajectory_to_xarray(trajectory):
 
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
-step_fn = time_integration.step_with_filters(
-    time_integration.imex_rk_sil3(eq, dt),
+step_fn = di.step_with_filters(
+    di.imex_rk_sil3(eq, dt),
     [hyperdiffusion_filter],
 )
 integrate_fn = jax.jit(
-    time_integration.trajectory_from_step(
+    di.trajectory_from_step(
         step_fn,
         outer_steps=outer_steps,
         inner_steps=inner_steps,

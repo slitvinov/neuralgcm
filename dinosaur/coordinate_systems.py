@@ -10,6 +10,7 @@ import numpy as np
 
 P = jax.sharding.PartitionSpec
 
+
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
     horizontal: Any

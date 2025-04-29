@@ -341,8 +341,9 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
 
     def _t_omega_over_sigma_sp(self, temperature_field, g_term,
                                v_dot_grad_log_sp):
-        f = sigma_coordinates.cumulative_sigma_integral(
-            g_term, self.coords.vertical, sharding=None)
+        f = sigma_coordinates.cumulative_sigma_integral(g_term,
+                                                        self.coords.vertical,
+                                                        sharding=None)
         alpha = get_sigma_ratios(self.coords.vertical)
         alpha = alpha[:, np.newaxis, np.newaxis]
         del_𝜎 = self.coords.vertical.layer_thickness[:, np.newaxis, np.newaxis]

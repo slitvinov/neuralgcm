@@ -3,7 +3,6 @@ from jax import lax
 from typing import Callable, Mapping, Union, Any
 import dataclasses
 import functools
-import importlib
 import jax
 import jax.numpy as jnp
 import numpy as np

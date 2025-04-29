@@ -1047,10 +1047,10 @@ class PrimitiveEquationsSpecs:
         return self.gravity_acceleration
 
     def nondimensionalize(self, quantity):
-        return self.scale.nondimensionalize(quantity)
+        return DEFAULT_SCALE.nondimensionalize(quantity)
 
     def dimensionalize(self, value, unit: units.Unit):
-        return self.scale.dimensionalize(value, unit)
+        return DEFAULT_SCALE.dimensionalize(value, unit)
 
     @classmethod
     def from_si(
@@ -1064,14 +1064,13 @@ class PrimitiveEquationsSpecs:
         kappa_si=KAPPA,
     ):
         return cls(
-            scale.nondimensionalize(radius_si),
-            scale.nondimensionalize(angular_velocity_si),
-            scale.nondimensionalize(gravity_acceleration_si),
-            scale.nondimensionalize(ideal_gas_constant_si),
-            scale.nondimensionalize(water_vapor_gas_constant_si),
-            scale.nondimensionalize(water_vapor_isobaric_heat_capacity_si),
-            scale.nondimensionalize(kappa_si),
-            scale,
+            DEFAULT_SCALE.nondimensionalize(radius_si),
+            DEFAULT_SCALE.nondimensionalize(angular_velocity_si),
+            DEFAULT_SCALE.nondimensionalize(gravity_acceleration_si),
+            DEFAULT_SCALE.nondimensionalize(ideal_gas_constant_si),
+            DEFAULT_SCALE.nondimensionalize(water_vapor_gas_constant_si),
+            DEFAULT_SCALE.nondimensionalize(water_vapor_isobaric_heat_capacity_si),
+            DEFAULT_SCALE.nondimensionalize(kappa_si),
         )
 
 

@@ -104,8 +104,7 @@ def compute_diagnostic_state(
     )
 
 
-def compute_vertical_velocity(state,
-                              coords):
+def compute_vertical_velocity(state, coords):
     sigma_dot_boundaries = compute_diagnostic_state(state,
                                                     coords).sigma_dot_full
     assert sigma_dot_boundaries.ndim == 3

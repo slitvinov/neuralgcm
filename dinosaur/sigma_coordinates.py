@@ -79,10 +79,10 @@ def centered_difference(x: np.ndarray,
 def cumulative_sigma_integral(
     x,
     coordinates,
-    axis= -3,
-    downward= True,
-    cumsum_method = "dot",
-    sharding = None,
+    axis=-3,
+    downward=True,
+    cumsum_method="dot",
+    sharding=None,
 ):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness

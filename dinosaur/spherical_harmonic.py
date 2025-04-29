@@ -45,6 +45,7 @@ def gauss_legendre_nodes(n):
 
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 
+
 def real_basis(wavenumbers, nodes):
     dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
     cos = np.real(dft[:, 1:])
@@ -82,15 +83,12 @@ class _SphericalHarmonicBasis:
 
 
 @dataclasses.dataclass(frozen=True)
-class SphericalHarmonics:
+class RealSphericalHarmonics:
     longitude_wavenumbers: int = 0
     total_wavenumbers: int = 0
     longitude_nodes: int = 0
     latitude_nodes: int = 0
     latitude_spacing: str = "gauss"
-
-
-class RealSphericalHarmonics(SphericalHarmonics):
 
     @functools.cached_property
     def nodal_axes(self):
@@ -165,12 +163,15 @@ class RealSphericalHarmonics(SphericalHarmonics):
 
 
 P = jax.sharding.PartitionSpec
+
+
 def _with_vertical_padding(f):
 
     def g(x):
         return f(x)
 
     return g
+
 
 @dataclasses.dataclass(frozen=True)
 class Grid:

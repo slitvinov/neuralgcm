@@ -5,6 +5,7 @@ from dinosaur import pytree_utils
 import jax
 import numpy as np
 
+
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
     horizontal: Any

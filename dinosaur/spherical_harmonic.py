@@ -243,102 +243,23 @@ class Grid:
         )
 
     @classmethod
-    def T21(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=21, gaussian_nodes=16, **kwargs)
-
-    @classmethod
-    def T31(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=31, gaussian_nodes=24, **kwargs)
-
-    @classmethod
     def T42(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=42, gaussian_nodes=32, **kwargs)
-
-    @classmethod
-    def T85(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=85, gaussian_nodes=64, **kwargs)
-
-    @classmethod
-    def T106(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=106, gaussian_nodes=80, **kwargs)
-
-    @classmethod
-    def T119(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=119, gaussian_nodes=90, **kwargs)
 
     @classmethod
     def T170(cls, **kwargs) -> Grid:
         return cls.construct(max_wavenumber=170, gaussian_nodes=128, **kwargs)
 
-    @classmethod
-    def T213(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=213, gaussian_nodes=160, **kwargs)
-
-    @classmethod
-    def T340(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=340, gaussian_nodes=256, **kwargs)
-
-    @classmethod
-    def T425(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=425, gaussian_nodes=320, **kwargs)
-
-    @classmethod
-    def TL31(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=31, gaussian_nodes=16, **kwargs)
-
-    @classmethod
-    def TL47(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=47, gaussian_nodes=24, **kwargs)
-
-    @classmethod
-    def TL63(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=63, gaussian_nodes=32, **kwargs)
-
-    @classmethod
-    def TL95(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=95, gaussian_nodes=48, **kwargs)
-
-    @classmethod
-    def TL127(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=127, gaussian_nodes=64, **kwargs)
-
-    @classmethod
-    def TL159(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=159, gaussian_nodes=80, **kwargs)
-
-    @classmethod
-    def TL179(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=179, gaussian_nodes=90, **kwargs)
-
-    @classmethod
-    def TL255(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=255, gaussian_nodes=128, **kwargs)
-
-    @classmethod
-    def TL639(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=639, gaussian_nodes=320, **kwargs)
-
-    @classmethod
-    def TL1279(cls, **kwargs) -> Grid:
-        return cls.construct(max_wavenumber=1279, gaussian_nodes=640, **kwargs)
-
     def asdict(self) -> dict[str, Any]:
         items = dataclasses.asdict(self)
         items[
             SPHERICAL_HARMONICS_IMPL_KEY] = self.spherical_harmonics_impl.__name__
-        if self.spmd_mesh is not None:
-            items[SPMD_MESH_KEY] = ','.join(
-                f'{k}={v}' for k, v in self.spmd_mesh.shape.items())
-        else:
-            items[SPMD_MESH_KEY] = ''
+        items[SPMD_MESH_KEY] = ''
         return items
 
     @functools.cached_property
     def spherical_harmonics(self) -> SphericalHarmonics:
-        if self.spmd_mesh is not None:
-            kwargs = dict(spmd_mesh=self.spmd_mesh)
-        else:
-            kwargs = dict()
+        kwargs = dict()
         return self.spherical_harmonics_impl(
             longitude_wavenumbers=self.longitude_wavenumbers,
             total_wavenumbers=self.total_wavenumbers,
@@ -423,9 +344,6 @@ class Grid:
 
     @jax.named_call
     def clip_wavenumbers(self, x, n: int = 1):
-        if n <= 0:
-            raise ValueError(f'`n` must be >= 0; got {n}.')
-
         def clip(x):
             num_zeros = n + self.modal_padding[-1]
             mask = jnp.ones(self.modal_shape[-1],

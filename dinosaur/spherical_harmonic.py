@@ -218,14 +218,12 @@ class Grid:
 
     def asdict(self):
         items = dataclasses.asdict(self)
-        items[
-            'spherical_harmonics_impl'] = self.spherical_harmonics_impl.__name__
         return items
 
     @functools.cached_property
     def spherical_harmonics(self):
         kwargs = dict()
-        return self.spherical_harmonics_impl(
+        return RealSphericalHarmonics(
             longitude_wavenumbers=self.longitude_wavenumbers,
             total_wavenumbers=self.total_wavenumbers,
             longitude_nodes=self.longitude_nodes,

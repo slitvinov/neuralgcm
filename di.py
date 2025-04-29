@@ -940,8 +940,8 @@ class State:
     divergence: Any
     temperature_variation: Any
     log_surface_pressure: Any
-    tracers: Mapping[str, Any] = dataclasses.field(default_factory=dict)
-    sim_time: Union[float, None] = None
+    tracers: Any = dataclasses.field(default_factory=dict)
+    sim_time: Any = None
 
 
 def _asdict(state: State):
@@ -1098,10 +1098,10 @@ def get_geopotential(
     temperature_variation: Any,
     reference_temperature: Any,
     orography: Any,
-    coordinates: SigmaCoordinates,
-    gravity_acceleration: float,
-    ideal_gas_constant: float,
-    sharding: Union[jax.sharding.NamedSharding, None] = None,
+    coordinates: Any,
+    gravity_acceleration: Any,
+    ideal_gas_constant: Any,
+    sharding: Any = None,
 ):
     surface_geopotential = orography * gravity_acceleration
     temperature = add_constant(temperature_variation, reference_temperature)
@@ -1145,7 +1145,7 @@ def get_temperature_implicit(
     coordinates: SigmaCoordinates,
     reference_temperature: np.ndarray,
     kappa: float,
-    sharding: Union[jax.sharding.NamedSharding, None] = None,
+    sharding: Any = None,
 ):
     weights = -get_temperature_implicit_weights(coordinates,
                                                 reference_temperature, kappa)
@@ -1221,7 +1221,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
     orography: Any
     coords: coordinate_systems.CoordinateSystem
     physics_specs: PrimitiveEquationsSpecs
-    vertical_matmul_method: Union[str, None] = dataclasses.field(default=None)
+    vertical_matmul_method: Any = dataclasses.field(default=None)
     implicit_inverse_method: str = dataclasses.field(default="split")
     vertical_advection: Callable[..., jax.Array] = dataclasses.field(
         default=centered_vertical_advection)
@@ -1596,7 +1596,7 @@ def steady_state_jw(
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
 
-    def initial_state_fn(rng_key: Union[jnp.ndarray, None] = None, ):
+    def initial_state_fn(rng_key = None):
         del rng_key
         nodal_vorticity = np.stack([
             _get_vorticity(lat, lon, sigma)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 import dataclasses
 import functools
-import math
 from typing import Any, Callable
 from dinosaur import jax_numpy_utils
 from dinosaur import pytree_utils

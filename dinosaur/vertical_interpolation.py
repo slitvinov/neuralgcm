@@ -2,7 +2,6 @@ from __future__ import annotations
 import dataclasses
 import functools
 import importlib
-from typing import Any, Callable, Dict, Sequence, TypeVar, Union
 import dinosaur
 from dinosaur import pytree_utils
 from dinosaur import sigma_coordinates

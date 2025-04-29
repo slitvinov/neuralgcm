@@ -1,7 +1,7 @@
 from __future__ import annotations
 import dataclasses
 import functools
-from typing import Any, Callable, Mapping, Sequence, Union
+from typing import Callable, Mapping, Union
 from dinosaur import coordinate_systems
 from dinosaur import jax_numpy_utils
 from dinosaur import scales
@@ -321,7 +321,7 @@ def truncated_modal_orography(
     wavenumbers_to_clip: int = 1,
 ):
     grid = coords.horizontal
-    expected_shape = grid.nodal_shape
+    grid.nodal_shape
     return grid.clip_wavenumbers(grid.to_modal(orography),
                                  n=wavenumbers_to_clip)
 
@@ -544,7 +544,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         div = slice(0, layers)
         temp = slice(layers, 2 * layers)
         logp = slice(2 * layers, 2 * layers + 1)
-        temp_logp = slice(layers, 2 * layers + 1)
+        slice(layers, 2 * layers + 1)
 
         def named_vertical_matvec(name):
             return jax.named_call(_vertical_matvec_per_wavenumber, name=name)

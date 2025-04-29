@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from typing import Union
 from dinosaur import coordinate_systems
 from dinosaur import filtering
 from dinosaur import primitive_equations

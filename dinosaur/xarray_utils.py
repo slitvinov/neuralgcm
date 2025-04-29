@@ -1,4 +1,3 @@
-import dataclasses
 import functools
 import jax
 import numpy as np
@@ -21,7 +20,7 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
     sample_ids,
     include_realization,
 ):
-    not_scalar = bool(shape)
+    bool(shape)
     if times is not None:
         shape = times.shape + shape
         dims = ('time', ) + dims
@@ -91,7 +90,7 @@ def data_to_xarray(
     serialize_coords_to_attrs=True,
 ):
     prognostic_keys = set(data.keys()) - {'tracers'} - {'diagnostics'}
-    tracer_keys = data['tracers'].keys() if 'tracers' in data else set()
+    data['tracers'].keys() if 'tracers' in data else set()
     diagnostic_keys = (data['diagnostics'].keys()
                        if 'diagnostics' in data else set())
     if additional_coords is None:

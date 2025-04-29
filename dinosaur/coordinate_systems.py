@@ -1,6 +1,6 @@
 from __future__ import annotations
 import dataclasses
-from typing import Any, Callable, Sequence, Union
+from typing import Any, Union
 from dinosaur import pytree_utils
 from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
@@ -41,8 +41,8 @@ class CoordinateSystem:
         return _with_sharding_constraint(x, self.dycore_sharding)
 
     def asdict(self) ->...:
-        horizontal_keys = set(self.horizontal.asdict().keys())
-        vertical_keys = set(self.vertical.asdict().keys())
+        set(self.horizontal.asdict().keys())
+        set(self.vertical.asdict().keys())
         out = {**self.horizontal.asdict(), **self.vertical.asdict()}
         out['horizontal_grid_type'] = type(self.horizontal).__name__
         out['vertical_grid_type'] = type(self.vertical).__name__

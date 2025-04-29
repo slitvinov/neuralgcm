@@ -1,7 +1,4 @@
 from __future__ import annotations
-import functools
-import math
-import re
 import jax
 from jax import lax
 from jax.experimental import shard_map

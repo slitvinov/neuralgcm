@@ -1,5 +1,4 @@
-import dataclasses
-from typing import Any, Callable, Generic, Mapping, TypeVar, Union
+from typing import Any, Mapping, TypeVar, Union
 from dinosaur import scales
 import jax.numpy as jnp
 import numpy as np

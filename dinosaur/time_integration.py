@@ -1,6 +1,5 @@
 from __future__ import annotations
 import dataclasses
-import math
 from dinosaur import filtering
 from dinosaur import spherical_harmonic
 from dinosaur import typing

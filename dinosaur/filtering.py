@@ -1,5 +1,4 @@
 import functools
-from typing import Callable, Union
 from dinosaur import spherical_harmonic
 from dinosaur import typing
 import jax

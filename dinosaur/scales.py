@@ -1,5 +1,4 @@
-from collections import abc
-from typing import Iterator, Protocol, Union
+from typing import Protocol, Union
 import jax.numpy as jnp
 import numpy as np
 import pint
@@ -20,7 +19,7 @@ IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
 
 
 def _get_dimension(quantity: Quantity) -> str:
-    exponents = list(quantity.dimensionality.values())
+    list(quantity.dimensionality.values())
     return str(quantity.dimensionality)
 
 
@@ -38,7 +37,7 @@ class Scale:
     def __init__(self, *scales: Quantity):
         self._scales = dict()
         for quantity in scales:
-            dimension = _get_dimension(quantity)
+            _get_dimension(quantity)
             self._scales[_get_dimension(quantity)] = quantity.to_base_units()
 
     def _scaling_factor(self,

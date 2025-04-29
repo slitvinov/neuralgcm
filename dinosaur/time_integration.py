@@ -46,8 +46,7 @@ class TimeReversedImExODE(ImplicitExplicitODE):
         return self.forward_eq.implicit_inverse(state, -step_size)
 
 
-def compose_equations(equations: Sequence[Union[ImplicitExplicitODE,
-                                                ExplicitODE]], ):
+def compose_equations(equations):
     implicit_explicit_eqs = list(
         filter(lambda x: isinstance(x, ImplicitExplicitODE), equations))
     (implicit_explicit_equation, ) = implicit_explicit_eqs
@@ -67,16 +66,16 @@ def compose_equations(equations: Sequence[Union[ImplicitExplicitODE,
 
 @dataclasses.dataclass
 class ImExButcherTableau:
-    a_ex: Sequence[Sequence[float]]
-    a_im: Sequence[Sequence[float]]
-    b_ex: Sequence[float]
-    b_im: Sequence[float]
+    a_ex: Any
+    a_im: Any
+    b_ex: Any
+    b_im: Any
 
 
 def imex_runge_kutta(
-    tableau: ImExButcherTableau,
-    equation: ImplicitExplicitODE,
-    time_step: float,
+    tableau,
+    equation,
+    time_step,
 ):
     dt = time_step
     F = tree_math.unwrap(equation.explicit_terms)

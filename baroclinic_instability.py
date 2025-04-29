@@ -66,7 +66,7 @@ plt.savefig("b.03.png")
 plt.close()
 primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
 dt_s = 100 * units.s
-dt = physics_specs.nondimensionalize(dt_s)
+dt = di.DEFAULT_SCALE..nondimensionalize(dt_s)
 step_fn = di.imex_rk_sil3(primitive, dt)
 save_every = 2 * units.hour
 total_time = 1 * units.week
@@ -102,7 +102,7 @@ data_array.isel(lon=0).thin(time=12).plot.contour(x="lat",
 ax = plt.gca()
 ax.set_ylim((1, 0))
 data_array = trajectory_ds[
-    "surface_pressure"] / physics_specs.nondimensionalize(1e5 * units.pascal)
+    "surface_pressure"] / di.DEFAULT_SCALE.nondimensionalize(1e5 * units.pascal)
 data_array.max(["lon"]).plot(x="time", hue="lat")
 ax = plt.gca()
 ax.legend().remove()
@@ -150,7 +150,7 @@ temperature = di.temperature_variation_to_absolute(
 trajectory_ds = trajectory_ds.assign(
     temperature=(trajectory_ds.temperature_variation.dims, temperature))
 data_array = trajectory_ds[
-    "surface_pressure"] / physics_specs.nondimensionalize(1e5 * units.pascal)
+    "surface_pressure"] / di.DEFAULT_SCALE.nondimensionalize(1e5 * units.pascal)
 levels = [(992 + 2 * i) / 1000 for i in range(8)]
 data_array.sel({
     "lat":
@@ -168,7 +168,7 @@ fig.set_figwidth(10)
 plt.savefig("b.07.png")
 plt.close()
 data_array = trajectory_ds[
-    "surface_pressure"] / physics_specs.nondimensionalize(1e5 * units.pascal)
+    "surface_pressure"] / di.DEFAULT_SCALE.nondimensionalize(1e5 * units.pascal)
 levels = [(930 + 10 * i) / 1000 for i in range(10)]
 (data_array.sel({
     "lat":
@@ -187,7 +187,7 @@ plt.savefig("b.08.png")
 plt.close()
 temp_array = trajectory_ds["temperature"]
 levels = [(220 + 10 * i) for i in range(10)]
-target_pressure = 0.85 * physics_specs.nondimensionalize(1e5 * units.pascal)
+target_pressure = 0.85 * di.DEFAULT_SCALE.nondimensionalize(1e5 * units.pascal)
 (temp_array.sel({
     "lat":
     slice(0, 90),
@@ -209,7 +209,7 @@ fig.set_figwidth(12)
 plt.savefig("b.09.png")
 plt.close()
 voriticty_array = trajectory_ds["vorticity"]
-target_pressure = 0.85 * physics_specs.nondimensionalize(1e5 * units.pascal)
+target_pressure = 0.85 * di.DEFAULT_SCALE.nondimensionalize(1e5 * units.pascal)
 voriticty_array_si = dimensionalize(voriticty_array, 1 / units.s)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 5))
 levels = [-3e-5 + 1e-5 * i for i in range(10)]

@@ -202,7 +202,7 @@ def trajectory_to_xarray(trajectory):
         device=jax.devices("cpu")[0])
     trajectory_cpu = jax.device_put(trajectory, device=jax.devices("cpu")[0])
     traj_nodal_si = {
-        k: physics_specs.dimensionalize(v, target_units[k]).magnitude
+        k: di.DEFAULT_SCALE.dimensionalize(v, target_units[k]).magnitude
         for k, v in trajectory_cpu.items()
     }
     times = float(save_every / units.hour) * np.arange(outer_steps)

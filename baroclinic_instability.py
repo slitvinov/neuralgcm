@@ -19,7 +19,7 @@ orography = di.truncated_modal_orography(aux_features["orography"], coords)
 
 def dimensionalize(x, unit):
     """Dimensionalizes `xarray.DataArray`s."""
-    dimensionalize = functools.partial(physics_specs.dimensionalize, unit=unit)
+    dimensionalize = functools.partial(di.DEFAULT_SCALE.dimensionalize, unit=unit)
     return xarray.apply_ufunc(dimensionalize, x)
 
 

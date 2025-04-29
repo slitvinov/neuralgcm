@@ -1,7 +1,7 @@
 from __future__ import annotations
 import dataclasses
 import functools
-from typing import Any, Callable
+from typing import Callable
 from dinosaur import jax_numpy_utils
 from dinosaur import pytree_utils
 import jax
@@ -175,10 +175,6 @@ def _with_vertical_padding(f):
 
     return g
 
-
-SphericalHarmonicsImpl = Callable[..., SphericalHarmonics]
-
-
 @dataclasses.dataclass(frozen=True)
 class Grid:
     longitude_wavenumbers: int = 0
@@ -188,7 +184,7 @@ class Grid:
     latitude_spacing: str = "gauss"
     longitude_offset: float = 0.0
     radius: float | None = None
-    spherical_harmonics_impl: SphericalHarmonicsImpl = RealSphericalHarmonics
+    spherical_harmonics_impl = RealSphericalHarmonics
 
     def __post_init__(self):
         if self.radius is None:
@@ -202,8 +198,7 @@ class Grid:
         latitude_spacing: str = "gauss",
         longitude_offset: float = 0.0,
         radius: float | None = None,
-        spherical_harmonics_impl:
-        SphericalHarmonicsImpl = RealSphericalHarmonics,
+        spherical_harmonics_impl = RealSphericalHarmonics,
     ):
         return cls(
             longitude_wavenumbers=max_wavenumber + 1,

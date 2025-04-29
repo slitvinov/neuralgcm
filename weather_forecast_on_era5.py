@@ -93,7 +93,7 @@ ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init["orography"] /= di.GRAVITY_ACCELERATION
-source_vertical = vertical_interpolation.HybridCoordinates.ECMWF137()
+source_vertical = di.HybridCoordinates.ECMWF137()
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)
 sp_nodal = model_level_inputs.pop("surface_pressure")
@@ -101,7 +101,7 @@ orography_input = model_level_inputs.pop("orography")
 sp_init_hpa = (ds_init.surface_pressure.transpose(
     "longitude", "latitude").data.to("hPa").magnitude)
 physics_specs = primitive_equations.PrimitiveEquationsSpecs.from_si()
-nodal_inputs = vertical_interpolation.regrid_hybrid_to_sigma(
+nodal_inputs = di.regrid_hybrid_to_sigma(
     fields=model_level_inputs,
     hybrid_coords=source_vertical,
     sigma_coords=model_coords.vertical,

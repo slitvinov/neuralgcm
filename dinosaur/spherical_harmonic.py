@@ -198,7 +198,7 @@ class Grid:
         latitude_spacing: str = "gauss",
         longitude_offset: float = 0.0,
         radius: float | None = None,
-        spherical_harmonics_impl = RealSphericalHarmonics,
+        spherical_harmonics_impl : None = RealSphericalHarmonics,
     ):
         return cls(
             longitude_wavenumbers=max_wavenumber + 1,

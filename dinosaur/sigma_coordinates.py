@@ -82,7 +82,7 @@ def cumulative_sigma_integral(
     axis= -3,
     downward= True,
     cumsum_method = "dot",
-    sharding,
+    sharding = None,
 ):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness

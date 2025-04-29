@@ -151,7 +151,7 @@ class PrimitiveEquationsSpecs:
         water_vapor_gas_constant_si=scales.IDEAL_GAS_CONSTANT_H20,
         water_vapor_isobaric_heat_capacity_si=scales.WATER_VAPOR_CP,
         kappa_si=scales.KAPPA,
-        scale= scales.DEFAULT_SCALE,
+        scale=scales.DEFAULT_SCALE,
     ):
         return cls(
             scale.nondimensionalize(radius_si),

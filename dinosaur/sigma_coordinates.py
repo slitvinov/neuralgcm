@@ -23,9 +23,7 @@ def _slice_shape_along_axis(
     return tuple(x_shape)
 
 
-def _with_f64_math(
-    f: Callable[[np.ndarray],
-                np.ndarray], ):
+def _with_f64_math(f: Callable[[np.ndarray], np.ndarray], ):
     return lambda x: f(x.astype(np.float64)).astype(x.dtype)
 
 
@@ -98,6 +96,7 @@ def cumulative_sigma_integral(
                                   axis,
                                   method=cumsum_method,
                                   sharding=sharding)
+
 
 @jax.named_call
 def sigma_integral(

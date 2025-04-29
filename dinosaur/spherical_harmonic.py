@@ -172,9 +172,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
 P = jax.sharding.PartitionSpec
 
 
-def _vertical_pad(
-        field: jax.Array,
-        mesh: jax.sharding.Mesh | None):
+def _vertical_pad(field: jax.Array, mesh: jax.sharding.Mesh | None):
     return field, None
 
 
@@ -182,9 +180,8 @@ def _vertical_crop(field: jax.Array, padding: int | None):
     return field
 
 
-def _with_vertical_padding(
-        f: Callable[[jax.Array], jax.Array],
-        mesh: jax.sharding.Mesh | None):
+def _with_vertical_padding(f: Callable[[jax.Array], jax.Array],
+                           mesh: jax.sharding.Mesh | None):
 
     def g(x):
         x, padding = _vertical_pad(x, mesh)
@@ -193,8 +190,6 @@ def _with_vertical_padding(
     return g
 
 
-SPHERICAL_HARMONICS_IMPL_KEY = "spherical_harmonics_impl"
-SPMD_MESH_KEY = "spmd_mesh"
 SphericalHarmonicsImpl = Callable[..., SphericalHarmonics]
 
 
@@ -247,8 +242,8 @@ class Grid:
     def asdict(self):
         items = dataclasses.asdict(self)
         items[
-            SPHERICAL_HARMONICS_IMPL_KEY] = self.spherical_harmonics_impl.__name__
-        items[SPMD_MESH_KEY] = ""
+            'spherical_harmonics_impl'] = self.spherical_harmonics_impl.__name__
+        items['spmd_mesh'] = ""
         return items
 
     @functools.cached_property

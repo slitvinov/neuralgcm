@@ -159,9 +159,7 @@ def steady_state_jw(
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)
 
-    def initial_state_fn(
-        rng_key: Union[jnp.ndarray,
-                       None] = None, ):
+    def initial_state_fn(rng_key: Union[jnp.ndarray, None] = None, ):
         del rng_key
         nodal_vorticity = np.stack([
             _get_vorticity(lat, lon, sigma)

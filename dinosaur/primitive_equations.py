@@ -18,7 +18,6 @@ import tree_math
 
 units = scales.units
 Array = typing.Array
-Quantity = typing.Quantity
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 
 
@@ -136,7 +135,7 @@ class PrimitiveEquationsSpecs:
     def g(self):
         return self.gravity_acceleration
 
-    def nondimensionalize(self, quantity: Quantity):
+    def nondimensionalize(self, quantity):
         return self.scale.nondimensionalize(quantity)
 
     def dimensionalize(self, value, unit: units.Unit):

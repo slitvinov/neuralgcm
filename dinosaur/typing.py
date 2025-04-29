@@ -5,5 +5,4 @@ import numpy as np
 import tree_math
 
 Array = Union[np.ndarray, jnp.ndarray]
-Quantity = scales.Quantity
 State = TypeVar("State")

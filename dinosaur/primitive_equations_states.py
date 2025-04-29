@@ -11,7 +11,6 @@ import numpy as np
 
 units = scales.units
 Array = typing.Array
-Quantity = typing.Quantity
 
 
 def isothermal_rest_atmosphere(
@@ -20,7 +19,7 @@ def isothermal_rest_atmosphere(
     tref=288.0 * units.degK,
     p0=1e5 * units.pascal,
     p1=0.0 * units.pascal,
-    surface_height: Union[Quantity, None] = None,
+    surface_height = None,
 ):
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)

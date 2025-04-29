@@ -8,8 +8,6 @@ import jax.numpy as jnp
 import numpy as np
 
 units = scales.units
-Quantity = units.Quantity
-
 
 class HeldSuarezForcing:
 

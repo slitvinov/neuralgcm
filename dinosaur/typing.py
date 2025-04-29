@@ -6,5 +6,4 @@ import tree_math
 
 Array = Union[np.ndarray, jnp.ndarray]
 Quantity = scales.Quantity
-PRNGKeyArray = Any
 State = TypeVar("State")

@@ -8,7 +8,7 @@ import xarray
 units = dinosaur.scales.units
 
 
-def dimensionalize(x: xarray.DataArray, unit: units.Unit) -> xarray.DataArray:
+def dimensionalize(x, unit):
     """Dimensionalizes `xarray.DataArray`s."""
     dimensionalize = functools.partial(physics_specs.dimensionalize, unit=unit)
     return xarray.apply_ufunc(dimensionalize, x)

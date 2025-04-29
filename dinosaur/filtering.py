@@ -19,10 +19,10 @@ def _make_filter_fn(scaling, name=None):
 
 
 def exponential_filter(
-    grid ,
+    grid,
     attenuation=16,
     order=18,
-    cutoff  = 0,
+    cutoff=0,
 ):
     _, total_wavenumber = grid.modal_axes
     k = total_wavenumber / total_wavenumber.max()

@@ -35,9 +35,7 @@ def _evaluate_rhombus(n_l, n_m, x):
 
 
 def evaluate(n_m, n_l, x):
-    r = np.transpose(
-        _evaluate_rhombus(n_l=n_l, n_m=n_m, x=x),
-        (1, 2, 0))
+    r = np.transpose(_evaluate_rhombus(n_l=n_l, n_m=n_m, x=x), (1, 2, 0))
     p = np.zeros((n_m, len(x), n_l))
     for m in range(n_m):
         p[m, :, m:n_l] = r[m, :, 0:n_l - m]
@@ -187,6 +185,7 @@ def _vertical_pad(
 
 def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
     return field
+
 
 def _with_vertical_padding(
         f: Callable[[jax.Array], jax.Array],

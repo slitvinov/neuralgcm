@@ -15,6 +15,7 @@ P = jax.sharding.PartitionSpec
 def _with_sharding_constraint(x, sharding):
     return x
 
+
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
     horizontal: Any

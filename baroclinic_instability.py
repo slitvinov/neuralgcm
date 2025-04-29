@@ -21,7 +21,7 @@ orography = dinosaur.primitive_equations.truncated_modal_orography(
     aux_features['orography'], coords)
 
 
-def dimensionalize(x: xarray.DataArray, unit: units.Unit) -> xarray.DataArray:
+def dimensionalize(x, unit):
     """Dimensionalizes `xarray.DataArray`s."""
     dimensionalize = functools.partial(physics_specs.dimensionalize, unit=unit)
     return xarray.apply_ufunc(dimensionalize, x)

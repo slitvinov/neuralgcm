@@ -100,7 +100,7 @@ sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
 sp_init_hpa = (ds_init.surface_pressure.transpose(
     "longitude", "latitude").data.to("hPa").magnitude)
-physics_specs = primitive_equations.PrimitiveEquationsSpecs.from_si()
+physics_specs = di.PrimitiveEquationsSpecs.from_si()
 nodal_inputs = di.regrid_hybrid_to_sigma(
     fields=model_level_inputs,
     hybrid_coords=source_vertical,
@@ -126,7 +126,7 @@ tracers = model_coords.horizontal.to_modal({
     "specific_cloud_ice_water_content":
     nodal_inputs["specific_cloud_ice_water_content"],
 })
-raw_init_state = primitive_equations.State(
+raw_init_state = di.State(
     vorticity=vorticity,
     divergence=divergence,
     temperature_variation=temperature_variation,
@@ -136,7 +136,7 @@ raw_init_state = primitive_equations.State(
 orography = model_coords.horizontal.to_modal(orography_input)
 orography = filtering.exponential_filter(model_coords.horizontal,
                                          order=2)(orography)
-eq = primitive_equations.PrimitiveEquations(ref_temps, orography, model_coords,
+eq = di.PrimitiveEquations(ref_temps, orography, model_coords,
                                             physics_specs)
 res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = physics_specs.nondimensionalize(dt_si)
@@ -162,7 +162,7 @@ def nodal_prognostics_and_diagnostics(state):
     u_nodal, v_nodal = di.vor_div_to_uv_nodal(coords, state.vorticity,
                                               state.divergence)
     geopotential_nodal = coords.to_nodal(
-        primitive_equations.get_geopotential(
+        di.get_geopotential(
             state.temperature_variation,
             eq.reference_temperature,
             orography,
@@ -176,7 +176,7 @@ def nodal_prognostics_and_diagnostics(state):
     tracers_nodal = {k: coords.to_nodal(v) for k, v in state.tracers.items()}
     t_nodal = (coords.to_nodal(state.temperature_variation) +
                ref_temps[:, np.newaxis, np.newaxis])
-    vertical_velocity_nodal = primitive_equations.compute_vertical_velocity(
+    vertical_velocity_nodal = di.compute_vertical_velocity(
         state, model_coords)
     state_nodal = {
         "u_component_of_wind": u_nodal,

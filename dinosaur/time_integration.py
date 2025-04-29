@@ -121,8 +121,8 @@ def imex_runge_kutta(
 
 
 def imex_rk_sil3(
-    equation: ImplicitExplicitODE,
-    time_step: float,
+    equation,
+    time_step,
 ):
     return imex_runge_kutta(
         tableau=ImExButcherTableau(

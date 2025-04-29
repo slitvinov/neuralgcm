@@ -1,4 +1,4 @@
-from typing import Protocol, Union
+from typing import Union
 import jax.numpy as jnp
 import numpy as np
 import pint

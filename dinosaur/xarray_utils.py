@@ -90,7 +90,6 @@ def data_to_xarray(
     serialize_coords_to_attrs=True,
 ):
     prognostic_keys = set(data.keys()) - {'tracers'} - {'diagnostics'}
-    data['tracers'].keys() if 'tracers' in data else set()
     diagnostic_keys = (data['diagnostics'].keys()
                        if 'diagnostics' in data else set())
     if additional_coords is None:

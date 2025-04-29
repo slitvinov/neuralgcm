@@ -19,7 +19,6 @@ IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
 
 
 def _get_dimension(quantity: Quantity) -> str:
-    list(quantity.dimensionality.values())
     return str(quantity.dimensionality)
 
 
@@ -37,7 +36,6 @@ class Scale:
     def __init__(self, *scales: Quantity):
         self._scales = dict()
         for quantity in scales:
-            _get_dimension(quantity)
             self._scales[_get_dimension(quantity)] = quantity.to_base_units()
 
     def _scaling_factor(self,

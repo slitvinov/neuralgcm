@@ -323,9 +323,6 @@ def truncated_modal_orography(
 ):
     grid = coords.horizontal
     expected_shape = grid.nodal_shape
-    if orography.shape != expected_shape:
-        raise ValueError(
-            f'Expected nodal orography with shape={expected_shape}')
     return grid.clip_wavenumbers(grid.to_modal(orography),
                                  n=wavenumbers_to_clip)
 

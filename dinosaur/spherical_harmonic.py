@@ -219,15 +219,7 @@ class Grid:
     def __post_init__(self):
         if self.radius is None:
             object.__setattr__(self, 'radius', 1.0)
-        if self.latitude_spacing not in LATITUDE_SPACINGS:
-            raise ValueError(
-                f'Unsupported `latitude_spacing` "{self.latitude_spacing}". '
-                f'Supported values are: {list(LATITUDE_SPACINGS)}.')
         if self.spmd_mesh is not None:
-            if not {'x', 'y'} <= set(self.spmd_mesh.axis_names):
-                raise ValueError(
-                    "mesh is missing one or more of the required axis names 'x' and "
-                    f"'y': {self.spmd_mesh}")
             assert isinstance(self.spherical_harmonics, FastSphericalHarmonics)
 
     @classmethod

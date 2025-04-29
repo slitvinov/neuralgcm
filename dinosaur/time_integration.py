@@ -51,10 +51,6 @@ def compose_equations(equations: Sequence[Union[ImplicitExplicitODE,
                                                 ExplicitODE]], ):
     implicit_explicit_eqs = list(
         filter(lambda x: isinstance(x, ImplicitExplicitODE), equations))
-    if len(implicit_explicit_eqs) != 1:
-        raise ValueError(
-            "compose_equations supports at most 1 ImplicitExplicitODE "
-            f"got {len(implicit_explicit_eqs)}")
     (implicit_explicit_equation, ) = implicit_explicit_eqs
     assert isinstance(implicit_explicit_equation, ImplicitExplicitODE)
 

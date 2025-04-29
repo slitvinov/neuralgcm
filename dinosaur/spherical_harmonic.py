@@ -350,14 +350,6 @@ class Grid:
             **kwargs,
         )
 
-    @property
-    def longitudes(self) -> np.ndarray:
-        return self.nodal_axes[0]
-
-    @property
-    def latitudes(self) -> np.ndarray:
-        return np.arcsin(self.nodal_axes[1])
-
     @functools.cached_property
     def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         lon, sin_lat = self.spherical_harmonics.nodal_axes

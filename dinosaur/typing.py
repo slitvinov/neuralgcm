@@ -1,4 +1,4 @@
-from typing import Any, Mapping, TypeVar, Union
+from typing import Any, TypeVar
 from dinosaur import scales
 import jax.numpy as jnp
 import numpy as np
@@ -8,4 +8,3 @@ Array = Union[np.ndarray, jnp.ndarray]
 Quantity = scales.Quantity
 PRNGKeyArray = Any
 State = TypeVar("State")
-Params = Union[Mapping[str, Mapping[str, Array]], None]

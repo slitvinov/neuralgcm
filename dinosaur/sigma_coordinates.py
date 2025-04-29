@@ -94,14 +94,10 @@ def cumulative_sigma_integral(
     d𝜎 = coordinates.layer_thickness
     d𝜎_axes = [x_axes[axis]]
     xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
-    if downward:
-        return jax_numpy_utils.cumsum(xd𝜎,
-                                      axis,
-                                      method=cumsum_method,
-                                      sharding=sharding)
-    else:
-        assert False
-
+    return jax_numpy_utils.cumsum(xd𝜎,
+                                  axis,
+                                  method=cumsum_method,
+                                  sharding=sharding)
 
 @jax.named_call
 def sigma_integral(

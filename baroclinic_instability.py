@@ -38,7 +38,7 @@ initial_state_ds = initial_state_ds.assign(
 phi = initial_state_ds["z_surf"] * physics_specs.g
 phi_si = dimensionalize(phi, units.m**2 / units.s**2)
 phi_si.isel(lon=0).plot(x="lat")
-plt.savefig("00.png")
+plt.savefig("b.00.png")
 plt.close()
 u_array = initial_state_ds["u"]
 u_array_si = dimensionalize(u_array, units.m / units.s)
@@ -46,7 +46,7 @@ levels = [3 * i for i in range(1, 12)]
 u_array_si.isel(lon=0).plot.contour(x="lat", y="level", levels=levels)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-plt.savefig("01.png")
+plt.savefig("b.01.png")
 plt.close()
 t_array = initial_state_ds["temperature"]
 t_array_si = dimensionalize(t_array, units.degK)
@@ -54,7 +54,7 @@ levels = np.linspace(210, 305, 1 + (305 - 210) // 5)
 t_array_si.isel(lon=0).plot.contour(x="lat", y="level", levels=levels)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-plt.savefig("02.png")
+plt.savefig("b.02.png")
 plt.close()
 voriticty_array = initial_state_ds["vorticity"]
 voriticty_array_si = dimensionalize(voriticty_array, 1 / units.s)
@@ -62,7 +62,7 @@ levels = np.linspace(-1.75e-5, 1.75e-5, 15)
 voriticty_array_si.isel(lon=0).plot.contour(x="lat", y="level", levels=levels)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-plt.savefig("03.png")
+plt.savefig("b.03.png")
 plt.close()
 primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
 dt_s = 100 * units.s
@@ -106,7 +106,7 @@ data_array = trajectory_ds[
 data_array.max(["lon"]).plot(x="time", hue="lat")
 ax = plt.gca()
 ax.legend().remove()
-plt.savefig("04.png")
+plt.savefig("b.04.png")
 plt.close()
 t_array = trajectory_ds["temperature"]
 t_array_si = dimensionalize(t_array, units.degK)
@@ -117,12 +117,12 @@ t_array_si.isel(lon=0).thin(time=12).plot.contour(x="lat",
                                                   col="time")
 ax = plt.gca()
 ax.set_ylim((1, 0))
-plt.savefig("05.png")
+plt.savefig("b.05.png")
 plt.close()
 data_array = trajectory_ds["divergence"]
 data_array.mean(["lat", "lon"]).plot(x="time", hue="level")
 ax = plt.gca()
-plt.savefig("06.png")
+plt.savefig("b.06.png")
 plt.close()
 perturbation = di.baroclinic_perturbation_jw(coords, physics_specs)
 state = steady_state + perturbation
@@ -165,7 +165,7 @@ data_array.sel({
                  cmap=plt.cm.Spectral_r)
 fig = plt.gcf()
 fig.set_figwidth(10)
-plt.savefig("07.png")
+plt.savefig("b.07.png")
 plt.close()
 data_array = trajectory_ds[
     "surface_pressure"] / physics_specs.nondimensionalize(1e5 * units.pascal)
@@ -183,7 +183,7 @@ levels = [(930 + 10 * i) / 1000 for i in range(10)]
                  cmap=plt.cm.Spectral_r))
 fig = plt.gcf()
 fig.set_figwidth(10)
-plt.savefig("08.png")
+plt.savefig("b.08.png")
 plt.close()
 temp_array = trajectory_ds["temperature"]
 levels = [(220 + 10 * i) for i in range(10)]
@@ -206,7 +206,7 @@ target_pressure = 0.85 * physics_specs.nondimensionalize(1e5 * units.pascal)
                                 cmap=plt.cm.Spectral_r))
 fig = plt.gcf()
 fig.set_figwidth(12)
-plt.savefig("09.png")
+plt.savefig("b.09.png")
 plt.close()
 voriticty_array = trajectory_ds["vorticity"]
 target_pressure = 0.85 * physics_specs.nondimensionalize(1e5 * units.pascal)
@@ -225,12 +225,12 @@ levels = [-10e-5 + 5e-5 * i for i in range(11)]
     "time": (9 * units.day).to(units.s).m,
 }).isel(level=22).plot.contourf(x="lon", y="lat", levels=levels, ax=ax2))
 fig.set_figwidth(25)
-plt.savefig("10.png")
+plt.savefig("b.10.png")
 plt.close()
 times = ((np.arange(12) * units.day).to(units.second)).astype(np.int32)
 data = temp_array.sel(lat=slice(54, 56), lon=slice(120, 270),
                       time=times).isel(lat=0)
 data.attrs["units"] = "seconds"
 data.plot.contourf(x="lon", y="level", row="time", aspect=2, col_wrap=3)
-plt.savefig("11.png")
+plt.savefig("b.11.png")
 plt.close()

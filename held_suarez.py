@@ -49,7 +49,7 @@ initial_state_ds = initial_state_ds.assign(
 pressure_array = initial_state_ds["surface_pressure"]
 pressure_array_si = dimensionalize(pressure_array, units.pascal)
 pressure_array_si.plot.imshow(x="lon", y="lat", size=5)
-plt.savefig("00.png")
+plt.savefig("h.00.png")
 plt.close()
 dt_si = 5 * units.minute
 save_every = 10 * units.minute
@@ -103,20 +103,20 @@ data_array_si.isel(time=slice(0, 18, 4)).plot(x="lon",
                                               y="lat",
                                               col="time",
                                               col_wrap=6)
-plt.savefig("01.png")
+plt.savefig("h.01.png")
 plt.close()
 data_array = ds["vorticity"]
 data_array.isel(level=10).isel(time=slice(0, 18, 4)).plot(x="lon",
                                                           y="lat",
                                                           col="time",
                                                           col_wrap=6)
-plt.savefig("02.png")
+plt.savefig("h.02.png")
 plt.close()
 data_array = ds["total_kinetic_energy"]
 data_array.plot(x="time")
 ax = plt.gca()
 ax.legend().remove()
-plt.savefig("03.png")
+plt.savefig("h.03.png")
 plt.close()
 hs = di.HeldSuarezForcing(coords=coords,
                                             physics_specs=physics_specs,
@@ -156,7 +156,7 @@ def linspace_step(start, stop, step):
 kv = ds["kv"]
 kv_si = dimensionalize(kv, 1 / units.day)
 kv_si.plot(size=5)
-plt.savefig("04.png")
+plt.savefig("h.04.png")
 plt.close()
 kt_array = ds["kt"]
 levels = linspace_step(0, 0.3, 0.05)
@@ -168,7 +168,7 @@ p = kt_array_si.isel(lon=0).plot.contour(x="lat",
                                          aspect=1.5)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-plt.savefig("05.png")
+plt.savefig("h.05.png")
 plt.close()
 teq_array = ds["eq_temp"]
 teq_array_si = dimensionalize(teq_array, units.degK)
@@ -180,7 +180,7 @@ p = teq_array_si.isel(lon=0).plot.contour(x="lat",
                                           aspect=1.5)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-plt.savefig("06.png")
+plt.savefig("h.06.png")
 plt.close()
 temperature = dimensionalize(ds["eq_temp"], units.degK)
 surface_pressure = dimensionalize(ds["surface_pressure"], units.pascal)
@@ -200,7 +200,7 @@ ax.set_ylim((1, 0))
 plt.colorbar(p)
 print(potential_temperature.min())
 print(potential_temperature.max())
-plt.savefig("07.png")
+plt.savefig("h.07.png")
 plt.close()
 dt_si = 10 * units.minute
 save_every = 10 * units.day
@@ -235,7 +235,7 @@ data_array = ds["total_kinetic_energy"]
 data_array.plot(x="time")
 ax = plt.gca()
 ax.legend().remove()
-plt.savefig("08.png")
+plt.savefig("h.08.png")
 plt.close()
 mask = ds["time"] <= 150
 data_array = ds["temperature"]
@@ -243,7 +243,7 @@ data_array.isel(level=-1, time=mask).plot(x="lon",
                                           y="lat",
                                           col="time",
                                           col_wrap=4)
-plt.savefig("09.png")
+plt.savefig("h.09.png")
 plt.close()
 mask = ds["time"] <= 150
 data_array = ds["vorticity"]
@@ -251,7 +251,7 @@ data_array.isel(level=-1, time=mask).plot(x="lon",
                                           y="lat",
                                           col="time",
                                           col_wrap=4)
-plt.savefig("10.png")
+plt.savefig("h.10.png")
 plt.close()
 mask = ds["time"] <= 100
 data_array = ds["temperature"]
@@ -264,7 +264,7 @@ data_array.isel(time=mask).mean("lon").plot.contour(x="lat",
                                                     levels=levels)
 ax = plt.gca()
 ax.set_ylim((1, 0))
-plt.savefig("11.png")
+plt.savefig("h.11.png")
 plt.close()
 start_time = 200
 mask = ds["time"] > start_time
@@ -345,9 +345,9 @@ final_2, trajectory_2 = jax.block_until_ready(integrate_fn(final))
 ds = trajectory_to_xarray(coords, trajectory_2, times)
 data_array = ds["temperature"]
 data_array.thin(time=4).isel(level=-10).plot(x="lon", y="lat", col="time")
-plt.savefig("12.png")
+plt.savefig("h.12.png")
 plt.close()
 data_array = ds["vorticity"]
 data_array.thin(time=4).isel(level=-5).plot(x="lon", y="lat", col="time")
-plt.savefig("13.png")
+plt.savefig("h.13.png")
 plt.close()

@@ -87,11 +87,11 @@ def isothermal_rest_atmosphere(
 def steady_state_jw(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-    u0: Quantity = 35.0 * units.m / units.s,
-    p0: Quantity = 1e5 * units.pascal,
-    t0: Quantity = 288.0 * units.degK,
-    delta_t: Quantity = 4.8e5 * units.degK,
-    gamma: Quantity = 0.005 * units.degK / units.m,
+    u0=35.0 * units.m / units.s,
+    p0=1e5 * units.pascal,
+    t0=288.0 * units.degK,
+    delta_t=4.8e5 * units.degK,
+    gamma=0.005 * units.degK / units.m,
     sigma_tropo: float = 0.2,
     sigma0: float = 0.252,
 ):
@@ -205,10 +205,10 @@ def steady_state_jw(
 def baroclinic_perturbation_jw(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-    u_perturb: Quantity = 1.0 * units.m / units.s,
-    lon_location: Quantity = np.pi / 9,
-    lat_location: Quantity = 2 * np.pi / 9,
-    perturbation_radius: Quantity = 0.1,
+    u_perturb=1.0 * units.m / units.s,
+    lon_location=np.pi / 9,
+    lat_location=2 * np.pi / 9,
+    perturbation_radius=0.1,
 ) -> primitive_equations.State:
     u_p = physics_specs.nondimensionalize(u_perturb)
     a = physics_specs.radius

@@ -145,14 +145,13 @@ class PrimitiveEquationsSpecs:
     @classmethod
     def from_si(
         cls,
-        radius_si: Quantity = scales.RADIUS,
-        angular_velocity_si: Quantity = scales.ANGULAR_VELOCITY,
-        gravity_acceleration_si: Quantity = scales.GRAVITY_ACCELERATION,
-        ideal_gas_constant_si: Quantity = scales.IDEAL_GAS_CONSTANT,
-        water_vapor_gas_constant_si: Quantity = scales.IDEAL_GAS_CONSTANT_H20,
-        water_vapor_isobaric_heat_capacity_si: Quantity = scales.
-        WATER_VAPOR_CP,
-        kappa_si: Quantity = scales.KAPPA,
+        radius_si=scales.RADIUS,
+        angular_velocity_si=scales.ANGULAR_VELOCITY,
+        gravity_acceleration_si=scales.GRAVITY_ACCELERATION,
+        ideal_gas_constant_si=scales.IDEAL_GAS_CONSTANT,
+        water_vapor_gas_constant_si=scales.IDEAL_GAS_CONSTANT_H20,
+        water_vapor_isobaric_heat_capacity_si=scales.WATER_VAPOR_CP,
+        kappa_si=scales.KAPPA,
         scale: scales.ScaleProtocol = scales.DEFAULT_SCALE,
     ):
         return cls(

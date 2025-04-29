@@ -467,16 +467,11 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         return self.coords.horizontal.clip_wavenumbers(tendency)
 
     def implicit_terms(self, state: State):
-        method = self.vertical_matmul_method
-        if method is None:
-            mesh = self.coords.spmd_mesh
-            method = "sparse" if mesh is not None and mesh.shape[
-                "z"] > 1 else "dense"
         geopotential_diff = get_geopotential_diff(
             state.temperature_variation,
             self.coords.vertical,
             self.physics_specs.R,
-            method=method,
+            method="dense",
             sharding=None,
         )
         rt_log_p = (self.physics_specs.ideal_gas_constant * self.T_ref *

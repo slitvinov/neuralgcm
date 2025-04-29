@@ -29,12 +29,9 @@ class CoordinateSystem:
                                          spmd_mesh=self.spmd_mesh)
         object.__setattr__(self, "horizontal", horizontal)
 
-    def _get_sharding(self, partition_spec: jax.sharding.PartitionSpec):
-        return None
-
     @property
     def dycore_sharding(self):
-        return self._get_sharding(self.dycore_partition_spec)
+        return None
 
     def with_dycore_sharding(self, x):
         return _with_sharding_constraint(x, self.dycore_sharding)

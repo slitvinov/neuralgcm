@@ -1852,12 +1852,10 @@ class HybridCoordinates:
 
     @classmethod
     def _from_resource_csv(cls, path: str):
-        levels_csv = importlib.resources.files(dinosaur).joinpath(path)
-        with levels_csv.open() as f:
-            a_in_pa, b = np.loadtxt(f,
-                                    skiprows=1,
-                                    usecols=(1, 2),
-                                    delimiter="\t").T
+        a_in_pa, b = np.loadtxt("ecmwf137_hybrid_levels.csv",
+                                skiprows=1,
+                                usecols=(1, 2),
+                                delimiter="\t").T
         a = a_in_pa / 100
         assert 100 < a.max() < 1000
         return cls(a_boundaries=a, b_boundaries=b)

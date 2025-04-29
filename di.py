@@ -23,6 +23,17 @@ MODAL_AXES_NAMES = (
 )
 tree_map = jax.tree_util.tree_map
 einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
+units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+Unit = units.Unit
+RADIUS = 6.37122e6 * units.m
+ANGULAR_VELOCITY = OMEGA = 7.292e-5 / units.s
+GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
+ISOBARIC_HEAT_CAPACITY = 1004 * units.J / units.kilogram / units.degK
+WATER_VAPOR_CP = 1859 * units.J / units.kilogram / units.degK
+KAPPA = 2 / 7 * units.dimensionless
+IDEAL_GAS_CONSTANT = ISOBARIC_HEAT_CAPACITY * KAPPA
+IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
+_CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 
 def cumsum(x, axis):
@@ -87,18 +98,6 @@ def as_dict(inputs):
     inputs = inputs.asdict()
     from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
     return inputs, from_dict_fn
-
-
-units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-Unit = units.Unit
-RADIUS = 6.37122e6 * units.m
-ANGULAR_VELOCITY = OMEGA = 7.292e-5 / units.s
-GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
-ISOBARIC_HEAT_CAPACITY = 1004 * units.J / units.kilogram / units.degK
-WATER_VAPOR_CP = 1859 * units.J / units.kilogram / units.degK
-KAPPA = 2 / 7 * units.dimensionless
-IDEAL_GAS_CONSTANT = ISOBARIC_HEAT_CAPACITY * KAPPA
-IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
 
 
 def _get_dimension(quantity):
@@ -293,9 +292,6 @@ def evaluate(n_m, n_l, x):
     return p
 
 
-einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-
-
 def real_basis(wavenumbers, nodes):
     dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
     cos = np.real(dft[:, 1:])
@@ -405,9 +401,6 @@ class RealSphericalHarmonics:
 
     def longitudinal_derivative(self, x):
         return real_basis_derivative(x, axis=-2)
-
-
-P = jax.sharding.PartitionSpec
 
 
 def _with_vertical_padding(f):
@@ -616,9 +609,6 @@ class Grid:
         return einsum("y,...xy->...", w, z)
 
 
-_CONSTANT_NORMALIZATION_FACTOR = 3.5449077
-
-
 def add_constant(x: jnp.ndarray, c):
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
 
@@ -707,9 +697,6 @@ def maybe_to_nodal(
 
     fn = lambda x, nodal: x if x.shape == tuple(nodal) else to_nodal_fn(x)
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)
-
-
-tree_map = jax.tree_util.tree_map
 
 
 class ImplicitExplicitODE:
@@ -967,9 +954,6 @@ def digital_filter_initialization(
                         backward_term)
 
     return f
-
-
-einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 
 
 @tree_math.struct

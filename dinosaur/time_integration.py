@@ -138,7 +138,7 @@ def imex_rk_sil3(
 def runge_kutta_step_filter(state_filter: PyTreeTermsFn, ):
 
     def _filter(u: PyTreeState, u_next: PyTreeState):
-        del u  # unused
+        del u
         return state_filter(u_next)
 
     return _filter
@@ -261,7 +261,7 @@ def digital_filter_initialization(
         backward_step = step_with_filters(
             ode_solver(TimeReversedImExODE(equation), dt), filters)
         weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
-        init_weight = 1.0  # for time=0
+        init_weight = 1.0
         total_weight = init_weight + 2 * weights.sum()
         init_weight /= total_weight
         weights /= total_weight

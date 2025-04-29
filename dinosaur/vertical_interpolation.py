@@ -27,12 +27,12 @@ class HybridCoordinates:
                                     skiprows=1,
                                     usecols=(1, 2),
                                     delimiter='\t').T
-        a = a_in_pa / 100  # convert from Pa to hPa
+        a = a_in_pa / 100
         assert 100 < a.max() < 1000
         return cls(a_boundaries=a, b_boundaries=b)
 
     @classmethod
-    def ECMWF137(cls) -> HybridCoordinates:  # pylint: disable=invalid-name
+    def ECMWF137(cls) -> HybridCoordinates:
         return cls._from_resource_csv('data/ecmwf137_hybrid_levels.csv')
 
     @property

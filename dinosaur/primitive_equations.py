@@ -372,8 +372,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         f = sigma_coordinates.cumulative_sigma_integral(
             g_term, self.coords.vertical, sharding=self.coords.dycore_sharding)
         alpha = get_sigma_ratios(self.coords.vertical)
-        alpha = alpha[:, np.newaxis,
-                      np.newaxis]  # make alpha broadcast to `f`.
+        alpha = alpha[:, np.newaxis, np.newaxis]
         del_𝜎 = self.coords.vertical.layer_thickness[:, np.newaxis, np.newaxis]
         padding = [(1, 0), (0, 0), (0, 0)]
         g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]) / del_𝜎

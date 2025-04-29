@@ -115,8 +115,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
     def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
         m_pos = np.arange(1, self.longitude_wavenumbers)
         m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
-        lon_wavenumbers = np.concatenate([[0],
-                                          m_pos_neg])  # [0, 1, -1, 2, -2, ...]
+        lon_wavenumbers = np.concatenate([[0], m_pos_neg])
         tot_wavenumbers = np.arange(self.total_wavenumbers)
         return lon_wavenumbers, tot_wavenumbers
 
@@ -326,7 +325,7 @@ class Grid:
     def asdict(self) -> dict[str, Any]:
         items = dataclasses.asdict(self)
         items[
-            SPHERICAL_HARMONICS_IMPL_KEY] = self.spherical_harmonics_impl.__name__  # pylint:disable=attribute-error
+            SPHERICAL_HARMONICS_IMPL_KEY] = self.spherical_harmonics_impl.__name__
         if self.spmd_mesh is not None:
             items[SPMD_MESH_KEY] = ','.join(
                 f'{k}={v}' for k, v in self.spmd_mesh.shape.items())
@@ -390,7 +389,7 @@ class Grid:
     @functools.cached_property
     def sec2_lat(self) -> jnp.ndarray:
         _, sin_lat = self.nodal_axes
-        return 1 / (1 - sin_lat**2)  # pytype: disable=bad-return-type  # jnp-array
+        return 1 / (1 - sin_lat**2)
 
     @functools.cached_property
     def laplacian_eigenvalues(self) -> np.ndarray:
@@ -472,11 +471,11 @@ class Grid:
             x) / self.radius
         if clip:
             return self.clip_wavenumbers(raw)
-        return raw  # pytype: disable=bad-return-type  # jnp-array
+        return raw
 
     @jax.named_call
     def k_cross(self, v: ArrayOrArrayTuple) -> Array:
-        return -v[1], v[0]  # pytype: disable=bad-return-type  # jnp-array
+        return -v[1], v[0]
 
     @jax.named_call
     def div_cos_lat(

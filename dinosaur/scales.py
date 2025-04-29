@@ -60,12 +60,12 @@ class Scale:
     def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
         scaling_factor = self._scaling_factor(unit.dimensionality)
         dimensionalized = value * scaling_factor
-        return dimensionalized.to(unit)  # pytype: disable=attribute-error  # jax-ndarray
+        return dimensionalized.to(unit)
 
 
 DEFAULT_SCALE = Scale(
-    RADIUS,  # length
-    1 / 2 / OMEGA,  # time
-    1 * units.kilogram,  # mass
-    1 * units.degK,  # temperature
+    RADIUS,
+    1 / 2 / OMEGA,
+    1 * units.kilogram,
+    1 * units.degK,
 )

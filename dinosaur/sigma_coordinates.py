@@ -78,7 +78,7 @@ def centered_difference(x: np.ndarray,
                   inv_d𝜎,
                   inv_d𝜎_axes,
                   dx_axes,
-                  precision='float32')  # pytype: disable=bad-return-type
+                  precision='float32')
 
 
 @jax.named_call

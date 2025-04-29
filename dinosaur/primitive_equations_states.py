@@ -29,22 +29,22 @@ def isothermal_rest_atmosphere(
     p0 = physics_specs.nondimensionalize(units.Quantity(p0))
     p1 = physics_specs.nondimensionalize(units.Quantity(p1))
     if surface_height is None:
-        orography = np.zeros_like(lat)  # flat planet
+        orography = np.zeros_like(lat)
     else:
         assert False
 
     def _get_vorticity(sigma, lon, lat):
-        del sigma, lon  # unused.
+        del sigma, lon
         return jnp.zeros_like(lat)
 
     def _get_surface_pressure(lon, lat, rng_key):
 
         def relative_pressure(altitude_m):
-            g = 9.80665  # m/s2
-            cp = 1004.68506  # J/(kg·K)
-            T0 = 288.16  # K
-            M = 0.02896968  # kg/mol
-            R0 = 8.314462618  # J/(mol·K)
+            g = 9.80665
+            cp = 1004.68506
+            T0 = 288.16
+            M = 0.02896968
+            R0 = 8.314462618
             return (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
 
         altitude_m = physics_specs.dimensionalize(orography,
@@ -56,8 +56,8 @@ def isothermal_rest_atmosphere(
                                   minval=np.pi / 2,
                                   maxval=3 * np.pi / 2)
         lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)
-        stddev = np.pi / 20  # std deviation in lon, lat
-        k = 4  # wavenumber in lon
+        stddev = np.pi / 20
+        k = 4
         perturbation = (jnp.exp(-(lon - lon0)**2 / (2 * stddev**2)) *
                         jnp.exp(-(lat - lat0)**2 /
                                 (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
@@ -126,7 +126,7 @@ def steady_state_jw(
             return top_mean_potential
 
     def _get_geopotential(lat, lon, sigma):
-        del lon  # unused.
+        del lon
         sigma_nu = (sigma - sigma0) * np.pi / 2
         return _get_reference_geopotential(
             sigma) + u0 * np.cos(sigma_nu)**1.5 * (
@@ -137,10 +137,10 @@ def steady_state_jw(
                   (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * a * omega))
 
     def _get_temperature_variation(lat, lon, sigma):
-        del lon  # unused.
+        del lon
         sigma_nu = (sigma - sigma0) * np.pi / 2
-        cos_𝜎ν = np.cos(sigma_nu)  # pylint: disable=invalid-name
-        sin_𝜎ν = np.sin(sigma_nu)  # pylint: disable=invalid-name
+        cos_𝜎ν = np.cos(sigma_nu)
+        sin_𝜎ν = np.sin(sigma_nu)
         return 0.75 * (
             sigma * np.pi * u0 / r_gas) * sin_𝜎ν * np.sqrt(cos_𝜎ν) * (
                 ((-2 * (np.cos(lat)**2 + 1 / 3) * np.sin(lat)**6 + 10 / 63) *
@@ -149,7 +149,7 @@ def steady_state_jw(
                   (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * a * omega))
 
     def _get_vorticity(lat, lon, sigma):
-        del lon  # unused.
+        del lon
         sigma_nu = (sigma - sigma0) * np.pi / 2
         return ((-4 * u0 / a) * (np.cos(sigma_nu)**(3 / 2)) * np.sin(lat) *
                 np.cos(lat) * (2 - 5 * np.sin(lat)**2))
@@ -158,7 +158,7 @@ def steady_state_jw(
         lat,
         lon,
     ):
-        del lon  # unused.
+        del lon
         return p0 * np.ones(lat.shape)[np.newaxis, ...]
 
     lon, sin_lat = coords.horizontal.nodal_mesh
@@ -167,7 +167,7 @@ def steady_state_jw(
     def initial_state_fn(
             rng_key: Union[jnp.ndarray,
                            None] = None) -> primitive_equations.State:
-        del rng_key  # unused.
+        del rng_key
         nodal_vorticity = np.stack([
             _get_vorticity(lat, lon, sigma)
             for sigma in coords.vertical.centers
@@ -214,11 +214,11 @@ def baroclinic_perturbation_jw(
     a = physics_specs.radius
 
     def _get_vorticity_perturbation(lat, lon, sigma):
-        del sigma  # unused.
+        del sigma
         x = (np.sin(lat_location) * np.sin(lat) +
              np.cos(lat_location) * np.cos(lat) * np.cos(lon - lon_location))
         r = a * np.arccos(x)
-        R = a * perturbation_radius  # pylint: disable=invalid-name
+        R = a * perturbation_radius
         return (u_p / a) * np.exp(-(r / R)**2) * (
             np.tan(lat) - (2 * ((a / R)**2) * np.arccos(x)) *
             (np.sin(lat_location) * np.cos(lat) -
@@ -226,11 +226,11 @@ def baroclinic_perturbation_jw(
             (np.sqrt(1 - x**2)))
 
     def _get_divergence_perturbation(lat, lon, sigma):
-        del sigma  # unused.
+        del sigma
         x = (np.sin(lat_location) * np.sin(lat) +
              np.cos(lat_location) * np.cos(lat) * np.cos(lon - lon_location))
         r = a * np.arccos(x)
-        R = a * perturbation_radius  # pylint: disable=invalid-name
+        R = a * perturbation_radius
         return (-2 * u_p * a / (R**2)) * np.exp(-(r / R)**2) * np.arccos(x) * (
             (np.cos(lat_location) * np.sin(lon - lon_location)) /
             (np.sqrt(1 - x**2)))

@@ -51,8 +51,7 @@ def cumsum(
 def pad_in_dim(x, pad_width, axis):
     padding_value = jnp.array(0, dtype=x.dtype)
     padding_config = [(0, 0, 0)] * x.ndim
-    padding_config[axis] = pad_width + (0,
-                                        )  # add "interior" padding for lax.pad
+    padding_config[axis] = pad_width + (0, )
     return lax.pad(x, padding_value, padding_config)
 
 

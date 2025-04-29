@@ -1,6 +1,5 @@
 import functools
 from dinosaur import spherical_harmonic
-from dinosaur import typing
 import jax
 import jax.numpy as jnp
 import numpy as np

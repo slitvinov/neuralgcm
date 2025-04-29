@@ -5,8 +5,6 @@ import pint
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 Unit = units.Unit
-UnitsContainer = pint.util.UnitsContainer
-Array = Union[np.ndarray, jnp.ndarray]
 RADIUS = 6.37122e6 * units.m
 ANGULAR_VELOCITY = OMEGA = 7.292e-5 / units.s
 GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
@@ -28,7 +26,7 @@ class Scale:
         for quantity in scales:
             self._scales[_get_dimension(quantity)] = quantity.to_base_units()
 
-    def _scaling_factor(self, dimensionality: pint.util.UnitsContainer):
+    def _scaling_factor(self, dimensionality):
         factor = units.Quantity(1)
         for dimension, exponent in dimensionality.items():
             quantity = self._scales.get(dimension)

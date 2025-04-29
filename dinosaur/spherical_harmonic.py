@@ -217,8 +217,6 @@ class Grid:
     def __post_init__(self):
         if self.radius is None:
             object.__setattr__(self, 'radius', 1.0)
-        else:
-            assert False
 
     @classmethod
     def construct(

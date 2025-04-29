@@ -6,7 +6,6 @@ import numpy as np
 import tree_math
 
 Array = Union[np.ndarray, jnp.ndarray]
-Numeric = Union[float, int, Array]
 Quantity = scales.Quantity
 PRNGKeyArray = Any
 PyTreeState = TypeVar('PyTreeState')

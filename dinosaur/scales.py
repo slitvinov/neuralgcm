@@ -9,7 +9,6 @@ Quantity = units.Quantity
 Unit = units.Unit
 UnitsContainer = pint.util.UnitsContainer
 Array = Union[np.ndarray, jnp.ndarray]
-Numeric = Union[Array, float, int]
 RADIUS = 6.37122e6 * units.m
 ANGULAR_VELOCITY = OMEGA = 7.292e-5 / units.s
 GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
@@ -27,10 +26,10 @@ def _get_dimension(quantity: Quantity) -> str:
 
 class ScaleProtocol(Protocol):
 
-    def nondimensionalize(self, quantity: Quantity) -> Numeric:
+    def nondimensionalize(self, quantity):
         ...
 
-    def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
+    def dimensionalize(self, value, unit):
         ...
 
 
@@ -51,13 +50,13 @@ class Scale:
         assert factor.check(dimensionality)
         return factor
 
-    def nondimensionalize(self, quantity: Quantity) -> Numeric:
+    def nondimensionalize(self, quantity: Quantity):
         scaling_factor = self._scaling_factor(quantity.dimensionality)
         nondimensionalized = (quantity / scaling_factor).to(
             units.dimensionless)
         return nondimensionalized.magnitude
 
-    def dimensionalize(self, value: Numeric, unit: Unit) -> Quantity:
+    def dimensionalize(self, value, unit: Unit) -> Quantity:
         scaling_factor = self._scaling_factor(unit.dimensionality)
         dimensionalized = value * scaling_factor
         return dimensionalized.to(unit)

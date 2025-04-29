@@ -18,7 +18,6 @@ import tree_math
 
 units = scales.units
 Array = typing.Array
-Numeric = typing.Numeric
 Quantity = typing.Quantity
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 
@@ -140,7 +139,7 @@ class PrimitiveEquationsSpecs:
     def nondimensionalize(self, quantity: Quantity):
         return self.scale.nondimensionalize(quantity)
 
-    def dimensionalize(self, value: Numeric, unit: units.Unit):
+    def dimensionalize(self, value, unit: units.Unit):
         return self.scale.dimensionalize(value, unit)
 
     @classmethod

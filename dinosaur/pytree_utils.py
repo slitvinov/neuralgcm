@@ -28,9 +28,6 @@ def tree_map_over_nonscalars(
 
 def as_dict(inputs):
     return_type = type(inputs)
-    if dataclasses.is_dataclass(inputs):
-        inputs = inputs.asdict()
-    else:
-        assert 0
+    inputs = inputs.asdict()
     from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
     return inputs, from_dict_fn

@@ -44,8 +44,6 @@ def gauss_legendre_nodes(n):
 
 
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-LATITUDE_SPACINGS = dict(gauss=gauss_legendre_nodes, )
-
 
 def real_basis(wavenumbers, nodes):
     dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
@@ -72,9 +70,8 @@ def quadrature_nodes(nodes):
     return xs, weights
 
 
-def get_latitude_nodes(n: int, spacing: str):
-    get_nodes = LATITUDE_SPACINGS.get(spacing)
-    return get_nodes(n)
+def get_latitude_nodes(n, spacing):
+    return sps.roots_legendre(n)
 
 
 @dataclasses.dataclass

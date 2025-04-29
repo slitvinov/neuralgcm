@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import numpy as np
 
 
-def _single_device_dot_cumsum(x, axis):
+def cumsum(x, axis):
     if axis < 0:
         axis = axis + x.ndim
     size = x.shape[axis]
@@ -22,21 +22,6 @@ def _single_device_dot_cumsum(x, axis):
         out_axes,
         precision=("bfloat16", "highest"),
     )
-
-
-def _dot_cumsum(
-    x,
-    axis,
-):
-    return _single_device_dot_cumsum(x, axis)
-
-
-def cumsum(
-    x,
-    axis,
-    method="dot",
-):
-    return _dot_cumsum(x, axis)
 
 
 def pad_in_dim(x, pad_width, axis):

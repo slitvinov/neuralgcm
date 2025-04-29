@@ -1,12 +1,10 @@
 import dataclasses
 import functools
-from typing import Any, Callable, Mapping, MutableMapping, Sequence, TypeVar, Union
 from dinosaur import coordinate_systems
 from dinosaur import primitive_equations
 from dinosaur import scales
 from dinosaur import sigma_coordinates
 from dinosaur import spherical_harmonic
-from dinosaur import typing
 from dinosaur import vertical_interpolation
 import jax
 import numpy as np

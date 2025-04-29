@@ -191,11 +191,8 @@ def get_geopotential_diff(
     method: str = "dense",
     sharding: Union[jax.sharding.NamedSharding, None] = None,
 ):
-    if method == "dense":
-        weights = get_geopotential_weights(coordinates, ideal_gas_constant)
-        return _vertical_matvec(weights, temperature)
-    else:
-        assert False
+    weights = get_geopotential_weights(coordinates, ideal_gas_constant)
+    return _vertical_matvec(weights, temperature)
 
 
 def get_geopotential(

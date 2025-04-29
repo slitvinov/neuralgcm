@@ -74,12 +74,9 @@ def tree_map_over_nonscalars(
     x,
     *,
     scalar_fn=lambda x: x,
-    backend: str = "jax",
 ):
-    as_array_fn = {"jax": jnp.asarray, "numpy": np.asarray}[backend]
-
     def g(x):
-        x = as_array_fn(x)
+        x = jnp.asarray(x)
         return f(x) if x.ndim else scalar_fn(x)
 
     return tree_map(g, x)

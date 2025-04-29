@@ -387,12 +387,8 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         nodal_vorticity_u = -v * total_vorticity * sec2_lat
         nodal_vorticity_v = u * total_vorticity * sec2_lat
         d𝜎_dt = aux_state.sigma_dot_full
-        if self.include_vertical_advection:
-            sigma_dot_u = -self._vertical_tendency(d𝜎_dt, u)
-            sigma_dot_v = -self._vertical_tendency(d𝜎_dt, v)
-        else:
-            sigma_dot_u = 0
-            sigma_dot_v = 0
+        sigma_dot_u = -self._vertical_tendency(d𝜎_dt, u)
+        sigma_dot_v = -self._vertical_tendency(d𝜎_dt, v)
         rt = self.physics_specs.R * aux_state.temperature_variation
         grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
         vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat
@@ -415,11 +411,8 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         sigma_dot_explicit = aux_state.sigma_dot_explicit
         sigma_dot_full = aux_state.sigma_dot_full
         temperature_variation = aux_state.temperature_variation
-        if self.include_vertical_advection:
-            tendency = self._vertical_tendency(sigma_dot_full,
-                                               temperature_variation)
-        else:
-            tendency = 0
+        tendency = self._vertical_tendency(sigma_dot_full,
+                                           temperature_variation)
         if np.unique(self.T_ref.ravel()).size > 1:
             tendency += self._vertical_tendency(sigma_dot_explicit, self.T_ref)
         return tendency

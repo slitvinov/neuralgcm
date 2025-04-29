@@ -19,7 +19,7 @@ class HybridCoordinates:
         pass
 
     @classmethod
-    def _from_resource_csv(cls, path: str) -> HybridCoordinates:
+    def _from_resource_csv(cls, path: str):
         levels_csv = importlib.resources.files(dinosaur).joinpath(path)
         with levels_csv.open() as f:
             a_in_pa, b = np.loadtxt(f,
@@ -31,7 +31,7 @@ class HybridCoordinates:
         return cls(a_boundaries=a, b_boundaries=b)
 
     @classmethod
-    def ECMWF137(cls) -> HybridCoordinates:
+    def ECMWF137(cls):
         return cls._from_resource_csv("data/ecmwf137_hybrid_levels.csv")
 
     def __hash__(self):
@@ -42,7 +42,7 @@ class HybridCoordinates:
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
 
-def _interval_overlap(source_bounds, target_bounds) -> jnp.ndarray:
+def _interval_overlap(source_bounds, target_bounds):
     upper = jnp.minimum(target_bounds[1:, jnp.newaxis],
                         source_bounds[jnp.newaxis, 1:])
     lower = jnp.maximum(target_bounds[:-1, jnp.newaxis],
@@ -50,7 +50,7 @@ def _interval_overlap(source_bounds, target_bounds) -> jnp.ndarray:
     return jnp.maximum(upper - lower, 0)
 
 
-def conservative_regrid_weights(source_bounds, target_bounds) -> jnp.ndarray:
+def conservative_regrid_weights(source_bounds, target_bounds):
     weights = _interval_overlap(source_bounds, target_bounds)
     weights /= jnp.sum(weights, axis=1, keepdims=True)
     assert weights.shape == (target_bounds.size - 1, source_bounds.size - 1)

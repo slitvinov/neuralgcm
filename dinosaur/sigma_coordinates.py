@@ -17,7 +17,7 @@ def _slice_shape_along_axis(
     x: np.ndarray,
     axis: int,
     slice_width: int = 1,
-) -> tuple[int, ...]:
+):
     x_shape = list(x.shape)
     x_shape[axis] = slice_width
     return tuple(x_shape)
@@ -25,7 +25,7 @@ def _slice_shape_along_axis(
 
 def _with_f64_math(
     f: Callable[[np.ndarray],
-                np.ndarray], ) -> Callable[[np.ndarray], np.ndarray]:
+                np.ndarray], ):
     return lambda x: f(x.astype(np.float64)).astype(x.dtype)
 
 
@@ -38,23 +38,23 @@ class SigmaCoordinates:
         object.__setattr__(self, "boundaries", boundaries)
 
     @property
-    def centers(self) -> np.ndarray:
+    def centers(self):
         return _with_f64_math(lambda x: (x[1:] + x[:-1]) / 2)(self.boundaries)
 
     @property
-    def layer_thickness(self) -> np.ndarray:
+    def layer_thickness(self):
         return _with_f64_math(np.diff)(self.boundaries)
 
     @property
-    def center_to_center(self) -> np.ndarray:
+    def center_to_center(self):
         return _with_f64_math(np.diff)(self.centers)
 
     @property
-    def layers(self) -> int:
+    def layers(self):
         return len(self.boundaries) - 1
 
     @classmethod
-    def equidistant(cls, layers: int, dtype=np.float32) -> SigmaCoordinates:
+    def equidistant(cls, layers: int, dtype=np.float32):
         boundaries = np.linspace(0, 1, layers + 1, dtype=dtype)
         return cls(boundaries)
 
@@ -68,7 +68,7 @@ class SigmaCoordinates:
 @jax.named_call
 def centered_difference(x: np.ndarray,
                         coordinates: SigmaCoordinates,
-                        axis: int = -3) -> np.ndarray:
+                        axis: int = -3):
     dx = jax_numpy_utils.diff(x, axis=axis)
     dx_axes = range(dx.ndim)
     inv_d𝜎 = 1 / coordinates.center_to_center
@@ -89,7 +89,7 @@ def cumulative_sigma_integral(
     downward: bool = True,
     cumsum_method: str = "dot",
     sharding: jax.sharding.NamedSharding | None = None,
-) -> jax.Array:
+):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
     d𝜎_axes = [x_axes[axis]]
@@ -105,7 +105,7 @@ def sigma_integral(
     coordinates: SigmaCoordinates,
     axis: int = -3,
     keepdims: bool = True,
-) -> jax.Array:
+):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
     d𝜎_axes = [x_axes[axis]]
@@ -121,7 +121,7 @@ def centered_vertical_advection(
     axis: int = -3,
     w_boundary_values: tuple[Array, Array] | None = None,
     dx_dsigma_boundary_values: tuple[Array, Array] | None = None,
-) -> jnp.ndarray:
+):
     if w_boundary_values is None:
         w_slc_shape = _slice_shape_along_axis(w, axis)
         w_boundary_values = (

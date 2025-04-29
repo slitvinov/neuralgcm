@@ -74,7 +74,7 @@ def quadrature_nodes(nodes):
     return xs, weights
 
 
-def get_latitude_nodes(n: int, spacing: str) -> tuple[np.ndarray, np.ndarray]:
+def get_latitude_nodes(n: int, spacing: str):
     get_nodes = LATITUDE_SPACINGS.get(spacing)
     return get_nodes(n)
 
@@ -98,18 +98,18 @@ class SphericalHarmonics:
 class RealSphericalHarmonics(SphericalHarmonics):
 
     @functools.cached_property
-    def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
+    def nodal_axes(self):
         longitude, _ = quadrature_nodes(self.longitude_nodes)
         sin_latitude, _ = get_latitude_nodes(self.latitude_nodes,
                                              self.latitude_spacing)
         return longitude, sin_latitude
 
     @functools.cached_property
-    def nodal_shape(self) -> tuple[int, int]:
+    def nodal_shape(self):
         return (self.longitude_nodes, self.latitude_nodes)
 
     @functools.cached_property
-    def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
+    def modal_axes(self):
         m_pos = np.arange(1, self.longitude_wavenumbers)
         m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
         lon_wavenumbers = np.concatenate([[0], m_pos_neg])
@@ -117,20 +117,20 @@ class RealSphericalHarmonics(SphericalHarmonics):
         return lon_wavenumbers, tot_wavenumbers
 
     @functools.cached_property
-    def modal_shape(self) -> tuple[int, int]:
+    def modal_shape(self):
         return (2 * self.longitude_wavenumbers - 1, self.total_wavenumbers)
 
     @functools.cached_property
-    def modal_padding(self) -> tuple[int, int]:
+    def modal_padding(self):
         return (0, 0)
 
     @functools.cached_property
-    def mask(self) -> np.ndarray:
+    def mask(self):
         m, l = np.meshgrid(*self.modal_axes, indexing="ij")
         return abs(m) <= l
 
     @functools.cached_property
-    def basis(self) -> _SphericalHarmonicBasis:
+    def basis(self):
         f = real_basis(
             wavenumbers=self.longitude_wavenumbers,
             nodes=self.longitude_nodes,
@@ -165,7 +165,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
                                                            p, fwx)
         return pfwx
 
-    def longitudinal_derivative(self, x: Array) -> Array:
+    def longitudinal_derivative(self, x: Array):
         return real_basis_derivative(x, axis=-2)
 
 
@@ -174,17 +174,17 @@ P = jax.sharding.PartitionSpec
 
 def _vertical_pad(
         field: jax.Array,
-        mesh: jax.sharding.Mesh | None) -> tuple[jax.Array, int | None]:
+        mesh: jax.sharding.Mesh | None):
     return field, None
 
 
-def _vertical_crop(field: jax.Array, padding: int | None) -> jax.Array:
+def _vertical_crop(field: jax.Array, padding: int | None):
     return field
 
 
 def _with_vertical_padding(
         f: Callable[[jax.Array], jax.Array],
-        mesh: jax.sharding.Mesh | None) -> Callable[[jax.Array], jax.Array]:
+        mesh: jax.sharding.Mesh | None):
 
     def g(x):
         x, padding = _vertical_pad(x, mesh)
@@ -224,7 +224,7 @@ class Grid:
         radius: float | None = None,
         spherical_harmonics_impl:
         SphericalHarmonicsImpl = RealSphericalHarmonics,
-    ) -> Grid:
+    ):
         return cls(
             longitude_wavenumbers=max_wavenumber + 1,
             total_wavenumbers=max_wavenumber + 2,
@@ -237,14 +237,14 @@ class Grid:
         )
 
     @classmethod
-    def T42(cls, **kwargs) -> Grid:
+    def T42(cls, **kwargs):
         return cls.construct(max_wavenumber=42, gaussian_nodes=32, **kwargs)
 
     @classmethod
-    def T170(cls, **kwargs) -> Grid:
+    def T170(cls, **kwargs):
         return cls.construct(max_wavenumber=170, gaussian_nodes=128, **kwargs)
 
-    def asdict(self) -> dict[str, Any]:
+    def asdict(self):
         items = dataclasses.asdict(self)
         items[
             SPHERICAL_HARMONICS_IMPL_KEY] = self.spherical_harmonics_impl.__name__
@@ -252,7 +252,7 @@ class Grid:
         return items
 
     @functools.cached_property
-    def spherical_harmonics(self) -> SphericalHarmonics:
+    def spherical_harmonics(self):
         kwargs = dict()
         return self.spherical_harmonics_impl(
             longitude_wavenumbers=self.longitude_wavenumbers,
@@ -264,50 +264,50 @@ class Grid:
         )
 
     @functools.cached_property
-    def nodal_axes(self) -> tuple[np.ndarray, np.ndarray]:
+    def nodal_axes(self):
         lon, sin_lat = self.spherical_harmonics.nodal_axes
         return lon + self.longitude_offset, sin_lat
 
     @functools.cached_property
-    def nodal_shape(self) -> tuple[int, int]:
+    def nodal_shape(self):
         return self.spherical_harmonics.nodal_shape
 
     @functools.cached_property
-    def nodal_mesh(self) -> tuple[np.ndarray, np.ndarray]:
+    def nodal_mesh(self):
         return np.meshgrid(*self.nodal_axes, indexing="ij")
 
     @functools.cached_property
-    def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
+    def modal_axes(self):
         return self.spherical_harmonics.modal_axes
 
     @functools.cached_property
-    def modal_shape(self) -> tuple[int, int]:
+    def modal_shape(self):
         return self.spherical_harmonics.modal_shape
 
     @functools.cached_property
-    def modal_padding(self) -> tuple[int, int]:
+    def modal_padding(self):
         return self.spherical_harmonics.modal_padding
 
     @functools.cached_property
-    def mask(self) -> np.ndarray:
+    def mask(self):
         return self.spherical_harmonics.mask
 
     @functools.cached_property
-    def modal_mesh(self) -> tuple[np.ndarray, np.ndarray]:
+    def modal_mesh(self):
         return np.meshgrid(*self.spherical_harmonics.modal_axes, indexing="ij")
 
     @functools.cached_property
-    def cos_lat(self) -> jnp.ndarray:
+    def cos_lat(self):
         _, sin_lat = self.nodal_axes
         return np.sqrt(1 - sin_lat**2)
 
     @functools.cached_property
-    def sec2_lat(self) -> jnp.ndarray:
+    def sec2_lat(self):
         _, sin_lat = self.nodal_axes
         return 1 / (1 - sin_lat**2)
 
     @functools.cached_property
-    def laplacian_eigenvalues(self) -> np.ndarray:
+    def laplacian_eigenvalues(self):
         _, l = self.modal_axes
         return -l * (l + 1) / (self.radius**2)
 
@@ -324,11 +324,11 @@ class Grid:
         return pytree_utils.tree_map_over_nonscalars(f, z)
 
     @jax.named_call
-    def laplacian(self, x: Array) -> jnp.ndarray:
+    def laplacian(self, x: Array):
         return x * self.laplacian_eigenvalues
 
     @jax.named_call
-    def inverse_laplacian(self, x: Array) -> jnp.ndarray:
+    def inverse_laplacian(self, x: Array):
         with np.errstate(divide="ignore", invalid="ignore"):
             inverse_eigenvalues = 1 / self.laplacian_eigenvalues
         inverse_eigenvalues[0] = 0
@@ -348,7 +348,7 @@ class Grid:
         return pytree_utils.tree_map_over_nonscalars(clip, x)
 
     @functools.cached_property
-    def _derivative_recurrence_weights(self) -> tuple[np.ndarray, np.ndarray]:
+    def _derivative_recurrence_weights(self):
         m, l = self.modal_mesh
         a = np.sqrt(self.mask * (l**2 - m**2) / (4 * l**2 - 1))
         a[:, 0] = 0
@@ -357,13 +357,13 @@ class Grid:
         return a, b
 
     @jax.named_call
-    def d_dlon(self, x: Array) -> Array:
+    def d_dlon(self, x: Array):
         return _with_vertical_padding(
             self.spherical_harmonics.longitudinal_derivative,
             self.spmd_mesh)(x)
 
     @jax.named_call
-    def cos_lat_d_dlat(self, x: Array) -> Array:
+    def cos_lat_d_dlat(self, x: Array):
         _, l = self.modal_mesh
         a, b = self._derivative_recurrence_weights
         x_lm1 = jax_numpy_utils.shift(((l + 1) * a) * x, -1, axis=-1)
@@ -371,7 +371,7 @@ class Grid:
         return x_lm1 + x_lp1
 
     @jax.named_call
-    def sec_lat_d_dlat_cos2(self, x: Array) -> Array:
+    def sec_lat_d_dlat_cos2(self, x: Array):
         _, l = self.modal_mesh
         a, b = self._derivative_recurrence_weights
         x_lm1 = jax_numpy_utils.shift(((l - 1) * a) * x, -1, axis=-1)
@@ -379,7 +379,7 @@ class Grid:
         return x_lm1 + x_lp1
 
     @jax.named_call
-    def cos_lat_grad(self, x: Array, clip: bool = True) -> Array:
+    def cos_lat_grad(self, x: Array, clip: bool = True):
         raw = self.d_dlon(x) / self.radius, self.cos_lat_d_dlat(
             x) / self.radius
         if clip:
@@ -395,7 +395,7 @@ class Grid:
         self,
         v,
         clip: bool = True,
-    ) -> Array:
+    ):
         raw = (self.d_dlon(v[0]) +
                self.sec_lat_d_dlat_cos2(v[1])) / self.radius
         if clip:
@@ -407,7 +407,7 @@ class Grid:
         self,
         v,
         clip: bool = True,
-    ) -> Array:
+    ):
         raw = (self.d_dlon(v[1]) -
                self.sec_lat_d_dlat_cos2(v[0])) / self.radius
         if clip:
@@ -415,7 +415,7 @@ class Grid:
         return raw
 
     @jax.named_call
-    def integrate(self, z: Array) -> Array:
+    def integrate(self, z: Array):
         w = self.spherical_harmonics.basis.w * self.radius**2
         return einsum("y,...xy->...", w, z)
 
@@ -423,7 +423,7 @@ class Grid:
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 
-def add_constant(x: jnp.ndarray, c: float | Array) -> jnp.ndarray:
+def add_constant(x: jnp.ndarray, c: float | Array):
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
 
 
@@ -433,7 +433,7 @@ def get_cos_lat_vector(
     divergence: Array,
     grid: Grid,
     clip: bool = True,
-) -> Array:
+):
     stream_function = grid.inverse_laplacian(vorticity)
     velocity_potential = grid.inverse_laplacian(divergence)
     return jax.tree_util.tree_map(
@@ -449,7 +449,7 @@ def uv_nodal_to_vor_div_modal(
     u_nodal: Array,
     v_nodal: Array,
     clip: bool = True,
-) -> tuple[Array, Array]:
+):
     u_over_cos_lat = grid.to_modal(u_nodal / grid.cos_lat)
     v_over_cos_lat = grid.to_modal(v_nodal / grid.cos_lat)
     vorticity = grid.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
@@ -463,7 +463,7 @@ def vor_div_to_uv_nodal(
     vorticity: Array,
     divergence: Array,
     clip: bool = True,
-) -> tuple[Array, Array]:
+):
     u_cos_lat, v_cos_lat = get_cos_lat_vector(vorticity,
                                               divergence,
                                               grid,

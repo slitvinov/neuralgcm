@@ -58,7 +58,7 @@ def isothermal_rest_atmosphere(
                                 (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
         return surface_pressure + p1 * perturbation
 
-    def random_state_fn(rng_key: jnp.ndarray) -> primitive_equations.State:
+    def random_state_fn(rng_key: jnp.ndarray):
         nodal_vorticity = jnp.stack([
             _get_vorticity(sigma, lon, lat)
             for sigma in coords.vertical.centers
@@ -161,7 +161,7 @@ def steady_state_jw(
 
     def initial_state_fn(
         rng_key: Union[jnp.ndarray,
-                       None] = None, ) -> primitive_equations.State:
+                       None] = None, ):
         del rng_key
         nodal_vorticity = np.stack([
             _get_vorticity(lat, lon, sigma)
@@ -205,7 +205,7 @@ def baroclinic_perturbation_jw(
     lon_location=np.pi / 9,
     lat_location=2 * np.pi / 9,
     perturbation_radius=0.1,
-) -> primitive_equations.State:
+):
     u_p = physics_specs.nondimensionalize(u_perturb)
     a = physics_specs.radius
 

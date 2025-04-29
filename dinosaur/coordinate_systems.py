@@ -40,7 +40,7 @@ class CoordinateSystem:
     def with_dycore_sharding(self, x):
         return _with_sharding_constraint(x, self.dycore_sharding)
 
-    def asdict(self) ->...:
+    def asdict(self):
         out = {**self.horizontal.asdict(), **self.vertical.asdict()}
         out["horizontal_grid_type"] = type(self.horizontal).__name__
         out["vertical_grid_type"] = type(self.vertical).__name__

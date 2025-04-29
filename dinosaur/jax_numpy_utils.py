@@ -1,7 +1,6 @@
 from __future__ import annotations
 import jax
 from jax import lax
-from jax.experimental import shard_map
 import jax.numpy as jnp
 import numpy as np
 

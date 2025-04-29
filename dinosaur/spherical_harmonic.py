@@ -7,7 +7,6 @@ from dinosaur import pytree_utils
 from dinosaur import typing
 import jax
 from jax import lax
-from jax.experimental import shard_map
 import jax.numpy as jnp
 import numpy as np
 import scipy
@@ -171,7 +170,6 @@ class RealSphericalHarmonics(SphericalHarmonics):
 
 
 P = jax.sharding.PartitionSpec
-shmap = shard_map.shard_map
 
 
 def _vertical_pad(

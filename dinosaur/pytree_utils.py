@@ -11,9 +11,9 @@ def tree_map_over_nonscalars(
     x,
     *,
     scalar_fn=lambda x: x,
-    backend: str = 'jax',
+    backend: str = "jax",
 ):
-    as_array_fn = {'jax': jnp.asarray, 'numpy': np.asarray}[backend]
+    as_array_fn = {"jax": jnp.asarray, "numpy": np.asarray}[backend]
 
     def g(x):
         x = as_array_fn(x)

@@ -36,7 +36,7 @@ def _asdict(state: State):
     return {
         field.name: getattr(state, field.name)
         for field in state.fields
-        if field.name != 'sim_time' or state.sim_time is not None
+        if field.name != "sim_time" or state.sim_time is not None
     }
 
 
@@ -190,10 +190,10 @@ def get_geopotential_diff(
     temperature: Array,
     coordinates: sigma_coordinates.SigmaCoordinates,
     ideal_gas_constant: float,
-    method: str = 'dense',
+    method: str = "dense",
     sharding: Union[jax.sharding.NamedSharding, None] = None,
 ):
-    if method == 'dense':
+    if method == "dense":
         weights = get_geopotential_weights(coordinates, ideal_gas_constant)
         return _vertical_matvec(weights, temperature)
     else:
@@ -233,8 +233,9 @@ def get_temperature_implicit_weights(
           (p_alpha + p_alpha_shifted) /
           coordinates.layer_thickness[..., np.newaxis])
     temp_diff = np.diff(reference_temperature)
-    thickness_sum = (coordinates.layer_thickness[:-1] +
-                     coordinates.layer_thickness[1:])
+    thickness_sum = coordinates.layer_thickness[:
+                                                -1] + coordinates.layer_thickness[
+                                                    1:]
     k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[...,
                                                                   np.newaxis]
     thickness_cumulative = np.cumsum(coordinates.layer_thickness)[...,
@@ -251,7 +252,7 @@ def get_temperature_implicit(
     coordinates: sigma_coordinates.SigmaCoordinates,
     reference_temperature: np.ndarray,
     kappa: float,
-    method: str = 'dense',
+    method: str = "dense",
     sharding: Union[jax.sharding.NamedSharding, None] = None,
 ):
     weights = -get_temperature_implicit_weights(coordinates,
@@ -261,12 +262,12 @@ def get_temperature_implicit(
 
 @jax.named_call
 def _vertical_matvec(a: Array, x: Array):
-    return einsum('gh,...hml->...gml', a, x)
+    return einsum("gh,...hml->...gml", a, x)
 
 
 @jax.named_call
 def _vertical_matvec_per_wavenumber(a: Array, x: Array):
-    return einsum('lgh,...hml->...gml', a, x)
+    return einsum("lgh,...hml->...gml", a, x)
 
 
 def _get_implicit_term_matrix(eta, coords, reference_temperature, kappa,
@@ -284,8 +285,8 @@ def _get_implicit_term_matrix(eta, coords, reference_temperature, kappa,
     row0 = np.concatenate(
         [
             np.broadcast_to(eye, [l, j, k]),
-            eta * np.einsum('l,jk->ljk', lam, g),
-            eta * r * np.einsum('l,jo->ljo', lam, t),
+            eta * np.einsum("l,jk->ljk", lam, g),
+            eta * r * np.einsum("l,jo->ljo", lam, t),
         ],
         axis=2,
     )
@@ -332,7 +333,7 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
     coords: coordinate_systems.CoordinateSystem
     physics_specs: PrimitiveEquationsSpecs
     vertical_matmul_method: Union[str, None] = dataclasses.field(default=None)
-    implicit_inverse_method: str = dataclasses.field(default='split')
+    implicit_inverse_method: str = dataclasses.field(default="split")
     vertical_advection: Callable[..., jax.Array] = dataclasses.field(
         default=sigma_coordinates.centered_vertical_advection)
     include_vertical_advection: bool = dataclasses.field(default=True)
@@ -494,8 +495,8 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         method = self.vertical_matmul_method
         if method is None:
             mesh = self.coords.spmd_mesh
-            method = 'sparse' if mesh is not None and mesh.shape[
-                'z'] > 1 else 'dense'
+            method = "sparse" if mesh is not None and mesh.shape[
+                "z"] > 1 else "dense"
         geopotential_diff = get_geopotential_diff(
             state.temperature_variation,
             self.coords.vertical,
@@ -543,31 +544,32 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         div = slice(0, layers)
         temp = slice(layers, 2 * layers)
         logp = slice(2 * layers, 2 * layers + 1)
+
         def named_vertical_matvec(name):
             return jax.named_call(_vertical_matvec_per_wavenumber, name=name)
 
         inverse = np.linalg.inv(implicit_matrix)
         assert not np.isnan(inverse).any()
         inverted_divergence = (
-            named_vertical_matvec('div_from_div')(inverse[:, div, div],
+            named_vertical_matvec("div_from_div")(inverse[:, div, div],
                                                   state.divergence) +
-            named_vertical_matvec('div_from_temp')(
+            named_vertical_matvec("div_from_temp")(
                 inverse[:, div, temp], state.temperature_variation) +
-            named_vertical_matvec('div_from_logp')(
-                inverse[:, div, logp], state.log_surface_pressure))
+            named_vertical_matvec("div_from_logp")(inverse[:, div, logp],
+                                                   state.log_surface_pressure))
         inverted_temperature_variation = (
-            named_vertical_matvec('temp_from_div')(inverse[:, temp, div],
+            named_vertical_matvec("temp_from_div")(inverse[:, temp, div],
                                                    state.divergence) +
-            named_vertical_matvec('temp_from_temp')(
+            named_vertical_matvec("temp_from_temp")(
                 inverse[:, temp, temp], state.temperature_variation) +
-            named_vertical_matvec('temp_from_logp')(
+            named_vertical_matvec("temp_from_logp")(
                 inverse[:, temp, logp], state.log_surface_pressure))
         inverted_log_surface_pressure = (
-            named_vertical_matvec('logp_from_div')(inverse[:, logp, div],
+            named_vertical_matvec("logp_from_div")(inverse[:, logp, div],
                                                    state.divergence) +
-            named_vertical_matvec('logp_from_temp')(
+            named_vertical_matvec("logp_from_temp")(
                 inverse[:, logp, temp], state.temperature_variation) +
-            named_vertical_matvec('logp_from_logp')(
+            named_vertical_matvec("logp_from_logp")(
                 inverse[:, logp, logp], state.log_surface_pressure))
         inverted_vorticity = state.vorticity
         inverted_tracers = state.tracers

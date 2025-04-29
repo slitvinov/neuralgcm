@@ -23,7 +23,7 @@ def _single_device_dot_cumsum(x, axis, reverse=False):
         x,
         list(range(x.ndim)),
         out_axes,
-        precision=('bfloat16', 'highest'),
+        precision=("bfloat16", "highest"),
     )
 
 
@@ -39,7 +39,7 @@ def _dot_cumsum(
 def cumsum(
     x,
     axis,
-    method='dot',
+    method="dot",
     sharding=None,
 ):
     return _dot_cumsum(x, axis, sharding=sharding)

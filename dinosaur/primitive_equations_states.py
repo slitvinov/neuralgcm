@@ -13,12 +13,13 @@ units = scales.units
 Array = typing.Array
 Quantity = typing.Quantity
 
+
 def isothermal_rest_atmosphere(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-    tref = 288. * units.degK,
-    p0 = 1e5 * units.pascal,
-    p1 = 0. * units.pascal,
+    tref=288.0 * units.degK,
+    p0=1e5 * units.pascal,
+    p1=0.0 * units.pascal,
     surface_height: Union[Quantity, None] = None,
 ):
     lon, sin_lat = coords.horizontal.nodal_mesh
@@ -56,8 +57,8 @@ def isothermal_rest_atmosphere(
         lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)
         stddev = np.pi / 20
         k = 4
-        perturbation = (jnp.exp(-(lon - lon0)**2 / (2 * stddev**2)) *
-                        jnp.exp(-(lat - lat0)**2 /
+        perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *
+                        jnp.exp(-((lat - lat0)**2) /
                                 (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
         return surface_pressure + p1 * perturbation
 
@@ -77,8 +78,8 @@ def isothermal_rest_atmosphere(
         )
 
     aux_features = {
-        'orography': orography,
-        'ref_temperatures': np.full((coords.vertical.layers, ), tref)
+        "orography": orography,
+        "ref_temperatures": np.full((coords.vertical.layers, ), tref),
     }
     return random_state_fn, aux_features
 
@@ -86,9 +87,9 @@ def isothermal_rest_atmosphere(
 def steady_state_jw(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-    u0: Quantity = 35. * units.m / units.s,
+    u0: Quantity = 35.0 * units.m / units.s,
     p0: Quantity = 1e5 * units.pascal,
-    t0: Quantity = 288. * units.degK,
+    t0: Quantity = 288.0 * units.degK,
     delta_t: Quantity = 4.8e5 * units.degK,
     gamma: Quantity = 0.005 * units.degK / units.m,
     sigma_tropo: float = 0.2,
@@ -139,12 +140,12 @@ def steady_state_jw(
         sigma_nu = (sigma - sigma0) * np.pi / 2
         cos_𝜎ν = np.cos(sigma_nu)
         sin_𝜎ν = np.sin(sigma_nu)
-        return 0.75 * (
-            sigma * np.pi * u0 / r_gas) * sin_𝜎ν * np.sqrt(cos_𝜎ν) * (
-                ((-2 * (np.cos(lat)**2 + 1 / 3) * np.sin(lat)**6 + 10 / 63) *
-                 2 * u0 * cos_𝜎ν**(3 / 2)) +
-                ((1.6 * (np.cos(lat)**3) *
-                  (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * a * omega))
+        return (0.75 * (sigma * np.pi * u0 / r_gas) * sin_𝜎ν *
+                np.sqrt(cos_𝜎ν) *
+                (((-2 * (np.cos(lat)**2 + 1 / 3) * np.sin(lat)**6 + 10 / 63) *
+                  2 * u0 * cos_𝜎ν**(3 / 2)) +
+                 ((1.6 * (np.cos(lat)**3) *
+                   (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * a * omega)))
 
     def _get_vorticity(lat, lon, sigma):
         del lon
@@ -163,8 +164,8 @@ def steady_state_jw(
     lat = np.arcsin(sin_lat)
 
     def initial_state_fn(
-            rng_key: Union[jnp.ndarray,
-                           None] = None) -> primitive_equations.State:
+        rng_key: Union[jnp.ndarray,
+                       None] = None, ) -> primitive_equations.State:
         del rng_key
         nodal_vorticity = np.stack([
             _get_vorticity(lat, lon, sigma)
@@ -182,10 +183,11 @@ def steady_state_jw(
             temperature_variation=coords.horizontal.to_modal(
                 nodal_temperature_variation),
             log_surface_pressure=coords.horizontal.to_modal(
-                log_nodal_surface_pressure))
+                log_nodal_surface_pressure),
+        )
         return state
 
-    orography = _get_geopotential(lat, lon, 1.) / g
+    orography = _get_geopotential(lat, lon, 1.0) / g
     geopotential = np.stack([
         _get_geopotential(lat, lon, sigma) for sigma in coords.vertical.centers
     ])
@@ -193,9 +195,9 @@ def steady_state_jw(
         _get_reference_temperature(sigma) for sigma in coords.vertical.centers
     ])
     aux_features = {
-        'geopotential': geopotential,
-        'orography': orography,
-        'ref_temperatures': reference_temperatures,
+        "geopotential": geopotential,
+        "orography": orography,
+        "ref_temperatures": reference_temperatures,
     }
     return initial_state_fn, aux_features
 
@@ -203,7 +205,7 @@ def steady_state_jw(
 def baroclinic_perturbation_jw(
     coords: coordinate_systems.CoordinateSystem,
     physics_specs: primitive_equations.PrimitiveEquationsSpecs,
-    u_perturb: Quantity = 1. * units.m / units.s,
+    u_perturb: Quantity = 1.0 * units.m / units.s,
     lon_location: Quantity = np.pi / 9,
     lat_location: Quantity = 2 * np.pi / 9,
     perturbation_radius: Quantity = 0.1,
@@ -213,25 +215,26 @@ def baroclinic_perturbation_jw(
 
     def _get_vorticity_perturbation(lat, lon, sigma):
         del sigma
-        x = (np.sin(lat_location) * np.sin(lat) +
-             np.cos(lat_location) * np.cos(lat) * np.cos(lon - lon_location))
+        x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
+            lat) * np.cos(lon - lon_location)
         r = a * np.arccos(x)
         R = a * perturbation_radius
-        return (u_p / a) * np.exp(-(r / R)**2) * (
-            np.tan(lat) - (2 * ((a / R)**2) * np.arccos(x)) *
-            (np.sin(lat_location) * np.cos(lat) -
-             np.cos(lat_location) * np.sin(lat) * np.cos(lon - lon_location)) /
-            (np.sqrt(1 - x**2)))
+        return ((u_p / a) * np.exp(-((r / R)**2)) *
+                (np.tan(lat) - (2 * ((a / R)**2) * np.arccos(x)) *
+                 (np.sin(lat_location) * np.cos(lat) - np.cos(lat_location) *
+                  np.sin(lat) * np.cos(lon - lon_location)) /
+                 (np.sqrt(1 - x**2))))
 
     def _get_divergence_perturbation(lat, lon, sigma):
         del sigma
-        x = (np.sin(lat_location) * np.sin(lat) +
-             np.cos(lat_location) * np.cos(lat) * np.cos(lon - lon_location))
+        x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
+            lat) * np.cos(lon - lon_location)
         r = a * np.arccos(x)
         R = a * perturbation_radius
-        return (-2 * u_p * a / (R**2)) * np.exp(-(r / R)**2) * np.arccos(x) * (
-            (np.cos(lat_location) * np.sin(lon - lon_location)) /
-            (np.sqrt(1 - x**2)))
+        return ((-2 * u_p * a /
+                 (R**2)) * np.exp(-((r / R)**2)) * np.arccos(x) *
+                ((np.cos(lat_location) * np.sin(lon - lon_location)) /
+                 (np.sqrt(1 - x**2))))
 
     lon, sin_lat = coords.horizontal.nodal_mesh
     lat = np.arcsin(sin_lat)

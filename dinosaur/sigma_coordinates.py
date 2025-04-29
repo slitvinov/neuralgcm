@@ -35,7 +35,7 @@ class SigmaCoordinates:
 
     def __init__(self, boundaries):
         boundaries = np.asarray(boundaries)
-        object.__setattr__(self, 'boundaries', boundaries)
+        object.__setattr__(self, "boundaries", boundaries)
 
     @property
     def centers(self) -> np.ndarray:
@@ -78,7 +78,7 @@ def centered_difference(x: np.ndarray,
                   inv_d𝜎,
                   inv_d𝜎_axes,
                   dx_axes,
-                  precision='float32')
+                  precision="float32")
 
 
 @jax.named_call
@@ -87,7 +87,7 @@ def cumulative_sigma_integral(
     coordinates: SigmaCoordinates,
     axis: int = -3,
     downward: bool = True,
-    cumsum_method: str = 'dot',
+    cumsum_method: str = "dot",
     sharding: jax.sharding.NamedSharding | None = None,
 ) -> jax.Array:
     x_axes = range(x.ndim)

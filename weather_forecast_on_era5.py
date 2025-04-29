@@ -17,8 +17,8 @@ units = scales.units
 
 def attach_data_array_units(array):
     attrs = dict(array.attrs)
-    units = attrs.pop('units', None)
-    if units in {'(0 - 1)', '%', '~'}:
+    units = attrs.pop("units", None)
+    if units in {"(0 - 1)", "%", "~"}:
         units = None
     if units is not None:
         data = scales.units.parse_expression(units) * array.data
@@ -40,7 +40,7 @@ def xarray_to_gcm_dict(ds, var_names=None):
         var_names = ds.keys()
     result = {}
     for var_name in var_names:
-        data = ds[var_name].transpose(..., 'longitude', 'latitude').data
+        data = ds[var_name].transpose(..., "longitude", "latitude").data
         if data.ndim == 2:
             data = data[np.newaxis, ...]
         result[var_name] = data
@@ -74,42 +74,44 @@ output_level_indices = [layers // 4, layers // 2, 3 * layers // 4, -1]
 def open_era5(path, time):
     ds = xarray.open_zarr(path,
                           chunks=None,
-                          storage_options=dict(token='anon'))
+                          storage_options=dict(token="anon"))
     return ds.sel(time=time)
 
 
 ds_arco_era5 = xarray.merge([
     open_era5(
-        'gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3',
-        time='19900501T00').drop_dims('level'),
+        "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3",
+        time="19900501T00",
+    ).drop_dims("level"),
     open_era5(
-        'gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1',
-        time='19900501T00'),
+        "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1",
+        time="19900501T00",
+    ),
 ])
 ds = ds_arco_era5[[
-    'u_component_of_wind',
-    'v_component_of_wind',
-    'temperature',
-    'specific_humidity',
-    'specific_cloud_liquid_water_content',
-    'specific_cloud_ice_water_content',
-    'surface_pressure',
+    "u_component_of_wind",
+    "v_component_of_wind",
+    "temperature",
+    "specific_humidity",
+    "specific_cloud_liquid_water_content",
+    "specific_cloud_ice_water_content",
+    "surface_pressure",
 ]]
 raw_orography = ds_arco_era5.geopotential_at_surface
 desired_lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
 desired_lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
 ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
                                                   longitude=desired_lon))
-ds_init['orography'] = attach_data_array_units(
+ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
-ds_init['orography'] /= scales.GRAVITY_ACCELERATION
+ds_init["orography"] /= scales.GRAVITY_ACCELERATION
 source_vertical = vertical_interpolation.HybridCoordinates.ECMWF137()
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)
-sp_nodal = model_level_inputs.pop('surface_pressure')
-orography_input = model_level_inputs.pop('orography')
-sp_init_hpa = ds_init.surface_pressure.transpose(
-    'longitude', 'latitude').data.to('hPa').magnitude
+sp_nodal = model_level_inputs.pop("surface_pressure")
+orography_input = model_level_inputs.pop("orography")
+sp_init_hpa = (ds_init.surface_pressure.transpose(
+    "longitude", "latitude").data.to("hPa").magnitude)
 physics_specs = primitive_equations.PrimitiveEquationsSpecs.from_si()
 nodal_inputs = vertical_interpolation.regrid_hybrid_to_sigma(
     fields=model_level_inputs,
@@ -117,9 +119,9 @@ nodal_inputs = vertical_interpolation.regrid_hybrid_to_sigma(
     sigma_coords=model_coords.vertical,
     surface_pressure=sp_init_hpa,
 )
-u_nodal = nodal_inputs['u_component_of_wind']
-v_nodal = nodal_inputs['v_component_of_wind']
-t_nodal = nodal_inputs['temperature']
+u_nodal = nodal_inputs["u_component_of_wind"]
+v_nodal = nodal_inputs["v_component_of_wind"]
+t_nodal = nodal_inputs["temperature"]
 vorticity, divergence = spherical_harmonic.uv_nodal_to_vor_div_modal(
     model_coords.horizontal, u_nodal, v_nodal)
 ref_temps = physics_specs.nondimensionalize(ref_temp_si * np.ones(
@@ -129,12 +131,12 @@ temperature_variation = model_coords.horizontal.to_modal(
     t_nodal - ref_temps.reshape(-1, 1, 1))
 log_sp = model_coords.horizontal.to_modal(np.log(sp_nodal))
 tracers = model_coords.horizontal.to_modal({
-    'specific_humidity':
-    nodal_inputs['specific_humidity'],
-    'specific_cloud_liquid_water_content':
-    nodal_inputs['specific_cloud_liquid_water_content'],
-    'specific_cloud_ice_water_content':
-    nodal_inputs['specific_cloud_ice_water_content'],
+    "specific_humidity":
+    nodal_inputs["specific_humidity"],
+    "specific_cloud_liquid_water_content":
+    nodal_inputs["specific_cloud_liquid_water_content"],
+    "specific_cloud_ice_water_content":
+    nodal_inputs["specific_cloud_ice_water_content"],
 })
 raw_init_state = primitive_equations.State(
     vorticity=vorticity,
@@ -189,14 +191,14 @@ def nodal_prognostics_and_diagnostics(state):
     vertical_velocity_nodal = primitive_equations.compute_vertical_velocity(
         state, model_coords)
     state_nodal = {
-        'u_component_of_wind': u_nodal,
-        'v_component_of_wind': v_nodal,
-        'temperature': t_nodal,
-        'vorticity': vor_nodal,
-        'divergence': div_nodal,
-        'vertical_velocity': vertical_velocity_nodal,
-        'geopotential': geopotential_nodal,
-        'surface_pressure': sp_nodal,
+        "u_component_of_wind": u_nodal,
+        "v_component_of_wind": v_nodal,
+        "temperature": t_nodal,
+        "vorticity": vor_nodal,
+        "divergence": div_nodal,
+        "vertical_velocity": vertical_velocity_nodal,
+        "geopotential": geopotential_nodal,
+        "surface_pressure": sp_nodal,
         **tracers_nodal,
     }
     return slice_levels(state_nodal, output_level_indices)
@@ -205,15 +207,15 @@ def nodal_prognostics_and_diagnostics(state):
 def trajectory_to_xarray(trajectory):
     target_units = {k: v.data.units for k, v in ds_init.items()}
     target_units |= {
-        'vorticity': units('1/s'),
-        'divergence': units('1/s'),
-        'geopotential': units('m^2/s^2'),
-        'vertical_velocity': units('1/s'),
+        "vorticity": units("1/s"),
+        "divergence": units("1/s"),
+        "geopotential": units("m^2/s^2"),
+        "vertical_velocity": units("1/s"),
     }
     orography_nodal = jax.device_put(
         model_coords.horizontal.to_nodal(orography),
-        device=jax.devices('cpu')[0])
-    trajectory_cpu = jax.device_put(trajectory, device=jax.devices('cpu')[0])
+        device=jax.devices("cpu")[0])
+    trajectory_cpu = jax.device_put(trajectory, device=jax.devices("cpu")[0])
     traj_nodal_si = {
         k: physics_specs.dimensionalize(v, target_units[k]).magnitude
         for k, v in trajectory_cpu.items()
@@ -221,23 +223,23 @@ def trajectory_to_xarray(trajectory):
     times = float(save_every / units.hour) * np.arange(outer_steps)
     lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
     lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
-    dims = ('time', 'sigma', 'longitude', 'latitude')
+    dims = ("time", "sigma", "longitude", "latitude")
     ds_result = xarray.Dataset(
         data_vars={
             k: (dims, v)
-            for k, v in traj_nodal_si.items() if k != 'surface_pressure'
+            for k, v in traj_nodal_si.items() if k != "surface_pressure"
         },
         coords={
-            'longitude': lon,
-            'latitude': lat,
-            'sigma': model_coords.vertical.centers[output_level_indices],
-            'time': times,
-            'orography':
-            (('longitude', 'latitude'), orography_nodal.squeeze()),
+            "longitude": lon,
+            "latitude": lat,
+            "sigma": model_coords.vertical.centers[output_level_indices],
+            "time": times,
+            "orography":
+            (("longitude", "latitude"), orography_nodal.squeeze()),
         },
     ).assign(surface_pressure=(
-        ('time', 'longitude', 'latitude'),
-        traj_nodal_si['surface_pressure'].squeeze(axis=-3),
+        ("time", "longitude", "latitude"),
+        traj_nodal_si["surface_pressure"].squeeze(axis=-3),
     ))
     return ds_result
 
@@ -263,20 +265,20 @@ ds_out_unfiltered = trajectory_to_xarray(trajectory)
 ds_out
 ds_out.surface_pressure.sel(
     latitude=0, longitude=0,
-    method='nearest').plot.line(label='digital filter initialization')
+    method="nearest").plot.line(label="digital filter initialization")
 ds_out_unfiltered.surface_pressure.sel(
-    latitude=0, longitude=0, method='nearest').plot.line(label='unfiltered')
+    latitude=0, longitude=0, method="nearest").plot.line(label="unfiltered")
 plt.legend()
 plt.savefig("00.png")
 plt.close()
 ds_out.specific_humidity.thin(time=4 * 24).isel(sigma=1).plot.imshow(
-    col='time',
-    x='longitude',
-    y='latitude',
+    col="time",
+    x="longitude",
+    y="latitude",
     col_wrap=3,
     aspect=2,
     size=3.5,
-    cmap='viridis',
+    cmap="viridis",
     vmin=0,
     vmax=0.01,
 )
@@ -284,13 +286,13 @@ plt.savefig("01.png")
 plt.close()
 ds_out.specific_cloud_liquid_water_content.thin(time=4 *
                                                 24).isel(sigma=2).plot.imshow(
-                                                    col='time',
-                                                    x='longitude',
-                                                    y='latitude',
+                                                    col="time",
+                                                    x="longitude",
+                                                    y="latitude",
                                                     col_wrap=3,
                                                     aspect=2,
                                                     size=3.5,
-                                                    cmap='RdBu',
+                                                    cmap="RdBu",
                                                     vmin=-1e-4,
                                                     vmax=1e-4,
                                                 )

@@ -25,14 +25,14 @@ class HybridCoordinates:
             a_in_pa, b = np.loadtxt(f,
                                     skiprows=1,
                                     usecols=(1, 2),
-                                    delimiter='\t').T
+                                    delimiter="\t").T
         a = a_in_pa / 100
         assert 100 < a.max() < 1000
         return cls(a_boundaries=a, b_boundaries=b)
 
     @classmethod
     def ECMWF137(cls) -> HybridCoordinates:
-        return cls._from_resource_csv('data/ecmwf137_hybrid_levels.csv')
+        return cls._from_resource_csv("data/ecmwf137_hybrid_levels.csv")
 
     @property
     def layers(self) -> int:
@@ -70,14 +70,14 @@ def regrid_hybrid_to_sigma(
 ):
 
     @jax.jit
-    @functools.partial(jnp.vectorize, signature='(x,y),(a),(b,x,y)->(c,x,y)')
+    @functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     def regrid(surface_pressure, sigma_bounds, field):
         assert sigma_bounds.shape == (sigma_coords.layers + 1, )
         hybrid_bounds = hybrid_coords.get_sigma_boundaries(surface_pressure)
         weights = conservative_regrid_weights(hybrid_bounds, sigma_bounds)
-        result = jnp.einsum('ab,b->a', weights, field, precision='float32')
+        result = jnp.einsum("ab,b->a", weights, field, precision="float32")
         assert result.shape[0] == sigma_coords.layers
         return result
 

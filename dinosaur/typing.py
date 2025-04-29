@@ -7,7 +7,7 @@ import tree_math
 Array = Union[np.ndarray, jnp.ndarray]
 Quantity = scales.Quantity
 PRNGKeyArray = Any
-PyTreeState = TypeVar('PyTreeState')
+PyTreeState = TypeVar("PyTreeState")
 Pytree = Any
-State = TypeVar('State')
+State = TypeVar("State")
 Params = Union[Mapping[str, Mapping[str, Array]], None]

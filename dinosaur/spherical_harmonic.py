@@ -93,7 +93,7 @@ class SphericalHarmonics:
     total_wavenumbers: int = 0
     longitude_nodes: int = 0
     latitude_nodes: int = 0
-    latitude_spacing: str = 'gauss'
+    latitude_spacing: str = "gauss"
 
 
 class RealSphericalHarmonics(SphericalHarmonics):
@@ -127,7 +127,7 @@ class RealSphericalHarmonics(SphericalHarmonics):
 
     @functools.cached_property
     def mask(self) -> np.ndarray:
-        m, l = np.meshgrid(*self.modal_axes, indexing='ij')
+        m, l = np.meshgrid(*self.modal_axes, indexing="ij")
         return abs(m) <= l
 
     @functools.cached_property
@@ -149,9 +149,9 @@ class RealSphericalHarmonics(SphericalHarmonics):
     def inverse_transform(self, x):
         p = self.basis.p
         f = self.basis.f
-        px = jax.named_call(einsum, name='inv_legendre')('mjl,...ml->...mj', p,
+        px = jax.named_call(einsum, name="inv_legendre")("mjl,...ml->...mj", p,
                                                          x)
-        fpx = jax.named_call(einsum, name='inv_fourier')('im,...mj->...ij', f,
+        fpx = jax.named_call(einsum, name="inv_fourier")("im,...mj->...ij", f,
                                                          px)
         return fpx
 
@@ -160,9 +160,9 @@ class RealSphericalHarmonics(SphericalHarmonics):
         f = self.basis.f
         p = self.basis.p
         wx = w * x
-        fwx = jax.named_call(einsum, name='fwd_fourier')('im,...ij->...mj', f,
+        fwx = jax.named_call(einsum, name="fwd_fourier")("im,...ij->...mj", f,
                                                          wx)
-        pfwx = jax.named_call(einsum, name='fwd_legendre')('mjl,...mj->...ml',
+        pfwx = jax.named_call(einsum, name="fwd_legendre")("mjl,...mj->...ml",
                                                            p, fwx)
         return pfwx
 
@@ -195,8 +195,8 @@ def _with_vertical_padding(
     return g
 
 
-SPHERICAL_HARMONICS_IMPL_KEY = 'spherical_harmonics_impl'
-SPMD_MESH_KEY = 'spmd_mesh'
+SPHERICAL_HARMONICS_IMPL_KEY = "spherical_harmonics_impl"
+SPMD_MESH_KEY = "spmd_mesh"
 SphericalHarmonicsImpl = Callable[..., SphericalHarmonics]
 
 
@@ -206,7 +206,7 @@ class Grid:
     total_wavenumbers: int = 0
     longitude_nodes: int = 0
     latitude_nodes: int = 0
-    latitude_spacing: str = 'gauss'
+    latitude_spacing: str = "gauss"
     longitude_offset: float = 0.0
     radius: float | None = None
     spherical_harmonics_impl: SphericalHarmonicsImpl = RealSphericalHarmonics
@@ -214,14 +214,14 @@ class Grid:
 
     def __post_init__(self):
         if self.radius is None:
-            object.__setattr__(self, 'radius', 1.0)
+            object.__setattr__(self, "radius", 1.0)
 
     @classmethod
     def construct(
         cls,
         max_wavenumber: int,
         gaussian_nodes: int,
-        latitude_spacing: str = 'gauss',
+        latitude_spacing: str = "gauss",
         longitude_offset: float = 0.0,
         radius: float | None = None,
         spherical_harmonics_impl:
@@ -250,7 +250,7 @@ class Grid:
         items = dataclasses.asdict(self)
         items[
             SPHERICAL_HARMONICS_IMPL_KEY] = self.spherical_harmonics_impl.__name__
-        items[SPMD_MESH_KEY] = ''
+        items[SPMD_MESH_KEY] = ""
         return items
 
     @functools.cached_property
@@ -276,7 +276,7 @@ class Grid:
 
     @functools.cached_property
     def nodal_mesh(self) -> tuple[np.ndarray, np.ndarray]:
-        return np.meshgrid(*self.nodal_axes, indexing='ij')
+        return np.meshgrid(*self.nodal_axes, indexing="ij")
 
     @functools.cached_property
     def modal_axes(self) -> tuple[np.ndarray, np.ndarray]:
@@ -296,7 +296,7 @@ class Grid:
 
     @functools.cached_property
     def modal_mesh(self) -> tuple[np.ndarray, np.ndarray]:
-        return np.meshgrid(*self.spherical_harmonics.modal_axes, indexing='ij')
+        return np.meshgrid(*self.spherical_harmonics.modal_axes, indexing="ij")
 
     @functools.cached_property
     def cos_lat(self) -> jnp.ndarray:
@@ -331,7 +331,7 @@ class Grid:
 
     @jax.named_call
     def inverse_laplacian(self, x: Array) -> jnp.ndarray:
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             inverse_eigenvalues = 1 / self.laplacian_eigenvalues
         inverse_eigenvalues[0] = 0
         inverse_eigenvalues[self.total_wavenumbers:] = 0
@@ -340,6 +340,7 @@ class Grid:
 
     @jax.named_call
     def clip_wavenumbers(self, x, n: int = 1):
+
         def clip(x):
             num_zeros = n + self.modal_padding[-1]
             mask = jnp.ones(self.modal_shape[-1],
@@ -418,7 +419,7 @@ class Grid:
     @jax.named_call
     def integrate(self, z: Array) -> Array:
         w = self.spherical_harmonics.basis.w * self.radius**2
-        return einsum('y,...xy->...', w, z)
+        return einsum("y,...xy->...", w, z)
 
 
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
@@ -444,7 +445,7 @@ def get_cos_lat_vector(
     )
 
 
-@functools.partial(jax.jit, static_argnames=('grid', 'clip'))
+@functools.partial(jax.jit, static_argnames=("grid", "clip"))
 def uv_nodal_to_vor_div_modal(
     grid: Grid,
     u_nodal: Array,
@@ -458,7 +459,7 @@ def uv_nodal_to_vor_div_modal(
     return vorticity, divergence
 
 
-@functools.partial(jax.jit, static_argnames=('grid', 'clip'))
+@functools.partial(jax.jit, static_argnames=("grid", "clip"))
 def vor_div_to_uv_nodal(
     grid: Grid,
     vorticity: Array,

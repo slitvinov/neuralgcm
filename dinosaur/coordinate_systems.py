@@ -21,14 +21,14 @@ class CoordinateSystem:
     horizontal: Any
     vertical: Any
     spmd_mesh: Union[jax.sharding.Mesh, None] = None
-    dycore_partition_spec: jax.sharding.PartitionSpec = P('z', 'x', 'y')
+    dycore_partition_spec: jax.sharding.PartitionSpec = P("z", "x", "y")
     physics_partition_spec: jax.sharding.PartitionSpec = P(
-        None, ('x', 'z'), 'y')
+        None, ("x", "z"), "y")
 
     def __post_init__(self):
         horizontal = dataclasses.replace(self.horizontal,
                                          spmd_mesh=self.spmd_mesh)
-        object.__setattr__(self, 'horizontal', horizontal)
+        object.__setattr__(self, "horizontal", horizontal)
 
     def _get_sharding(self, partition_spec: jax.sharding.PartitionSpec):
         return None
@@ -42,8 +42,8 @@ class CoordinateSystem:
 
     def asdict(self) ->...:
         out = {**self.horizontal.asdict(), **self.vertical.asdict()}
-        out['horizontal_grid_type'] = type(self.horizontal).__name__
-        out['vertical_grid_type'] = type(self.vertical).__name__
+        out["horizontal_grid_type"] = type(self.horizontal).__name__
+        out["vertical_grid_type"] = type(self.vertical).__name__
         return out
 
     @property

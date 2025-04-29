@@ -353,15 +353,6 @@ class PrimitiveEquations(time_integration.ImplicitExplicitODE):
         default=sigma_coordinates.centered_vertical_advection)
     include_vertical_advection: bool = dataclasses.field(default=True)
 
-    def __post_init__(self):
-        if not np.allclose(self.coords.horizontal.radius,
-                           self.physics_specs.radius,
-                           rtol=1e-5):
-            raise ValueError(
-                'inconsistent radius between coordinates and constants: '
-                f'{self.coords.horizontal.radius=} != {self.physics_specs.radius=}'
-            )
-
     @property
     def coriolis_parameter(self):
         _, sin_lat = self.coords.horizontal.nodal_mesh

@@ -98,24 +98,6 @@ class HeldSuarezForcing:
         )
 
 
-def trajectory_to_xarray(coords, trajectory, times):
-    trajectory_dict, _ = di.as_dict(trajectory)
-    u, v = di.vor_div_to_uv_nodal(coords.horizontal, trajectory.vorticity,
-                                  trajectory.divergence)
-    trajectory_dict.update({"u": u, "v": v})
-    nodal_trajectory_fields = di.maybe_to_nodal(trajectory_dict, coords=coords)
-    trajectory_ds = di.data_to_xarray(nodal_trajectory_fields,
-                                      coords=coords,
-                                      times=times)
-    trajectory_ds["surface_pressure"] = np.exp(
-        trajectory_ds.log_surface_pressure[:, 0, :, :])
-    temperature = di.temperature_variation_to_absolute(
-        trajectory_ds.temperature_variation.data, ref_temps)
-    trajectory_ds = trajectory_ds.assign(
-        temperature=(trajectory_ds.temperature_variation.dims, temperature))
-    return trajectory_ds
-
-
 def ds_held_suarez_forcing(coords):
     grid = coords.horizontal
     sigma = coords.vertical.centers
@@ -210,18 +192,6 @@ times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
 start_time = 200
-mask = ds["time"] > start_time
-data_array = ds["temperature"]
-data_array = dimensionalize(data_array, units.degK)
-levels = linspace_step(190, 305, 5)
-data_array.isel(time=mask).mean(["lon", "time"]).plot.contour(x="lat",
-                                                              y="level",
-                                                              levels=levels,
-                                                              size=5,
-                                                              aspect=1.5)
-ax = plt.gca()
-ax.set_ylim((1, 0))
-mask = ds["time"] > start_time
 dt_si = 10 * units.minute
 save_every = 6 * units.hours
 total_time = 1 * units.week
@@ -244,9 +214,13 @@ integrate_fn = jax.jit(
         inner_steps=inner_steps,
     ))
 times = save_every * np.arange(1, outer_steps + 1)
-final_2, trajectory_2 = jax.block_until_ready(integrate_fn(final))
-ds = trajectory_to_xarray(coords, trajectory_2, times)
-data_array = ds["temperature"]
-data_array.thin(time=4).isel(level=-10).plot(x="lon", y="lat", col="time")
+final, trajectory = jax.block_until_ready(integrate_fn(final))
+trajectory_dict, _ = di.as_dict(trajectory)
+u, v = di.vor_div_to_uv_nodal(coords.horizontal, trajectory.vorticity,
+                              trajectory.divergence)
+trajectory_dict.update({"u": u, "v": v})
+f0 = di.maybe_to_nodal(trajectory_dict, coords=coords)
+temperature = di.temperature_variation_to_absolute(f0["temperature_variation"], ref_temps)
+plt.contourf(temperature[-1, 22, :, :])
 plt.savefig("h.12.png")
 plt.close()

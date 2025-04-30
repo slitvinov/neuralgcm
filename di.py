@@ -1828,6 +1828,8 @@ def data_to_xarray(data, *, coords, times):
     additional_coords = {}
     if coords.vertical.layers != 1:
         additional_coords["surface"] = np.ones(1)
+    else:
+        assert False
     all_coords, shape_to_dims = _infer_dims_shape_and_coords(
         coords, times, None, additional_coords)
     dims_in_state = set()

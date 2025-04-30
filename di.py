@@ -1773,12 +1773,7 @@ def _maybe_update_shape_and_dim_with_realization_time_sample(
     return shape, dims
 
 
-def _infer_dims_shape_and_coords(
-    coords,
-    times,
-    sample_ids,
-    additional_coords,
-):
+def _infer_dims_shape_and_coords(coords, times, sample_ids, additional_coords):
     lon_k, lat_k = coords.horizontal.modal_axes
     lon, sin_lat = coords.horizontal.nodal_axes
     all_xr_coords = {

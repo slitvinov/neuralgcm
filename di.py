@@ -618,15 +618,13 @@ class CoordinateSystem:
         return (1, ) + self.horizontal.nodal_shape
 
 def maybe_to_nodal(fields, coords):
-    def to_nodal_fn(x):
-        return coords.horizontal.to_nodal(x)
     nodal_shape = coords.horizontal.nodal_shape
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + nodal_shape)
     scalar_shape_fn = lambda x: np.array([], dtype=int)
     nodal_shape = tree_map_over_nonscalars(array_shape_fn,
                                            fields,
                                            scalar_fn=scalar_shape_fn)
-    fn = lambda x, nodal: x if x.shape == tuple(nodal) else to_nodal_fn(x)
+    fn = lambda x, nodal: x if x.shape == tuple(nodal) else coords.horizontal.to_nodal(x)
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)
 
 

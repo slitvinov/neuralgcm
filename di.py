@@ -1110,8 +1110,6 @@ class PrimitiveEquations(ImplicitExplicitODE):
     reference_temperature: Any
     orography: Any
     coords: Any
-    vertical_advection: Any = dataclasses.field(
-        default=centered_vertical_advection)
 
     @property
     def coriolis_parameter(self):
@@ -1123,7 +1121,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
         return self.reference_temperature[..., np.newaxis, np.newaxis]
 
     def _vertical_tendency(self, w, x):
-        return self.vertical_advection(w, x, self.coords.vertical)
+        return centered_vertical_advection(w, x, self.coords.vertical)
 
     def _t_omega_over_sigma_sp(self, temperature_field, g_term,
                                v_dot_grad_log_sp):

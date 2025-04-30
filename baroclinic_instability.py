@@ -201,13 +201,11 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(steady_state))
 trajectory = jax.device_get(trajectory)
-times = save_every * np.arange(outer_steps)
 trajectory_dict, _ = di.as_dict(trajectory)
 u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
 f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
-x1 = di.data_to_xarray(f1, coords=coords, times=times)
 perturbation = baroclinic_perturbation_jw(coords)
 state = steady_state + perturbation
 save_every = 2 * units.hour
@@ -218,7 +216,6 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
-times = (save_every * np.arange(outer_steps)).to(units.s)
 trajectory_dict, _ = di.as_dict(trajectory)
 u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)

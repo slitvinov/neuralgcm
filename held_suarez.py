@@ -91,12 +91,6 @@ class HeldSuarezForcing:
             log_surface_pressure=log_surface_pressure_tendency,
         )
 
-
-def linspace_step(start, stop, step):
-    num = round((stop - start) / step) + 1
-    return np.linspace(start, stop, num)
-
-
 layers = 24
 coords = di.CoordinateSystem(
     horizontal=di.Grid.T42(),

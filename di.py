@@ -20,10 +20,8 @@ RADIUS = 6.37122e6 * units.m
 ANGULAR_VELOCITY = 7.292e-5 / units.s
 GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
 ISOBARIC_HEAT_CAPACITY = 1004 * units.J / units.kilogram / units.degK
-WATER_VAPOR_CP = 1859 * units.J / units.kilogram / units.degK
 KAPPA = 2 / 7 * units.dimensionless
 IDEAL_GAS_CONSTANT = ISOBARIC_HEAT_CAPACITY * KAPPA
-IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 class Scale:

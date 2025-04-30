@@ -207,7 +207,6 @@ trajectory_dict, _ = di.as_dict(trajectory)
 u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
-f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
 perturbation = baroclinic_perturbation_jw(coords)
 state = steady_state + perturbation
 save_every = 2 * units.hour

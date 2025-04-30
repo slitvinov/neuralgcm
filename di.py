@@ -1077,7 +1077,6 @@ def get_temperature_implicit(
     divergence,
     coordinates,
     reference_temperature,
-    kappa,
 ):
     weights = -get_temperature_implicit_weights(coordinates,
                                                 reference_temperature)
@@ -1311,7 +1310,6 @@ class PrimitiveEquations(ImplicitExplicitODE):
             state.divergence,
             self.coords.vertical,
             self.reference_temperature,
-            kappa,
         )
         log_surface_pressure_implicit = -_vertical_matvec(
             self.coords.vertical.layer_thickness[np.newaxis], state.divergence)

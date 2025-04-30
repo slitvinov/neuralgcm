@@ -573,12 +573,7 @@ def add_constant(x: jnp.ndarray, c):
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
 
 
-def get_cos_lat_vector(
-    vorticity,
-    divergence,
-    grid: Grid,
-    clip: bool = True,
-):
+def get_cos_lat_vector(vorticity, divergence, grid, clip=True):
     stream_function = grid.inverse_laplacian(vorticity)
     velocity_potential = grid.inverse_laplacian(divergence)
     return jax.tree_util.tree_map(
@@ -603,12 +598,11 @@ def uv_nodal_to_vor_div_modal(
 
 
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
-def vor_div_to_uv_nodal(grid, vorticity, divergence, clip=True):
-    assert clip == True
+def vor_div_to_uv_nodal(grid, vorticity, divergence):
     u_cos_lat, v_cos_lat = get_cos_lat_vector(vorticity,
                                               divergence,
                                               grid,
-                                              clip=clip)
+                                              clip=True)
     u_nodal = grid.to_nodal(u_cos_lat) / grid.cos_lat
     v_nodal = grid.to_nodal(v_cos_lat) / grid.cos_lat
     return u_nodal, v_nodal

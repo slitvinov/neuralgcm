@@ -1028,7 +1028,7 @@ def get_geopotential_weights(
     return ideal_gas_constant * weights
 
 
-def get_geopotential_diff(temperature, coordinates, ideal_gas_constant):
+def get_geopotential_diff(temperature, coordinates):
     weights = get_geopotential_weights(coordinates, ideal_gas_constant)
     return _vertical_matvec(weights, temperature)
 
@@ -1041,8 +1041,7 @@ def get_geopotential(
 ):
     surface_geopotential = orography * gravity_acceleration
     temperature = add_constant(temperature_variation, reference_temperature)
-    geopotential_diff = get_geopotential_diff(temperature, coordinates,
-                                              ideal_gas_constant)
+    geopotential_diff = get_geopotential_diff(temperature, coordinates)
     return surface_geopotential + geopotential_diff
 
 
@@ -1298,8 +1297,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
     def implicit_terms(self, state: State):
         geopotential_diff = get_geopotential_diff(
             state.temperature_variation,
-            self.coords.vertical,
-            ideal_gas_constant,
+            self.coords.vertical
         )
         rt_log_p = (ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)

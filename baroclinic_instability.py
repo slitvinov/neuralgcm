@@ -130,8 +130,8 @@ def baroclinic_perturbation_jw(
     lat_location=2 * np.pi / 9,
     perturbation_radius=0.1,
 ):
-    u_p = DEFAULT_SCALE.nondimensionalize(u_perturb)
-    a = radius
+    u_p = di.DEFAULT_SCALE.nondimensionalize(u_perturb)
+    a = di.radius
 
     def _get_vorticity_perturbation(lat, lon, sigma):
         del sigma

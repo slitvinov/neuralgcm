@@ -106,7 +106,7 @@ class Scale:
             units.dimensionless)
         return nondimensionalized.magnitude
 
-    def dimensionalize(self, value, unit: Unit):
+    def dimensionalize(self, value, unit):
         scaling_factor = self.scaling_factor(unit.dimensionality)
         dimensionalized = value * scaling_factor
         return dimensionalized.to(unit)

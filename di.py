@@ -875,7 +875,7 @@ class State:
     sim_time: Any = None
 
 
-def _asdict(state: State):
+def _asdict(state):
     return {
         field.name: getattr(state, field.name)
         for field in state.fields

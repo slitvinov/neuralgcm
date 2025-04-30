@@ -631,10 +631,7 @@ def get_nodal_shapes(
                                     scalar_fn=scalar_shape_fn)
 
 
-def maybe_to_nodal(
-    fields,
-    coords,
-):
+def maybe_to_nodal(fields, coords):
     nodal_shapes = get_nodal_shapes(fields, coords)
 
     def to_nodal_fn(x):

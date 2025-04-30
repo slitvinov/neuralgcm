@@ -162,9 +162,6 @@ class SigmaCoordinates:
         boundaries = np.linspace(0, 1, layers + 1, dtype=dtype)
         return cls(boundaries)
 
-    def asdict(self):
-        return {k: v.tolist() for k, v in dataclasses.asdict(self).items()}
-
     def __hash__(self):
         return hash(tuple(self.centers.tolist()))
 

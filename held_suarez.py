@@ -92,28 +92,6 @@ class HeldSuarezForcing:
         )
 
 
-def ds_held_suarez_forcing(coords):
-    grid = coords.horizontal
-    sigma = coords.vertical.centers
-    lon, _ = grid.nodal_mesh
-    surface_pressure = di.DEFAULT_SCALE.nondimensionalize(p0) * np.ones_like(
-        lon)
-    dims = ("sigma", "lon", "lat")
-    return xarray.Dataset(
-        data_vars={
-            "surface_pressure": (("lon", "lat"), surface_pressure),
-            "eq_temp": (dims, hs.equilibrium_temperature(surface_pressure)),
-            "kt": (dims, hs.kt()),
-            "kv": ("sigma", hs.kv()[:, 0, 0]),
-        },
-        coords={
-            "lon": grid.nodal_axes[0] * 180 / np.pi,
-            "lat": np.arcsin(grid.nodal_axes[1]) * 180 / np.pi,
-            "sigma": sigma,
-        },
-    )
-
-
 def linspace_step(start, stop, step):
     num = round((stop - start) / step) + 1
     return np.linspace(start, stop, num)

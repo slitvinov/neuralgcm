@@ -410,10 +410,6 @@ class Grid:
     def T170(cls, **kwargs):
         return cls.construct(max_wavenumber=170, gaussian_nodes=128, **kwargs)
 
-    def asdict(self):
-        items = dataclasses.asdict(self)
-        return items
-
     @functools.cached_property
     def spherical_harmonics(self):
         kwargs = dict()

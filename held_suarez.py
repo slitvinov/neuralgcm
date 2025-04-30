@@ -32,15 +32,15 @@ class HeldSuarezForcing:
     ):
         self.coords = coords
         self.reference_temperature = reference_temperature
-        self.p0 = DEFAULT_SCALE.nondimensionalize(p0)
+        self.p0 = di.DEFAULT_SCALE.nondimensionalize(p0)
         self.sigma_b = sigma_b
-        self.kf = DEFAULT_SCALE.nondimensionalize(kf)
-        self.ka = DEFAULT_SCALE.nondimensionalize(ka)
-        self.ks = DEFAULT_SCALE.nondimensionalize(ks)
-        self.minT = DEFAULT_SCALE.nondimensionalize(minT)
-        self.maxT = DEFAULT_SCALE.nondimensionalize(maxT)
-        self.dTy = DEFAULT_SCALE.nondimensionalize(dTy)
-        self.dThz = DEFAULT_SCALE.nondimensionalize(dThz)
+        self.kf = di.DEFAULT_SCALE.nondimensionalize(kf)
+        self.ka = di.DEFAULT_SCALE.nondimensionalize(ka)
+        self.ks = di.DEFAULT_SCALE.nondimensionalize(ks)
+        self.minT = di.DEFAULT_SCALE.nondimensionalize(minT)
+        self.maxT = di.DEFAULT_SCALE.nondimensionalize(maxT)
+        self.dTy = di.DEFAULT_SCALE.nondimensionalize(dTy)
+        self.dThz = di.DEFAULT_SCALE.nondimensionalize(dThz)
         self.sigma = self.coords.vertical.centers
         _, sin_lat = self.coords.horizontal.nodal_mesh
         self.lat = np.arcsin(sin_lat)

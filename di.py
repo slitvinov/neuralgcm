@@ -124,10 +124,9 @@ def as_dict(inputs):
     return inputs, from_dict_fn
 
 
-def _slice_shape_along_axis(x, axis, slice_width=1):
-    assert slice_width == 1
+def _slice_shape_along_axis(x, axis):
     x_shape = list(x.shape)
-    x_shape[axis] = slice_width
+    x_shape[axis] = 1
     return tuple(x_shape)
 
 

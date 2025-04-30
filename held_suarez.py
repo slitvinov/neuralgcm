@@ -249,33 +249,6 @@ data_array.isel(time=mask).mean(["lon", "time"]).plot.contour(x="lat",
 ax = plt.gca()
 ax.set_ylim((1, 0))
 mask = ds["time"] > start_time
-temperature = dimensionalize(ds["temperature"], units.degK)
-surface_pressure = dimensionalize(ds["surface_pressure"], units.pascal)
-pressure = ds.level * surface_pressure
-kappa = di.KAPPA
-potential_temperature = temperature * (pressure / p0)**-kappa
-levels = linspace_step(260, 325, 5)
-levels = np.concatenate(
-    [levels, np.array([350, 400, 450, 500, 550, 600])], axis=0)
-p = (potential_temperature.isel(time=mask).mean(["lon", "time"
-                                                 ]).plot.contour(x="lat",
-                                                                 y="level",
-                                                                 levels=levels,
-                                                                 size=5,
-                                                                 aspect=1.5))
-ax = plt.gca()
-ax.set_ylim((1, 0))
-mask = ds["time"] > start_time
-mask = ds["time"] > start_time
-data_array = ds["u"]
-data_array2 = ds["v"]
-data_array = dimensionalize(data_array, units.meter / units.s)
-data_array2 = dimensionalize(data_array2, units.meter / units.s)
-mean_u = data_array.isel(time=mask).mean(["time"])
-zonal_u = data_array.isel(time=mask)
-mean_v = data_array2.isel(time=mask).mean(["time"])
-zonal_v = data_array2.isel(time=mask)
-eke = (zonal_u - mean_u)**2 + (zonal_v - mean_v)**2
 dt_si = 10 * units.minute
 save_every = 6 * units.hours
 total_time = 1 * units.week

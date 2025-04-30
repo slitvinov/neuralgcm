@@ -10,7 +10,6 @@ import pint
 import scipy
 import scipy.special as sps
 import tree_math
-import xarray
 
 tree_map = jax.tree_util.tree_map
 einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)

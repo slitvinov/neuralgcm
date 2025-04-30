@@ -164,8 +164,6 @@ def nodal_prognostics_and_diagnostics(state):
             eq.reference_temperature,
             orography,
             model_coords.vertical,
-            di.gravity_acceleration,
-            di.ideal_gas_constant,
         ))
     vor_nodal = coords.to_nodal(state.vorticity)
     div_nodal = coords.to_nodal(state.divergence)

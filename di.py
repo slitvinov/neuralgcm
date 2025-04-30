@@ -1038,8 +1038,6 @@ def get_geopotential(
     reference_temperature,
     orography,
     coordinates,
-    gravity_acceleration,
-    ideal_gas_constant,
 ):
     surface_geopotential = orography * gravity_acceleration
     temperature = add_constant(temperature_variation, reference_temperature)

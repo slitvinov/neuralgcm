@@ -285,12 +285,6 @@ def real_basis_derivative(u, /, axis=-1):
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
-def quadrature_nodes(nodes):
-    xs = np.linspace(0, 2 * np.pi, nodes, endpoint=False)
-    weights = 2 * np.pi / nodes
-    return xs, weights
-
-
 @dataclasses.dataclass
 class _SphericalHarmonicBasis:
     f: np.ndarray
@@ -307,7 +301,7 @@ class RealSphericalHarmonics:
 
     @functools.cached_property
     def nodal_axes(self):
-        longitude, _ = quadrature_nodes(self.longitude_nodes)
+        longitude = np.linspace(0, 2 * np.pi, self.longitude_nodes, endpoint=False)
         sin_latitude, _ = sps.roots_legendre(self.latitude_nodes)
         return longitude, sin_latitude
 
@@ -342,7 +336,7 @@ class RealSphericalHarmonics:
             wavenumbers=self.longitude_wavenumbers,
             nodes=self.longitude_nodes,
         )
-        _, wf = quadrature_nodes(self.longitude_nodes)
+        wf = 2 * np.pi / self.longitude_nodes
         x, wp = sps.roots_legendre(self.latitude_nodes)
         w = wf * wp
         p = evaluate(n_m=self.longitude_wavenumbers,

@@ -584,12 +584,7 @@ def get_cos_lat_vector(vorticity, divergence, grid, clip=True):
 
 
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
-def uv_nodal_to_vor_div_modal(
-    grid: Grid,
-    u_nodal,
-    v_nodal,
-    clip: bool = True,
-):
+def uv_nodal_to_vor_div_modal(grid, u_nodal, v_nodal, clip=True):
     u_over_cos_lat = grid.to_modal(u_nodal / grid.cos_lat)
     v_over_cos_lat = grid.to_modal(v_nodal / grid.cos_lat)
     vorticity = grid.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
@@ -1115,17 +1110,13 @@ def _get_implicit_term_matrix(eta, coords, reference_temperature):
     return np.concatenate((row0, row1, row2), axis=1)
 
 
-def div_sec_lat(m_component, n_component, grid: Grid):
+def div_sec_lat(m_component, n_component, grid):
     m_component = grid.to_modal(m_component * grid.sec2_lat)
     n_component = grid.to_modal(n_component * grid.sec2_lat)
     return grid.div_cos_lat((m_component, n_component), clip=False)
 
 
-def truncated_modal_orography(
-    orography,
-    coords,
-    wavenumbers_to_clip: int = 1,
-):
+def truncated_modal_orography(orography, coords, wavenumbers_to_clip = 1):
     grid = coords.horizontal
     return grid.clip_wavenumbers(grid.to_modal(orography),
                                  n=wavenumbers_to_clip)
@@ -1133,7 +1124,7 @@ def truncated_modal_orography(
 
 @dataclasses.dataclass
 class PrimitiveEquations(ImplicitExplicitODE):
-    reference_temperature: np.ndarray
+    reference_temperature: Any
     orography: Any
     coords: Any
     vertical_matmul_method: Any = dataclasses.field(default=None)

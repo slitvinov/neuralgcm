@@ -26,8 +26,8 @@ steady_state_dict, _ = di.as_dict(steady_state)
 u, v = di.vor_div_to_uv_nodal(grid, steady_state.vorticity,
                               steady_state.divergence)
 steady_state_dict.update({"u": u, "v": v, "z_surf": orography})
-nodal_steady_state_fields = di.maybe_to_nodal(steady_state_dict, coords=coords)
-initial_state_ds = di.data_to_xarray(nodal_steady_state_fields,
+f0 = di.maybe_to_nodal(steady_state_dict, coords=coords)
+initial_state_ds = di.data_to_xarray(f0,
                                      coords=coords,
                                      times=None)
 temperature = di.temperature_variation_to_absolute(
@@ -84,8 +84,8 @@ trajectory_dict, _ = di.as_dict(trajectory)
 u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
-nodal_trajectory_fields = di.maybe_to_nodal(trajectory_dict, coords=coords)
-trajectory_ds = di.data_to_xarray(nodal_trajectory_fields,
+f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
+trajectory_ds = di.data_to_xarray(f1,
                                   coords=coords,
                                   times=times)
 trajectory_ds["surface_pressure"] = np.exp(
@@ -139,8 +139,8 @@ trajectory_dict, _ = di.as_dict(trajectory)
 u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
-nodal_trajectory_fields = di.maybe_to_nodal(trajectory_dict, coords=coords)
-trajectory_ds = di.data_to_xarray(nodal_trajectory_fields,
+f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
+trajectory_ds = di.data_to_xarray(f1,
                                   coords=coords,
                                   times=times)
 trajectory_ds["surface_pressure"] = np.exp(

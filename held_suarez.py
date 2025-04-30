@@ -200,10 +200,7 @@ integrate_fn = jax.jit(
 times = save_every * np.arange(0, outer_steps)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 
-ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
 hs = HeldSuarezForcing(coords=coords, reference_temperature=ref_temps, p0=p0)
-ds = ds_held_suarez_forcing(coords)
-kv = ds["kv"]
 temperature = dimensionalize(ds["eq_temp"], units.degK)
 surface_pressure = dimensionalize(ds["surface_pressure"], units.pascal)
 pressure = ds.sigma * surface_pressure

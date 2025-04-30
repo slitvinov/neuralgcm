@@ -618,12 +618,12 @@ class CoordinateSystem:
         return (1, ) + self.horizontal.nodal_shape
 
 
-def get_nodal_shapes(inputs, coords):
+def get_nodal_shapes(fields, coords):
     nodal_shape = coords.horizontal.nodal_shape
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + nodal_shape)
     scalar_shape_fn = lambda x: np.array([], dtype=int)
     return tree_map_over_nonscalars(array_shape_fn,
-                                    inputs,
+                                    fields,
                                     scalar_fn=scalar_shape_fn)
 
 

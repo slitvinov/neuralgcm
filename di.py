@@ -65,8 +65,6 @@ angular_velocity = DEFAULT_SCALE.nondimensionalize(ANGULAR_VELOCITY)
 gravity_acceleration = DEFAULT_SCALE.nondimensionalize(
     GRAVITY_ACCELERATION)
 ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT)
-water_vapor_gas_constant = DEFAULT_SCALE.nondimensionalize(
-    IDEAL_GAS_CONSTANT_H20)
 water_vapor_isobaric_heat_capacity = DEFAULT_SCALE.nondimensionalize(
     WATER_VAPOR_CP)
 kappa = DEFAULT_SCALE.nondimensionalize(KAPPA)

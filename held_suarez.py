@@ -427,7 +427,3 @@ data_array = ds["temperature"]
 data_array.thin(time=4).isel(level=-10).plot(x="lon", y="lat", col="time")
 plt.savefig("h.12.png")
 plt.close()
-data_array = ds["vorticity"]
-data_array.thin(time=4).isel(level=-5).plot(x="lon", y="lat", col="time")
-plt.savefig("h.13.png")
-plt.close()

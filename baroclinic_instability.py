@@ -224,28 +224,9 @@ u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
 f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
-x1 = di.data_to_xarray(f1, coords=coords, times=times)
-temperature = di.temperature_variation_to_absolute(
-    x1.temperature_variation.data, ref_temps)
-x1 = x1.assign(temperature=(x1.temperature_variation.dims, temperature))
-temp_array = x1["temperature"]
+temperature = di.temperature_variation_to_absolute(f1["temperature_variation"], ref_temps)
 levels = [(220 + 10 * i) for i in range(10)]
-(temp_array.sel({
-    "lat":
-    slice(0, 90),
-    "lon":
-    slice(45, 360),
-    "time": [
-        (4 * units.day).to(units.s).m,
-        (6 * units.day).to(units.s).m,
-        (8 * units.day).to(units.s).m,
-        (10 * units.day).to(units.s).m,
-    ],
-}).isel(level=22).plot.contourf(x="lon",
-                                y="lat",
-                                row="time",
-                                levels=levels,
-                                cmap=plt.cm.Spectral_r))
+plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
 fig = plt.gcf()
 fig.set_figwidth(12)
 plt.savefig("b.09.png")

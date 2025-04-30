@@ -1040,13 +1040,12 @@ def get_geopotential_diff(temperature, coordinates, ideal_gas_constant):
 
 
 def get_geopotential(
-    temperature_variation: Any,
-    reference_temperature: Any,
-    orography: Any,
-    coordinates: Any,
-    gravity_acceleration: Any,
-    ideal_gas_constant: Any,
-    sharding: Any = None,
+    temperature_variation,
+    reference_temperature,
+    orography,
+    coordinates,
+    gravity_acceleration,
+    ideal_gas_constant,
 ):
     surface_geopotential = orography * gravity_acceleration
     temperature = add_constant(temperature_variation, reference_temperature)

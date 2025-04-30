@@ -10,7 +10,8 @@ units = di.units
 
 def dimensionalize(x, unit):
     """Dimensionalizes `xarray.DataArray`s."""
-    dimensionalize = functools.partial(di.DEFAULT_SCALE.dimensionalize, unit=unit)
+    dimensionalize = functools.partial(di.DEFAULT_SCALE.dimensionalize,
+                                       unit=unit)
     return xarray.apply_ufunc(dimensionalize, x)
 
 
@@ -128,7 +129,8 @@ def ds_held_suarez_forcing(coords):
     grid = coords.horizontal
     sigma = coords.vertical.centers
     lon, _ = grid.nodal_mesh
-    surface_pressure = di.DEFAULT_SCALE.nondimensionalize(p0) * np.ones_like(lon)
+    surface_pressure = di.DEFAULT_SCALE.nondimensionalize(p0) * np.ones_like(
+        lon)
     dims = ("sigma", "lon", "lat")
     return xarray.Dataset(
         data_vars={

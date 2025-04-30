@@ -139,7 +139,7 @@ eq = di.PrimitiveEquations(ref_temps, orography, model_coords, physics_specs)
 res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = di.DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
-                                      units.hours)
+                                         units.hours)
 hyperdiffusion_filter = di.horizontal_diffusion_step_filter(
     model_coords.horizontal, dt=dt, tau=tau, order=2)
 time_span = cutoff_period = di.DEFAULT_SCALE.nondimensionalize(dfi_timescale)

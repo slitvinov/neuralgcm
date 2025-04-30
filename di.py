@@ -1010,19 +1010,19 @@ def compute_vertical_velocity(state, coords):
 class PrimitiveEquationsSpecs:
     radius = DEFAULT_SCALE.nondimensionalize(RADIUS)
     angular_velocity = DEFAULT_SCALE.nondimensionalize(ANGULAR_VELOCITY)
-    gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
+    gravity_acceleration = DEFAULT_SCALE.nondimensionalize(
+        GRAVITY_ACCELERATION)
     ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT)
-    water_vapor_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT_H20)
-    water_vapor_isobaric_heat_capacity = DEFAULT_SCALE.nondimensionalize(WATER_VAPOR_CP)
+    water_vapor_gas_constant = DEFAULT_SCALE.nondimensionalize(
+        IDEAL_GAS_CONSTANT_H20)
+    water_vapor_isobaric_heat_capacity = DEFAULT_SCALE.nondimensionalize(
+        WATER_VAPOR_CP)
     kappa = DEFAULT_SCALE.nondimensionalize(KAPPA)
-
-    @property
-    def R(self):
-        return self.ideal_gas_constant
 
     @property
     def g(self):
         return self.gravity_acceleration
+
 
 def get_sigma_ratios(coordinates):
     alpha = np.diff(np.log(coordinates.centers), append=0) / 2
@@ -1222,7 +1222,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
         d𝜎_dt = aux_state.sigma_dot_full
         sigma_dot_u = -self._vertical_tendency(d𝜎_dt, u)
         sigma_dot_v = -self._vertical_tendency(d𝜎_dt, v)
-        rt = self.physics_specs.R * aux_state.temperature_variation
+        rt = self.physics_specs.ideal_gas_constant * aux_state.temperature_variation
         grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
         vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat
         vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat
@@ -1320,7 +1320,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
         geopotential_diff = get_geopotential_diff(
             state.temperature_variation,
             self.coords.vertical,
-            self.physics_specs.R,
+            self.physics_specs.ideal_gas_constant,
         )
         rt_log_p = (self.physics_specs.ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)
@@ -1352,7 +1352,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
             self.coords,
             self.reference_temperature,
             self.physics_specs.kappa,
-            self.physics_specs.R,
+            self.physics_specs.ideal_gas_constant,
         )
         assert implicit_matrix.dtype == np.float64
         layers = self.coords.vertical.layers
@@ -1483,7 +1483,7 @@ def steady_state_jw(
     gamma = DEFAULT_SCALE.nondimensionalize(gamma)
     a = physics_specs.radius
     g = physics_specs.g
-    r_gas = physics_specs.R
+    r_gas = physics_specs.ideal_gas_constant
     omega = physics_specs.angular_velocity
 
     def _get_reference_temperature(sigma):

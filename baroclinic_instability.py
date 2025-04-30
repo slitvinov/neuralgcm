@@ -27,19 +27,19 @@ u, v = di.vor_div_to_uv_nodal(grid, steady_state.vorticity,
                               steady_state.divergence)
 steady_state_dict.update({"u": u, "v": v, "z_surf": orography})
 f0 = di.maybe_to_nodal(steady_state_dict, coords=coords)
-initial_state_ds = di.data_to_xarray(f0,
+x0 = di.data_to_xarray(f0,
                                      coords=coords,
                                      times=None)
 temperature = di.temperature_variation_to_absolute(
-    initial_state_ds.temperature_variation.data, ref_temps)
-initial_state_ds = initial_state_ds.assign(
-    temperature=(initial_state_ds.temperature_variation.dims, temperature))
-phi = initial_state_ds["z_surf"] * di.gravity_acceleration
+    x0.temperature_variation.data, ref_temps)
+x0 = x0.assign(
+    temperature=(x0.temperature_variation.dims, temperature))
+phi = x0["z_surf"] * di.gravity_acceleration
 phi_si = dimensionalize(phi, units.m**2 / units.s**2)
 phi_si.isel(lon=0).plot(x="lat")
 plt.savefig("b.00.png")
 plt.close()
-u_array = initial_state_ds["u"]
+u_array = x0["u"]
 u_array_si = dimensionalize(u_array, units.m / units.s)
 levels = [3 * i for i in range(1, 12)]
 u_array_si.isel(lon=0).plot.contour(x="lat", y="level", levels=levels)
@@ -47,7 +47,7 @@ ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.savefig("b.01.png")
 plt.close()
-t_array = initial_state_ds["temperature"]
+t_array = x0["temperature"]
 t_array_si = dimensionalize(t_array, units.degK)
 levels = np.linspace(210, 305, 1 + (305 - 210) // 5)
 t_array_si.isel(lon=0).plot.contour(x="lat", y="level", levels=levels)
@@ -55,7 +55,7 @@ ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.savefig("b.02.png")
 plt.close()
-voriticty_array = initial_state_ds["vorticity"]
+voriticty_array = x0["vorticity"]
 voriticty_array_si = dimensionalize(voriticty_array, 1 / units.s)
 levels = np.linspace(-1.75e-5, 1.75e-5, 15)
 voriticty_array_si.isel(lon=0).plot.contour(x="lat", y="level", levels=levels)
@@ -85,22 +85,22 @@ u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
 f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
-trajectory_ds = di.data_to_xarray(f1,
+x1 = di.data_to_xarray(f1,
                                   coords=coords,
                                   times=times)
-trajectory_ds["surface_pressure"] = np.exp(
-    trajectory_ds.log_surface_pressure[:, 0, :, :])
+x1["surface_pressure"] = np.exp(
+    x1.log_surface_pressure[:, 0, :, :])
 temperature = di.temperature_variation_to_absolute(
-    trajectory_ds.temperature_variation.data, ref_temps)
-trajectory_ds = trajectory_ds.assign(
-    temperature=(trajectory_ds.temperature_variation.dims, temperature))
-data_array = trajectory_ds["vorticity"]
+    x1.temperature_variation.data, ref_temps)
+x1 = x1.assign(
+    temperature=(x1.temperature_variation.dims, temperature))
+data_array = x1["vorticity"]
 data_array.isel(lon=0).thin(time=12).plot.contour(x="lat",
                                                   y="level",
                                                   col="time")
 ax = plt.gca()
 ax.set_ylim((1, 0))
-data_array = trajectory_ds[
+data_array = x1[
     "surface_pressure"] / di.DEFAULT_SCALE.nondimensionalize(
         1e5 * units.pascal)
 data_array.max(["lon"]).plot(x="time", hue="lat")
@@ -108,7 +108,7 @@ ax = plt.gca()
 ax.legend().remove()
 plt.savefig("b.04.png")
 plt.close()
-t_array = trajectory_ds["temperature"]
+t_array = x1["temperature"]
 t_array_si = dimensionalize(t_array, units.degK)
 levels = np.linspace(210, 305, 1 + (305 - 210) // 5)
 t_array_si.isel(lon=0).thin(time=12).plot.contour(x="lat",
@@ -119,7 +119,7 @@ ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.savefig("b.05.png")
 plt.close()
-data_array = trajectory_ds["divergence"]
+data_array = x1["divergence"]
 data_array.mean(["lat", "lon"]).plot(x="time", hue="level")
 ax = plt.gca()
 plt.savefig("b.06.png")
@@ -140,16 +140,16 @@ u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
 f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
-trajectory_ds = di.data_to_xarray(f1,
+x1 = di.data_to_xarray(f1,
                                   coords=coords,
                                   times=times)
-trajectory_ds["surface_pressure"] = np.exp(
-    trajectory_ds.log_surface_pressure[:, 0, :, :])
+x1["surface_pressure"] = np.exp(
+    x1.log_surface_pressure[:, 0, :, :])
 temperature = di.temperature_variation_to_absolute(
-    trajectory_ds.temperature_variation.data, ref_temps)
-trajectory_ds = trajectory_ds.assign(
-    temperature=(trajectory_ds.temperature_variation.dims, temperature))
-data_array = trajectory_ds[
+    x1.temperature_variation.data, ref_temps)
+x1 = x1.assign(
+    temperature=(x1.temperature_variation.dims, temperature))
+data_array = x1[
     "surface_pressure"] / di.DEFAULT_SCALE.nondimensionalize(
         1e5 * units.pascal)
 levels = [(992 + 2 * i) / 1000 for i in range(8)]
@@ -168,7 +168,7 @@ fig = plt.gcf()
 fig.set_figwidth(10)
 plt.savefig("b.07.png")
 plt.close()
-data_array = trajectory_ds[
+data_array = x1[
     "surface_pressure"] / di.DEFAULT_SCALE.nondimensionalize(
         1e5 * units.pascal)
 levels = [(930 + 10 * i) / 1000 for i in range(10)]
@@ -187,7 +187,7 @@ fig = plt.gcf()
 fig.set_figwidth(10)
 plt.savefig("b.08.png")
 plt.close()
-temp_array = trajectory_ds["temperature"]
+temp_array = x1["temperature"]
 levels = [(220 + 10 * i) for i in range(10)]
 target_pressure = 0.85 * di.DEFAULT_SCALE.nondimensionalize(1e5 * units.pascal)
 (temp_array.sel({
@@ -210,7 +210,7 @@ fig = plt.gcf()
 fig.set_figwidth(12)
 plt.savefig("b.09.png")
 plt.close()
-voriticty_array = trajectory_ds["vorticity"]
+voriticty_array = x1["vorticity"]
 target_pressure = 0.85 * di.DEFAULT_SCALE.nondimensionalize(1e5 * units.pascal)
 voriticty_array_si = dimensionalize(voriticty_array, 1 / units.s)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 5))

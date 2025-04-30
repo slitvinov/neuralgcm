@@ -186,7 +186,6 @@ def cumulative_sigma_integral(
     x,
     coordinates,
     axis=-3,
-    downward=True,
 ):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness

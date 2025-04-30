@@ -199,9 +199,9 @@ ax = plt.gca()
 ax.legend().remove()
 plt.savefig("h.03.png")
 plt.close()
-hs = di.HeldSuarezForcing(coords=coords,
-                          reference_temperature=ref_temps,
-                          p0=p0)
+hs = HeldSuarezForcing(coords=coords,
+                       reference_temperature=ref_temps,
+                       p0=p0)
 
 
 def ds_held_suarez_forcing(coords):

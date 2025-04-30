@@ -1401,10 +1401,9 @@ def _preserves_shape(target, scaling):
     return target_shape == np.broadcast_shapes(target_shape, scaling.shape)
 
 
-def _make_filter_fn(scaling, name=None):
+def _make_filter_fn(scaling):
     rescale = lambda x: scaling * x if _preserves_shape(x, scaling) else x
-    return functools.partial(jax.tree_util.tree_map,
-                             jax.named_call(rescale, name=name))
+    return functools.partial(jax.tree_util.tree_map, rescale)
 
 
 def exponential_filter(
@@ -1419,7 +1418,7 @@ def exponential_filter(
     c = cutoff
     p = order
     scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
-    return _make_filter_fn(scaling, "exponential_filter")
+    return _make_filter_fn(scaling)
 
 
 def horizontal_diffusion_filter(
@@ -1429,7 +1428,7 @@ def horizontal_diffusion_filter(
 ):
     eigenvalues = grid.laplacian_eigenvalues
     scaling = jnp.exp(-scale * (-eigenvalues)**order)
-    return _make_filter_fn(scaling, "horizontal_diffusion_filter")
+    return _make_filter_fn(scaling)
 
 
 @dataclasses.dataclass(frozen=True)

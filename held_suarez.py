@@ -20,7 +20,7 @@ coords = di.CoordinateSystem(
     horizontal=di.Grid.T42(),
     vertical=di.SigmaCoordinates.equidistant(layers),
 )
-physics_specs = di.PrimitiveEquationsSpecs.from_si()
+physics_specs = di.PrimitiveEquationsSpecs()
 p0 = 100e3 * units.pascal
 p1 = 5e3 * units.pascal
 rng_key = jax.random.PRNGKey(0)

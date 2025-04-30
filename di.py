@@ -1008,13 +1008,13 @@ def compute_vertical_velocity(state, coords):
 
 @dataclasses.dataclass(frozen=True)
 class PrimitiveEquationsSpecs:
-    radius: Any
-    angular_velocity: Any
-    gravity_acceleration: Any
-    ideal_gas_constant: Any
-    water_vapor_gas_constant: Any
-    water_vapor_isobaric_heat_capacity: Any
-    kappa: Any
+    radius = DEFAULT_SCALE.nondimensionalize(RADIUS)
+    angular_velocity = DEFAULT_SCALE.nondimensionalize(ANGULAR_VELOCITY)
+    gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
+    ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT)
+    water_vapor_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT_H20)
+    water_vapor_isobaric_heat_capacity = DEFAULT_SCALE.nondimensionalize(WATER_VAPOR_CP)
+    kappa = DEFAULT_SCALE.nondimensionalize(KAPPA)
 
     @property
     def R(self):
@@ -1023,19 +1023,6 @@ class PrimitiveEquationsSpecs:
     @property
     def g(self):
         return self.gravity_acceleration
-
-    @classmethod
-    def from_si(cls):
-        return cls(
-            DEFAULT_SCALE.nondimensionalize(RADIUS),
-            DEFAULT_SCALE.nondimensionalize(ANGULAR_VELOCITY),
-            DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION),
-            DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT),
-            DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT_H20),
-            DEFAULT_SCALE.nondimensionalize(WATER_VAPOR_CP),
-            DEFAULT_SCALE.nondimensionalize(KAPPA),
-        )
-
 
 def get_sigma_ratios(coordinates):
     alpha = np.diff(np.log(coordinates.centers), append=0) / 2

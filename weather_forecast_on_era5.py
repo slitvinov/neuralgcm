@@ -100,7 +100,7 @@ sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
 sp_init_hpa = (ds_init.surface_pressure.transpose(
     "longitude", "latitude").data.to("hPa").magnitude)
-physics_specs = di.PrimitiveEquationsSpecs.from_si()
+physics_specs = di.PrimitiveEquationsSpecs()
 nodal_inputs = di.regrid_hybrid_to_sigma(
     fields=model_level_inputs,
     hybrid_coords=source_vertical,

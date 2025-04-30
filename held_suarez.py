@@ -66,7 +66,7 @@ class HeldSuarezForcing:
         return jnp.maximum(self.minT, temperature)
 
     def explicit_terms(self, state):
-        aux_state = compute_diagnostic_state(state=state, coords=self.coords)
+        aux_state = di.compute_diagnostic_state(state=state, coords=self.coords)
         nodal_velocity_tendency = jax.tree.map(
             lambda x: -self.kv() * x / self.coords.horizontal.cos_lat**2,
             aux_state.cos_lat_u,

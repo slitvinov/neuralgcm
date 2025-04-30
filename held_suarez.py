@@ -171,7 +171,7 @@ initial_state_fn, aux_features = (isothermal_rest_atmosphere(coords=coords,
 initial_state = initial_state_fn(rng_key)
 ref_temps = aux_features["ref_temperatures"]
 orography = di.truncated_modal_orography(aux_features["orography"], coords)
-initial_state_dict, _ = di.as_dict(initial_state)
+initial_state_dict = initial_state.asdict()
 u, v = di.vor_div_to_uv_nodal(coords.horizontal, initial_state.vorticity,
                               initial_state.divergence)
 initial_state_dict.update({"u": u, "v": v, "orography": orography})
@@ -244,7 +244,7 @@ integrate_fn = jax.jit(
     ))
 times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(final))
-trajectory_dict, _ = di.as_dict(trajectory)
+trajectory_dict = trajectory.asdict()
 u, v = di.vor_div_to_uv_nodal(coords.horizontal, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})

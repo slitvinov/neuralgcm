@@ -115,14 +115,6 @@ def tree_map_over_nonscalars(f, x, *, scalar_fn=lambda x: x):
 
     return tree_map(g, x)
 
-
-def as_dict(inputs):
-    return_type = type(inputs)
-    inputs = inputs.asdict()
-    from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
-    return inputs, from_dict_fn
-
-
 def _slice_shape_along_axis(x, axis):
     x_shape = list(x.shape)
     x_shape[axis] = 1

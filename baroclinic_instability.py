@@ -168,7 +168,7 @@ def baroclinic_perturbation_jw(
     ])
     modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
     modal_divergence = coords.horizontal.to_modal(nodal_divergence)
-    state = State(
+    state = di.State(
         vorticity=modal_vorticity,
         divergence=modal_divergence,
         temperature_variation=np.zeros_like(modal_vorticity),

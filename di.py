@@ -617,13 +617,16 @@ class CoordinateSystem:
     def surface_nodal_shape(self):
         return (1, ) + self.horizontal.nodal_shape
 
+
 def maybe_to_nodal(fields, coords):
-    array_shape_fn = lambda x: np.asarray(x.shape[:-2] + coords.horizontal.nodal_shape)
+    array_shape_fn = lambda x: np.asarray(x.shape[:-2] + coords.horizontal.
+                                          nodal_shape)
     scalar_shape_fn = lambda x: np.array([], dtype=int)
     nodal_shapes = tree_map_over_nonscalars(array_shape_fn,
                                             fields,
                                             scalar_fn=scalar_shape_fn)
-    fn = lambda x, nodal: x if x.shape == tuple(nodal) else coords.horizontal.to_nodal(x)
+    fn = lambda x, nodal: x if x.shape == tuple(
+        nodal) else coords.horizontal.to_nodal(x)
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)
 
 
@@ -1484,6 +1487,7 @@ def regrid_hybrid_to_sigma(
 
     return tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
+
 
 def temperature_variation_to_absolute(
     temperature_variation,

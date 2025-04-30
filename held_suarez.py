@@ -1,9 +1,10 @@
+import di
 import functools
 import jax
-import numpy as np
+import jax.numpy as jnp
 import matplotlib.pyplot as plt
+import numpy as np
 import xarray
-import di
 
 units = di.units
 
@@ -290,7 +291,7 @@ inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
-hs_forcing = di.HeldSuarezForcing(coords=coords,
+hs_forcing = HeldSuarezForcing(coords=coords,
                                   reference_temperature=ref_temps,
                                   p0=p0)
 primitive_with_hs = di.compose_equations([primitive, hs_forcing])

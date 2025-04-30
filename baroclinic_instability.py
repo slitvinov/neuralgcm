@@ -35,7 +35,7 @@ temperature = di.temperature_variation_to_absolute(
     initial_state_ds.temperature_variation.data, ref_temps)
 initial_state_ds = initial_state_ds.assign(
     temperature=(initial_state_ds.temperature_variation.dims, temperature))
-phi = initial_state_ds["z_surf"] * physics_specs.g
+phi = initial_state_ds["z_surf"] * physics_specs.gravity_acceleration
 phi_si = dimensionalize(phi, units.m**2 / units.s**2)
 phi_si.isel(lon=0).plot(x="lat")
 plt.savefig("b.00.png")

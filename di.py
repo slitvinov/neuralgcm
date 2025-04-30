@@ -1019,11 +1019,6 @@ class PrimitiveEquationsSpecs:
         WATER_VAPOR_CP)
     kappa = DEFAULT_SCALE.nondimensionalize(KAPPA)
 
-    @property
-    def g(self):
-        return self.gravity_acceleration
-
-
 def get_sigma_ratios(coordinates):
     alpha = np.diff(np.log(coordinates.centers), append=0) / 2
     alpha[-1] = -np.log(coordinates.centers[-1])
@@ -1207,7 +1202,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
             self.coords.horizontal.to_modal(kinetic))
 
     def orography_tendency(self):
-        return -self.physics_specs.g * self.coords.horizontal.laplacian(
+        return -self.physics_specs.gravity_acceleration * self.coords.horizontal.laplacian(
             self.orography)
 
     def curl_and_div_tendencies(

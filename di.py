@@ -1017,7 +1017,6 @@ def get_sigma_ratios(coordinates):
 
 def get_geopotential_weights(
     coordinates,
-    ideal_gas_constant,
 ):
     alpha = get_sigma_ratios(coordinates)
     weights = np.zeros([coordinates.layers, coordinates.layers])
@@ -1029,7 +1028,7 @@ def get_geopotential_weights(
 
 
 def get_geopotential_diff(temperature, coordinates):
-    weights = get_geopotential_weights(coordinates, ideal_gas_constant)
+    weights = get_geopotential_weights(coordinates)
     return _vertical_matvec(weights, temperature)
 
 
@@ -1093,7 +1092,7 @@ def _vertical_matvec_per_wavenumber(a, x):
 def _get_implicit_term_matrix(eta, coords, reference_temperature):
     eye = np.eye(coords.vertical.layers)[np.newaxis]
     lam = coords.horizontal.laplacian_eigenvalues
-    g = get_geopotential_weights(coords.vertical, ideal_gas_constant)
+    g = get_geopotential_weights(coords.vertical)
     r = ideal_gas_constant
     h = get_temperature_implicit_weights(coords.vertical,
                                          reference_temperature)

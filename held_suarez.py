@@ -175,8 +175,6 @@ initial_state_dict, _ = di.as_dict(initial_state)
 u, v = di.vor_div_to_uv_nodal(coords.horizontal, initial_state.vorticity,
                               initial_state.divergence)
 initial_state_dict.update({"u": u, "v": v, "orography": orography})
-nodal_steady_state_fields = di.maybe_to_nodal(initial_state_dict,
-                                              coords=coords)
 dt_si = 5 * units.minute
 save_every = 10 * units.minute
 total_time = 24 * units.hour

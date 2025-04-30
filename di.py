@@ -1049,7 +1049,6 @@ def get_geopotential(
 def get_temperature_implicit_weights(
     coordinates,
     reference_temperature,
-    kappa,
 ):
     p = np.tril(np.ones([coordinates.layers, coordinates.layers]))
     alpha = get_sigma_ratios(coordinates)[..., np.newaxis]
@@ -1081,7 +1080,7 @@ def get_temperature_implicit(
     kappa,
 ):
     weights = -get_temperature_implicit_weights(coordinates,
-                                                reference_temperature, kappa)
+                                                reference_temperature)
     return _vertical_matvec(weights, divergence)
 
 
@@ -1100,7 +1099,7 @@ def _get_implicit_term_matrix(eta, coords, reference_temperature, kappa,
     g = get_geopotential_weights(coords.vertical, ideal_gas_constant)
     r = ideal_gas_constant
     h = get_temperature_implicit_weights(coords.vertical,
-                                         reference_temperature, kappa)
+                                         reference_temperature)
     t = reference_temperature[:, np.newaxis]
     thickness = coords.vertical.layer_thickness[np.newaxis, np.newaxis, :]
     l = coords.horizontal.modal_shape[1]

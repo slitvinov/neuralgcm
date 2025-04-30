@@ -1,13 +1,9 @@
-import functools
 import jax
 import numpy as np
 import matplotlib.pyplot as plt
-import xarray
 import di
 
 units = di.units
-
-
 def steady_state_jw(
     coords,
     u0=35.0 * units.m / units.s,

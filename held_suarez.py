@@ -15,6 +15,7 @@ def dimensionalize(x, unit):
                                        unit=unit)
     return xarray.apply_ufunc(dimensionalize, x)
 
+
 class HeldSuarezForcing:
 
     def __init__(
@@ -66,7 +67,8 @@ class HeldSuarezForcing:
         return jnp.maximum(self.minT, temperature)
 
     def explicit_terms(self, state):
-        aux_state = di.compute_diagnostic_state(state=state, coords=self.coords)
+        aux_state = di.compute_diagnostic_state(state=state,
+                                                coords=self.coords)
         nodal_velocity_tendency = jax.tree.map(
             lambda x: -self.kv() * x / self.coords.horizontal.cos_lat**2,
             aux_state.cos_lat_u,
@@ -95,6 +97,58 @@ class HeldSuarezForcing:
             temperature_variation=temperature_tendency,
             log_surface_pressure=log_surface_pressure_tendency,
         )
+
+
+def trajectory_to_xarray(coords, trajectory, times):
+    trajectory_dict, _ = di.as_dict(trajectory)
+    u, v = di.vor_div_to_uv_nodal(coords.horizontal, trajectory.vorticity,
+                                  trajectory.divergence)
+    trajectory_dict.update({"u": u, "v": v})
+    nodal_trajectory_fields = di.maybe_to_nodal(trajectory_dict, coords=coords)
+    trajectory_ds = di.data_to_xarray(nodal_trajectory_fields,
+                                      coords=coords,
+                                      times=times)
+    trajectory_ds["surface_pressure"] = np.exp(
+        trajectory_ds.log_surface_pressure[:, 0, :, :])
+    temperature = di.temperature_variation_to_absolute(
+        trajectory_ds.temperature_variation.data, ref_temps)
+    trajectory_ds = trajectory_ds.assign(
+        temperature=(trajectory_ds.temperature_variation.dims, temperature))
+    total_layer_ke = coords.horizontal.integrate(u**2 + v**2)
+    total_ke_cumulative = di.cumulative_sigma_integral(total_layer_ke,
+                                                       coords.vertical,
+                                                       axis=-1)
+    total_ke = total_ke_cumulative[..., -1]
+    trajectory_ds = trajectory_ds.assign(total_kinetic_energy=(("time"),
+                                                               total_ke))
+    return trajectory_ds
+
+
+def ds_held_suarez_forcing(coords):
+    grid = coords.horizontal
+    sigma = coords.vertical.centers
+    lon, _ = grid.nodal_mesh
+    surface_pressure = di.DEFAULT_SCALE.nondimensionalize(p0) * np.ones_like(
+        lon)
+    dims = ("sigma", "lon", "lat")
+    return xarray.Dataset(
+        data_vars={
+            "surface_pressure": (("lon", "lat"), surface_pressure),
+            "eq_temp": (dims, hs.equilibrium_temperature(surface_pressure)),
+            "kt": (dims, hs.kt()),
+            "kv": ("sigma", hs.kv()[:, 0, 0]),
+        },
+        coords={
+            "lon": grid.nodal_axes[0] * 180 / np.pi,
+            "lat": np.arcsin(grid.nodal_axes[1]) * 180 / np.pi,
+            "sigma": sigma,
+        },
+    )
+
+
+def linspace_step(start, stop, step):
+    num = round((stop - start) / step) + 1
+    return np.linspace(start, stop, num)
 
 
 layers = 24
@@ -152,32 +206,6 @@ integrate_fn = jax.jit(
 times = save_every * np.arange(0, outer_steps)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 
-
-def trajectory_to_xarray(coords, trajectory, times):
-    trajectory_dict, _ = di.as_dict(trajectory)
-    u, v = di.vor_div_to_uv_nodal(coords.horizontal, trajectory.vorticity,
-                                  trajectory.divergence)
-    trajectory_dict.update({"u": u, "v": v})
-    nodal_trajectory_fields = di.maybe_to_nodal(trajectory_dict, coords=coords)
-    trajectory_ds = di.data_to_xarray(nodal_trajectory_fields,
-                                      coords=coords,
-                                      times=times)
-    trajectory_ds["surface_pressure"] = np.exp(
-        trajectory_ds.log_surface_pressure[:, 0, :, :])
-    temperature = di.temperature_variation_to_absolute(
-        trajectory_ds.temperature_variation.data, ref_temps)
-    trajectory_ds = trajectory_ds.assign(
-        temperature=(trajectory_ds.temperature_variation.dims, temperature))
-    total_layer_ke = coords.horizontal.integrate(u**2 + v**2)
-    total_ke_cumulative = di.cumulative_sigma_integral(total_layer_ke,
-                                                       coords.vertical,
-                                                       axis=-1)
-    total_ke = total_ke_cumulative[..., -1]
-    trajectory_ds = trajectory_ds.assign(total_kinetic_energy=(("time"),
-                                                               total_ke))
-    return trajectory_ds
-
-
 ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
 data_array = ds["surface_pressure"] - ds["surface_pressure"].isel(time=0)
 data_array_si = dimensionalize(data_array, units.pascal)
@@ -200,40 +228,9 @@ ax = plt.gca()
 ax.legend().remove()
 plt.savefig("h.03.png")
 plt.close()
-hs = HeldSuarezForcing(coords=coords,
-                       reference_temperature=ref_temps,
-                       p0=p0)
-
-
-def ds_held_suarez_forcing(coords):
-    grid = coords.horizontal
-    sigma = coords.vertical.centers
-    lon, _ = grid.nodal_mesh
-    surface_pressure = di.DEFAULT_SCALE.nondimensionalize(p0) * np.ones_like(
-        lon)
-    dims = ("sigma", "lon", "lat")
-    return xarray.Dataset(
-        data_vars={
-            "surface_pressure": (("lon", "lat"), surface_pressure),
-            "eq_temp": (dims, hs.equilibrium_temperature(surface_pressure)),
-            "kt": (dims, hs.kt()),
-            "kv": ("sigma", hs.kv()[:, 0, 0]),
-        },
-        coords={
-            "lon": grid.nodal_axes[0] * 180 / np.pi,
-            "lat": np.arcsin(grid.nodal_axes[1]) * 180 / np.pi,
-            "sigma": sigma,
-        },
-    )
-
+hs = HeldSuarezForcing(coords=coords, reference_temperature=ref_temps, p0=p0)
 
 ds = ds_held_suarez_forcing(coords)
-
-
-def linspace_step(start, stop, step):
-    num = round((stop - start) / step) + 1
-    return np.linspace(start, stop, num)
-
 
 kv = ds["kv"]
 kv_si = dimensionalize(kv, 1 / units.day)
@@ -292,8 +289,8 @@ outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 hs_forcing = HeldSuarezForcing(coords=coords,
-                                  reference_temperature=ref_temps,
-                                  p0=p0)
+                               reference_temperature=ref_temps,
+                               p0=p0)
 primitive_with_hs = di.compose_equations([primitive, hs_forcing])
 step_fn = di.imex_rk_sil3(primitive_with_hs, dt)
 filters = [

@@ -604,6 +604,7 @@ def uv_nodal_to_vor_div_modal(
 
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
 def vor_div_to_uv_nodal(grid, vorticity, divergence, clip=True):
+    assert clip == True
     u_cos_lat, v_cos_lat = get_cos_lat_vector(vorticity,
                                               divergence,
                                               grid,

@@ -142,7 +142,7 @@ def isothermal_rest_atmosphere(
         ])
         modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
         nodal_surface_pressure = _get_surface_pressure(lon, lat, rng_key)
-        return State(
+        return di.State(
             vorticity=modal_vorticity,
             divergence=jnp.zeros_like(modal_vorticity),
             temperature_variation=jnp.zeros_like(modal_vorticity),

@@ -10,8 +10,7 @@ layers = 24
 grid = di.Grid.T42()
 vertical_grid = di.SigmaCoordinates.equidistant(layers)
 coords = di.CoordinateSystem(grid, vertical_grid)
-physics_specs = di.PrimitiveEquationsSpecs()
-initial_state_fn, aux_features = di.steady_state_jw(coords, physics_specs)
+initial_state_fn, aux_features = di.steady_state_jw(coords)
 steady_state = initial_state_fn()
 ref_temps = aux_features["ref_temperatures"]
 orography = di.truncated_modal_orography(aux_features["orography"], coords)
@@ -35,7 +34,7 @@ temperature = di.temperature_variation_to_absolute(
     initial_state_ds.temperature_variation.data, ref_temps)
 initial_state_ds = initial_state_ds.assign(
     temperature=(initial_state_ds.temperature_variation.dims, temperature))
-phi = initial_state_ds["z_surf"] * physics_specs.gravity_acceleration
+phi = initial_state_ds["z_surf"] * di.gravity_acceleration
 phi_si = dimensionalize(phi, units.m**2 / units.s**2)
 phi_si.isel(lon=0).plot(x="lat")
 plt.savefig("b.00.png")
@@ -64,7 +63,7 @@ ax = plt.gca()
 ax.set_ylim((1, 0))
 plt.savefig("b.03.png")
 plt.close()
-primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
+primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 dt_s = 100 * units.s
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_s)
 step_fn = di.imex_rk_sil3(primitive, dt)
@@ -125,7 +124,7 @@ data_array.mean(["lat", "lon"]).plot(x="time", hue="level")
 ax = plt.gca()
 plt.savefig("b.06.png")
 plt.close()
-perturbation = di.baroclinic_perturbation_jw(coords, physics_specs)
+perturbation = di.baroclinic_perturbation_jw(coords)
 state = steady_state + perturbation
 save_every = 2 * units.hour
 total_time = 2 * units.week

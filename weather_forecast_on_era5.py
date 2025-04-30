@@ -100,7 +100,6 @@ sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
 sp_init_hpa = (ds_init.surface_pressure.transpose(
     "longitude", "latitude").data.to("hPa").magnitude)
-physics_specs = di.PrimitiveEquationsSpecs()
 nodal_inputs = di.regrid_hybrid_to_sigma(
     fields=model_level_inputs,
     hybrid_coords=source_vertical,
@@ -135,7 +134,7 @@ raw_init_state = di.State(
 )
 orography = model_coords.horizontal.to_modal(orography_input)
 orography = di.exponential_filter(model_coords.horizontal, order=2)(orography)
-eq = di.PrimitiveEquations(ref_temps, orography, model_coords, physics_specs)
+eq = di.PrimitiveEquations(ref_temps, orography, model_coords)
 res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = di.DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
@@ -165,8 +164,8 @@ def nodal_prognostics_and_diagnostics(state):
             eq.reference_temperature,
             orography,
             model_coords.vertical,
-            physics_specs.gravity_acceleration,
-            physics_specs.ideal_gas_constant,
+            di.gravity_acceleration,
+            di.ideal_gas_constant,
         ))
     vor_nodal = coords.to_nodal(state.vorticity)
     div_nodal = coords.to_nodal(state.divergence)

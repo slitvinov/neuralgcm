@@ -21,12 +21,11 @@ coords = di.CoordinateSystem(
     horizontal=di.Grid.T42(),
     vertical=di.SigmaCoordinates.equidistant(layers),
 )
-physics_specs = di.PrimitiveEquationsSpecs()
 p0 = 100e3 * units.pascal
 p1 = 5e3 * units.pascal
 rng_key = jax.random.PRNGKey(0)
 initial_state_fn, aux_features = (di.isothermal_rest_atmosphere(
-    coords=coords, physics_specs=physics_specs, p0=p0, p1=p1))
+    coords=coords, p0=p0, p1=p1))
 initial_state = initial_state_fn(rng_key)
 ref_temps = aux_features["ref_temperatures"]
 orography = di.truncated_modal_orography(aux_features["orography"], coords)
@@ -58,7 +57,7 @@ total_time = 24 * units.hour
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
-primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
+primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 integrator = di.imex_rk_sil3
 step_fn = integrator(primitive, dt)
 filters = [di.exponential_step_filter(coords.horizontal, dt)]
@@ -120,7 +119,6 @@ ax.legend().remove()
 plt.savefig("h.03.png")
 plt.close()
 hs = di.HeldSuarezForcing(coords=coords,
-                          physics_specs=physics_specs,
                           reference_temperature=ref_temps,
                           p0=p0)
 
@@ -210,9 +208,8 @@ total_time = 1200 * units.day
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
-primitive = di.PrimitiveEquations(ref_temps, orography, coords, physics_specs)
+primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 hs_forcing = di.HeldSuarezForcing(coords=coords,
-                                  physics_specs=physics_specs,
                                   reference_temperature=ref_temps,
                                   p0=p0)
 primitive_with_hs = di.compose_equations([primitive, hs_forcing])

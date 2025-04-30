@@ -26,7 +26,51 @@ IDEAL_GAS_CONSTANT = ISOBARIC_HEAT_CAPACITY * KAPPA
 IDEAL_GAS_CONSTANT_H20 = 461.0 * units.J / units.kilogram / units.degK
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
+class Scale:
 
+    def __init__(self, *scales):
+        self.scales = {}
+        for quantity in scales:
+            self.scales[str(
+                quantity.dimensionality)] = quantity.to_base_units()
+
+    def scaling_factor(self, dimensionality):
+        factor = units.Quantity(1)
+        for dimension, exponent in dimensionality.items():
+            quantity = self.scales.get(dimension)
+            factor *= quantity**exponent
+        assert factor.check(dimensionality)
+        return factor
+
+    def nondimensionalize(self, quantity):
+        scaling_factor = self.scaling_factor(quantity.dimensionality)
+        nondimensionalized = (quantity / scaling_factor).to(
+            units.dimensionless)
+        return nondimensionalized.magnitude
+
+    def dimensionalize(self, value, unit):
+        scaling_factor = self.scaling_factor(unit.dimensionality)
+        dimensionalized = value * scaling_factor
+        return dimensionalized.to(unit)
+
+DEFAULT_SCALE = Scale(
+    RADIUS,
+    1 / 2 / ANGULAR_VELOCITY,
+    1 * units.kilogram,
+    1 * units.degK,
+)
+
+radius = DEFAULT_SCALE.nondimensionalize(RADIUS)
+angular_velocity = DEFAULT_SCALE.nondimensionalize(ANGULAR_VELOCITY)
+gravity_acceleration = DEFAULT_SCALE.nondimensionalize(
+    GRAVITY_ACCELERATION)
+ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT)
+water_vapor_gas_constant = DEFAULT_SCALE.nondimensionalize(
+    IDEAL_GAS_CONSTANT_H20)
+water_vapor_isobaric_heat_capacity = DEFAULT_SCALE.nondimensionalize(
+    WATER_VAPOR_CP)
+kappa = DEFAULT_SCALE.nondimensionalize(KAPPA)
+    
 def cumsum(x, axis):
     if axis < 0:
         axis = axis + x.ndim
@@ -83,41 +127,6 @@ def as_dict(inputs):
     from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
     return inputs, from_dict_fn
 
-
-class Scale:
-
-    def __init__(self, *scales):
-        self.scales = {}
-        for quantity in scales:
-            self.scales[str(
-                quantity.dimensionality)] = quantity.to_base_units()
-
-    def scaling_factor(self, dimensionality):
-        factor = units.Quantity(1)
-        for dimension, exponent in dimensionality.items():
-            quantity = self.scales.get(dimension)
-            factor *= quantity**exponent
-        assert factor.check(dimensionality)
-        return factor
-
-    def nondimensionalize(self, quantity):
-        scaling_factor = self.scaling_factor(quantity.dimensionality)
-        nondimensionalized = (quantity / scaling_factor).to(
-            units.dimensionless)
-        return nondimensionalized.magnitude
-
-    def dimensionalize(self, value, unit):
-        scaling_factor = self.scaling_factor(unit.dimensionality)
-        dimensionalized = value * scaling_factor
-        return dimensionalized.to(unit)
-
-
-DEFAULT_SCALE = Scale(
-    RADIUS,
-    1 / 2 / ANGULAR_VELOCITY,
-    1 * units.kilogram,
-    1 * units.degK,
-)
 
 
 def _slice_shape_along_axis(x, axis, slice_width=1):
@@ -1006,19 +1015,6 @@ def compute_vertical_velocity(state, coords):
     return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
 
 
-@dataclasses.dataclass(frozen=True)
-class PrimitiveEquationsSpecs:
-    radius = DEFAULT_SCALE.nondimensionalize(RADIUS)
-    angular_velocity = DEFAULT_SCALE.nondimensionalize(ANGULAR_VELOCITY)
-    gravity_acceleration = DEFAULT_SCALE.nondimensionalize(
-        GRAVITY_ACCELERATION)
-    ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT)
-    water_vapor_gas_constant = DEFAULT_SCALE.nondimensionalize(
-        IDEAL_GAS_CONSTANT_H20)
-    water_vapor_isobaric_heat_capacity = DEFAULT_SCALE.nondimensionalize(
-        WATER_VAPOR_CP)
-    kappa = DEFAULT_SCALE.nondimensionalize(KAPPA)
-
 def get_sigma_ratios(coordinates):
     alpha = np.diff(np.log(coordinates.centers), append=0) / 2
     alpha[-1] = -np.log(coordinates.centers[-1])
@@ -1166,7 +1162,6 @@ class PrimitiveEquations(ImplicitExplicitODE):
     reference_temperature: np.ndarray
     orography: Any
     coords: Any
-    physics_specs: Any
     vertical_matmul_method: Any = dataclasses.field(default=None)
     implicit_inverse_method: Any = dataclasses.field(default="split")
     vertical_advection: Any = dataclasses.field(
@@ -1176,7 +1171,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
     @property
     def coriolis_parameter(self):
         _, sin_lat = self.coords.horizontal.nodal_mesh
-        return 2 * self.physics_specs.angular_velocity * sin_lat
+        return 2 * angular_velocity * sin_lat
 
     @property
     def T_ref(self):
@@ -1202,7 +1197,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
             self.coords.horizontal.to_modal(kinetic))
 
     def orography_tendency(self):
-        return -self.physics_specs.gravity_acceleration * self.coords.horizontal.laplacian(
+        return -gravity_acceleration * self.coords.horizontal.laplacian(
             self.orography)
 
     def curl_and_div_tendencies(
@@ -1217,7 +1212,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
         d𝜎_dt = aux_state.sigma_dot_full
         sigma_dot_u = -self._vertical_tendency(d𝜎_dt, u)
         sigma_dot_v = -self._vertical_tendency(d𝜎_dt, v)
-        rt = self.physics_specs.ideal_gas_constant * aux_state.temperature_variation
+        rt = ideal_gas_constant * aux_state.temperature_variation
         grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
         vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat
         vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat
@@ -1263,7 +1258,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
         variation_t_part = self._t_omega_over_sigma_sp(
             aux_state.temperature_variation, g_full,
             aux_state.u_dot_grad_log_sp)
-        return self.physics_specs.kappa * (mean_t_part + variation_t_part)
+        return kappa * (mean_t_part + variation_t_part)
 
     def nodal_log_pressure_tendency(self, aux_state: DiagnosticState):
         g = aux_state.u_dot_grad_log_sp
@@ -1315,9 +1310,9 @@ class PrimitiveEquations(ImplicitExplicitODE):
         geopotential_diff = get_geopotential_diff(
             state.temperature_variation,
             self.coords.vertical,
-            self.physics_specs.ideal_gas_constant,
+            ideal_gas_constant,
         )
-        rt_log_p = (self.physics_specs.ideal_gas_constant * self.T_ref *
+        rt_log_p = (ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)
         vorticity_implicit = jnp.zeros_like(state.vorticity)
         divergence_implicit = -self.coords.horizontal.laplacian(
@@ -1326,7 +1321,7 @@ class PrimitiveEquations(ImplicitExplicitODE):
             state.divergence,
             self.coords.vertical,
             self.reference_temperature,
-            self.physics_specs.kappa,
+            kappa,
         )
         log_surface_pressure_implicit = -_vertical_matvec(
             self.coords.vertical.layer_thickness[np.newaxis], state.divergence)
@@ -1346,8 +1341,8 @@ class PrimitiveEquations(ImplicitExplicitODE):
             step_size,
             self.coords,
             self.reference_temperature,
-            self.physics_specs.kappa,
-            self.physics_specs.ideal_gas_constant,
+            kappa,
+            ideal_gas_constant,
         )
         assert implicit_matrix.dtype == np.float64
         layers = self.coords.vertical.layers
@@ -1395,7 +1390,6 @@ class PrimitiveEquations(ImplicitExplicitODE):
 
 def isothermal_rest_atmosphere(
     coords,
-    physics_specs,
     tref=288.0 * units.degK,
     p0=1e5 * units.pascal,
     p1=0.0 * units.pascal,
@@ -1462,7 +1456,6 @@ def isothermal_rest_atmosphere(
 
 def steady_state_jw(
     coords,
-    physics_specs,
     u0=35.0 * units.m / units.s,
     p0=1e5 * units.pascal,
     t0=288.0 * units.degK,
@@ -1476,10 +1469,10 @@ def steady_state_jw(
     delta_t = DEFAULT_SCALE.nondimensionalize(delta_t)
     p0 = DEFAULT_SCALE.nondimensionalize(p0)
     gamma = DEFAULT_SCALE.nondimensionalize(gamma)
-    a = physics_specs.radius
-    g = physics_specs.g
-    r_gas = physics_specs.ideal_gas_constant
-    omega = physics_specs.angular_velocity
+    a = radius
+    g = gravity_acceleration
+    r_gas = ideal_gas_constant
+    omega = angular_velocity
 
     def _get_reference_temperature(sigma):
         top_mean_t = t0 * sigma**(r_gas * gamma / g)
@@ -1578,14 +1571,13 @@ def steady_state_jw(
 
 def baroclinic_perturbation_jw(
     coords,
-    physics_specs,
     u_perturb=1.0 * units.m / units.s,
     lon_location=np.pi / 9,
     lat_location=2 * np.pi / 9,
     perturbation_radius=0.1,
 ):
     u_p = DEFAULT_SCALE.nondimensionalize(u_perturb)
-    a = physics_specs.radius
+    a = radius
 
     def _get_vorticity_perturbation(lat, lon, sigma):
         del sigma
@@ -1672,7 +1664,6 @@ class HeldSuarezForcing:
     def __init__(
         self,
         coords,
-        physics_specs,
         reference_temperature,
         p0=1e5 * units.pascal,
         sigma_b=0.7,
@@ -1685,7 +1676,6 @@ class HeldSuarezForcing:
         dThz=10 * units.degK,
     ):
         self.coords = coords
-        self.physics_specs = physics_specs
         self.reference_temperature = reference_temperature
         self.p0 = DEFAULT_SCALE.nondimensionalize(p0)
         self.sigma_b = sigma_b
@@ -1714,7 +1704,7 @@ class HeldSuarezForcing:
     def equilibrium_temperature(self, nodal_surface_pressure):
         p_over_p0 = (self.sigma[:, np.newaxis, np.newaxis] *
                      nodal_surface_pressure / self.p0)
-        temperature = p_over_p0**self.physics_specs.kappa * (
+        temperature = p_over_p0**kappa * (
             self.maxT - self.dTy * np.sin(self.lat)**2 -
             self.dThz * jnp.log(p_over_p0) * np.cos(self.lat)**2)
         return jnp.maximum(self.minT, temperature)

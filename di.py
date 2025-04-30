@@ -1110,11 +1110,8 @@ class PrimitiveEquations(ImplicitExplicitODE):
     reference_temperature: Any
     orography: Any
     coords: Any
-    vertical_matmul_method: Any = dataclasses.field(default=None)
-    implicit_inverse_method: Any = dataclasses.field(default="split")
     vertical_advection: Any = dataclasses.field(
         default=centered_vertical_advection)
-    include_vertical_advection: Any = dataclasses.field(default=True)
 
     @property
     def coriolis_parameter(self):

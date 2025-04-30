@@ -170,17 +170,6 @@ u, v = di.vor_div_to_uv_nodal(coords.horizontal, initial_state.vorticity,
 initial_state_dict.update({"u": u, "v": v, "orography": orography})
 nodal_steady_state_fields = di.maybe_to_nodal(initial_state_dict,
                                               coords=coords)
-initial_state_ds = di.data_to_xarray(nodal_steady_state_fields,
-                                     coords=coords,
-                                     times=None)
-temperature = di.temperature_variation_to_absolute(
-    initial_state_ds.temperature_variation.data, ref_temps)
-initial_state_ds = initial_state_ds.assign(
-    temperature=(initial_state_ds.temperature_variation.dims, temperature))
-surface_pressure = np.exp(initial_state_ds.log_surface_pressure.data[0, ...])
-initial_state_ds = initial_state_ds.assign(
-    surface_pressure=(initial_state_ds.log_surface_pressure.dims[1:],
-                      surface_pressure))
 dt_si = 5 * units.minute
 save_every = 10 * units.minute
 total_time = 24 * units.hour

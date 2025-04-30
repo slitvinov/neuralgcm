@@ -89,7 +89,7 @@ class HeldSuarezForcing:
             velocity_tendency)
         log_surface_pressure_tendency = jnp.zeros_like(
             state.log_surface_pressure)
-        return State(
+        return di.State(
             vorticity=vorticity_tendency,
             divergence=divergence_tendency,
             temperature_variation=temperature_tendency,

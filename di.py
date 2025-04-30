@@ -1823,14 +1823,7 @@ def _infer_dims_shape_and_coords(
     return all_xr_coords, shape_to_dims
 
 
-def data_to_xarray(
-    data,
-    *,
-    coords,
-    times,
-    serialize_coords_to_attrs=True,
-):
-    # assert serialize_coords_to_attrs is None
+def data_to_xarray(data, *, coords, times):
     prognostic_keys = set(data.keys()) - {"tracers"} - {"diagnostics"}
     additional_coords = {}
     if coords.vertical.layers != 1:
@@ -1844,7 +1837,7 @@ def data_to_xarray(
         dims = shape_to_dims[value.shape]
         data_vars[key] = (dims, value)
         dims_in_state.update(set(dims))
-    dataset_attrs = coords.asdict() if serialize_coords_to_attrs else {}
+    dataset_attrs = coords.asdict()
     coords = {k: v for k, v in all_coords.items() if k in dims_in_state}
     return xarray.Dataset(data_vars, coords, attrs=dataset_attrs)
 

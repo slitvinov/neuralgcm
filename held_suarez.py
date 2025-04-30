@@ -8,13 +8,6 @@ import xarray
 
 units = di.units
 
-
-def dimensionalize(x, unit):
-    dimensionalize = functools.partial(di.DEFAULT_SCALE.dimensionalize,
-                                       unit=unit)
-    return xarray.apply_ufunc(dimensionalize, x)
-
-
 class HeldSuarezForcing:
 
     def __init__(
@@ -190,7 +183,6 @@ integrate_fn = jax.jit(
                             inner_steps=inner_steps))
 times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
-ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
 start_time = 200
 dt_si = 10 * units.minute
 save_every = 6 * units.hours

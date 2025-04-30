@@ -113,13 +113,6 @@ def trajectory_to_xarray(coords, trajectory, times):
         trajectory_ds.temperature_variation.data, ref_temps)
     trajectory_ds = trajectory_ds.assign(
         temperature=(trajectory_ds.temperature_variation.dims, temperature))
-    total_layer_ke = coords.horizontal.integrate(u**2 + v**2)
-    total_ke_cumulative = di.cumulative_sigma_integral(total_layer_ke,
-                                                       coords.vertical,
-                                                       axis=-1)
-    total_ke = total_ke_cumulative[..., -1]
-    trajectory_ds = trajectory_ds.assign(total_kinetic_energy=(("time"),
-                                                               total_ke))
     return trajectory_ds
 
 
@@ -188,13 +181,7 @@ integrate_fn = jax.jit(
                             start_with_input=True))
 times = save_every * np.arange(0, outer_steps)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
-
 hs = HeldSuarezForcing(coords=coords, reference_temperature=ref_temps, p0=p0)
-temperature = dimensionalize(ds["eq_temp"], units.degK)
-surface_pressure = dimensionalize(ds["surface_pressure"], units.pascal)
-pressure = ds.sigma * surface_pressure
-kappa = di.KAPPA
-potential_temperature = temperature * (pressure / p0)**-kappa
 dt_si = 10 * units.minute
 save_every = 10 * units.day
 total_time = 1200 * units.day

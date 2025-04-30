@@ -556,10 +556,6 @@ class Grid:
             return self.clip_wavenumbers(raw)
         return raw
 
-    def integrate(self, z):
-        w = self.spherical_harmonics.basis.w * self.radius**2
-        return einsum("y,...xy->...", w, z)
-
 
 def add_constant(x: jnp.ndarray, c):
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)

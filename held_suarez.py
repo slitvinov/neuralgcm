@@ -91,6 +91,72 @@ class HeldSuarezForcing:
             log_surface_pressure=log_surface_pressure_tendency,
         )
 
+
+def isothermal_rest_atmosphere(
+    coords,
+    tref=288.0 * units.degK,
+    p0=1e5 * units.pascal,
+    p1=0.0 * units.pascal,
+):
+    lon, sin_lat = coords.horizontal.nodal_mesh
+    lat = np.arcsin(sin_lat)
+    tref = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(tref))
+    p0 = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(p0))
+    p1 = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(p1))
+    orography = np.zeros_like(lat)
+
+    def _get_vorticity(sigma, lon, lat):
+        del sigma, lon
+        return jnp.zeros_like(lat)
+
+    def _get_surface_pressure(lon, lat, rng_key):
+
+        def relative_pressure(altitude_m):
+            g = 9.80665
+            cp = 1004.68506
+            T0 = 288.16
+            M = 0.02896968
+            R0 = 8.314462618
+            return (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
+
+        altitude_m = di.DEFAULT_SCALE.dimensionalize(orography,
+                                                     units.meter).magnitude
+        surface_pressure = (p0 * np.ones(coords.surface_nodal_shape) *
+                            relative_pressure(altitude_m))
+        keys = jax.random.split(rng_key, 2)
+        lon0 = jax.random.uniform(keys[1],
+                                  minval=np.pi / 2,
+                                  maxval=3 * np.pi / 2)
+        lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)
+        stddev = np.pi / 20
+        k = 4
+        perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *
+                        jnp.exp(-((lat - lat0)**2) /
+                                (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
+        return surface_pressure + p1 * perturbation
+
+    def random_state_fn(rng_key: jnp.ndarray):
+        nodal_vorticity = jnp.stack([
+            _get_vorticity(sigma, lon, lat)
+            for sigma in coords.vertical.centers
+        ])
+        modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
+        nodal_surface_pressure = _get_surface_pressure(lon, lat, rng_key)
+        return State(
+            vorticity=modal_vorticity,
+            divergence=jnp.zeros_like(modal_vorticity),
+            temperature_variation=jnp.zeros_like(modal_vorticity),
+            log_surface_pressure=(coords.horizontal.to_modal(
+                jnp.log(nodal_surface_pressure))),
+        )
+
+    aux_features = {
+        "orography": orography,
+        "ref_temperatures": np.full((coords.vertical.layers, ), tref),
+    }
+    return random_state_fn, aux_features
+
+
 layers = 24
 coords = di.CoordinateSystem(
     horizontal=di.Grid.T42(),
@@ -99,9 +165,9 @@ coords = di.CoordinateSystem(
 p0 = 100e3 * units.pascal
 p1 = 5e3 * units.pascal
 rng_key = jax.random.PRNGKey(0)
-initial_state_fn, aux_features = (di.isothermal_rest_atmosphere(coords=coords,
-                                                                p0=p0,
-                                                                p1=p1))
+initial_state_fn, aux_features = (isothermal_rest_atmosphere(coords=coords,
+                                                             p0=p0,
+                                                             p1=p1))
 initial_state = initial_state_fn(rng_key)
 ref_temps = aux_features["ref_temperatures"]
 orography = di.truncated_modal_orography(aux_features["orography"], coords)

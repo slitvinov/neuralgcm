@@ -24,6 +24,7 @@ KAPPA = 2 / 7 * units.dimensionless
 IDEAL_GAS_CONSTANT = ISOBARIC_HEAT_CAPACITY * KAPPA
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
+
 class Scale:
 
     def __init__(self, *scales):
@@ -51,6 +52,7 @@ class Scale:
         dimensionalized = value * scaling_factor
         return dimensionalized.to(unit)
 
+
 DEFAULT_SCALE = Scale(
     RADIUS,
     1 / 2 / ANGULAR_VELOCITY,
@@ -60,11 +62,11 @@ DEFAULT_SCALE = Scale(
 
 radius = DEFAULT_SCALE.nondimensionalize(RADIUS)
 angular_velocity = DEFAULT_SCALE.nondimensionalize(ANGULAR_VELOCITY)
-gravity_acceleration = DEFAULT_SCALE.nondimensionalize(
-    GRAVITY_ACCELERATION)
+gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT)
 kappa = DEFAULT_SCALE.nondimensionalize(KAPPA)
-    
+
+
 def cumsum(x, axis):
     if axis < 0:
         axis = axis + x.ndim
@@ -120,7 +122,6 @@ def as_dict(inputs):
     inputs = inputs.asdict()
     from_dict_fn = lambda dict_inputs: return_type(**dict_inputs)
     return inputs, from_dict_fn
-
 
 
 def _slice_shape_along_axis(x, axis, slice_width=1):
@@ -602,12 +603,7 @@ def uv_nodal_to_vor_div_modal(
 
 
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
-def vor_div_to_uv_nodal(
-    grid: Grid,
-    vorticity,
-    divergence,
-    clip: bool = True,
-):
+def vor_div_to_uv_nodal(grid, vorticity, divergence, clip=True):
     u_cos_lat, v_cos_lat = get_cos_lat_vector(vorticity,
                                               divergence,
                                               grid,
@@ -1014,9 +1010,7 @@ def get_sigma_ratios(coordinates):
     return alpha
 
 
-def get_geopotential_weights(
-    coordinates,
-):
+def get_geopotential_weights(coordinates, ):
     alpha = get_sigma_ratios(coordinates)
     weights = np.zeros([coordinates.layers, coordinates.layers])
     for j in range(coordinates.layers):
@@ -1292,10 +1286,8 @@ class PrimitiveEquations(ImplicitExplicitODE):
         return self.coords.horizontal.clip_wavenumbers(tendency)
 
     def implicit_terms(self, state: State):
-        geopotential_diff = get_geopotential_diff(
-            state.temperature_variation,
-            self.coords.vertical
-        )
+        geopotential_diff = get_geopotential_diff(state.temperature_variation,
+                                                  self.coords.vertical)
         rt_log_p = (ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)
         vorticity_implicit = jnp.zeros_like(state.vorticity)

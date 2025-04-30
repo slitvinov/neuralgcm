@@ -24,8 +24,9 @@ coords = di.CoordinateSystem(
 p0 = 100e3 * units.pascal
 p1 = 5e3 * units.pascal
 rng_key = jax.random.PRNGKey(0)
-initial_state_fn, aux_features = (di.isothermal_rest_atmosphere(
-    coords=coords, p0=p0, p1=p1))
+initial_state_fn, aux_features = (di.isothermal_rest_atmosphere(coords=coords,
+                                                                p0=p0,
+                                                                p1=p1))
 initial_state = initial_state_fn(rng_key)
 ref_temps = aux_features["ref_temperatures"]
 orography = di.truncated_modal_orography(aux_features["orography"], coords)

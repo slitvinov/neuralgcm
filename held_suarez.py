@@ -182,11 +182,6 @@ surface_pressure = np.exp(initial_state_ds.log_surface_pressure.data[0, ...])
 initial_state_ds = initial_state_ds.assign(
     surface_pressure=(initial_state_ds.log_surface_pressure.dims[1:],
                       surface_pressure))
-pressure_array = initial_state_ds["surface_pressure"]
-pressure_array_si = dimensionalize(pressure_array, units.pascal)
-pressure_array_si.plot.imshow(x="lon", y="lat", size=5)
-plt.savefig("h.00.png")
-plt.close()
 dt_si = 5 * units.minute
 save_every = 10 * units.minute
 total_time = 24 * units.hour
@@ -207,80 +202,14 @@ times = save_every * np.arange(0, outer_steps)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 
 ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
-data_array = ds["surface_pressure"] - ds["surface_pressure"].isel(time=0)
-data_array_si = dimensionalize(data_array, units.pascal)
-data_array_si.isel(time=slice(0, 18, 4)).plot(x="lon",
-                                              y="lat",
-                                              col="time",
-                                              col_wrap=6)
-plt.savefig("h.01.png")
-plt.close()
-data_array = ds["vorticity"]
-data_array.isel(level=10).isel(time=slice(0, 18, 4)).plot(x="lon",
-                                                          y="lat",
-                                                          col="time",
-                                                          col_wrap=6)
-plt.savefig("h.02.png")
-plt.close()
-data_array = ds["total_kinetic_energy"]
-data_array.plot(x="time")
-ax = plt.gca()
-ax.legend().remove()
-plt.savefig("h.03.png")
-plt.close()
 hs = HeldSuarezForcing(coords=coords, reference_temperature=ref_temps, p0=p0)
-
 ds = ds_held_suarez_forcing(coords)
-
 kv = ds["kv"]
-kv_si = dimensionalize(kv, 1 / units.day)
-kv_si.plot(size=5)
-plt.savefig("h.04.png")
-plt.close()
-kt_array = ds["kt"]
-levels = linspace_step(0, 0.3, 0.05)
-kt_array_si = dimensionalize(kt_array, 1 / units.day)
-p = kt_array_si.isel(lon=0).plot.contour(x="lat",
-                                         y="sigma",
-                                         levels=levels,
-                                         size=5,
-                                         aspect=1.5)
-ax = plt.gca()
-ax.set_ylim((1, 0))
-plt.savefig("h.05.png")
-plt.close()
-teq_array = ds["eq_temp"]
-teq_array_si = dimensionalize(teq_array, units.degK)
-levels = linspace_step(205, 310, 5)
-p = teq_array_si.isel(lon=0).plot.contour(x="lat",
-                                          y="sigma",
-                                          levels=levels,
-                                          size=5,
-                                          aspect=1.5)
-ax = plt.gca()
-ax.set_ylim((1, 0))
-plt.savefig("h.06.png")
-plt.close()
 temperature = dimensionalize(ds["eq_temp"], units.degK)
 surface_pressure = dimensionalize(ds["surface_pressure"], units.pascal)
 pressure = ds.sigma * surface_pressure
 kappa = di.KAPPA
 potential_temperature = temperature * (pressure / p0)**-kappa
-levels = linspace_step(260, 325, 5)
-levels = np.concatenate(
-    [levels, np.array([350, 400, 450, 500, 550, 600])], axis=0)
-p = potential_temperature.isel(lon=0).plot.contour(x="lat",
-                                                   y="sigma",
-                                                   levels=levels,
-                                                   size=5,
-                                                   aspect=1.5)
-ax = plt.gca()
-ax.set_ylim((1, 0))
-plt.colorbar(p)
-print(potential_temperature.min())
-print(potential_temperature.max())
-plt.savefig("h.07.png")
-plt.close()
 dt_si = 10 * units.minute
 save_every = 10 * units.day
 total_time = 1200 * units.day
@@ -308,41 +237,6 @@ integrate_fn = jax.jit(
 times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 ds = trajectory_to_xarray(coords, jax.device_get(trajectory), times)
-data_array = ds["total_kinetic_energy"]
-data_array.plot(x="time")
-ax = plt.gca()
-ax.legend().remove()
-plt.savefig("h.08.png")
-plt.close()
-mask = ds["time"] <= 150
-data_array = ds["temperature"]
-data_array.isel(level=-1, time=mask).plot(x="lon",
-                                          y="lat",
-                                          col="time",
-                                          col_wrap=4)
-plt.savefig("h.09.png")
-plt.close()
-mask = ds["time"] <= 150
-data_array = ds["vorticity"]
-data_array.isel(level=-1, time=mask).plot(x="lon",
-                                          y="lat",
-                                          col="time",
-                                          col_wrap=4)
-plt.savefig("h.10.png")
-plt.close()
-mask = ds["time"] <= 100
-data_array = ds["temperature"]
-data_array = dimensionalize(data_array, units.degK)
-levels = linspace_step(190, 305, 5)
-data_array.isel(time=mask).mean("lon").plot.contour(x="lat",
-                                                    y="level",
-                                                    col="time",
-                                                    col_wrap=4,
-                                                    levels=levels)
-ax = plt.gca()
-ax.set_ylim((1, 0))
-plt.savefig("h.11.png")
-plt.close()
 start_time = 200
 mask = ds["time"] > start_time
 data_array = ds["temperature"]
@@ -373,16 +267,6 @@ p = (potential_temperature.isel(time=mask).mean(["lon", "time"
 ax = plt.gca()
 ax.set_ylim((1, 0))
 mask = ds["time"] > start_time
-data_array = ds["u"]
-data_array = dimensionalize(data_array, units.meter / units.s)
-levels = linspace_step(-20, 28, 4)
-data_array.isel(time=mask).mean(["lon", "time"]).plot.contour(x="lat",
-                                                              y="level",
-                                                              levels=levels,
-                                                              size=5,
-                                                              aspect=1.5)
-ax = plt.gca()
-ax.set_ylim((1, 0))
 mask = ds["time"] > start_time
 data_array = ds["u"]
 data_array2 = ds["v"]
@@ -393,9 +277,6 @@ zonal_u = data_array.isel(time=mask)
 mean_v = data_array2.isel(time=mask).mean(["time"])
 zonal_v = data_array2.isel(time=mask)
 eke = (zonal_u - mean_u)**2 + (zonal_v - mean_v)**2
-p = eke.mean(["time", "lon"]).plot(x="lat", y="level", size=5, aspect=1.5)
-ax = plt.gca()
-ax.set_ylim((1, 0))
 dt_si = 10 * units.minute
 save_every = 6 * units.hours
 total_time = 1 * units.week

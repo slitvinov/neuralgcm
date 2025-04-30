@@ -1821,10 +1821,7 @@ def _infer_dims_shape_and_coords(coords, times, sample_ids, additional_coords):
 def data_to_xarray(data, *, coords, times):
     prognostic_keys = set(data.keys()) - {"tracers"} - {"diagnostics"}
     additional_coords = {}
-    if coords.vertical.layers != 1:
-        additional_coords["surface"] = np.ones(1)
-    else:
-        assert False
+    additional_coords["surface"] = np.ones(1)
     all_coords, shape_to_dims = _infer_dims_shape_and_coords(
         coords, times, None, additional_coords)
     dims_in_state = set()

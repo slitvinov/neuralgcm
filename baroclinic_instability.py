@@ -227,7 +227,5 @@ f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
 temperature = di.temperature_variation_to_absolute(f1["temperature_variation"], ref_temps)
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
-fig = plt.gcf()
-fig.set_figwidth(12)
 plt.savefig("b.09.png")
 plt.close()

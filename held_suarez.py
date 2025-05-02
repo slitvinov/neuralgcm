@@ -249,8 +249,6 @@ u, v = di.vor_div_to_uv_nodal(coords.horizontal, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
 f0 = di.maybe_to_nodal(trajectory_dict, coords=coords)
-temperature = di.temperature_variation_to_absolute(f0["temperature_variation"],
-                                                   ref_temps)
-plt.contourf(temperature[-1, 22, :, :])
+plt.contourf(f0["temperature_variation"][-1, 22, :, :])
 plt.savefig("h.12.png")
 plt.close()

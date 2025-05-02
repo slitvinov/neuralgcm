@@ -115,6 +115,7 @@ def tree_map_over_nonscalars(f, x, *, scalar_fn=lambda x: x):
 
     return tree_map(g, x)
 
+
 def _slice_shape_along_axis(x, axis):
     x_shape = list(x.shape)
     x_shape[axis] = 1
@@ -1400,10 +1401,3 @@ def regrid_hybrid_to_sigma(
 
     return tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
-
-
-def temperature_variation_to_absolute(
-    temperature_variation,
-    ref_temperature,
-):
-    return temperature_variation + ref_temperature[:, np.newaxis, np.newaxis]

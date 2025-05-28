@@ -3,9 +3,32 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
+import dataclasses
 import xarray
 
 units = di.units
+
+
+@dataclasses.dataclass(frozen=True)
+class HybridCoordinates:
+    a_boundaries: np.ndarray
+    b_boundaries: np.ndarray
+
+    @classmethod
+    def ECMWF137(cls):
+        a_in_pa, b = np.loadtxt("ecmwf137_hybrid_levels.csv",
+                                skiprows=1,
+                                usecols=(1, 2),
+                                delimiter="\t").T
+        a = a_in_pa / 100
+        return cls(a_boundaries=a, b_boundaries=b)
+
+    def __hash__(self):
+        return hash((tuple(self.a_boundaries.tolist()),
+                     tuple(self.b_boundaries.tolist())))
+
+    def get_sigma_boundaries(self, surface_pressure):
+        return self.a_boundaries / surface_pressure + self.b_boundaries
 
 
 def attach_data_array_units(array):
@@ -93,7 +116,7 @@ ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init["orography"] /= di.GRAVITY_ACCELERATION
-source_vertical = di.HybridCoordinates.ECMWF137()
+source_vertical = HybridCoordinates.ECMWF137()
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)
 sp_nodal = model_level_inputs.pop("surface_pressure")

@@ -223,6 +223,8 @@ u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
 trajectory_dict.update({"u": u, "v": v})
 f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
 levels = [(220 + 10 * i) for i in range(10)]
-plt.contourf(f1["temperature_variation"][119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
+plt.contourf(f1["temperature_variation"][119, 22, :, :],
+             levels=levels,
+             cmap=plt.cm.Spectral_r)
 plt.savefig("b.09.png")
 plt.close()

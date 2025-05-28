@@ -1342,28 +1342,6 @@ def horizontal_diffusion_filter(
     return _make_filter_fn(scaling)
 
 
-@dataclasses.dataclass(frozen=True)
-class HybridCoordinates:
-    a_boundaries: np.ndarray
-    b_boundaries: np.ndarray
-
-    @classmethod
-    def ECMWF137(cls):
-        a_in_pa, b = np.loadtxt("ecmwf137_hybrid_levels.csv",
-                                skiprows=1,
-                                usecols=(1, 2),
-                                delimiter="\t").T
-        a = a_in_pa / 100
-        return cls(a_boundaries=a, b_boundaries=b)
-
-    def __hash__(self):
-        return hash((tuple(self.a_boundaries.tolist()),
-                     tuple(self.b_boundaries.tolist())))
-
-    def get_sigma_boundaries(self, surface_pressure):
-        return self.a_boundaries / surface_pressure + self.b_boundaries
-
-
 def _interval_overlap(source_bounds, target_bounds):
     upper = jnp.minimum(target_bounds[1:, jnp.newaxis],
                         source_bounds[jnp.newaxis, 1:])

@@ -18,6 +18,7 @@ Unit = units.Unit
 GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
+
 class Scale:
 
     def __init__(self, *scales):
@@ -55,7 +56,9 @@ DEFAULT_SCALE = Scale(
 
 gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 kappa = 2 / 7
-ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(kappa * 1004 * units.J / units.kilogram / units.degK)
+ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(
+    kappa * 1004 * units.J / units.kilogram / units.degK)
+
 
 def cumsum(x, axis):
     if axis < 0:
@@ -301,10 +304,6 @@ class RealSphericalHarmonics:
         return (2 * self.longitude_wavenumbers - 1, self.total_wavenumbers)
 
     @functools.cached_property
-    def modal_padding(self):
-        return (0, 0)
-
-    @functools.cached_property
     def mask(self):
         m, l = np.meshgrid(*self.modal_axes, indexing="ij")
         return abs(m) <= l
@@ -385,10 +384,6 @@ class Grid:
         return self.spherical_harmonics.modal_shape
 
     @functools.cached_property
-    def modal_padding(self):
-        return self.spherical_harmonics.modal_padding
-
-    @functools.cached_property
     def mask(self):
         return self.spherical_harmonics.mask
 
@@ -433,9 +428,7 @@ class Grid:
     def clip_wavenumbers(self, x, n: int = 1):
 
         def clip(x):
-            num_zeros = n + self.modal_padding[-1]
-            mask = jnp.ones(self.modal_shape[-1],
-                            x.dtype).at[-num_zeros:].set(0)
+            mask = jnp.ones(self.modal_shape[-1], x.dtype).at[-n:].set(0)
             return x * mask
 
         return tree_map_over_nonscalars(clip, x)

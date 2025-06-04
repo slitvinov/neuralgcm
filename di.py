@@ -1019,7 +1019,7 @@ def truncated_modal_orography(orography, coords, wavenumbers_to_clip=1):
 
 class PrimitiveEquations:
 
-    def __init__(reference_temperature, orography, coords):
+    def __init__(self, reference_temperature, orography, coords):
         self.reference_temperature = reference_temperature
         self.orography = orography
         self.coords = coords

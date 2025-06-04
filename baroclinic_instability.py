@@ -138,7 +138,7 @@ def baroclinic_perturbation_jw(
             lat) * np.cos(lon - lon_location)
         r = np.arccos(x)
         R = perturbation_radius
-        return ((u_p / a) * np.exp(-((r / R)**2)) *
+        return (u_p * np.exp(-((r / R)**2)) *
                 (np.tan(lat) - (2 * ((1.0 / R)**2) * np.arccos(x)) *
                  (np.sin(lat_location) * np.cos(lat) - np.cos(lat_location) *
                   np.sin(lat) * np.cos(lon - lon_location)) /

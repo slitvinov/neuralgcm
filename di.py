@@ -368,12 +368,9 @@ class Grid:
     total_wavenumbers: int
     longitude_nodes: int
     latitude_nodes: int
-    longitude_offset: float
-    radius: float | None
 
     def __post_init__(self):
-        if self.radius is None:
-            object.__setattr__(self, "radius", 1.0)
+        pass
 
     @functools.cached_property
     def spherical_harmonics(self):
@@ -389,7 +386,7 @@ class Grid:
     @functools.cached_property
     def nodal_axes(self):
         lon, sin_lat = self.spherical_harmonics.nodal_axes
-        return lon + self.longitude_offset, sin_lat
+        return lon + 0.0, sin_lat
 
     @functools.cached_property
     def nodal_shape(self):
@@ -432,7 +429,7 @@ class Grid:
     @functools.cached_property
     def laplacian_eigenvalues(self):
         _, l = self.modal_axes
-        return -l * (l + 1) / (self.radius**2)
+        return -l * (l + 1) / (1.0**2)
 
     def to_nodal(self, x):
         f = self.spherical_harmonics.inverse_transform
@@ -490,8 +487,8 @@ class Grid:
         return x_lm1 + x_lp1
 
     def cos_lat_grad(self, x, clip: bool = True):
-        raw = self.d_dlon(x) / self.radius, self.cos_lat_d_dlat(
-            x) / self.radius
+        raw = self.d_dlon(x) / 1.0, self.cos_lat_d_dlat(
+            x) / 1.0
         if clip:
             return self.clip_wavenumbers(raw)
         return raw
@@ -505,7 +502,7 @@ class Grid:
         clip: bool = True,
     ):
         raw = (self.d_dlon(v[0]) +
-               self.sec_lat_d_dlat_cos2(v[1])) / self.radius
+               self.sec_lat_d_dlat_cos2(v[1])) / 1.0
         if clip:
             return self.clip_wavenumbers(raw)
         return raw
@@ -516,7 +513,7 @@ class Grid:
         clip: bool = True,
     ):
         raw = (self.d_dlon(v[1]) -
-               self.sec_lat_d_dlat_cos2(v[0])) / self.radius
+               self.sec_lat_d_dlat_cos2(v[0])) / 1.0
         if clip:
             return self.clip_wavenumbers(raw)
         return raw

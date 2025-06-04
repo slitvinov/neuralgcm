@@ -5,6 +5,8 @@ import di
 
 units = di.units
 
+def temperature_variation_to_absolute(temperature_variation, ref_temperature):
+    return temperature_variation + ref_temperature[:, np.newaxis, np.newaxis]
 
 def steady_state_jw(
     coords,
@@ -222,7 +224,7 @@ u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
 f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
-temperature = di.temperature_variation_to_absolute(f1["temperature_variation"],
+temperature = temperature_variation_to_absolute(f1["temperature_variation"],
                                                    ref_temps)
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)

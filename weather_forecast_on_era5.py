@@ -72,7 +72,7 @@ def slice_levels(output, level_indices):
 layers = 32
 ref_temp_si = 250 * units.degK
 model_coords = di.CoordinateSystem(
-    di.Grid(longitude_wavenumbers=171, total_wavenumbers=172, longitude_nodes=512, latitude_nodes=256, longitude_offset=0.0, radius=None),
+    di.Grid(longitude_wavenumbers=171, total_wavenumbers=172, longitude_nodes=512, latitude_nodes=256),
     di.SigmaCoordinates.equidistant(layers),
 )
 dt_si = 5 * units.minute

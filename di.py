@@ -126,13 +126,8 @@ def _with_f64_math(f):
     return lambda x: f(x.astype(np.float64)).astype(x.dtype)
 
 
-@dataclasses.dataclass(frozen=True)
 class SigmaCoordinates:
     boundaries: np.ndarray
-
-    def __init__(self, boundaries):
-        boundaries = np.asarray(boundaries)
-        object.__setattr__(self, "boundaries", boundaries)
 
     @property
     def centers(self):

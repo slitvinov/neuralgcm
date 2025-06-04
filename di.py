@@ -59,7 +59,6 @@ DEFAULT_SCALE = Scale(
     1 * units.degK,
 )
 
-radius = DEFAULT_SCALE.nondimensionalize(RADIUS)
 angular_velocity = DEFAULT_SCALE.nondimensionalize(ANGULAR_VELOCITY)
 gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT)

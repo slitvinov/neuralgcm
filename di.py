@@ -583,24 +583,32 @@ class ImplicitExplicitODE:
         return explicit_implicit_ode
 
 
+# START_NEW_CODE
+def _time_reversed_explicit_terms(forward_eq_explicit_terms_fn, state):
+    """Replicates TimeReversedImExODE.explicit_terms logic."""
+    forward_term = forward_eq_explicit_terms_fn(state)
+    return tree_map(jnp.negative, forward_term)
+
+def _time_reversed_implicit_terms(forward_eq_implicit_terms_fn, state):
+    """Replicates TimeReversedImExODE.implicit_terms logic."""
+    forward_term = forward_eq_implicit_terms_fn(state)
+    return tree_map(jnp.negative, forward_term)
+
+def _time_reversed_implicit_inverse(forward_eq_implicit_inverse_fn, state, step_size):
+    """Replicates TimeReversedImExODE.implicit_inverse logic."""
+    return forward_eq_implicit_inverse_fn(state, -step_size)
+# END_NEW_CODE
+
+
 @dataclasses.dataclass
-class TimeReversedImExODE(ImplicitExplicitODE):
+class _TimeReversedEquationAdapters:
+    """Wraps a forward_eq to provide time-reversed behavior via helper functions."""
     forward_eq: ImplicitExplicitODE
 
-    def explicit_terms(self, state):
-        forward_term = self.forward_eq.explicit_terms(state)
-        return tree_map(jnp.negative, forward_term)
-
-    def implicit_terms(self, state):
-        forward_term = self.forward_eq.implicit_terms(state)
-        return tree_map(jnp.negative, forward_term)
-
-    def implicit_inverse(
-        self,
-        state,
-        step_size: float,
-    ):
-        return self.forward_eq.implicit_inverse(state, -step_size)
+    def __post_init__(self):
+        self.explicit_terms = functools.partial(_time_reversed_explicit_terms, self.forward_eq.explicit_terms)
+        self.implicit_terms = functools.partial(_time_reversed_implicit_terms, self.forward_eq.implicit_terms)
+        self.implicit_inverse = functools.partial(_time_reversed_implicit_inverse, self.forward_eq.implicit_inverse)
 
 
 def compose_equations(equations):
@@ -809,7 +817,7 @@ def digital_filter_initialization(
     def f(state):
         forward_step = step_with_filters(ode_solver(equation, dt), filters)
         backward_step = step_with_filters(
-            ode_solver(TimeReversedImExODE(equation), dt), filters)
+            ode_solver(_TimeReversedEquationAdapters(equation), dt), filters)
         weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
         init_weight = 1.0
         total_weight = init_weight + 2 * weights.sum()

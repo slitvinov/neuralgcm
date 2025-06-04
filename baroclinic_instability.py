@@ -229,4 +229,5 @@ temperature = temperature_variation_to_absolute(f1["temperature_variation"],
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
 plt.savefig("b.09.png")
+temperature.tofile("b.09.raw")
 plt.close()

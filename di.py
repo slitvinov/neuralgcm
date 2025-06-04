@@ -1017,11 +1017,12 @@ def truncated_modal_orography(orography, coords, wavenumbers_to_clip=1):
                                  n=wavenumbers_to_clip)
 
 
-@dataclasses.dataclass
 class PrimitiveEquations:
-    reference_temperature: Any
-    orography: Any
-    coords: Any
+
+    def __init__(reference_temperature, orography, coords):
+        self.reference_temperature = reference_temperature
+        self.orography = orography
+        self.coords = coords
 
     @property
     def coriolis_parameter(self):

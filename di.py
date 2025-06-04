@@ -127,7 +127,8 @@ def _with_f64_math(f):
 
 
 class SigmaCoordinates:
-    boundaries: np.ndarray
+    def __init__(self, boundaries):
+        self.boundaries = boundaries
 
     @property
     def centers(self):

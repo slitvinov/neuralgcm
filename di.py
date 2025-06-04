@@ -1018,7 +1018,7 @@ def truncated_modal_orography(orography, coords, wavenumbers_to_clip=1):
 
 
 @dataclasses.dataclass
-class PrimitiveEquations(ImplicitExplicitODE):
+class PrimitiveEquations:
     reference_temperature: Any
     orography: Any
     coords: Any

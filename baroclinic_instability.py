@@ -5,8 +5,10 @@ import di
 
 units = di.units
 
+
 def temperature_variation_to_absolute(temperature_variation, ref_temperature):
     return temperature_variation + ref_temperature[:, np.newaxis, np.newaxis]
+
 
 def steady_state_jw(
     coords,
@@ -178,7 +180,10 @@ def baroclinic_perturbation_jw(
 
 
 layers = 12
-grid = di.Grid(longitude_wavenumbers=22, total_wavenumbers=23, longitude_nodes=64, latitude_nodes=32)
+grid = di.Grid(longitude_wavenumbers=22,
+               total_wavenumbers=23,
+               longitude_nodes=64,
+               latitude_nodes=32)
 vertical_grid = di.SigmaCoordinates.equidistant(layers)
 coords = di.CoordinateSystem(grid, vertical_grid)
 initial_state_fn, aux_features = steady_state_jw(coords)
@@ -225,7 +230,7 @@ u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
 trajectory_dict.update({"u": u, "v": v})
 f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
 temperature = temperature_variation_to_absolute(f1["temperature_variation"],
-                                                   ref_temps)
+                                                ref_temps)
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
 plt.savefig("b.09.png")

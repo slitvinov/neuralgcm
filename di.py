@@ -484,8 +484,7 @@ class Grid:
         return x_lm1 + x_lp1
 
     def cos_lat_grad(self, x, clip: bool = True):
-        raw = self.d_dlon(x) / 1.0, self.cos_lat_d_dlat(
-            x) / 1.0
+        raw = self.d_dlon(x) / 1.0, self.cos_lat_d_dlat(x) / 1.0
         if clip:
             return self.clip_wavenumbers(raw)
         return raw
@@ -498,8 +497,7 @@ class Grid:
         v,
         clip: bool = True,
     ):
-        raw = (self.d_dlon(v[0]) +
-               self.sec_lat_d_dlat_cos2(v[1])) / 1.0
+        raw = (self.d_dlon(v[0]) + self.sec_lat_d_dlat_cos2(v[1])) / 1.0
         if clip:
             return self.clip_wavenumbers(raw)
         return raw
@@ -509,8 +507,7 @@ class Grid:
         v,
         clip: bool = True,
     ):
-        raw = (self.d_dlon(v[1]) -
-               self.sec_lat_d_dlat_cos2(v[0])) / 1.0
+        raw = (self.d_dlon(v[1]) - self.sec_lat_d_dlat_cos2(v[0])) / 1.0
         if clip:
             return self.clip_wavenumbers(raw)
         return raw
@@ -555,6 +552,7 @@ class CoordinateSystem:
     horizontal: Any
     vertical: Any
 
+
 def maybe_to_nodal(fields, coords):
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + coords.horizontal.
                                           nodal_shape)
@@ -569,18 +567,10 @@ def maybe_to_nodal(fields, coords):
 
 class ImplicitExplicitODE:
 
-    @classmethod
-    def from_functions(
-        cls,
-        explicit_terms,
-        implicit_terms,
-        implicit_inverse,
-    ):
-        explicit_implicit_ode = cls()
-        explicit_implicit_ode.explicit_terms = explicit_terms
-        explicit_implicit_ode.implicit_terms = implicit_terms
-        explicit_implicit_ode.implicit_inverse = implicit_inverse
-        return explicit_implicit_ode
+    def __init__(self, explicit_terms, implicit_terms, implicit_inverse):
+        self.explicit_terms = explicit_terms
+        self.implicit_terms = implicit_terms
+        self.implicit_inverse = implicit_inverse
 
 
 @dataclasses.dataclass
@@ -614,11 +604,9 @@ def compose_equations(equations):
         return tree_map(lambda *args: sum([x for x in args if x is not None]),
                         *explicit_tendencies)
 
-    return ImplicitExplicitODE.from_functions(
-        explicit_fn,
-        implicit_explicit_equation.implicit_terms,
-        implicit_explicit_equation.implicit_inverse,
-    )
+    return ImplicitExplicitODE(explicit_fn,
+                               implicit_explicit_equation.implicit_terms,
+                               implicit_explicit_equation.implicit_inverse)
 
 
 @dataclasses.dataclass

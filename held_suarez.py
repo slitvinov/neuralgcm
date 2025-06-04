@@ -121,7 +121,8 @@ def isothermal_rest_atmosphere(
 
         altitude_m = di.DEFAULT_SCALE.dimensionalize(orography,
                                                      units.meter).magnitude
-        surface_pressure = (p0 * np.ones((1, ) + coords.horizontal.nodal_shape) *
+        surface_pressure = (p0 *
+                            np.ones((1, ) + coords.horizontal.nodal_shape) *
                             relative_pressure(altitude_m))
         keys = jax.random.split(rng_key, 2)
         lon0 = jax.random.uniform(keys[1],
@@ -159,7 +160,10 @@ def isothermal_rest_atmosphere(
 
 layers = 24
 coords = di.CoordinateSystem(
-    horizontal=di.Grid(longitude_wavenumbers=22, total_wavenumbers=23, longitude_nodes=64, latitude_nodes=32),
+    horizontal=di.Grid(longitude_wavenumbers=22,
+                       total_wavenumbers=23,
+                       longitude_nodes=64,
+                       latitude_nodes=32),
     vertical=di.SigmaCoordinates.equidistant(layers),
 )
 p0 = 100e3 * units.pascal

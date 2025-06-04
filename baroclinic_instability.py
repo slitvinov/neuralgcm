@@ -27,7 +27,6 @@ def steady_state_jw(
     gamma = di.DEFAULT_SCALE.nondimensionalize(gamma)
     g = di.gravity_acceleration
     r_gas = di.ideal_gas_constant
-    omega = di.angular_velocity
 
     def _get_reference_temperature(sigma):
         top_mean_t = t0 * sigma**(r_gas * gamma / g)
@@ -57,7 +56,7 @@ def steady_state_jw(
                   (np.cos(lat)**2 + 1 / 3) + 10 / 63) * u0 * np.cos(sigma_nu)**
                  (3 / 2)) +
                 ((1.6 * (np.cos(lat)**3) *
-                  (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * omega))
+                  (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * 0.5))
 
     def _get_temperature_variation(lat, lon, sigma):
         del lon
@@ -69,7 +68,7 @@ def steady_state_jw(
                 (((-2 * (np.cos(lat)**2 + 1 / 3) * np.sin(lat)**6 + 10 / 63) *
                   2 * u0 * cos_𝜎ν**(3 / 2)) +
                  ((1.6 * (np.cos(lat)**3) *
-                   (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * omega)))
+                   (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * 0.5)))
 
     def _get_vorticity(lat, lon, sigma):
         del lon

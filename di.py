@@ -16,7 +16,6 @@ einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 Unit = units.Unit
 GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
-ISOBARIC_HEAT_CAPACITY = 1004 * units.J / units.kilogram / units.degK
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 class Scale:
@@ -56,8 +55,7 @@ DEFAULT_SCALE = Scale(
 
 gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 kappa = 2 / 7
-ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(ISOBARIC_HEAT_CAPACITY * kappa)
-
+ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(kappa * 1004 * units.J / units.kilogram / units.degK)
 
 def cumsum(x, axis):
     if axis < 0:

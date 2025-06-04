@@ -393,7 +393,7 @@ class Grid:
         )
 
     @classmethod
-    def T42(cls, **kwargs):
+    def T21(cls, **kwargs):
         return cls.construct(max_wavenumber=42, gaussian_nodes=32, **kwargs)
 
     @classmethod

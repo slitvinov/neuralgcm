@@ -1016,7 +1016,7 @@ class PrimitiveEquations:
     @property
     def coriolis_parameter(self):
         _, sin_lat = self.coords.horizontal.nodal_mesh
-        return 2 * angular_velocity * sin_lat
+        return sin_lat
 
     @property
     def T_ref(self):

@@ -567,25 +567,9 @@ def maybe_to_nodal(fields, coords):
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)
 
 
-class ImplicitExplicitODE:
-
-    @classmethod
-    def from_functions(
-        cls,
-        explicit_terms,
-        implicit_terms,
-        implicit_inverse,
-    ):
-        explicit_implicit_ode = cls()
-        explicit_implicit_ode.explicit_terms = explicit_terms
-        explicit_implicit_ode.implicit_terms = implicit_terms
-        explicit_implicit_ode.implicit_inverse = implicit_inverse
-        return explicit_implicit_ode
-
-
 @dataclasses.dataclass
-class TimeReversedImExODE(ImplicitExplicitODE):
-    forward_eq: ImplicitExplicitODE
+class TimeReversedImExODE:
+    forward_eq: PrimitiveEquations
 
     def explicit_terms(self, state):
         forward_term = self.forward_eq.explicit_terms(state)
@@ -605,20 +589,47 @@ class TimeReversedImExODE(ImplicitExplicitODE):
 
 def compose_equations(equations):
     implicit_explicit_eqs = list(
-        filter(lambda x: isinstance(x, ImplicitExplicitODE), equations))
-    (implicit_explicit_equation, ) = implicit_explicit_eqs
-    assert isinstance(implicit_explicit_equation, ImplicitExplicitODE)
+        filter(lambda x: isinstance(x, TimeReversedImExODE) or isinstance(x, PrimitiveEquations), equations))
+
+    # Ensure there's exactly one equation that provides implicit terms and inverse
+    # This will be the PrimitiveEquations instance or similar, not TimeReversedImExODE
+    core_eq_candidates = [eq for eq in implicit_explicit_eqs if hasattr(eq, 'implicit_terms') and hasattr(eq, 'implicit_inverse') and not isinstance(eq, TimeReversedImExODE)]
+    if len(core_eq_candidates) != 1:
+        raise ValueError(f"Expected exactly one core equation providing implicit methods, found {len(core_eq_candidates)}")
+    core_equation = core_eq_candidates[0]
+
+    # TimeReversedImExODE should not be the one providing the core implicit methods for compose_equations
+    # It wraps another equation (which should be the core_equation or similar)
+    # and reverses its tendencies.
+    # The logic here assumes that `equations` might contain various components,
+    # and we need to find the primary one for implicit parts.
 
     def explicit_fn(x):
-        explicit_tendencies = [fn.explicit_terms(x) for fn in equations]
-        return tree_map(lambda *args: sum([x for x in args if x is not None]),
-                        *explicit_tendencies)
+        explicit_tendencies = [fn.explicit_terms(x) for fn in equations if hasattr(fn, 'explicit_terms')]
+        # Filter out None tendencies before summing, if any explicit_terms might return None
+        return tree_map(lambda *args: sum([val for val in args if val is not None]), *explicit_tendencies)
 
-    return ImplicitExplicitODE.from_functions(
-        explicit_fn,
-        implicit_explicit_equation.implicit_terms,
-        implicit_explicit_equation.implicit_inverse,
-    )
+    # Check if the core_equation is of a type that has 'from_functions'
+    # This check might need to be more robust depending on actual types
+    if hasattr(core_equation, 'from_functions') and callable(core_equation.from_functions):
+        return core_equation.from_functions(
+            explicit_fn,
+            core_equation.implicit_terms,
+            core_equation.implicit_inverse,
+        )
+    elif isinstance(core_equation, PrimitiveEquations): # Or any other class that should be constructed this way
+        # Fallback or specific construction for PrimitiveEquations if from_functions is not appropriate
+        # This branch assumes PrimitiveEquations might be directly instantiated or needs special handling
+        # For this refactoring, we assume PrimitiveEquations now has from_functions
+        return PrimitiveEquations.from_functions(
+            explicit_fn,
+            core_equation.implicit_terms,
+            core_equation.implicit_inverse,
+        )
+    else:
+        # This case should ideally not be reached if core_equation is always a type
+        # that can be used to construct the final composed equation.
+        raise TypeError(f"Unsupported equation type for composition: {type(core_equation)}")
 
 
 @dataclasses.dataclass
@@ -1046,10 +1057,23 @@ def truncated_modal_orography(orography, coords, wavenumbers_to_clip=1):
 
 
 @dataclasses.dataclass
-class PrimitiveEquations(ImplicitExplicitODE):
+class PrimitiveEquations:
     reference_temperature: Any
     orography: Any
     coords: Any
+
+    @classmethod
+    def from_functions(
+        cls,
+        explicit_terms,
+        implicit_terms,
+        implicit_inverse,
+    ):
+        explicit_implicit_ode = cls()
+        explicit_implicit_ode.explicit_terms = explicit_terms
+        explicit_implicit_ode.implicit_terms = implicit_terms
+        explicit_implicit_ode.implicit_inverse = implicit_inverse
+        return explicit_implicit_ode
 
     @property
     def coriolis_parameter(self):

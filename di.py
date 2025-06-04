@@ -282,7 +282,7 @@ class RealSphericalHarmonics:
 
     @functools.cached_property
     def nodal_shape(self):
-        return (self.longitude_nodes, self.latitude_nodes)
+        return self.longitude_nodes, self.latitude_nodes
 
     @functools.cached_property
     def modal_axes(self):
@@ -294,7 +294,7 @@ class RealSphericalHarmonics:
 
     @functools.cached_property
     def modal_shape(self):
-        return (2 * self.longitude_wavenumbers - 1, self.total_wavenumbers)
+        return 2 * self.longitude_wavenumbers - 1, self.total_wavenumbers
 
     @functools.cached_property
     def mask(self):

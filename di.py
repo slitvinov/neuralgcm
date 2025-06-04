@@ -351,8 +351,7 @@ class Grid:
 
     @functools.cached_property
     def nodal_axes(self):
-        lon, sin_lat = self.spherical_harmonics.nodal_axes
-        return lon + 0.0, sin_lat
+        return self.spherical_harmonics.nodal_axes
 
     @functools.cached_property
     def nodal_shape(self):

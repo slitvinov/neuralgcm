@@ -159,7 +159,7 @@ def isothermal_rest_atmosphere(
 
 layers = 24
 coords = di.CoordinateSystem(
-    horizontal=di.Grid.T42(),
+    horizontal=di.Grid(longitude_wavenumbers=43, total_wavenumbers=44, longitude_nodes=128, latitude_nodes=64, longitude_offset=0.0, radius=None),
     vertical=di.SigmaCoordinates.equidistant(layers),
 )
 p0 = 100e3 * units.pascal

@@ -53,7 +53,7 @@ class Scale:
 
 DEFAULT_SCALE = Scale(
     RADIUS,
-    1 / (2  * 7.292e-5) * units.s,
+    1 / 2  / 7.292e-5 * units.s,
     1 * units.kilogram,
     1 * units.degK,
 )

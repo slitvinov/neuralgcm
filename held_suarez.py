@@ -11,9 +11,9 @@ units = di.units
 
 def compose_equations(equations):
     implicit_explicit_eqs = list(
-        filter(lambda x: isinstance(x, ImplicitExplicitODE), equations))
+        filter(lambda x: isinstance(x, di.ImplicitExplicitODE), equations))
     (implicit_explicit_equation, ) = implicit_explicit_eqs
-    assert isinstance(implicit_explicit_equation, ImplicitExplicitODE)
+    assert isinstance(implicit_explicit_equation, di.ImplicitExplicitODE)
 
     def explicit_fn(x):
         explicit_tendencies = [fn.explicit_terms(x) for fn in equations]

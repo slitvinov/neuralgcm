@@ -362,6 +362,7 @@ class RealSphericalHarmonics:
         return real_basis_derivative(x, axis=-2)
 
 
+@dataclasses.dataclass(frozen=True)
 class Grid:
     longitude_wavenumbers: int
     total_wavenumbers: int

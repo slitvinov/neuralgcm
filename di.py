@@ -16,7 +16,6 @@ einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 Unit = units.Unit
 RADIUS = 6.37122e6 * units.m
-ANGULAR_VELOCITY = 7.292e-5 / units.s
 GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
 ISOBARIC_HEAT_CAPACITY = 1004 * units.J / units.kilogram / units.degK
 KAPPA = 2 / 7 * units.dimensionless
@@ -54,7 +53,7 @@ class Scale:
 
 DEFAULT_SCALE = Scale(
     RADIUS,
-    1 / 2 / ANGULAR_VELOCITY,
+    1 / (2  * 7.292e-5) * units.s,
     1 * units.kilogram,
     1 * units.degK,
 )

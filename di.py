@@ -555,17 +555,6 @@ class CoordinateSystem:
     horizontal: Any
     vertical: Any
 
-    def asdict(self):
-        out = {**self.horizontal.asdict(), **self.vertical.asdict()}
-        out["horizontal_grid_type"] = type(self.horizontal).__name__
-        out["vertical_grid_type"] = type(self.vertical).__name__
-        return out
-
-    @property
-    def surface_nodal_shape(self):
-        return (1, ) + self.horizontal.nodal_shape
-
-
 def maybe_to_nodal(fields, coords):
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + coords.horizontal.
                                           nodal_shape)

@@ -343,14 +343,11 @@ class Grid:
 
     @functools.cached_property
     def spherical_harmonics(self):
-        kwargs = dict()
         return RealSphericalHarmonics(
             longitude_wavenumbers=self.longitude_wavenumbers,
             total_wavenumbers=self.total_wavenumbers,
             longitude_nodes=self.longitude_nodes,
-            latitude_nodes=self.latitude_nodes,
-            **kwargs,
-        )
+            latitude_nodes=self.latitude_nodes)
 
     @functools.cached_property
     def nodal_axes(self):

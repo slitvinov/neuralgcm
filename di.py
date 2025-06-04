@@ -18,9 +18,7 @@ Unit = units.Unit
 GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
 ISOBARIC_HEAT_CAPACITY = 1004 * units.J / units.kilogram / units.degK
 KAPPA = 2 / 7 * units.dimensionless
-IDEAL_GAS_CONSTANT = ISOBARIC_HEAT_CAPACITY * KAPPA
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
-
 
 class Scale:
 
@@ -58,7 +56,7 @@ DEFAULT_SCALE = Scale(
 )
 
 gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
-ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(IDEAL_GAS_CONSTANT)
+ideal_gas_constant = DEFAULT_SCALE.nondimensionalize(ISOBARIC_HEAT_CAPACITY * KAPPA)
 kappa = DEFAULT_SCALE.nondimensionalize(KAPPA)
 
 

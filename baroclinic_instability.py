@@ -54,9 +54,8 @@ def steady_state_jw(
             sigma) + u0 * np.cos(sigma_nu)**1.5 * (
                 ((-2 * np.sin(lat)**6 *
                   (np.cos(lat)**2 + 1 / 3) + 10 / 63) * u0 * np.cos(sigma_nu)**
-                 (3 / 2)) +
-                ((1.6 * (np.cos(lat)**3) *
-                  (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * 0.5))
+                 (3 / 2)) + ((1.6 * (np.cos(lat)**3) *
+                              (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * 0.5))
 
     def _get_temperature_variation(lat, lon, sigma):
         del lon
@@ -131,6 +130,7 @@ def baroclinic_perturbation_jw(
     perturbation_radius=0.1,
 ):
     u_p = di.DEFAULT_SCALE.nondimensionalize(u_perturb)
+
     def _get_vorticity_perturbation(lat, lon, sigma):
         del sigma
         x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
@@ -149,8 +149,7 @@ def baroclinic_perturbation_jw(
             lat) * np.cos(lon - lon_location)
         r = np.arccos(x)
         R = perturbation_radius
-        return ((-2 * u_p /
-                 (R**2)) * np.exp(-((r / R)**2)) * np.arccos(x) *
+        return ((-2 * u_p / (R**2)) * np.exp(-((r / R)**2)) * np.arccos(x) *
                 ((np.cos(lat_location) * np.sin(lon - lon_location)) /
                  (np.sqrt(1 - x**2))))
 
@@ -180,7 +179,8 @@ grid = di.Grid(longitude_wavenumbers=22,
                total_wavenumbers=23,
                longitude_nodes=64,
                latitude_nodes=32)
-vertical_grid = di.SigmaCoordinates(np.linspace(0, 1, layers + 1, dtype=np.float32))
+vertical_grid = di.SigmaCoordinates(
+    np.linspace(0, 1, layers + 1, dtype=np.float32))
 coords = di.CoordinateSystem(grid, vertical_grid)
 initial_state_fn, aux_features = steady_state_jw(coords)
 steady_state = initial_state_fn()

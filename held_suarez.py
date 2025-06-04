@@ -159,13 +159,15 @@ def isothermal_rest_atmosphere(
 
 
 layers = 24
-coords = di.CoordinateSystem(
-    horizontal=di.Grid(longitude_wavenumbers=22,
-                       total_wavenumbers=23,
-                       longitude_nodes=64,
-                       latitude_nodes=32),
-    vertical=di.SigmaCoordinates(np.linspace(0, 1, layers + 1, dtype=np.float32))
-)
+coords = di.CoordinateSystem(horizontal=di.Grid(longitude_wavenumbers=22,
+                                                total_wavenumbers=23,
+                                                longitude_nodes=64,
+                                                latitude_nodes=32),
+                             vertical=di.SigmaCoordinates(
+                                 np.linspace(0,
+                                             1,
+                                             layers + 1,
+                                             dtype=np.float32)))
 p0 = 100e3 * units.pascal
 p1 = 5e3 * units.pascal
 rng_key = jax.random.PRNGKey(0)

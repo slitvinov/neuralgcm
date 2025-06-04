@@ -593,22 +593,6 @@ class TimeReversedImExODE(ImplicitExplicitODE):
         return self.forward_eq.implicit_inverse(state, -step_size)
 
 
-def compose_equations(equations):
-    implicit_explicit_eqs = list(
-        filter(lambda x: isinstance(x, ImplicitExplicitODE), equations))
-    (implicit_explicit_equation, ) = implicit_explicit_eqs
-    assert isinstance(implicit_explicit_equation, ImplicitExplicitODE)
-
-    def explicit_fn(x):
-        explicit_tendencies = [fn.explicit_terms(x) for fn in equations]
-        return tree_map(lambda *args: sum([x for x in args if x is not None]),
-                        *explicit_tendencies)
-
-    return ImplicitExplicitODE(explicit_fn,
-                               implicit_explicit_equation.implicit_terms,
-                               implicit_explicit_equation.implicit_inverse)
-
-
 @dataclasses.dataclass
 class ImExButcherTableau:
     a_ex: Any

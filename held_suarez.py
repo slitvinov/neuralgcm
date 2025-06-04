@@ -9,6 +9,23 @@ import xarray
 units = di.units
 
 
+def compose_equations(equations):
+    implicit_explicit_eqs = list(
+        filter(lambda x: isinstance(x, ImplicitExplicitODE), equations))
+    (implicit_explicit_equation, ) = implicit_explicit_eqs
+    assert isinstance(implicit_explicit_equation, ImplicitExplicitODE)
+
+    def explicit_fn(x):
+        explicit_tendencies = [fn.explicit_terms(x) for fn in equations]
+        return di.tree_map(
+            lambda *args: sum([x for x in args if x is not None]),
+            *explicit_tendencies)
+
+    return di.ImplicitExplicitODE(explicit_fn,
+                                  implicit_explicit_equation.implicit_terms,
+                                  implicit_explicit_equation.implicit_inverse)
+
+
 class HeldSuarezForcing:
 
     def __init__(
@@ -208,7 +225,7 @@ primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 hs_forcing = HeldSuarezForcing(coords=coords,
                                reference_temperature=ref_temps,
                                p0=p0)
-primitive_with_hs = di.compose_equations([primitive, hs_forcing])
+primitive_with_hs = compose_equations([primitive, hs_forcing])
 step_fn = di.imex_rk_sil3(primitive_with_hs, dt)
 filters = [
     di.exponential_step_filter(coords.horizontal,

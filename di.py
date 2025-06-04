@@ -264,13 +264,6 @@ def real_basis_derivative(u, /, axis=-1):
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
-@dataclasses.dataclass
-class _SphericalHarmonicBasis:
-    f: np.ndarray
-    p: np.ndarray
-    w: np.ndarray
-
-
 @dataclasses.dataclass(frozen=True)
 class RealSphericalHarmonics:
     longitude_wavenumbers: int = 0
@@ -322,19 +315,16 @@ class RealSphericalHarmonics:
                      x=x)
         p = np.repeat(p, 2, axis=0)
         p = p[1:]
-        return _SphericalHarmonicBasis(f=f, p=p, w=w)
+        return f, p, w
 
     def inverse_transform(self, x):
-        p = self.basis.p
-        f = self.basis.f
+        f, p, w = self.basis
         px = einsum("mjl,...ml->...mj", p, x)
         fpx = einsum("im,...mj->...ij", f, px)
         return fpx
 
     def transform(self, x):
-        w = self.basis.w
-        f = self.basis.f
-        p = self.basis.p
+        f, p, w = self.basis
         wx = w * x
         fwx = einsum("im,...ij->...mj", f, wx)
         pfwx = einsum("mjl,...mj->...ml", p, fwx)

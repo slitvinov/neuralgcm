@@ -150,6 +150,9 @@ class SigmaCoordinates:
     def layers(self):
         return len(self.boundaries) - 1
 
+    def __hash__(self):
+        return hash(tuple(self.centers.tolist()))
+
 
 def centered_difference(x, coordinates, axis=-3):
     dx = diff(x, axis=axis)

@@ -150,14 +150,6 @@ class SigmaCoordinates:
     def layers(self):
         return len(self.boundaries) - 1
 
-    @classmethod
-    def equidistant(cls, layers):
-        boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
-        return cls(boundaries)
-
-    def __hash__(self):
-        return hash(tuple(self.centers.tolist()))
-
 
 def centered_difference(x, coordinates, axis=-3):
     dx = diff(x, axis=axis)

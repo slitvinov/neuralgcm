@@ -184,7 +184,7 @@ grid = di.Grid(longitude_wavenumbers=22,
                total_wavenumbers=23,
                longitude_nodes=64,
                latitude_nodes=32)
-vertical_grid = di.SigmaCoordinates.equidistant(layers)
+vertical_grid = di.SigmaCoordinates(np.linspace(0, 1, layers + 1, dtype=np.float32))
 coords = di.CoordinateSystem(grid, vertical_grid)
 initial_state_fn, aux_features = steady_state_jw(coords)
 steady_state = initial_state_fn()

@@ -164,7 +164,7 @@ coords = di.CoordinateSystem(
                        total_wavenumbers=23,
                        longitude_nodes=64,
                        latitude_nodes=32),
-    vertical=di.SigmaCoordinates.equidistant(layers),
+    vertical=di.SigmaCoordinates(np.linspace(0, 1, layers + 1, dtype=np.float32))
 )
 p0 = 100e3 * units.pascal
 p1 = 5e3 * units.pascal

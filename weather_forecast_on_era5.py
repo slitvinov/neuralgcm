@@ -76,7 +76,7 @@ model_coords = di.CoordinateSystem(
             total_wavenumbers=172,
             longitude_nodes=512,
             latitude_nodes=256),
-    di.SigmaCoordinates.equidistant(layers),
+    di.SigmaCoordinates(np.linspace(0, 1, layers + 1, dtype=np.float32)),
 )
 dt_si = 5 * units.minute
 save_every = 15 * units.minute

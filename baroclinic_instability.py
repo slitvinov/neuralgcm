@@ -136,10 +136,10 @@ def baroclinic_perturbation_jw(
         del sigma
         x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
             lat) * np.cos(lon - lon_location)
-        r = a * np.arccos(x)
-        R = a * perturbation_radius
+        r = np.arccos(x)
+        R = perturbation_radius
         return ((u_p / a) * np.exp(-((r / R)**2)) *
-                (np.tan(lat) - (2 * ((a / R)**2) * np.arccos(x)) *
+                (np.tan(lat) - (2 * ((1.0 / R)**2) * np.arccos(x)) *
                  (np.sin(lat_location) * np.cos(lat) - np.cos(lat_location) *
                   np.sin(lat) * np.cos(lon - lon_location)) /
                  (np.sqrt(1 - x**2))))
@@ -148,9 +148,9 @@ def baroclinic_perturbation_jw(
         del sigma
         x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
             lat) * np.cos(lon - lon_location)
-        r = a * np.arccos(x)
-        R = a * perturbation_radius
-        return ((-2 * u_p * a /
+        r = np.arccos(x)
+        R = perturbation_radius
+        return ((-2 * u_p /
                  (R**2)) * np.exp(-((r / R)**2)) * np.arccos(x) *
                 ((np.cos(lat_location) * np.sin(lon - lon_location)) /
                  (np.sqrt(1 - x**2))))

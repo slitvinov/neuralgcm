@@ -175,8 +175,8 @@ def baroclinic_perturbation_jw(
     return state
 
 
-layers = 24
-grid = di.Grid.T42()
+layers = 12
+grid = di.Grid.T21()
 vertical_grid = di.SigmaCoordinates.equidistant(layers)
 coords = di.CoordinateSystem(grid, vertical_grid)
 initial_state_fn, aux_features = steady_state_jw(coords)

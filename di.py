@@ -362,43 +362,16 @@ class RealSphericalHarmonics:
         return real_basis_derivative(x, axis=-2)
 
 
-@dataclasses.dataclass(frozen=True)
 class Grid:
-    longitude_wavenumbers: int = 0
-    total_wavenumbers: int = 0
-    longitude_nodes: int = 0
-    latitude_nodes: int = 0
-    longitude_offset: float = 0.0
-    radius: float | None = None
-
-    def __post_init__(self):
+    def __init__(self, longitude_wavenumbers, total_wavenumbers, longitude_nodes, latitude_nodes, longitude_offset, radius):
+        self.longitude_wavenumbers = longitude_wavenumbers
+        self.total_wavenumbers = total_wavenumbers
+        self.longitude_nodes = longitude_nodes
+        self.latitude_nodes = latitude_nodes
+        self.longitude_offset = longitude_offset
+        self.radius = radius
         if self.radius is None:
-            object.__setattr__(self, "radius", 1.0)
-
-    @classmethod
-    def construct(
-        cls,
-        max_wavenumber: int,
-        gaussian_nodes: int,
-        longitude_offset: float = 0.0,
-        radius: float | None = None,
-    ):
-        return cls(
-            longitude_wavenumbers=max_wavenumber + 1,
-            total_wavenumbers=max_wavenumber + 2,
-            longitude_nodes=4 * gaussian_nodes,
-            latitude_nodes=2 * gaussian_nodes,
-            longitude_offset=longitude_offset,
-            radius=radius,
-        )
-
-    @classmethod
-    def T42(cls, **kwargs):
-        return cls.construct(max_wavenumber=42, gaussian_nodes=32, **kwargs)
-
-    @classmethod
-    def T170(cls, **kwargs):
-        return cls.construct(max_wavenumber=170, gaussian_nodes=128, **kwargs)
+            self.radius = 1.0
 
     @functools.cached_property
     def spherical_harmonics(self):

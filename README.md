@@ -4,7 +4,6 @@
 python -m venv ~/.venv/neuralgcm
 . ~/.venv/neuralgcm/bin/activate
 python -m pip install jax[cuda12] gcsfs matplotlib pint tree_math xarray zarr
-python -m pip install coverage
 ```
 
 ```

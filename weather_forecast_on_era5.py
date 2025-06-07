@@ -69,6 +69,85 @@ def slice_levels(output, level_indices):
     return jax.tree.map(get_horizontal, output)
 
 
+def open_era5(path, time):
+    ds = xarray.open_zarr(path,
+                          chunks=None,
+                          storage_options=dict(token="anon"))
+    return ds.sel(time=time)
+
+
+def nodal_prognostics_and_diagnostics(state):
+    coords = model_coords.horizontal
+    u_nodal, v_nodal = di.vor_div_to_uv_nodal(coords, state.vorticity,
+                                              state.divergence)
+    geopotential_nodal = coords.to_nodal(
+        di.get_geopotential(
+            state.temperature_variation,
+            eq.reference_temperature,
+            orography,
+            model_coords.vertical,
+        ))
+    vor_nodal = coords.to_nodal(state.vorticity)
+    div_nodal = coords.to_nodal(state.divergence)
+    sp_nodal = jnp.exp(coords.to_nodal(state.log_surface_pressure))
+    tracers_nodal = {k: coords.to_nodal(v) for k, v in state.tracers.items()}
+    t_nodal = (coords.to_nodal(state.temperature_variation) +
+               ref_temps[:, np.newaxis, np.newaxis])
+    vertical_velocity_nodal = di.compute_vertical_velocity(state, model_coords)
+    state_nodal = {
+        "u_component_of_wind": u_nodal,
+        "v_component_of_wind": v_nodal,
+        "temperature": t_nodal,
+        "vorticity": vor_nodal,
+        "divergence": div_nodal,
+        "vertical_velocity": vertical_velocity_nodal,
+        "geopotential": geopotential_nodal,
+        "surface_pressure": sp_nodal,
+        **tracers_nodal,
+    }
+    return slice_levels(state_nodal, output_level_indices)
+
+
+def trajectory_to_xarray(trajectory):
+    target_units = {k: v.data.units for k, v in ds_init.items()}
+    target_units |= {
+        "vorticity": units("1/s"),
+        "divergence": units("1/s"),
+        "geopotential": units("m^2/s^2"),
+        "vertical_velocity": units("1/s"),
+    }
+    orography_nodal = jax.device_put(
+        model_coords.horizontal.to_nodal(orography),
+        device=jax.devices("cpu")[0])
+    trajectory_cpu = jax.device_put(trajectory, device=jax.devices("cpu")[0])
+    traj_nodal_si = {
+        k: di.DEFAULT_SCALE.dimensionalize(v, target_units[k]).magnitude
+        for k, v in trajectory_cpu.items()
+    }
+    times = float(save_every / units.hour) * np.arange(outer_steps)
+    lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
+    lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
+    dims = ("time", "sigma", "longitude", "latitude")
+    ds_result = xarray.Dataset(
+        data_vars={
+            k: (dims, v)
+            for k, v in traj_nodal_si.items() if k != "surface_pressure"
+        },
+        coords={
+            "longitude": lon,
+            "latitude": lat,
+            "sigma": model_coords.vertical.centers[output_level_indices],
+            "time": times,
+            "orography":
+            (("longitude", "latitude"), orography_nodal.squeeze()),
+        },
+    ).assign(surface_pressure=(
+        ("time", "longitude", "latitude"),
+        traj_nodal_si["surface_pressure"].squeeze(axis=-3),
+    ))
+    return ds_result
+
+
 layers = 32
 ref_temp_si = 250 * units.degK
 model_coords = di.CoordinateSystem(
@@ -83,14 +162,6 @@ save_every = 15 * units.minute
 total_time = 2 * units.day + save_every
 dfi_timescale = 6 * units.hour
 output_level_indices = [layers // 4, layers // 2, 3 * layers // 4, -1]
-
-
-def open_era5(path, time):
-    ds = xarray.open_zarr(path,
-                          chunks=None,
-                          storage_options=dict(token="anon"))
-    return ds.sel(time=time)
-
 
 ds_arco_era5 = xarray.merge([
     open_era5(
@@ -178,79 +249,6 @@ dfi = jax.jit(
         dt=dt,
     ))
 dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
-
-
-def nodal_prognostics_and_diagnostics(state):
-    coords = model_coords.horizontal
-    u_nodal, v_nodal = di.vor_div_to_uv_nodal(coords, state.vorticity,
-                                              state.divergence)
-    geopotential_nodal = coords.to_nodal(
-        di.get_geopotential(
-            state.temperature_variation,
-            eq.reference_temperature,
-            orography,
-            model_coords.vertical,
-        ))
-    vor_nodal = coords.to_nodal(state.vorticity)
-    div_nodal = coords.to_nodal(state.divergence)
-    sp_nodal = jnp.exp(coords.to_nodal(state.log_surface_pressure))
-    tracers_nodal = {k: coords.to_nodal(v) for k, v in state.tracers.items()}
-    t_nodal = (coords.to_nodal(state.temperature_variation) +
-               ref_temps[:, np.newaxis, np.newaxis])
-    vertical_velocity_nodal = di.compute_vertical_velocity(state, model_coords)
-    state_nodal = {
-        "u_component_of_wind": u_nodal,
-        "v_component_of_wind": v_nodal,
-        "temperature": t_nodal,
-        "vorticity": vor_nodal,
-        "divergence": div_nodal,
-        "vertical_velocity": vertical_velocity_nodal,
-        "geopotential": geopotential_nodal,
-        "surface_pressure": sp_nodal,
-        **tracers_nodal,
-    }
-    return slice_levels(state_nodal, output_level_indices)
-
-
-def trajectory_to_xarray(trajectory):
-    target_units = {k: v.data.units for k, v in ds_init.items()}
-    target_units |= {
-        "vorticity": units("1/s"),
-        "divergence": units("1/s"),
-        "geopotential": units("m^2/s^2"),
-        "vertical_velocity": units("1/s"),
-    }
-    orography_nodal = jax.device_put(
-        model_coords.horizontal.to_nodal(orography),
-        device=jax.devices("cpu")[0])
-    trajectory_cpu = jax.device_put(trajectory, device=jax.devices("cpu")[0])
-    traj_nodal_si = {
-        k: di.DEFAULT_SCALE.dimensionalize(v, target_units[k]).magnitude
-        for k, v in trajectory_cpu.items()
-    }
-    times = float(save_every / units.hour) * np.arange(outer_steps)
-    lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
-    lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
-    dims = ("time", "sigma", "longitude", "latitude")
-    ds_result = xarray.Dataset(
-        data_vars={
-            k: (dims, v)
-            for k, v in traj_nodal_si.items() if k != "surface_pressure"
-        },
-        coords={
-            "longitude": lon,
-            "latitude": lat,
-            "sigma": model_coords.vertical.centers[output_level_indices],
-            "time": times,
-            "orography":
-            (("longitude", "latitude"), orography_nodal.squeeze()),
-        },
-    ).assign(surface_pressure=(
-        ("time", "longitude", "latitude"),
-        traj_nodal_si["surface_pressure"].squeeze(axis=-3),
-    ))
-    return ds_result
-
 
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)

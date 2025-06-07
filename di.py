@@ -109,6 +109,7 @@ def tree_map_over_nonscalars(f, x, *, scalar_fn=lambda x: x):
 
     return tree_map(g, x)
 
+
 def _slice_shape_along_axis(x, axis):
     x_shape = list(x.shape)
     x_shape[axis] = 1
@@ -1231,18 +1232,3 @@ def horizontal_diffusion_filter(
     eigenvalues = grid.laplacian_eigenvalues
     scaling = jnp.exp(-scale * (-eigenvalues)**order)
     return _make_filter_fn(scaling)
-
-
-def _interval_overlap(source_bounds, target_bounds):
-    upper = jnp.minimum(target_bounds[1:, jnp.newaxis],
-                        source_bounds[jnp.newaxis, 1:])
-    lower = jnp.maximum(target_bounds[:-1, jnp.newaxis],
-                        source_bounds[jnp.newaxis, :-1])
-    return jnp.maximum(upper - lower, 0)
-
-
-def conservative_regrid_weights(source_bounds, target_bounds):
-    weights = _interval_overlap(source_bounds, target_bounds)
-    weights /= jnp.sum(weights, axis=1, keepdims=True)
-    assert weights.shape == (target_bounds.size - 1, source_bounds.size - 1)
-    return weights

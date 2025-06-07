@@ -54,11 +54,6 @@ def explicit_terms(state):
     )
 
 
-def _get_vorticity(sigma, lon, lat):
-    del sigma, lon
-    return jnp.zeros_like(lat)
-
-
 def _get_surface_pressure(lon, lat, rng_key):
 
     def relative_pressure(altitude_m):
@@ -82,20 +77,6 @@ def _get_surface_pressure(lon, lat, rng_key):
                     jnp.exp(-((lat - lat0)**2) /
                             (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
     return surface_pressure + p1 * perturbation
-
-
-def initial_state_fn(rng_key):
-    nodal_vorticity = jnp.stack(
-        [_get_vorticity(sigma, lon, lat) for sigma in coords.vertical.centers])
-    modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
-    nodal_surface_pressure = _get_surface_pressure(lon, lat, rng_key)
-    return di.State(
-        vorticity=modal_vorticity,
-        divergence=jnp.zeros_like(modal_vorticity),
-        temperature_variation=jnp.zeros_like(modal_vorticity),
-        log_surface_pressure=(coords.horizontal.to_modal(
-            jnp.log(nodal_surface_pressure))),
-    )
 
 
 def explicit_fn(x):
@@ -123,7 +104,17 @@ tref = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(tref))
 p0 = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(p0))
 p1 = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(p1))
 orography = np.zeros_like(lat)
-initial_state = initial_state_fn(rng_key)
+nodal_vorticity = jnp.stack(
+    [jnp.zeros_like(lat) for sigma in coords.vertical.centers])
+modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
+nodal_surface_pressure = _get_surface_pressure(lon, lat, rng_key)
+initial_state = di.State(
+    vorticity=modal_vorticity,
+    divergence=jnp.zeros_like(modal_vorticity),
+    temperature_variation=jnp.zeros_like(modal_vorticity),
+    log_surface_pressure=(coords.horizontal.to_modal(
+        jnp.log(nodal_surface_pressure))),
+)
 ref_temps = np.full((coords.vertical.layers, ), tref)
 orography = di.truncated_modal_orography(orography, coords)
 initial_state_dict = initial_state.asdict()

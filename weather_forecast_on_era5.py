@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import dataclasses
 import xarray
+import functools
 
 units = di.units
 
@@ -143,6 +144,30 @@ def trajectory_to_xarray(trajectory):
     return ds_result
 
 
+@functools.partial(jax.jit, static_argnums=(1, 2))
+def regrid_hybrid_to_sigma(
+    fields,
+    hybrid_coords,
+    sigma_coords,
+    surface_pressure,
+):
+
+    @jax.jit
+    @functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")
+    @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
+    @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
+    def regrid(surface_pressure, sigma_bounds, field):
+        assert sigma_bounds.shape == (sigma_coords.layers + 1, )
+        hybrid_bounds = hybrid_coords.get_sigma_boundaries(surface_pressure)
+        weights = conservative_regrid_weights(hybrid_bounds, sigma_bounds)
+        result = jnp.einsum("ab,b->a", weights, field, precision="float32")
+        assert result.shape[0] == sigma_coords.layers
+        return result
+
+    return tree_map_over_nonscalars(
+        lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
+
+
 layers = 32
 ref_temp_si = 250 * units.degK
 model_coords = di.CoordinateSystem(
@@ -192,7 +217,7 @@ sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
 sp_init_hpa = (ds_init.surface_pressure.transpose(
     "longitude", "latitude").data.to("hPa").magnitude)
-nodal_inputs = di.regrid_hybrid_to_sigma(
+nodal_inputs = regrid_hybrid_to_sigma(
     fields=model_level_inputs,
     hybrid_coords=source_vertical,
     sigma_coords=model_coords.vertical,

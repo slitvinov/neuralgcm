@@ -127,10 +127,6 @@ aux_features = {
     "orography": orography,
     "ref_temperatures": np.full((coords.vertical.layers, ), tref),
 }
-initial_state_fn, aux_features = isothermal_rest_atmosphere(coords=coords,
-                                                            p0=p0,
-                                                            p1=p1)
-
 initial_state = initial_state_fn(rng_key)
 ref_temps = aux_features["ref_temperatures"]
 orography = di.truncated_modal_orography(aux_features["orography"], coords)

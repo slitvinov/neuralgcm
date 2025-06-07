@@ -144,6 +144,15 @@ def trajectory_to_xarray(trajectory):
     return ds_result
 
 
+def tree_map_over_nonscalars(f, x, *, scalar_fn=lambda x: x):
+
+    def g(x):
+        x = jnp.asarray(x)
+        return f(x) if x.ndim else scalar_fn(x)
+
+    return tree_map(g, x)
+
+
 @functools.partial(jax.jit, static_argnums=(1, 2))
 def regrid_hybrid_to_sigma(
     fields,

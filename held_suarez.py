@@ -13,7 +13,7 @@ class HeldSuarezForcing:
     def __init__(
         self,
         coords,
-        reference_temperature,
+        ref_temps,
         p0=1e5 * units.pascal,
         sigma_b=0.7,
         kf=1 / (1 * units.day),
@@ -25,7 +25,7 @@ class HeldSuarezForcing:
         dThz=10 * units.degK,
     ):
         self.coords = coords
-        self.reference_temperature = reference_temperature
+        self.ref_temps = ref_temps
         self.p0 = di.DEFAULT_SCALE.nondimensionalize(p0)
         self.sigma_b = sigma_b
         self.kf = di.DEFAULT_SCALE.nondimensionalize(kf)
@@ -66,7 +66,7 @@ class HeldSuarezForcing:
             aux_state.cos_lat_u,
         )
         nodal_temperature = (
-            self.reference_temperature[:, np.newaxis, np.newaxis] +
+            self.ref_temps[:, np.newaxis, np.newaxis] +
             aux_state.temperature_variation)
         nodal_log_surface_pressure = self.coords.horizontal.to_nodal(
             state.log_surface_pressure)

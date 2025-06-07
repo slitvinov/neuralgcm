@@ -54,29 +54,13 @@ def explicit_terms(state):
     )
 
 
-def _get_surface_pressure(lon, lat, rng_key):
-
-    def relative_pressure(altitude_m):
-        g = 9.80665
-        cp = 1004.68506
-        T0 = 288.16
-        M = 0.02896968
-        R0 = 8.314462618
-        return (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
-
-    altitude_m = di.DEFAULT_SCALE.dimensionalize(orography,
-                                                 units.meter).magnitude
-    surface_pressure = (p0 * np.ones((1, ) + coords.horizontal.nodal_shape) *
-                        relative_pressure(altitude_m))
-    keys = jax.random.split(rng_key, 2)
-    lon0 = jax.random.uniform(keys[1], minval=np.pi / 2, maxval=3 * np.pi / 2)
-    lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)
-    stddev = np.pi / 20
-    k = 4
-    perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *
-                    jnp.exp(-((lat - lat0)**2) /
-                            (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
-    return surface_pressure + p1 * perturbation
+def relative_pressure(altitude_m):
+    g = 9.80665
+    cp = 1004.68506
+    T0 = 288.16
+    M = 0.02896968
+    R0 = 8.314462618
+    return (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
 
 
 def explicit_fn(x):
@@ -107,7 +91,20 @@ orography = np.zeros_like(lat)
 nodal_vorticity = jnp.stack(
     [jnp.zeros_like(lat) for sigma in coords.vertical.centers])
 modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
-nodal_surface_pressure = _get_surface_pressure(lon, lat, rng_key)
+
+altitude_m = di.DEFAULT_SCALE.dimensionalize(orography, units.meter).magnitude
+surface_pressure = (p0 * np.ones((1, ) + coords.horizontal.nodal_shape) *
+                    relative_pressure(altitude_m))
+keys = jax.random.split(rng_key, 2)
+lon0 = jax.random.uniform(keys[1], minval=np.pi / 2, maxval=3 * np.pi / 2)
+lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)
+stddev = np.pi / 20
+k = 4
+perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *
+                jnp.exp(-((lat - lat0)**2) /
+                        (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
+nodal_surface_pressure = surface_pressure + p1 * perturbation
+
 initial_state = di.State(
     vorticity=modal_vorticity,
     divergence=jnp.zeros_like(modal_vorticity),

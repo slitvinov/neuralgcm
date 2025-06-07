@@ -125,10 +125,8 @@ log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 steady_state = di.State(
     vorticity=modal_vorticity,
     divergence=np.zeros_like(modal_vorticity),
-    temperature_variation=grid.to_modal(
-        nodal_temperature_variation),
-    log_surface_pressure=grid.to_modal(
-        log_nodal_surface_pressure),
+    temperature_variation=grid.to_modal(nodal_temperature_variation),
+    log_surface_pressure=grid.to_modal(log_nodal_surface_pressure),
 )
 
 ref_temps = aux_features["ref_temperatures"]

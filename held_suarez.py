@@ -8,87 +8,50 @@ import numpy as np
 units = di.units
 
 
-class HeldSuarezForcing:
+def kv(self):
+    kv_coeff = kf * (np.maximum(0, (sigma - sigma_b) / (1 - sigma_b)))
+    return kv_coeff[:, np.newaxis, np.newaxis]
 
-    def __init__(
-        self,
-        coords,
-        ref_temps,
-        p0=1e5 * units.pascal,
-        sigma_b=0.7,
-        kf=1 / (1 * units.day),
-        ka=1 / (40 * units.day),
-        ks=1 / (4 * units.day),
-        minT=200 * units.degK,
-        maxT=315 * units.degK,
-        dTy=60 * units.degK,
-        dThz=10 * units.degK,
-    ):
-        self.coords = coords
-        self.ref_temps = ref_temps
-        self.p0 = di.DEFAULT_SCALE.nondimensionalize(p0)
-        self.sigma_b = sigma_b
-        self.kf = di.DEFAULT_SCALE.nondimensionalize(kf)
-        self.ka = di.DEFAULT_SCALE.nondimensionalize(ka)
-        self.ks = di.DEFAULT_SCALE.nondimensionalize(ks)
-        self.minT = di.DEFAULT_SCALE.nondimensionalize(minT)
-        self.maxT = di.DEFAULT_SCALE.nondimensionalize(maxT)
-        self.dTy = di.DEFAULT_SCALE.nondimensionalize(dTy)
-        self.dThz = di.DEFAULT_SCALE.nondimensionalize(dThz)
-        self.sigma = self.coords.vertical.centers
-        _, sin_lat = self.coords.horizontal.nodal_mesh
-        self.lat = np.arcsin(sin_lat)
 
-    def kv(self):
-        kv_coeff = self.kf * (np.maximum(0, (self.sigma - self.sigma_b) /
-                                         (1 - self.sigma_b)))
-        return kv_coeff[:, np.newaxis, np.newaxis]
+def kt(self):
+    cutoff = np.maximum(0, (sigma - sigma_b) / (1 - sigma_b))
+    return ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] *
+                             np.cos(lat)**4)
 
-    def kt(self):
-        cutoff = np.maximum(0,
-                            (self.sigma - self.sigma_b) / (1 - self.sigma_b))
-        return self.ka + (self.ks - self.ka) * (
-            cutoff[:, np.newaxis, np.newaxis] * np.cos(self.lat)**4)
 
-    def equilibrium_temperature(self, nodal_surface_pressure):
-        p_over_p0 = (self.sigma[:, np.newaxis, np.newaxis] *
-                     nodal_surface_pressure / self.p0)
-        temperature = p_over_p0**di.kappa * (
-            self.maxT - self.dTy * np.sin(self.lat)**2 -
-            self.dThz * jnp.log(p_over_p0) * np.cos(self.lat)**2)
-        return jnp.maximum(self.minT, temperature)
+def equilibrium_temperature(self, nodal_surface_pressure):
+    p_over_p0 = (sigma[:, np.newaxis, np.newaxis] * nodal_surface_pressure /
+                 p0)
+    temperature = p_over_p0**di.kappa * (maxT - dTy * np.sin(lat)**2 - dThz *
+                                         jnp.log(p_over_p0) * np.cos(lat)**2)
+    return jnp.maximum(minT, temperature)
 
-    def explicit_terms(self, state):
-        aux_state = di.compute_diagnostic_state(state=state,
-                                                coords=self.coords)
-        nodal_velocity_tendency = jax.tree.map(
-            lambda x: -self.kv() * x / self.coords.horizontal.cos_lat**2,
-            aux_state.cos_lat_u,
-        )
-        nodal_temperature = (
-            self.ref_temps[:, np.newaxis, np.newaxis] +
-            aux_state.temperature_variation)
-        nodal_log_surface_pressure = self.coords.horizontal.to_nodal(
-            state.log_surface_pressure)
-        nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
-        Teq = self.equilibrium_temperature(nodal_surface_pressure)
-        nodal_temperature_tendency = -self.kt() * (nodal_temperature - Teq)
-        temperature_tendency = self.coords.horizontal.to_modal(
-            nodal_temperature_tendency)
-        velocity_tendency = self.coords.horizontal.to_modal(
-            nodal_velocity_tendency)
-        vorticity_tendency = self.coords.horizontal.curl_cos_lat(
-            velocity_tendency)
-        divergence_tendency = self.coords.horizontal.div_cos_lat(
-            velocity_tendency)
-        log_surface_pressure_tendency = jnp.zeros_like(
-            state.log_surface_pressure)
-        return di.State(
-            vorticity=vorticity_tendency,
-            divergence=divergence_tendency,
-            temperature_variation=temperature_tendency,
-            log_surface_pressure=log_surface_pressure_tendency,
-        )
+
+def explicit_terms(self, state):
+    aux_state = di.compute_diagnostic_state(state=state, coords=coords)
+    nodal_velocity_tendency = jax.tree.map(
+        lambda x: -kv() * x / coords.horizontal.cos_lat**2,
+        aux_state.cos_lat_u,
+    )
+    nodal_temperature = (ref_temps[:, np.newaxis, np.newaxis] +
+                         aux_state.temperature_variation)
+    nodal_log_surface_pressure = coords.horizontal.to_nodal(
+        state.log_surface_pressure)
+    nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
+    Teq = equilibrium_temperature(nodal_surface_pressure)
+    nodal_temperature_tendency = -kt() * (nodal_temperature - Teq)
+    temperature_tendency = coords.horizontal.to_modal(
+        nodal_temperature_tendency)
+    velocity_tendency = coords.horizontal.to_modal(nodal_velocity_tendency)
+    vorticity_tendency = coords.horizontal.curl_cos_lat(velocity_tendency)
+    divergence_tendency = coords.horizontal.div_cos_lat(velocity_tendency)
+    log_surface_pressure_tendency = jnp.zeros_like(state.log_surface_pressure)
+    return di.State(
+        vorticity=vorticity_tendency,
+        divergence=divergence_tendency,
+        temperature_variation=temperature_tendency,
+        log_surface_pressure=log_surface_pressure_tendency,
+    )
 
 
 def isothermal_rest_atmosphere(
@@ -205,9 +168,30 @@ inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
-hs_forcing = HeldSuarezForcing(coords=coords,
-                               ref_temps=ref_temps,
-                               p0=p0)
+hs_forcing = HeldSuarezForcing(coords=coords, ref_temps=ref_temps, p0=p0)
+p0 = 1e5 * units.pascal
+sigma_b = 0.7
+kf = 1 / (1 * units.day)
+ka = 1 / (40 * units.day)
+ks = 1 / (4 * units.day)
+minT = 200 * units.degK
+maxT = 315 * units.degK
+dTy = 60 * units.degK
+dThz = 10 * units.degK
+coords = coords
+ref_temps = ref_temps
+p0 = di.DEFAULT_SCALE.nondimensionalize(p0)
+sigma_b = sigma_b
+kf = di.DEFAULT_SCALE.nondimensionalize(kf)
+ka = di.DEFAULT_SCALE.nondimensionalize(ka)
+ks = di.DEFAULT_SCALE.nondimensionalize(ks)
+minT = di.DEFAULT_SCALE.nondimensionalize(minT)
+maxT = di.DEFAULT_SCALE.nondimensionalize(maxT)
+dTy = di.DEFAULT_SCALE.nondimensionalize(dTy)
+dThz = di.DEFAULT_SCALE.nondimensionalize(dThz)
+sigma = coords.vertical.centers
+_, sin_lat = coords.horizontal.nodal_mesh
+lat = np.arcsin(sin_lat)
 
 
 def explicit_fn(x):

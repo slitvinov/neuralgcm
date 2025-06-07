@@ -974,8 +974,8 @@ def div_sec_lat(m_component, n_component, grid):
 
 
 def truncated_modal_orography(orography, coords, wavenumbers_to_clip=1):
-    return coords.horizontal.clip_wavenumbers(coords.horizontal.to_modal(orography),
-                                              n=wavenumbers_to_clip)
+    return coords.horizontal.clip_wavenumbers(
+        coords.horizontal.to_modal(orography), n=wavenumbers_to_clip)
 
 
 class PrimitiveEquations:

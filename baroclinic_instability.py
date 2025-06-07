@@ -85,56 +85,29 @@ def initial_state_fn(rng_key=None):
     return state
 
 
-def baroclinic_perturbation_jw(
-    coords,
-    u_perturb=1.0 * units.m / units.s,
-    lon_location=np.pi / 9,
-    lat_location=2 * np.pi / 9,
-    perturbation_radius=0.1,
-):
-    u_p = di.DEFAULT_SCALE.nondimensionalize(u_perturb)
+def get_vorticity_perturbation(lat, lon, sigma):
+    del sigma
+    x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
+        lat) * np.cos(lon - lon_location)
+    r = np.arccos(x)
+    R = perturbation_radius
+    return (
+        u_p * np.exp(-((r / R)**2)) *
+        (np.tan(lat) - (2 * ((1.0 / R)**2) * np.arccos(x)) *
+         (np.sin(lat_location) * np.cos(lat) -
+          np.cos(lat_location) * np.sin(lat) * np.cos(lon - lon_location)) /
+         (np.sqrt(1 - x**2))))
 
-    def get_vorticity_perturbation(lat, lon, sigma):
-        del sigma
-        x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
-            lat) * np.cos(lon - lon_location)
-        r = np.arccos(x)
-        R = perturbation_radius
-        return (u_p * np.exp(-((r / R)**2)) *
-                (np.tan(lat) - (2 * ((1.0 / R)**2) * np.arccos(x)) *
-                 (np.sin(lat_location) * np.cos(lat) - np.cos(lat_location) *
-                  np.sin(lat) * np.cos(lon - lon_location)) /
-                 (np.sqrt(1 - x**2))))
 
-    def get_divergence_perturbation(lat, lon, sigma):
-        del sigma
-        x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
-            lat) * np.cos(lon - lon_location)
-        r = np.arccos(x)
-        R = perturbation_radius
-        return ((-2 * u_p / (R**2)) * np.exp(-((r / R)**2)) * np.arccos(x) *
-                ((np.cos(lat_location) * np.sin(lon - lon_location)) /
-                 (np.sqrt(1 - x**2))))
-
-    lon, sin_lat = coords.horizontal.nodal_mesh
-    lat = np.arcsin(sin_lat)
-    nodal_vorticity = np.stack([
-        get_vorticity_perturbation(lat, lon, sigma)
-        for sigma in coords.vertical.centers
-    ])
-    nodal_divergence = np.stack([
-        get_divergence_perturbation(lat, lon, sigma)
-        for sigma in coords.vertical.centers
-    ])
-    modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
-    modal_divergence = coords.horizontal.to_modal(nodal_divergence)
-    state = di.State(
-        vorticity=modal_vorticity,
-        divergence=modal_divergence,
-        temperature_variation=np.zeros_like(modal_vorticity),
-        log_surface_pressure=np.zeros_like(modal_vorticity[:1, ...]),
-    )
-    return state
+def get_divergence_perturbation(lat, lon, sigma):
+    del sigma
+    x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
+        lat) * np.cos(lon - lon_location)
+    r = np.arccos(x)
+    R = perturbation_radius
+    return ((-2 * u_p / (R**2)) * np.exp(-((r / R)**2)) * np.arccos(x) *
+            ((np.cos(lat_location) * np.sin(lon - lon_location)) /
+             (np.sqrt(1 - x**2))))
 
 
 layers = 12
@@ -200,7 +173,30 @@ trajectory_dict = trajectory.asdict()
 u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
                               trajectory.divergence)
 trajectory_dict.update({"u": u, "v": v})
-perturbation = baroclinic_perturbation_jw(coords)
+u_perturb = 1.0 * units.m / units.s
+lon_location = np.pi / 9
+lat_location = 2 * np.pi / 9
+perturbation_radius = 0.1
+u_p = di.DEFAULT_SCALE.nondimensionalize(u_perturb)
+lon, sin_lat = coords.horizontal.nodal_mesh
+lat = np.arcsin(sin_lat)
+nodal_vorticity = np.stack([
+    get_vorticity_perturbation(lat, lon, sigma)
+    for sigma in coords.vertical.centers
+])
+nodal_divergence = np.stack([
+    get_divergence_perturbation(lat, lon, sigma)
+    for sigma in coords.vertical.centers
+])
+modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
+modal_divergence = coords.horizontal.to_modal(nodal_divergence)
+perturbation = di.State(
+    vorticity=modal_vorticity,
+    divergence=modal_divergence,
+    temperature_variation=np.zeros_like(modal_vorticity),
+    log_surface_pressure=np.zeros_like(modal_vorticity[:1, ...]),
+)
+
 state = steady_state + perturbation
 save_every = 2 * units.hour
 total_time = 2 * units.week

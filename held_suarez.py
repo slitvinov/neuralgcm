@@ -123,13 +123,9 @@ tref = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(tref))
 p0 = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(p0))
 p1 = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(p1))
 orography = np.zeros_like(lat)
-aux_features = {
-    "orography": orography,
-    "ref_temperatures": np.full((coords.vertical.layers, ), tref),
-}
 initial_state = initial_state_fn(rng_key)
-ref_temps = aux_features["ref_temperatures"]
-orography = di.truncated_modal_orography(aux_features["orography"], coords)
+ref_temps = np.full((coords.vertical.layers, ), tref)
+orography = di.truncated_modal_orography(orography, coords)
 initial_state_dict = initial_state.asdict()
 u, v = di.vor_div_to_uv_nodal(coords.horizontal, initial_state.vorticity,
                               initial_state.divergence)

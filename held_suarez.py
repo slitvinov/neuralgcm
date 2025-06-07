@@ -206,7 +206,7 @@ outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 hs_forcing = HeldSuarezForcing(coords=coords,
-                               reference_temperature=ref_temps,
+                               ref_temps=ref_temps,
                                p0=p0)
 
 

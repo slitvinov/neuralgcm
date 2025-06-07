@@ -54,15 +54,6 @@ def explicit_terms(state):
     )
 
 
-def relative_pressure(altitude_m):
-    g = 9.80665
-    cp = 1004.68506
-    T0 = 288.16
-    M = 0.02896968
-    R0 = 8.314462618
-    return (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
-
-
 def explicit_fn(x):
     return di.tree_map(lambda *args: sum([x for x in args if x is not None]),
                        primitive.explicit_terms(x), explicit_terms(x))
@@ -93,8 +84,14 @@ nodal_vorticity = jnp.stack(
 modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
 
 altitude_m = di.DEFAULT_SCALE.dimensionalize(orography, units.meter).magnitude
+g = 9.80665
+cp = 1004.68506
+T0 = 288.16
+M = 0.02896968
+R0 = 8.314462618
+relative_pressure = (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
 surface_pressure = (p0 * np.ones((1, ) + coords.horizontal.nodal_shape) *
-                    relative_pressure(altitude_m))
+                    relative_pressure)
 keys = jax.random.split(rng_key, 2)
 lon0 = jax.random.uniform(keys[1], minval=np.pi / 2, maxval=3 * np.pi / 2)
 lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)

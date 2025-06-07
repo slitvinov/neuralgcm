@@ -64,27 +64,6 @@ def get_surface_pressure(lat, lon):
     return p0 * np.ones(lat.shape)[np.newaxis, ...]
 
 
-def initial_state_fn(rng_key=None):
-    del rng_key
-    nodal_vorticity = np.stack(
-        [get_vorticity(lat, lon, sigma) for sigma in coords.vertical.centers])
-    modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
-    nodal_temperature_variation = np.stack([
-        get_temperature_variation(lat, lon, sigma)
-        for sigma in coords.vertical.centers
-    ])
-    log_nodal_surface_pressure = np.log(get_surface_pressure(lat, lon))
-    state = di.State(
-        vorticity=modal_vorticity,
-        divergence=np.zeros_like(modal_vorticity),
-        temperature_variation=coords.horizontal.to_modal(
-            nodal_temperature_variation),
-        log_surface_pressure=coords.horizontal.to_modal(
-            log_nodal_surface_pressure),
-    )
-    return state
-
-
 def get_vorticity_perturbation(lat, lon, sigma):
     del sigma
     x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
@@ -145,8 +124,23 @@ aux_features = {
     "orography": orography,
     "ref_temperatures": reference_temperatures,
 }
+nodal_vorticity = np.stack(
+    [get_vorticity(lat, lon, sigma) for sigma in coords.vertical.centers])
+modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
+nodal_temperature_variation = np.stack([
+    get_temperature_variation(lat, lon, sigma)
+    for sigma in coords.vertical.centers
+])
+log_nodal_surface_pressure = np.log(get_surface_pressure(lat, lon))
+steady_state = di.State(
+    vorticity=modal_vorticity,
+    divergence=np.zeros_like(modal_vorticity),
+    temperature_variation=coords.horizontal.to_modal(
+        nodal_temperature_variation),
+    log_surface_pressure=coords.horizontal.to_modal(
+        log_nodal_surface_pressure),
+)
 
-steady_state = initial_state_fn()
 ref_temps = aux_features["ref_temperatures"]
 orography = di.truncated_modal_orography(aux_features["orography"], coords)
 steady_state_dict = steady_state.asdict()

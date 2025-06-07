@@ -168,7 +168,6 @@ inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
-hs_forcing = HeldSuarezForcing(coords=coords, ref_temps=ref_temps, p0=p0)
 p0 = 1e5 * units.pascal
 sigma_b = 0.7
 kf = 1 / (1 * units.day)
@@ -197,7 +196,7 @@ lat = np.arcsin(sin_lat)
 def explicit_fn(x):
     return di.tree_map(lambda *args: sum([x for x in args if x is not None]),
                        primitive.explicit_terms(x),
-                       hs_forcing.explicit_terms(x))
+                       explicit_terms(x))
 
 
 primitive_with_hs = di.ImplicitExplicitODE(explicit_fn,

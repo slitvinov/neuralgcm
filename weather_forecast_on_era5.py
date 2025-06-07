@@ -160,12 +160,8 @@ def conservative_regrid_weights(source_bounds, target_bounds):
 
 
 @functools.partial(jax.jit, static_argnums=(1, 2))
-def regrid_hybrid_to_sigma(
-    fields,
-    hybrid_coords,
-    sigma_coords,
-    surface_pressure,
-):
+def regrid_hybrid_to_sigma(fields, hybrid_coords, sigma_coords,
+                           surface_pressure):
 
     @jax.jit
     @functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")

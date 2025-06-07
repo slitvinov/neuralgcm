@@ -8,18 +8,18 @@ import numpy as np
 units = di.units
 
 
-def kv(self):
+def kv():
     kv_coeff = kf * (np.maximum(0, (sigma - sigma_b) / (1 - sigma_b)))
     return kv_coeff[:, np.newaxis, np.newaxis]
 
 
-def kt(self):
+def kt():
     cutoff = np.maximum(0, (sigma - sigma_b) / (1 - sigma_b))
     return ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] *
                              np.cos(lat)**4)
 
 
-def equilibrium_temperature(self, nodal_surface_pressure):
+def equilibrium_temperature(nodal_surface_pressure):
     p_over_p0 = (sigma[:, np.newaxis, np.newaxis] * nodal_surface_pressure /
                  p0)
     temperature = p_over_p0**di.kappa * (maxT - dTy * np.sin(lat)**2 - dThz *
@@ -27,7 +27,7 @@ def equilibrium_temperature(self, nodal_surface_pressure):
     return jnp.maximum(minT, temperature)
 
 
-def explicit_terms(self, state):
+def explicit_terms(state):
     aux_state = di.compute_diagnostic_state(state=state, coords=coords)
     nodal_velocity_tendency = jax.tree.map(
         lambda x: -kv() * x / coords.horizontal.cos_lat**2,

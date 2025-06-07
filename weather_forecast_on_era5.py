@@ -9,19 +9,14 @@ import xarray
 units = di.units
 
 
-@dataclasses.dataclass(frozen=True)
 class HybridCoordinates:
-    a_boundaries: np.ndarray
-    b_boundaries: np.ndarray
 
-    @classmethod
-    def ECMWF137(cls):
-        a_in_pa, b = np.loadtxt("ecmwf137_hybrid_levels.csv",
-                                skiprows=1,
-                                usecols=(1, 2),
-                                delimiter="\t").T
-        a = a_in_pa / 100
-        return cls(a_boundaries=a, b_boundaries=b)
+    def __init__(self):
+        a_in_pa, self.b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
+                                                skiprows=1,
+                                                usecols=(1, 2),
+                                                delimiter="\t").T
+        self.a_boundaries = a_in_pa / 100
 
     def __hash__(self):
         return hash((tuple(self.a_boundaries.tolist()),
@@ -190,7 +185,7 @@ ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init["orography"] /= di.GRAVITY_ACCELERATION
-source_vertical = HybridCoordinates.ECMWF137()
+source_vertical = HybridCoordinates()
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)
 sp_nodal = model_level_inputs.pop("surface_pressure")

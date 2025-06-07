@@ -198,7 +198,6 @@ integrate_fn = jax.jit(
                             start_with_input=True))
 times = save_every * np.arange(0, outer_steps)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
-hs = HeldSuarezForcing(coords=coords, reference_temperature=ref_temps, p0=p0)
 dt_si = 10 * units.minute
 save_every = 10 * units.day
 total_time = 1200 * units.day

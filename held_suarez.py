@@ -120,6 +120,11 @@ def isothermal_rest_atmosphere(
     return random_state_fn, aux_features
 
 
+def explicit_fn(x):
+    return di.tree_map(lambda *args: sum([x for x in args if x is not None]),
+                       primitive.explicit_terms(x), explicit_terms(x))
+
+
 layers = 24
 coords = di.CoordinateSystem(horizontal=di.Grid(longitude_wavenumbers=22,
                                                 total_wavenumbers=23,
@@ -191,12 +196,6 @@ dThz = di.DEFAULT_SCALE.nondimensionalize(dThz)
 sigma = coords.vertical.centers
 _, sin_lat = coords.horizontal.nodal_mesh
 lat = np.arcsin(sin_lat)
-
-
-def explicit_fn(x):
-    return di.tree_map(lambda *args: sum([x for x in args if x is not None]),
-                       primitive.explicit_terms(x), explicit_terms(x))
-
 
 primitive_with_hs = di.ImplicitExplicitODE(explicit_fn,
                                            primitive.implicit_terms,

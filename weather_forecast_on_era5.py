@@ -274,7 +274,7 @@ raw_init_state = di.State(
     tracers=tracers,
 )
 orography = model_coords.horizontal.to_modal(orography_input)
-orography = exponential_filter(model_coords.horizontal, order=2)(orography)
+orography = di.exponential_filter(model_coords.horizontal, order=2)(orography)
 eq = di.PrimitiveEquations(ref_temps, orography, model_coords)
 res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)

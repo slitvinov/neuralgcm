@@ -979,7 +979,7 @@ class PrimitiveEquations:
         g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]) / del_𝜎
         return temperature_field * (v_dot_grad_log_sp - g_part)
 
-    def kinetic_energy_tendency(self, aux_state: DiagnosticState):
+    def kinetic_energy_tendency(self, aux_state):
         nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
         kinetic = nodal_cos_lat_u2.sum(0) * self.coords.horizontal.sec2_lat / 2
         return -self.coords.horizontal.laplacian(
@@ -989,10 +989,7 @@ class PrimitiveEquations:
         return -gravity_acceleration * self.coords.horizontal.laplacian(
             self.orography)
 
-    def curl_and_div_tendencies(
-        self,
-        aux_state: DiagnosticState,
-    ):
+    def curl_and_div_tendencies(self, aux_state):
         sec2_lat = self.coords.horizontal.sec2_lat
         u, v = aux_state.cos_lat_u
         total_vorticity = aux_state.vorticity + self.coriolis_parameter
@@ -1015,7 +1012,7 @@ class PrimitiveEquations:
             (combined_u, combined_v), clip=False)
         return (dζ_dt, d𝛅_dt)
 
-    def nodal_temperature_vertical_tendency(self, aux_state: DiagnosticState):
+    def nodal_temperature_vertical_tendency(self, aux_state):
         sigma_dot_explicit = aux_state.sigma_dot_explicit
         sigma_dot_full = aux_state.sigma_dot_full
         temperature_variation = aux_state.temperature_variation
@@ -1032,7 +1029,7 @@ class PrimitiveEquations:
                                    self.coords.horizontal)
         return nodal_terms, modal_terms
 
-    def nodal_temperature_adiabatic_tendency(self, aux_state: DiagnosticState):
+    def nodal_temperature_adiabatic_tendency(self, aux_state):
         g_explicit = aux_state.u_dot_grad_log_sp
         g_full = g_explicit + aux_state.divergence
         mean_t_part = self._t_omega_over_sigma_sp(self.T_ref, g_explicit,
@@ -1042,7 +1039,7 @@ class PrimitiveEquations:
             aux_state.u_dot_grad_log_sp)
         return kappa * (mean_t_part + variation_t_part)
 
-    def nodal_log_pressure_tendency(self, aux_state: DiagnosticState):
+    def nodal_log_pressure_tendency(self, aux_state):
         g = aux_state.u_dot_grad_log_sp
         return -sigma_integral(g, self.coords.vertical)
 

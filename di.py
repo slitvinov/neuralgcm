@@ -110,9 +110,9 @@ def tree_map_over_nonscalars(f, x, *, scalar_fn=lambda x: x):
     return tree_map(g, x)
 
 
-def _slice_shape_along_axis(x, axis):
+def _slice_shape_along_axis(x):
     x_shape = list(x.shape)
-    x_shape[axis] = 1
+    x_shape[-3] = 1
     return tuple(x_shape)
 
 
@@ -174,29 +174,17 @@ def sigma_integral(x, coordinates):
     return xd𝜎.sum(axis=-3, keepdims=True)
 
 
-def centered_vertical_advection(
-    w,
-    x,
-    coordinates,
-    w_boundary_values=None,
-    dx_dsigma_boundary_values=None,
-):
-    if w_boundary_values is None:
-        w_slc_shape = _slice_shape_along_axis(w, -3)
-        w_boundary_values = (
-            jnp.zeros(w_slc_shape,
-                      dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
-            jnp.zeros(w_slc_shape,
-                      dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
-        )
-    if dx_dsigma_boundary_values is None:
-        x_slc_shape = _slice_shape_along_axis(x, -3)
-        dx_dsigma_boundary_values = (
-            jnp.zeros(x_slc_shape,
-                      dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
-            jnp.zeros(x_slc_shape,
-                      dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
-        )
+def centered_vertical_advection(w, x, coordinates):
+    w_slc_shape = _slice_shape_along_axis(w)
+    w_boundary_values = (
+        jnp.zeros(w_slc_shape, dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
+        jnp.zeros(w_slc_shape, dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
+    )
+    x_slc_shape = _slice_shape_along_axis(x)
+    dx_dsigma_boundary_values = (
+        jnp.zeros(x_slc_shape, dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
+        jnp.zeros(x_slc_shape, dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
+    )
     w_boundary_top, w_boundary_bot = w_boundary_values
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
     x_diff = centered_difference(x, coordinates, -3)

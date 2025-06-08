@@ -229,7 +229,7 @@ def real_basis(wavenumbers, nodes):
     return f
 
 
-def real_basis_derivative(x):
+def real_basis_derivative(u):
     axis = -2
     i = jnp.arange(u.shape[axis]).reshape((-1, ) + (1, ) * (-1 - axis))
     j = (i + 1) // 2

@@ -908,32 +908,29 @@ class PrimitiveEquations:
         temp = slice(layers, 2 * layers)
         logp = slice(2 * layers, 2 * layers + 1)
 
-        def named_vertical_matvec(name):
-            return jax.named_call(_vertical_matvec_per_wavenumber, name=name)
-
         inverse = np.linalg.inv(implicit_matrix)
         assert not np.isnan(inverse).any()
         inverted_divergence = (
-            named_vertical_matvec("div_from_div")(inverse[:, div, div],
-                                                  state.divergence) +
-            named_vertical_matvec("div_from_temp")(
-                inverse[:, div, temp], state.temperature_variation) +
-            named_vertical_matvec("div_from_logp")(inverse[:, div, logp],
-                                                   state.log_surface_pressure))
+            _vertical_matvec_per_wavenumber(inverse[:, div, div],
+                                            state.divergence) +
+            _vertical_matvec_per_wavenumber(inverse[:, div, temp],
+                                            state.temperature_variation) +
+            _vertical_matvec_per_wavenumber(inverse[:, div, logp],
+                                            state.log_surface_pressure))
         inverted_temperature_variation = (
-            named_vertical_matvec("temp_from_div")(inverse[:, temp, div],
-                                                   state.divergence) +
-            named_vertical_matvec("temp_from_temp")(
-                inverse[:, temp, temp], state.temperature_variation) +
-            named_vertical_matvec("temp_from_logp")(
-                inverse[:, temp, logp], state.log_surface_pressure))
+            _vertical_matvec_per_wavenumber(inverse[:, temp, div],
+                                            state.divergence) +
+            _vertical_matvec_per_wavenumber(inverse[:, temp, temp],
+                                            state.temperature_variation) +
+            _vertical_matvec_per_wavenumber(inverse[:, temp, logp],
+                                            state.log_surface_pressure))
         inverted_log_surface_pressure = (
-            named_vertical_matvec("logp_from_div")(inverse[:, logp, div],
-                                                   state.divergence) +
-            named_vertical_matvec("logp_from_temp")(
-                inverse[:, logp, temp], state.temperature_variation) +
-            named_vertical_matvec("logp_from_logp")(
-                inverse[:, logp, logp], state.log_surface_pressure))
+            _vertical_matvec_per_wavenumber(inverse[:, logp, div],
+                                            state.divergence) +
+            _vertical_matvec_per_wavenumber(inverse[:, logp, temp],
+                                            state.temperature_variation) +
+            _vertical_matvec_per_wavenumber(inverse[:, logp, logp],
+                                            state.log_surface_pressure))
         inverted_vorticity = state.vorticity
         inverted_tracers = state.tracers
         return State(

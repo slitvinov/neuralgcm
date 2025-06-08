@@ -11,7 +11,7 @@ def temperature_variation_to_absolute(temperature_variation, ref_temperature):
 
 
 def get_reference_temperature(sigma):
-    top_mean_t = t0 * sigma**(r_gas * gamma / g)
+    top_mean_t = t0 * sigma**(r_gas * gamma / di.gravity_acceleration)
     if sigma < sigma_tropo:
         return top_mean_t + delta_t * (sigma_tropo - sigma)**5
     else:

@@ -489,15 +489,6 @@ def get_cos_lat_vector(vorticity, divergence, grid, clip=True):
     )
 
 
-@functools.partial(jax.jit, static_argnames=("grid", "clip"))
-def uv_nodal_to_vor_div_modal(grid, u_nodal, v_nodal, clip=True):
-    u_over_cos_lat = grid.to_modal(u_nodal / grid.cos_lat)
-    v_over_cos_lat = grid.to_modal(v_nodal / grid.cos_lat)
-    vorticity = grid.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
-    divergence = grid.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
-    return vorticity, divergence
-
-
 @functools.partial(jax.jit, static_argnames=("grid", ))
 def vor_div_to_uv_nodal(grid, vorticity, divergence):
     u_cos_lat, v_cos_lat = get_cos_lat_vector(vorticity,

@@ -198,6 +198,14 @@ def compute_vertical_velocity(state, coords):
     sigma_dot_padded = jnp.pad(sigma_dot_boundaries, [(1, 1), (0, 0), (0, 0)])
     return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
 
+@functools.partial(jax.jit, static_argnames=("grid", "clip"))
+def uv_nodal_to_vor_div_modal(grid, u_nodal, v_nodal, clip=True):
+    u_over_cos_lat = grid.to_modal(u_nodal / grid.cos_lat)
+    v_over_cos_lat = grid.to_modal(v_nodal / grid.cos_lat)
+    vorticity = grid.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
+    divergence = grid.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
+    return vorticity, divergence
+
 
 layers = 32
 ref_temp_si = 250 * units.degK
@@ -257,8 +265,8 @@ nodal_inputs = regrid_hybrid_to_sigma(
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]
-vorticity, divergence = di.uv_nodal_to_vor_div_modal(model_coords.horizontal,
-                                                     u_nodal, v_nodal)
+vorticity, divergence = uv_nodal_to_vor_div_modal(model_coords.horizontal,
+                                                  u_nodal, v_nodal)
 ref_temps = di.DEFAULT_SCALE.nondimensionalize(ref_temp_si * np.ones(
     (model_coords.vertical.layers, )))
 assert ref_temps.shape == (model_coords.vertical.layers, )

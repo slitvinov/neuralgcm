@@ -237,42 +237,14 @@ def real_basis_derivative(u, /, axis=-1):
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
-@dataclasses.dataclass(frozen=True)
-class RealSphericalHarmonics:
-    longitude_wavenumbers: int = 0
-    total_wavenumbers: int = 0
-    longitude_nodes: int = 0
-    latitude_nodes: int = 0
+class Grid:
 
-    @functools.cached_property
-    def nodal_axes(self):
-        longitude = np.linspace(0,
-                                2 * np.pi,
-                                self.longitude_nodes,
-                                endpoint=False)
-        sin_latitude, _ = sps.roots_legendre(self.latitude_nodes)
-        return longitude, sin_latitude
-
-    @functools.cached_property
-    def nodal_shape(self):
-        return self.longitude_nodes, self.latitude_nodes
-
-    @functools.cached_property
-    def modal_axes(self):
-        m_pos = np.arange(1, self.longitude_wavenumbers)
-        m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
-        lon_wavenumbers = np.concatenate([[0], m_pos_neg])
-        tot_wavenumbers = np.arange(self.total_wavenumbers)
-        return lon_wavenumbers, tot_wavenumbers
-
-    @functools.cached_property
-    def modal_shape(self):
-        return 2 * self.longitude_wavenumbers - 1, self.total_wavenumbers
-
-    @functools.cached_property
-    def mask(self):
-        m, l = np.meshgrid(*self.modal_axes, indexing="ij")
-        return abs(m) <= l
+    def __init__(self, longitude_wavenumbers, total_wavenumbers,
+                 longitude_nodes, latitude_nodes):
+        self.longitude_wavenumbers = longitude_wavenumbers
+        self.total_wavenumbers = total_wavenumbers
+        self.longitude_nodes = longitude_nodes
+        self.latitude_nodes = latitude_nodes
 
     @functools.cached_property
     def basis(self):
@@ -303,31 +275,18 @@ class RealSphericalHarmonics:
         pfwx = einsum("mjl,...mj->...ml", p, fwx)
         return pfwx
 
-    def longitudinal_derivative(self, x):
-        return real_basis_derivative(x, axis=-2)
-
-
-class Grid:
-
-    def __init__(self, longitude_wavenumbers, total_wavenumbers,
-                 longitude_nodes, latitude_nodes):
-        self.longitude_wavenumbers = longitude_wavenumbers
-        self.total_wavenumbers = total_wavenumbers
-        self.longitude_nodes = longitude_nodes
-        self.latitude_nodes = latitude_nodes
-        self.spherical_harmonics = RealSphericalHarmonics(
-            longitude_wavenumbers=self.longitude_wavenumbers,
-            total_wavenumbers=self.total_wavenumbers,
-            longitude_nodes=self.longitude_nodes,
-            latitude_nodes=self.latitude_nodes)
-
     @functools.cached_property
     def nodal_axes(self):
-        return self.spherical_harmonics.nodal_axes
+        longitude = np.linspace(0,
+                                2 * np.pi,
+                                self.longitude_nodes,
+                                endpoint=False)
+        sin_latitude, _ = sps.roots_legendre(self.latitude_nodes)
+        return longitude, sin_latitude
 
     @functools.cached_property
     def nodal_shape(self):
-        return self.spherical_harmonics.nodal_shape
+        return self.longitude_nodes, self.latitude_nodes
 
     @functools.cached_property
     def nodal_mesh(self):
@@ -335,19 +294,24 @@ class Grid:
 
     @functools.cached_property
     def modal_axes(self):
-        return self.spherical_harmonics.modal_axes
+        m_pos = np.arange(1, self.longitude_wavenumbers)
+        m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
+        lon_wavenumbers = np.concatenate([[0], m_pos_neg])
+        tot_wavenumbers = np.arange(self.total_wavenumbers)
+        return lon_wavenumbers, tot_wavenumbers
 
     @functools.cached_property
     def modal_shape(self):
-        return self.spherical_harmonics.modal_shape
+        return 2 * self.longitude_wavenumbers - 1, self.total_wavenumbers
 
     @functools.cached_property
     def mask(self):
-        return self.spherical_harmonics.mask
+        m, l = np.meshgrid(*self.modal_axes, indexing="ij")
+        return abs(m) <= l
 
     @functools.cached_property
     def modal_mesh(self):
-        return np.meshgrid(*self.spherical_harmonics.modal_axes, indexing="ij")
+        return np.meshgrid(*self.modal_axes, indexing="ij")
 
     @functools.cached_property
     def cos_lat(self):
@@ -365,11 +329,11 @@ class Grid:
         return -l * (l + 1) / (1.0**2)
 
     def to_nodal(self, x):
-        f = self.spherical_harmonics.inverse_transform
+        f = self.inverse_transform
         return tree_map_over_nonscalars(f, x)
 
     def to_modal(self, z):
-        f = self.spherical_harmonics.transform
+        f = self.transform
         return tree_map_over_nonscalars(f, z)
 
     def laplacian(self, x):
@@ -400,8 +364,11 @@ class Grid:
         b[:, -1] = 0
         return a, b
 
+    def longitudinal_derivative(self, x):
+        return real_basis_derivative(x, axis=-2)
+
     def d_dlon(self, x):
-        return self.spherical_harmonics.longitudinal_derivative(x)
+        return self.longitudinal_derivative(x)
 
     def cos_lat_d_dlat(self, x):
         _, l = self.modal_mesh

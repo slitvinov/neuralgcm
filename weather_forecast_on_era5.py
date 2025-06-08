@@ -222,11 +222,11 @@ class TimeReversedImExODE(di.ImplicitExplicitODE):
 
     def explicit_terms(self, state):
         forward_term = self.forward_eq.explicit_terms(state)
-        return tree_map(jnp.negative, forward_term)
+        return di.tree_map(jnp.negative, forward_term)
 
     def implicit_terms(self, state):
         forward_term = self.forward_eq.implicit_terms(state)
-        return tree_map(jnp.negative, forward_term)
+        return di.tree_map(jnp.negative, forward_term)
 
     def implicit_inverse(
         self,

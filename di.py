@@ -307,16 +307,15 @@ class RealSphericalHarmonics:
         return real_basis_derivative(x, axis=-2)
 
 
-@dataclasses.dataclass(frozen=True)
 class Grid:
-    longitude_wavenumbers: int
-    total_wavenumbers: int
-    longitude_nodes: int
-    latitude_nodes: int
 
-    @functools.cached_property
-    def spherical_harmonics(self):
-        return RealSphericalHarmonics(
+    def __init__(self, longitude_wavenumbers, total_wavenumbers,
+                 longitude_nodes, latitude_nodes):
+        self.longitude_wavenumbers = longitude_wavenumbers
+        self.total_wavenumbers = total_wavenumbers
+        self.longitude_nodes = longitude_nodes
+        self.latitude_nodes = latitude_nodes
+        self.spherical_harmonics = RealSphericalHarmonics(
             longitude_wavenumbers=self.longitude_wavenumbers,
             total_wavenumbers=self.total_wavenumbers,
             longitude_nodes=self.longitude_nodes,

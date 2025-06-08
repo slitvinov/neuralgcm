@@ -638,7 +638,7 @@ def get_sigma_ratios(coordinates):
     return alpha
 
 
-def get_geopotential_weights(coordinates, ):
+def get_geopotential_weights(coordinates):
     alpha = get_sigma_ratios(coordinates)
     weights = np.zeros([coordinates.layers, coordinates.layers])
     for j in range(coordinates.layers):

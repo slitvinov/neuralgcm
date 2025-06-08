@@ -87,24 +87,18 @@ grid = di.Grid(longitude_wavenumbers=22,
 vertical_grid = di.SigmaCoordinates(
     np.linspace(0, 1, layers + 1, dtype=np.float32))
 
-u0 = 35.0 * units.m / units.s
-p0 = 1e5 * units.pascal
-t0 = 288.0 * units.degK
-delta_t = 4.8e5 * units.degK
-gamma = 0.005 * units.degK / units.m
 sigma_tropo = 0.2
 sigma0 = 0.252
 coords = di.CoordinateSystem(grid, vertical_grid)
-u0 = di.DEFAULT_SCALE.nondimensionalize(u0)
-t0 = di.DEFAULT_SCALE.nondimensionalize(t0)
-delta_t = di.DEFAULT_SCALE.nondimensionalize(delta_t)
-p0 = di.DEFAULT_SCALE.nondimensionalize(p0)
-gamma = di.DEFAULT_SCALE.nondimensionalize(gamma)
-g = di.gravity_acceleration
+u0 = di.DEFAULT_SCALE.nondimensionalize(35.0 * units.m / units.s)
+t0 = di.DEFAULT_SCALE.nondimensionalize(288.0 * units.degK)
+delta_t = di.DEFAULT_SCALE.nondimensionalize(4.8e5 * units.degK)
+p0 = di.DEFAULT_SCALE.nondimensionalize(1e5 * units.pascal)
+gamma = di.DEFAULT_SCALE.nondimensionalize(0.005 * units.degK / units.m)
 r_gas = di.ideal_gas_constant
 lon, sin_lat = grid.nodal_mesh
 lat = np.arcsin(sin_lat)
-orography = get_geopotential(lat, lon, 1.0) / g
+orography = get_geopotential(lat, lon, 1.0) / di.gravity_acceleration
 geopotential = np.stack(
     [get_geopotential(lat, lon, sigma) for sigma in vertical_grid.centers])
 reference_temperatures = np.stack(

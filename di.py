@@ -931,14 +931,12 @@ class PrimitiveEquations:
                                             state.temperature_variation) +
             _vertical_matvec_per_wavenumber(inverse[:, logp, logp],
                                             state.log_surface_pressure))
-        inverted_vorticity = state.vorticity
-        inverted_tracers = state.tracers
         return State(
-            inverted_vorticity,
+            state.vorticity,
             inverted_divergence,
             inverted_temperature_variation,
             inverted_log_surface_pressure,
-            inverted_tracers,
+            state.tracers,
             sim_time=state.sim_time,
         )
 

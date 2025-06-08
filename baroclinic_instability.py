@@ -6,10 +6,6 @@ import di
 units = di.units
 
 
-def temperature_variation_to_absolute(temperature_variation, ref_temperature):
-    return temperature_variation + ref_temperature[:, np.newaxis, np.newaxis]
-
-
 def get_reference_temperature(sigma):
     top_mean_t = t0 * sigma**(r_gas * gamma / di.gravity_acceleration)
     if sigma < sigma_tropo:
@@ -19,7 +15,8 @@ def get_reference_temperature(sigma):
 
 
 def get_reference_geopotential(sigma):
-    top_mean_potential = (t0 * di.gravity_acceleration / gamma) * (1 - sigma**(r_gas * gamma / di.gravity_acceleration))
+    top_mean_potential = (t0 * di.gravity_acceleration / gamma) * (
+        1 - sigma**(r_gas * gamma / di.gravity_acceleration))
     if sigma < sigma_tropo:
         return top_mean_potential - r_gas * delta_t * (
             (np.log(sigma / sigma_tropo) + 137 / 60) * sigma_tropo**5 -
@@ -169,8 +166,9 @@ integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
 f1 = di.maybe_to_nodal(trajectory, coords=coords)
-temperature = temperature_variation_to_absolute(f1["temperature_variation"],
-                                                reference_temperatures)
+temperature = f1["temperature_variation"] + reference_temperatures[:,
+                                                                   np.newaxis,
+                                                                   np.newaxis]
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
 plt.savefig("b.09.png")

@@ -496,6 +496,7 @@ class CoordinateSystem:
 
 
 def maybe_to_nodal(fields, coords):
+    fields = {"temperature_variation" : fields.temperature_variation}
     array_shape_fn = lambda x: np.asarray(x.shape[:-2] + coords.horizontal.
                                           nodal_shape)
     scalar_shape_fn = lambda x: np.array([], dtype=int)

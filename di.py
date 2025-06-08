@@ -95,12 +95,6 @@ def shift(x, offset, axis):
         return pad_in_dim(sliced, (0, -offset), axis=axis)
 
 
-def diff(x, axis=-1):
-    upper = lax.slice_in_dim(x, 1, None, axis=axis)
-    lower = lax.slice_in_dim(x, 0, -1, axis=axis)
-    return upper - lower
-
-
 def tree_map_over_nonscalars(f, x, *, scalar_fn=lambda x: x):
 
     def g(x):
@@ -146,7 +140,8 @@ class SigmaCoordinates:
 
 
 def centered_difference(x, coordinates):
-    dx = diff(x, axis=-3)
+    dx = lax.slice_in_dim(x, 1, None, axis=-3) - lax.slice_in_dim(
+        x, 0, -1, axis=-3)
     dx_axes = range(dx.ndim)
     inv_d𝜎 = 1 / coordinates.center_to_center
     inv_d𝜎_axes = [dx_axes[-3]]

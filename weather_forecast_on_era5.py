@@ -89,7 +89,7 @@ def nodal_prognostics_and_diagnostics(state):
     tracers_nodal = {k: coords.to_nodal(v) for k, v in state.tracers.items()}
     t_nodal = (coords.to_nodal(state.temperature_variation) +
                ref_temps[:, np.newaxis, np.newaxis])
-    vertical_velocity_nodal = di.compute_vertical_velocity(state, model_coords)
+    vertical_velocity_nodal = compute_vertical_velocity(state, model_coords)
     state_nodal = {
         "u_component_of_wind": u_nodal,
         "v_component_of_wind": v_nodal,

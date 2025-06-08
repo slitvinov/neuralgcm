@@ -85,7 +85,7 @@ def vor_div_to_uv_nodal(grid, vorticity, divergence):
 
 def nodal_prognostics_and_diagnostics(state):
     coords = model_coords.horizontal
-    u_nodal, v_nodal = di.vor_div_to_uv_nodal(coords, state.vorticity,
+    u_nodal, v_nodal = vor_div_to_uv_nodal(coords, state.vorticity,
                                               state.divergence)
     geopotential_nodal = coords.to_nodal(
         di.get_geopotential(

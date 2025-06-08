@@ -19,7 +19,7 @@ def get_reference_temperature(sigma):
 
 
 def get_reference_geopotential(sigma):
-    top_mean_potential = (t0 * g / gamma) * (1 - sigma**(r_gas * gamma / g))
+    top_mean_potential = (t0 * di.gravity_acceleration / gamma) * (1 - sigma**(r_gas * gamma / g))
     if sigma < sigma_tropo:
         return top_mean_potential - r_gas * delta_t * (
             (np.log(sigma / sigma_tropo) + 137 / 60) * sigma_tropo**5 -

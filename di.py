@@ -629,6 +629,7 @@ def runge_kutta_step_filter(state_filter):
 
     return _filter
 
+
 def exponential_filter(grid, attenuation=16, order=18, cutoff=0):
     _, total_wavenumber = grid.modal_axes
     k = total_wavenumber / total_wavenumber.max()
@@ -637,6 +638,7 @@ def exponential_filter(grid, attenuation=16, order=18, cutoff=0):
     p = order
     scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
     return _make_filter_fn(scaling)
+
 
 def exponential_step_filter(
     grid,
@@ -1169,8 +1171,11 @@ class PrimitiveEquations:
         )
 
 
+def _make_filter_fn(scaling):
+    rescale = lambda x: scaling * x if _preserves_shape(x, scaling) else x
+    return functools.partial(jax.tree_util.tree_map, rescale)
 
 
-
-
-
+def _preserves_shape(target, scaling):
+    target_shape = np.shape(target)
+    return target_shape == np.broadcast_shapes(target_shape, scaling.shape)

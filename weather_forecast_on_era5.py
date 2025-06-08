@@ -178,24 +178,18 @@ def regrid_hybrid_to_sigma(fields, hybrid_coords, sigma_coords,
     return di.tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
 
+
 def horizontal_diffusion_step_filter(grid, dt, tau, order=1):
     eigenvalues = grid.laplacian_eigenvalues
     scale = dt / (tau * abs(eigenvalues[-1])**order)
     filter_fn = horizontal_diffusion_filter(grid, scale, order)
     return runge_kutta_step_filter(filter_fn)
 
-def _make_filter_fn(scaling):
-    rescale = lambda x: scaling * x if _preserves_shape(x, scaling) else x
-    return functools.partial(jax.tree_util.tree_map, rescale)
-
-def _preserves_shape(target, scaling):
-    target_shape = np.shape(target)
-    return target_shape == np.broadcast_shapes(target_shape, scaling.shape)
 
 def horizontal_diffusion_filter(grid, scale, order=1):
     eigenvalues = grid.laplacian_eigenvalues
     scaling = jnp.exp(-scale * (-eigenvalues)**order)
-    return _make_filter_fn(scaling)
+    return di._make_filter_fn(scaling)
 
 
 layers = 32

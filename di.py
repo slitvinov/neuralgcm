@@ -158,24 +158,15 @@ def centered_difference(x, coordinates, axis=-3):
                   precision="float32")
 
 
-def cumulative_sigma_integral(
-    x,
-    coordinates,
-    axis=-3,
-):
+def cumulative_sigma_integral(x, coordinates):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
-    d𝜎_axes = [x_axes[axis]]
+    d𝜎_axes = [x_axes[-3]]
     xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
-    return cumsum(xd𝜎, axis)
+    return cumsum(xd𝜎, -3)
 
 
-def sigma_integral(
-    x,
-    coordinates,
-    axis=-3,
-    keepdims=True,
-):
+def sigma_integral(x, coordinates, axis=-3, keepdims=True):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
     d𝜎_axes = [x_axes[axis]]

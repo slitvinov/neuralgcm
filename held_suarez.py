@@ -203,7 +203,7 @@ integrate_fn = jax.jit(
     ))
 times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(final))
-f0 = di.maybe_to_nodal(trajectory, coords.horizontal)
+f0 = coords.horizontal.to_nodal(trajectory.temperature_variation)
 plt.contourf(f0["temperature_variation"][-1, 22, :, :])
 plt.savefig("h.12.png")
 np.asarray(f0["temperature_variation"]).tofile("h.12.raw")

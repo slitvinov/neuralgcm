@@ -72,6 +72,17 @@ def open_era5(path, time):
     return ds.sel(time=time)
 
 
+@functools.partial(jax.jit, static_argnames=("grid", ))
+def vor_div_to_uv_nodal(grid, vorticity, divergence):
+    u_cos_lat, v_cos_lat = di.get_cos_lat_vector(vorticity,
+                                                 divergence,
+                                                 grid,
+                                                 clip=True)
+    u_nodal = grid.to_nodal(u_cos_lat) / grid.cos_lat
+    v_nodal = grid.to_nodal(v_cos_lat) / grid.cos_lat
+    return u_nodal, v_nodal
+
+
 def nodal_prognostics_and_diagnostics(state):
     coords = model_coords.horizontal
     u_nodal, v_nodal = di.vor_div_to_uv_nodal(coords, state.vorticity,

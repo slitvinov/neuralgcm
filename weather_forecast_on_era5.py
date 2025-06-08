@@ -240,8 +240,8 @@ def digital_filter_initialization(equation, ode_solver, filters, time_span,
                                   cutoff_period, dt):
 
     def f(state):
-        forward_step = step_with_filters(ode_solver(equation, dt), filters)
-        backward_step = step_with_filters(
+        forward_step = di.step_with_filters(ode_solver(equation, dt), filters)
+        backward_step = di.step_with_filters(
             ode_solver(TimeReversedImExODE(equation), dt), filters)
         weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
         init_weight = 1.0

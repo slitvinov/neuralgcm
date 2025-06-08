@@ -675,17 +675,6 @@ class State:
     sim_time: Any = None
 
 
-def _asdict(state):
-    return {
-        field.name: getattr(state, field.name)
-        for field in state.fields
-        if field.name != "sim_time" or state.sim_time is not None
-    }
-
-
-State.asdict = _asdict
-
-
 @tree_math.struct
 class DiagnosticState:
     vorticity: Any

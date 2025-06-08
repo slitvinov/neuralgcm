@@ -266,7 +266,7 @@ def digital_filter_initialization(equation, ode_solver, filters, time_span,
         forward_term = accumulate_repeated(forward_step, weights, state)
         backward_term = accumulate_repeated(backward_step, weights, state)
         return di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
-                        backward_term)
+                           backward_term)
 
     return f
 

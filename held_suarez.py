@@ -111,10 +111,6 @@ initial_state = di.State(
 )
 ref_temps = np.full((coords.vertical.layers, ), tref)
 orography = di.truncated_modal_orography(orography, coords)
-initial_state_dict = initial_state.asdict()
-u, v = di.vor_div_to_uv_nodal(coords.horizontal, initial_state.vorticity,
-                              initial_state.divergence)
-initial_state_dict.update({"u": u, "v": v, "orography": orography})
 dt_si = 5 * units.minute
 save_every = 10 * units.minute
 total_time = 24 * units.hour
@@ -207,7 +203,6 @@ integrate_fn = jax.jit(
     ))
 times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(final))
-trajectory_dict = trajectory.asdict()
 f0 = di.maybe_to_nodal(trajectory_dict, coords=coords)
 plt.contourf(f0["temperature_variation"][-1, 22, :, :])
 plt.savefig("h.12.png")

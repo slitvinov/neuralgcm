@@ -131,10 +131,6 @@ steady_state = di.State(
 
 ref_temps = aux_features["ref_temperatures"]
 orography = di.truncated_modal_orography(aux_features["orography"], coords)
-steady_state_dict = steady_state.asdict()
-u, v = di.vor_div_to_uv_nodal(grid, steady_state.vorticity,
-                              steady_state.divergence)
-steady_state_dict.update({"u": u, "v": v, "z_surf": orography})
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 dt_s = 100 * units.s
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_s)
@@ -151,10 +147,6 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(steady_state))
 trajectory = jax.device_get(trajectory)
-trajectory_dict = trajectory.asdict()
-u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
-                              trajectory.divergence)
-trajectory_dict.update({"u": u, "v": v})
 u_perturb = 1.0 * units.m / units.s
 lon_location = np.pi / 9
 lat_location = 2 * np.pi / 9
@@ -188,10 +180,6 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
-trajectory_dict = trajectory.asdict()
-u, v = di.vor_div_to_uv_nodal(grid, trajectory.vorticity,
-                              trajectory.divergence)
-trajectory_dict.update({"u": u, "v": v})
 f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
 temperature = temperature_variation_to_absolute(f1["temperature_variation"],
                                                 ref_temps)

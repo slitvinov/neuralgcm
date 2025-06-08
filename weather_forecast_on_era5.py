@@ -191,12 +191,14 @@ def horizontal_diffusion_filter(grid, scale, order=1):
     scaling = jnp.exp(-scale * (-eigenvalues)**order)
     return di._make_filter_fn(scaling)
 
+
 def compute_vertical_velocity(state, coords):
     sigma_dot_boundaries = di.compute_diagnostic_state(state,
                                                        coords).sigma_dot_full
     assert sigma_dot_boundaries.ndim == 3
     sigma_dot_padded = jnp.pad(sigma_dot_boundaries, [(1, 1), (0, 0), (0, 0)])
     return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
+
 
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
 def uv_nodal_to_vor_div_modal(grid, u_nodal, v_nodal, clip=True):

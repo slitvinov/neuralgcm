@@ -125,7 +125,7 @@ steady_state = di.State(
 )
 
 orography = di.truncated_modal_orography(orography, coords)
-primitive = di.PrimitiveEquations(ref_temps, orography, coords)
+primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
 dt_s = 100 * units.s
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_s)
 step_fn = di.imex_rk_sil3(primitive, dt)

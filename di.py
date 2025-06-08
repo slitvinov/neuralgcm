@@ -825,14 +825,6 @@ def compute_diagnostic_state(state, coords):
     )
 
 
-def compute_vertical_velocity(state, coords):
-    sigma_dot_boundaries = compute_diagnostic_state(state,
-                                                    coords).sigma_dot_full
-    assert sigma_dot_boundaries.ndim == 3
-    sigma_dot_padded = jnp.pad(sigma_dot_boundaries, [(1, 1), (0, 0), (0, 0)])
-    return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
-
-
 def get_sigma_ratios(coordinates):
     alpha = np.diff(np.log(coordinates.centers), append=0) / 2
     alpha[-1] = -np.log(coordinates.centers[-1])

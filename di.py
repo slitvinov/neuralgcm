@@ -1015,10 +1015,7 @@ class PrimitiveEquations:
             (combined_u, combined_v), clip=False)
         return (dζ_dt, d𝛅_dt)
 
-    def nodal_temperature_vertical_tendency(
-        self,
-        aux_state: DiagnosticState,
-    ):
+    def nodal_temperature_vertical_tendency(self, aux_state: DiagnosticState):
         sigma_dot_explicit = aux_state.sigma_dot_explicit
         sigma_dot_full = aux_state.sigma_dot_full
         temperature_variation = aux_state.temperature_variation
@@ -1028,11 +1025,7 @@ class PrimitiveEquations:
             tendency += self._vertical_tendency(sigma_dot_explicit, self.T_ref)
         return tendency
 
-    def horizontal_scalar_advection(
-        self,
-        scalar,
-        aux_state,
-    ):
+    def horizontal_scalar_advection(self, scalar, aux_state):
         u, v = aux_state.cos_lat_u
         nodal_terms = scalar * aux_state.divergence
         modal_terms = -div_sec_lat(u * scalar, v * scalar,

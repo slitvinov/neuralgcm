@@ -629,6 +629,14 @@ def runge_kutta_step_filter(state_filter):
 
     return _filter
 
+def exponential_filter(grid, attenuation=16, order=18, cutoff=0):
+    _, total_wavenumber = grid.modal_axes
+    k = total_wavenumber / total_wavenumber.max()
+    a = attenuation
+    c = cutoff
+    p = order
+    scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
+    return _make_filter_fn(scaling)
 
 def exponential_step_filter(
     grid,
@@ -638,13 +646,6 @@ def exponential_step_filter(
     cutoff=0,
 ):
     filter_fn = exponential_filter(grid, dt / tau, order, cutoff)
-    return runge_kutta_step_filter(filter_fn)
-
-
-def horizontal_diffusion_step_filter(grid, dt, tau, order=1):
-    eigenvalues = grid.laplacian_eigenvalues
-    scale = dt / (tau * abs(eigenvalues[-1])**order)
-    filter_fn = horizontal_diffusion_filter(grid, scale, order)
     return runge_kutta_step_filter(filter_fn)
 
 
@@ -1178,17 +1179,4 @@ def _make_filter_fn(scaling):
     return functools.partial(jax.tree_util.tree_map, rescale)
 
 
-def exponential_filter(grid, attenuation=16, order=18, cutoff=0):
-    _, total_wavenumber = grid.modal_axes
-    k = total_wavenumber / total_wavenumber.max()
-    a = attenuation
-    c = cutoff
-    p = order
-    scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
-    return _make_filter_fn(scaling)
 
-
-def horizontal_diffusion_filter(grid, scale, order=1):
-    eigenvalues = grid.laplacian_eigenvalues
-    scaling = jnp.exp(-scale * (-eigenvalues)**order)
-    return _make_filter_fn(scaling)

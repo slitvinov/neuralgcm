@@ -178,6 +178,17 @@ def regrid_hybrid_to_sigma(fields, hybrid_coords, sigma_coords,
     return di.tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
 
+def horizontal_diffusion_step_filter(grid, dt, tau, order=1):
+    eigenvalues = grid.laplacian_eigenvalues
+    scale = dt / (tau * abs(eigenvalues[-1])**order)
+    filter_fn = horizontal_diffusion_filter(grid, scale, order)
+    return runge_kutta_step_filter(filter_fn)
+
+def horizontal_diffusion_filter(grid, scale, order=1):
+    eigenvalues = grid.laplacian_eigenvalues
+    scaling = jnp.exp(-scale * (-eigenvalues)**order)
+    return _make_filter_fn(scaling)
+
 
 layers = 32
 ref_temp_si = 250 * units.degK
@@ -261,7 +272,7 @@ raw_init_state = di.State(
     tracers=tracers,
 )
 orography = model_coords.horizontal.to_modal(orography_input)
-orography = di.exponential_filter(model_coords.horizontal, order=2)(orography)
+orography = exponential_filter(model_coords.horizontal, order=2)(orography)
 eq = di.PrimitiveEquations(ref_temps, orography, model_coords)
 res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)

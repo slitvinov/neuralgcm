@@ -145,11 +145,11 @@ class SigmaCoordinates:
         return hash(tuple(self.centers.tolist()))
 
 
-def centered_difference(x, coordinates, axis=-3):
-    dx = diff(x, axis=axis)
+def centered_difference(x, coordinates):
+    dx = diff(x, axis=-3)
     dx_axes = range(dx.ndim)
     inv_d𝜎 = 1 / coordinates.center_to_center
-    inv_d𝜎_axes = [dx_axes[axis]]
+    inv_d𝜎_axes = [dx_axes[-3]]
     return einsum(dx,
                   dx_axes,
                   inv_d𝜎,
@@ -187,7 +187,7 @@ def centered_vertical_advection(w, x, coordinates):
     )
     w_boundary_top, w_boundary_bot = w_boundary_values
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
-    x_diff = centered_difference(x, coordinates, -3)
+    x_diff = centered_difference(x, coordinates)
     x_diff_boundary_top, x_diff_boundary_bot = dx_dsigma_boundary_values
     x_diff = jnp.concatenate(
         [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=-3)

@@ -180,7 +180,7 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
-f1 = di.maybe_to_nodal(trajectory_dict, coords=coords)
+f1 = di.maybe_to_nodal(trajectory, coords=coords)
 temperature = temperature_variation_to_absolute(f1["temperature_variation"],
                                                 ref_temps)
 levels = [(220 + 10 * i) for i in range(10)]

@@ -208,9 +208,6 @@ integrate_fn = jax.jit(
 times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(final))
 trajectory_dict = trajectory.asdict()
-u, v = di.vor_div_to_uv_nodal(coords.horizontal, trajectory.vorticity,
-                              trajectory.divergence)
-trajectory_dict.update({"u": u, "v": v})
 f0 = di.maybe_to_nodal(trajectory_dict, coords=coords)
 plt.contourf(f0["temperature_variation"][-1, 22, :, :])
 plt.savefig("h.12.png")

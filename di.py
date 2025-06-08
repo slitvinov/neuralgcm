@@ -459,7 +459,7 @@ def imex_runge_kutta(equation, time_step):
     G = tree_math.unwrap(equation.implicit_terms)
     G_inv = tree_math.unwrap(equation.implicit_inverse, vector_argnums=0)
     a_ex = [[1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]]
-    a_im = [[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]],
+    a_im = [[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]]
     b_ex = [1 / 2, -1 / 2, 1, 0]
     b_im = [3 / 8, 0, 3 / 8, 1 / 4]
     num_steps = len(b_ex)

@@ -236,6 +236,20 @@ class TimeReversedImExODE(di.ImplicitExplicitODE):
         return self.forward_eq.implicit_inverse(state, -step_size)
 
 
+def accumulate_repeated(step_fn, weights, state, scan_fn=jax.lax.scan):
+
+    def f(carry, weight):
+        state, averaged = carry
+        state = step_fn(state)
+        averaged = tree_map(lambda s, a: a + weight * s, state, averaged)
+        return (state, averaged), None
+
+    zeros = tree_map(jnp.zeros_like, state)
+    init = (state, zeros)
+    (_, averaged), _ = scan_fn(f, init, weights)
+    return averaged
+
+
 def digital_filter_initialization(equation, ode_solver, filters, time_span,
                                   cutoff_period, dt):
 
@@ -248,7 +262,7 @@ def digital_filter_initialization(equation, ode_solver, filters, time_span,
         total_weight = init_weight + 2 * weights.sum()
         init_weight /= total_weight
         weights /= total_weight
-        init_term = tree_map(lambda x: x * init_weight, state)
+        init_term = di.tree_map(lambda x: x * init_weight, state)
         forward_term = accumulate_repeated(forward_step, weights, state)
         backward_term = accumulate_repeated(backward_step, weights, state)
         return tree_map(lambda *xs: sum(xs), init_term, forward_term,

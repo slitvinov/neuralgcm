@@ -825,8 +825,8 @@ class PrimitiveEquations:
         return -sigma_integral(g, self.coords.vertical)
 
     def explicit_terms(self, state):
-        aux_state = compute_diagnostic_state(
-            state, self.coords.horizontal.self.coords.vertical)
+        aux_state = compute_diagnostic_state(state, self.coords.horizontal,
+                                             self.coords.vertical)
         vorticity_tendency, divergence_dot = self.curl_and_div_tendencies(
             aux_state)
         kinetic_energy_tendency = self.kinetic_energy_tendency(aux_state)

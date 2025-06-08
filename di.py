@@ -573,15 +573,13 @@ class DiagnosticState:
 
 def compute_diagnostic_state(state, coords):
 
-    def to_nodal_fn(x):
-        return coords.horizontal.to_nodal(x)
-
-    nodal_vorticity = to_nodal_fn(state.vorticity)
-    nodal_divergence = to_nodal_fn(state.divergence)
-    nodal_temperature_variation = to_nodal_fn(state.temperature_variation)
-    tracers = to_nodal_fn(state.tracers)
+    nodal_vorticity = coords.horizontal.to_nodal(state.vorticity)
+    nodal_divergence = coords.horizontal.to_nodal(state.divergence)
+    nodal_temperature_variation = coords.horizontal.to_nodal(
+        state.temperature_variation)
+    tracers = coords.horizontal.to_nodal(state.tracers)
     nodal_cos_lat_u = jax.tree_util.tree_map(
-        to_nodal_fn,
+        coords.horizontal.to_nodal,
         get_cos_lat_vector(state.vorticity,
                            state.divergence,
                            coords.horizontal,
@@ -589,7 +587,7 @@ def compute_diagnostic_state(state, coords):
     )
     cos_lat_grad_log_sp = coords.horizontal.cos_lat_grad(
         state.log_surface_pressure, clip=False)
-    nodal_cos_lat_grad_log_sp = to_nodal_fn(cos_lat_grad_log_sp)
+    nodal_cos_lat_grad_log_sp = coords.horizontal.to_nodal(cos_lat_grad_log_sp)
     nodal_u_dot_grad_log_sp = sum(
         jax.tree_util.tree_map(
             lambda x, y: x * y * coords.horizontal.sec2_lat,

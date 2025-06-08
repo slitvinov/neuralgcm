@@ -571,35 +571,33 @@ class DiagnosticState:
     tracers: Any
 
 
-def compute_diagnostic_state(state, coords):
+def compute_diagnostic_state(state, horizontal, vertical):
 
-    nodal_vorticity = coords.horizontal.to_nodal(state.vorticity)
-    nodal_divergence = coords.horizontal.to_nodal(state.divergence)
-    nodal_temperature_variation = coords.horizontal.to_nodal(
+    nodal_vorticity = horizontal.to_nodal(state.vorticity)
+    nodal_divergence = horizontal.to_nodal(state.divergence)
+    nodal_temperature_variation = horizontal.to_nodal(
         state.temperature_variation)
-    tracers = coords.horizontal.to_nodal(state.tracers)
+    tracers = horizontal.to_nodal(state.tracers)
     nodal_cos_lat_u = jax.tree_util.tree_map(
-        coords.horizontal.to_nodal,
+        horizontal.to_nodal,
         get_cos_lat_vector(state.vorticity,
                            state.divergence,
-                           coords.horizontal,
+                           horizontal,
                            clip=False),
     )
-    cos_lat_grad_log_sp = coords.horizontal.cos_lat_grad(
-        state.log_surface_pressure, clip=False)
-    nodal_cos_lat_grad_log_sp = coords.horizontal.to_nodal(cos_lat_grad_log_sp)
+    cos_lat_grad_log_sp = horizontal.cos_lat_grad(state.log_surface_pressure,
+                                                  clip=False)
+    nodal_cos_lat_grad_log_sp = horizontal.to_nodal(cos_lat_grad_log_sp)
     nodal_u_dot_grad_log_sp = sum(
         jax.tree_util.tree_map(
-            lambda x, y: x * y * coords.horizontal.sec2_lat,
+            lambda x, y: x * y * horizontal.sec2_lat,
             nodal_cos_lat_u,
             nodal_cos_lat_grad_log_sp,
         ))
-    f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp,
-                                           coords.vertical)
+    f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp, vertical)
     f_full = cumulative_sigma_integral(
-        nodal_divergence + nodal_u_dot_grad_log_sp, coords.vertical)
-    sum_𝜎 = np.cumsum(coords.vertical.layer_thickness)[:, np.newaxis,
-                                                       np.newaxis]
+        nodal_divergence + nodal_u_dot_grad_log_sp, vertical)
+    sum_𝜎 = np.cumsum(vertical.layer_thickness)[:, np.newaxis, np.newaxis]
     sigma_dot_explicit = lax.slice_in_dim(
         sum_𝜎 * lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
     sigma_dot_full = lax.slice_in_dim(
@@ -826,8 +824,9 @@ class PrimitiveEquations:
         g = aux_state.u_dot_grad_log_sp
         return -sigma_integral(g, self.coords.vertical)
 
-    def explicit_terms(self, state: State):
-        aux_state = compute_diagnostic_state(state, self.coords)
+    def explicit_terms(self, state):
+        aux_state = compute_diagnostic_state(
+            state, self.coords.horizontal.self.coords.vertical)
         vorticity_tendency, divergence_dot = self.curl_and_div_tendencies(
             aux_state)
         kinetic_energy_tendency = self.kinetic_energy_tendency(aux_state)

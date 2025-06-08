@@ -453,27 +453,15 @@ class ImplicitExplicitODE:
         self.implicit_inverse = implicit_inverse
 
 
-@dataclasses.dataclass
-class ImExButcherTableau:
-    a_ex: Any
-    a_im: Any
-    b_ex: Any
-    b_im: Any
-
-
-def imex_runge_kutta(
-    tableau,
-    equation,
-    time_step,
-):
+def imex_runge_kutta(equation, time_step):
     dt = time_step
     F = tree_math.unwrap(equation.explicit_terms)
     G = tree_math.unwrap(equation.implicit_terms)
     G_inv = tree_math.unwrap(equation.implicit_inverse, vector_argnums=0)
-    a_ex = tableau.a_ex
-    a_im = tableau.a_im
-    b_ex = tableau.b_ex
-    b_im = tableau.b_im
+    a_ex = [[1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]]
+    a_im = [[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]],
+    b_ex = [1 / 2, -1 / 2, 1, 0]
+    b_im = [3 / 8, 0, 3 / 8, 1 / 4]
     num_steps = len(b_ex)
 
     @tree_math.wrap
@@ -508,12 +496,6 @@ def imex_rk_sil3(
     time_step,
 ):
     return imex_runge_kutta(
-        tableau=ImExButcherTableau(
-            a_ex=[[1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]],
-            a_im=[[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]],
-            b_ex=[1 / 2, -1 / 2, 1, 0],
-            b_im=[3 / 8, 0, 3 / 8, 1 / 4],
-        ),
         equation=equation,
         time_step=time_step,
     )

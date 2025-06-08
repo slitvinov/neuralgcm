@@ -376,7 +376,7 @@ time_span = cutoff_period = di.DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 dfi = jax.jit(
     digital_filter_initialization(
         equation=eq,
-        ode_solver=di.imex_rk_sil3,
+        ode_solver=di.imex_runge_kutta,
         filters=[hyperdiffusion_filter],
         time_span=time_span,
         cutoff_period=cutoff_period,
@@ -387,7 +387,7 @@ dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 step_fn = di.step_with_filters(
-    di.imex_rk_sil3(eq, dt),
+    di.imex_runge_kutta(eq, dt),
     [hyperdiffusion_filter],
 )
 integrate_fn = jax.jit(

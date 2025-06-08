@@ -491,16 +491,6 @@ def imex_runge_kutta(equation, time_step):
     return step_fn
 
 
-def imex_rk_sil3(
-    equation,
-    time_step,
-):
-    return imex_runge_kutta(
-        equation=equation,
-        time_step=time_step,
-    )
-
-
 def runge_kutta_step_filter(state_filter):
 
     def _filter(u, u_next):

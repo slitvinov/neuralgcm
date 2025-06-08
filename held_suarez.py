@@ -118,7 +118,7 @@ inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
-integrator = di.imex_rk_sil3
+integrator = di.imex_runge_kutta
 step_fn = integrator(primitive, dt)
 filters = [di.exponential_step_filter(coords.horizontal, dt)]
 step_fn = di.step_with_filters(step_fn, filters)
@@ -164,7 +164,7 @@ primitive_with_hs = di.ImplicitExplicitODE(explicit_fn,
                                            primitive.implicit_terms,
                                            primitive.implicit_inverse)
 
-step_fn = di.imex_rk_sil3(primitive_with_hs, dt)
+step_fn = di.imex_runge_kutta(primitive_with_hs, dt)
 filters = [
     di.exponential_step_filter(coords.horizontal,
                                dt,
@@ -186,7 +186,7 @@ total_time = 1 * units.week
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
-step_fn = di.imex_rk_sil3(primitive_with_hs, dt)
+step_fn = di.imex_runge_kutta(primitive_with_hs, dt)
 filters = [
     di.exponential_step_filter(coords.horizontal,
                                dt,

@@ -28,7 +28,7 @@ def equilibrium_temperature(nodal_surface_pressure):
 
 
 def explicit_terms(state):
-    aux_state = di.compute_diagnostic_state(state=state,
+    aux_state = di.compute_diagnostic_state(state,
                                             coords.horizontal,
                                             coords.vertical)
     nodal_velocity_tendency = jax.tree.map(

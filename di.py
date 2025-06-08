@@ -178,12 +178,11 @@ def centered_vertical_advection(
     w,
     x,
     coordinates,
-    axis=-3,
     w_boundary_values=None,
     dx_dsigma_boundary_values=None,
 ):
     if w_boundary_values is None:
-        w_slc_shape = _slice_shape_along_axis(w, axis)
+        w_slc_shape = _slice_shape_along_axis(w, -3)
         w_boundary_values = (
             jnp.zeros(w_slc_shape,
                       dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
@@ -191,7 +190,7 @@ def centered_vertical_advection(
                       dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
         )
     if dx_dsigma_boundary_values is None:
-        x_slc_shape = _slice_shape_along_axis(x, axis)
+        x_slc_shape = _slice_shape_along_axis(x, -3)
         dx_dsigma_boundary_values = (
             jnp.zeros(x_slc_shape,
                       dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
@@ -199,14 +198,14 @@ def centered_vertical_advection(
                       dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
         )
     w_boundary_top, w_boundary_bot = w_boundary_values
-    w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=axis)
-    x_diff = centered_difference(x, coordinates, axis)
+    w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
+    x_diff = centered_difference(x, coordinates, -3)
     x_diff_boundary_top, x_diff_boundary_bot = dx_dsigma_boundary_values
     x_diff = jnp.concatenate(
-        [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=axis)
+        [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=-3)
     w_times_x_diff = w * x_diff
-    return -0.5 * (lax.slice_in_dim(w_times_x_diff, 1, None, axis=axis) +
-                   lax.slice_in_dim(w_times_x_diff, 0, -1, axis=axis))
+    return -0.5 * (lax.slice_in_dim(w_times_x_diff, 1, None, axis=-3) +
+                   lax.slice_in_dim(w_times_x_diff, 0, -1, axis=-3))
 
 
 def _evaluate_rhombus(n_l, n_m, x):

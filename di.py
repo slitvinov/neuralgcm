@@ -110,10 +110,6 @@ def _slice_shape_along_axis(x):
     return tuple(x_shape)
 
 
-def _with_f64_math(f):
-    return lambda x: f(x.astype(np.float64)).astype(x.dtype)
-
-
 class SigmaCoordinates:
 
     def __init__(self, boundaries):
@@ -121,15 +117,16 @@ class SigmaCoordinates:
 
     @property
     def centers(self):
-        return _with_f64_math(lambda x: (x[1:] + x[:-1]) / 2)(self.boundaries)
+        x = self.boundaries
+        return (x[1:] + x[:-1]) / 2
 
     @property
     def layer_thickness(self):
-        return _with_f64_math(np.diff)(self.boundaries)
+        return np.diff(self.boundaries)
 
     @property
     def center_to_center(self):
-        return _with_f64_math(np.diff)(self.centers)
+        return np.diff(self.centers)
 
     @property
     def layers(self):

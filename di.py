@@ -166,12 +166,12 @@ def cumulative_sigma_integral(x, coordinates):
     return cumsum(xd𝜎, -3)
 
 
-def sigma_integral(x, coordinates, axis=-3, keepdims=True):
+def sigma_integral(x, coordinates):
     x_axes = range(x.ndim)
     d𝜎 = coordinates.layer_thickness
-    d𝜎_axes = [x_axes[axis]]
+    d𝜎_axes = [x_axes[-3]]
     xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
-    return xd𝜎.sum(axis=axis, keepdims=keepdims)
+    return xd𝜎.sum(axis=-3, keepdims=True)
 
 
 def centered_vertical_advection(

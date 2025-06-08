@@ -641,22 +641,14 @@ def exponential_step_filter(
     return runge_kutta_step_filter(filter_fn)
 
 
-def horizontal_diffusion_step_filter(
-    grid,
-    dt,
-    tau,
-    order=1,
-):
+def horizontal_diffusion_step_filter(grid, dt, tau, order=1):
     eigenvalues = grid.laplacian_eigenvalues
     scale = dt / (tau * abs(eigenvalues[-1])**order)
     filter_fn = horizontal_diffusion_filter(grid, scale, order)
     return runge_kutta_step_filter(filter_fn)
 
 
-def step_with_filters(
-    step_fn,
-    filters,
-):
+def step_with_filters(step_fn, filters):
 
     def _step_fn(u):
         u_next = step_fn(u)
@@ -701,12 +693,7 @@ def trajectory_from_step(
     return multistep
 
 
-def accumulate_repeated(
-    step_fn,
-    weights,
-    state,
-    scan_fn=jax.lax.scan,
-):
+def accumulate_repeated(step_fn, weights, state, scan_fn=jax.lax.scan):
 
     def f(carry, weight):
         state, averaged = carry
@@ -720,11 +707,7 @@ def accumulate_repeated(
     return averaged
 
 
-def _dfi_lanczos_weights(
-    time_span,
-    cutoff_period,
-    dt,
-):
+def _dfi_lanczos_weights(time_span, cutoff_period, dt):
     N = round(time_span / (2 * dt))
     n = np.arange(1, N + 1)
     w = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
@@ -792,10 +775,7 @@ class DiagnosticState:
     tracers: Any
 
 
-def compute_diagnostic_state(
-    state,
-    coords,
-):
+def compute_diagnostic_state(state, coords):
 
     def to_nodal_fn(x):
         return coords.horizontal.to_nodal(x)
@@ -872,22 +852,15 @@ def get_geopotential_diff(temperature, coordinates):
     return _vertical_matvec(weights, temperature)
 
 
-def get_geopotential(
-    temperature_variation,
-    reference_temperature,
-    orography,
-    coordinates,
-):
+def get_geopotential(temperature_variation, reference_temperature, orography,
+                     coordinates):
     surface_geopotential = orography * gravity_acceleration
     temperature = add_constant(temperature_variation, reference_temperature)
     geopotential_diff = get_geopotential_diff(temperature, coordinates)
     return surface_geopotential + geopotential_diff
 
 
-def get_temperature_implicit_weights(
-    coordinates,
-    reference_temperature,
-):
+def get_temperature_implicit_weights(coordinates, reference_temperature):
     p = np.tril(np.ones([coordinates.layers, coordinates.layers]))
     alpha = get_sigma_ratios(coordinates)[..., np.newaxis]
     p_alpha = p * alpha
@@ -911,11 +884,7 @@ def get_temperature_implicit_weights(
     return (h0 - k - k_shifted) * coordinates.layer_thickness
 
 
-def get_temperature_implicit(
-    divergence,
-    coordinates,
-    reference_temperature,
-):
+def get_temperature_implicit(divergence, coordinates, reference_temperature):
     weights = -get_temperature_implicit_weights(coordinates,
                                                 reference_temperature)
     return _vertical_matvec(weights, divergence)
@@ -1209,12 +1178,7 @@ def _make_filter_fn(scaling):
     return functools.partial(jax.tree_util.tree_map, rescale)
 
 
-def exponential_filter(
-    grid,
-    attenuation=16,
-    order=18,
-    cutoff=0,
-):
+def exponential_filter(grid, attenuation=16, order=18, cutoff=0):
     _, total_wavenumber = grid.modal_axes
     k = total_wavenumber / total_wavenumber.max()
     a = attenuation
@@ -1224,11 +1188,7 @@ def exponential_filter(
     return _make_filter_fn(scaling)
 
 
-def horizontal_diffusion_filter(
-    grid,
-    scale,
-    order=1,
-):
+def horizontal_diffusion_filter(grid, scale, order=1):
     eigenvalues = grid.laplacian_eigenvalues
     scaling = jnp.exp(-scale * (-eigenvalues)**order)
     return _make_filter_fn(scaling)

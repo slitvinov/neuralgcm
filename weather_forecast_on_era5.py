@@ -241,10 +241,10 @@ def accumulate_repeated(step_fn, weights, state, scan_fn=jax.lax.scan):
     def f(carry, weight):
         state, averaged = carry
         state = step_fn(state)
-        averaged = tree_map(lambda s, a: a + weight * s, state, averaged)
+        averaged = di.tree_map(lambda s, a: a + weight * s, state, averaged)
         return (state, averaged), None
 
-    zeros = tree_map(jnp.zeros_like, state)
+    zeros = di.tree_map(jnp.zeros_like, state)
     init = (state, zeros)
     (_, averaged), _ = scan_fn(f, init, weights)
     return averaged

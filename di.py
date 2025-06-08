@@ -229,7 +229,8 @@ def real_basis(wavenumbers, nodes):
     return f
 
 
-def real_basis_derivative(u, /, axis=-1):
+def real_basis_derivative(x):
+    axis = -2
     i = jnp.arange(u.shape[axis]).reshape((-1, ) + (1, ) * (-1 - axis))
     j = (i + 1) // 2
     u_down = shift(u, -1, axis)
@@ -364,11 +365,8 @@ class Grid:
         b[:, -1] = 0
         return a, b
 
-    def longitudinal_derivative(self, x):
-        return real_basis_derivative(x, axis=-2)
-
     def d_dlon(self, x):
-        return self.longitudinal_derivative(x)
+        return real_basis_derivative(x)
 
     def cos_lat_d_dlat(self, x):
         _, l = self.modal_mesh

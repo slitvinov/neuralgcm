@@ -1169,14 +1169,8 @@ class PrimitiveEquations:
         )
 
 
-def _preserves_shape(target, scaling):
-    target_shape = np.shape(target)
-    return target_shape == np.broadcast_shapes(target_shape, scaling.shape)
 
 
-def _make_filter_fn(scaling):
-    rescale = lambda x: scaling * x if _preserves_shape(x, scaling) else x
-    return functools.partial(jax.tree_util.tree_map, rescale)
 
 
 

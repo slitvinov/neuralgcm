@@ -183,7 +183,7 @@ def horizontal_diffusion_step_filter(grid, dt, tau, order=1):
     eigenvalues = grid.laplacian_eigenvalues
     scale = dt / (tau * abs(eigenvalues[-1])**order)
     filter_fn = horizontal_diffusion_filter(grid, scale, order)
-    return runge_kutta_step_filter(filter_fn)
+    return di.runge_kutta_step_filter(filter_fn)
 
 
 def horizontal_diffusion_filter(grid, scale, order=1):

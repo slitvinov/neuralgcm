@@ -12,3 +12,11 @@ git clone git@github.com:neuralgcm/dinosaur
 git clone git@github.com:google-deepmind/dm-haiku
 git clone git@github.com:google-research/weatherbench2
 ```
+
+## Test
+
+Save reference raw files
+
+```
+for i in *.raw; do cmp $i ~/$i; echo $i $?; done
+```

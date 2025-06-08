@@ -165,7 +165,7 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
-f1 = di.maybe_to_nodal(trajectory, coords=coords)
+f1 = di.maybe_to_nodal(trajectory, coords.horizontal)
 temperature = f1["temperature_variation"] + reference_temperatures[:,
                                                                    np.newaxis,
                                                                    np.newaxis]

@@ -429,16 +429,15 @@ class CoordinateSystem:
     vertical: Any
 
 
-def maybe_to_nodal(fields, coords):
+def maybe_to_nodal(fields, horizontal):
     fields = {"temperature_variation": fields.temperature_variation}
-    array_shape_fn = lambda x: np.asarray(x.shape[:-2] + coords.horizontal.
-                                          nodal_shape)
+    array_shape_fn = lambda x: np.asarray(x.shape[:-2] + horizontal.nodal_shape)
     scalar_shape_fn = lambda x: np.array([], dtype=int)
     nodal_shapes = tree_map_over_nonscalars(array_shape_fn,
                                             fields,
                                             scalar_fn=scalar_shape_fn)
     fn = lambda x, nodal: x if x.shape == tuple(
-        nodal) else coords.horizontal.to_nodal(x)
+        nodal) else horizontal.to_nodal(x)
     return jax.tree_util.tree_map(fn, fields, nodal_shapes)
 
 

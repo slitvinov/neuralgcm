@@ -349,7 +349,7 @@ hyperdiffusion_filter = horizontal_diffusion_step_filter(
     model_coords.horizontal, dt=dt, tau=tau, order=2)
 time_span = cutoff_period = di.DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 dfi = jax.jit(
-    di.digital_filter_initialization(
+    digital_filter_initialization(
         equation=eq,
         ode_solver=di.imex_rk_sil3,
         filters=[hyperdiffusion_filter],

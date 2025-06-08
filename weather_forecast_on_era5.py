@@ -402,7 +402,6 @@ out_state, trajectory = jax.block_until_ready(integrate_fn(dfi_init_state))
 ds_out = trajectory_to_xarray(trajectory)
 out_state, trajectory = jax.block_until_ready(integrate_fn(raw_init_state))
 ds_out_unfiltered = trajectory_to_xarray(trajectory)
-ds_out
 ds_out.surface_pressure.sel(
     latitude=0, longitude=0,
     method="nearest").plot.line(label="digital filter initialization")

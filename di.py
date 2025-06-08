@@ -650,11 +650,9 @@ def trajectory_from_step(
     *,
     start_with_input=False,
     post_process_fn=lambda x: x,
-    outer_scan_fn=jax.lax.scan,
-    inner_scan_fn=jax.lax.scan,
 ):
     if inner_steps != 1:
-        step_fn = repeated(step_fn, inner_steps, inner_scan_fn)
+        step_fn = repeated(step_fn, inner_steps, jax.lax.scan)
 
     def step(carry_in, _):
         carry_out = step_fn(carry_in)
@@ -662,7 +660,7 @@ def trajectory_from_step(
         return carry_out, post_process_fn(frame)
 
     def multistep(x):
-        return outer_scan_fn(step, x, xs=None, length=outer_steps)
+        return jax.lax.scan(step, x, xs=None, length=outer_steps)
 
     return multistep
 

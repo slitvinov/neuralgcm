@@ -1027,5 +1027,6 @@ class PrimitiveEquations:
 
 
 def _make_filter_fn(scaling):
-    rescale = lambda x: scaling * x if np.shape(x) == np.broadcast_shapes(np.shape(x), scaling.shape) else x
+    rescale = lambda x: scaling * x if np.shape(x) == np.broadcast_shapes(
+        np.shape(x), scaling.shape) else x
     return functools.partial(jax.tree_util.tree_map, rescale)

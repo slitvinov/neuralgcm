@@ -109,11 +109,6 @@ geopotential = np.stack(
     [get_geopotential(lat, lon, sigma) for sigma in vertical_grid.centers])
 reference_temperatures = np.stack(
     [get_reference_temperature(sigma) for sigma in vertical_grid.centers])
-aux_features = {
-    "geopotential": geopotential,
-    "orography": orography,
-    "ref_temperatures": reference_temperatures,
-}
 nodal_vorticity = np.stack(
     [get_vorticity(lat, lon, sigma) for sigma in vertical_grid.centers])
 modal_vorticity = grid.to_modal(nodal_vorticity)
@@ -129,8 +124,7 @@ steady_state = di.State(
     log_surface_pressure=grid.to_modal(log_nodal_surface_pressure),
 )
 
-ref_temps = aux_features["ref_temperatures"]
-orography = di.truncated_modal_orography(aux_features["orography"], coords)
+orography = di.truncated_modal_orography(orography, coords)
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 dt_s = 100 * units.s
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_s)

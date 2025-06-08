@@ -6,10 +6,6 @@ import di
 units = di.units
 
 
-def temperature_variation_to_absolute(temperature_variation, ref_temperature):
-    return temperature_variation + ref_temperature[:, np.newaxis, np.newaxis]
-
-
 def get_reference_temperature(sigma):
     top_mean_t = t0 * sigma**(r_gas * gamma / g)
     if sigma < sigma_tropo:
@@ -181,8 +177,7 @@ integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
 f1 = di.maybe_to_nodal(trajectory, coords=coords)
-temperature = temperature_variation_to_absolute(f1["temperature_variation"],
-                                                ref_temps)
+temperature = f1["temperature_variation"] + ref_temps[:, np.newaxis, np.newaxis]
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
 plt.savefig("b.09.png")

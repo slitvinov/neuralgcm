@@ -27,15 +27,13 @@ class HybridCoordinates:
         return self.a_boundaries / surface_pressure + self.b_boundaries
 
 
-def attach_data_array_units(array):
-    attrs = dict(array.attrs)
-    units = attrs.pop("units", None)
-    data = di.units.parse_expression(units) * array.data
-    return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
-
-
 def attach_xarray_units(ds):
-    return ds.map(attach_data_array_units)
+    def _inlined_attach_data_array_units(array):
+        attrs = dict(array.attrs)
+        units_str = attrs.pop("units", None) # Renamed units to units_str
+        data = di.units.parse_expression(units_str) * array.data
+        return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
+    return ds.map(_inlined_attach_data_array_units)
 
 
 def xarray_nondimensionalize(ds):
@@ -321,8 +319,12 @@ desired_lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
 desired_lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
 ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
                                                   longitude=desired_lon))
-ds_init["orography"] = attach_data_array_units(
-    raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
+# Inlined logic for attach_data_array_units for orography:
+orography_array_input = raw_orography.interp(latitude=desired_lat, longitude=desired_lon)
+attrs_orography = dict(orography_array_input.attrs)
+units_str_orography = attrs_orography.pop("units", None)
+data_orography = di.units.parse_expression(units_str_orography) * orography_array_input.data
+ds_init["orography"] = xarray.DataArray(data_orography, orography_array_input.coords, orography_array_input.dims, attrs=attrs_orography)
 ds_init["orography"] /= di.GRAVITY_ACCELERATION
 source_vertical = HybridCoordinates()
 ds_nondim_init = xarray_nondimensionalize(ds_init)

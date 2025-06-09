@@ -894,11 +894,8 @@ class PrimitiveEquations:
         )
 
     def implicit_inverse(self, state, step_size):
-        implicit_matrix = _get_implicit_term_matrix(
-            step_size,
-            self.coords,
-            self.reference_temperature,
-        )
+        implicit_matrix = _get_implicit_term_matrix(step_size, self.coords,
+                                                    self.reference_temperature)
         assert implicit_matrix.dtype == np.float64
         layers = self.coords.vertical.layers
         div = slice(0, layers)

@@ -1,3 +1,72 @@
+\documentclass[sn-nature,Numbered]{sn-jnl}%
+
+\usepackage{subfiles}%
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{amsmath,amssymb,amsfonts}%
+\usepackage{amsthm}%
+\usepackage{mathrsfs}%
+\usepackage[title]{appendix}%
+\usepackage{xcolor}%
+\usepackage{textcomp}%
+\usepackage{siunitx}%
+\usepackage{manyfoot}%
+\usepackage{booktabs}%
+\usepackage{algorithm}%
+\usepackage{algorithmicx}%
+\usepackage{algpseudocode}%
+\usepackage{listings}%
+\usepackage{floatpag}%
+
+\usepackage{etoc}
+
+
+\usepackage{multibib}
+\newcites{SI}{Supplementary References}
+
+
+
+
+\newcommand{\dmk}[1]{{\color{pink}#1}}
+\newcommand{\pcn}[1]{{\color{purple}#1}}
+\newcommand{\jy}[1]{{\color{red}#1}}
+\newcommand{\sh}[1]{{\color{blue}#1}}
+\newcommand{\mpb}[1]{{\color{teal}#1}}
+
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+\newcommand{\explicit}[1]{\underbrace{#1}_{\text{explicit}}}
+\newcommand{\implicit}[1]{\underbrace{#1}_{\text{implicit}}}
+\newcommand{\Exp}[1]{ \mathbb{E}\left[ #1 \right] }
+\newcommand{\qbox}[1] { {\quad\mbox{#1}\quad}}
+
+\begin{document}
+
+\begin{appendices}
+\renewcommand{\contentsname}{Appendices}
+\setcounter{figure}{4} %
+
+\section{Dynamical core of NeuralGCM}\label{apx:sec:dycore}
+The dynamical core provides NeuralGCM with strong physics priors based on well understood and easy to simulate phenomena. In section \ref{apx:subsec:dycore_discretization} we provide more details on spatial discretization of the atmospheric state in NeuralGCM. In section \ref{apx:subsec:dycore_equations} we summarize the governing equations of the dynamical core. In section \ref{apx:subsec:dycore_numerics} we provide references to numerical implementations and rationale for our choices.
+
+\subsection{Discretization of the dynamical core}\label{apx:subsec:dycore_discretization}
+Our dynamical core uses a Gaussian grid and sigma coordinates \cite{Bourke1974-spectral} to discretize the computational domain. Gaussian grids enable fast and accurate transformations between the grid space representation and spherical harmonics basis. They result in equiangular longitude lines and unequal spacing latitudes defined by the Gaussian quadrature. Terrain-following sigma coordinates discretize the vertical direction by the fraction of the surface pressure, and thus correspond to non-stationary vertical height since surface pressure changes with time. Cell boundaries in sigma coordinates take values $\sigma \in \left[0,1\right]$, with $\sigma=0$ corresponding to the top of the atmosphere ($p=0$ pressure boundary) and $\sigma=1$ representing the earth's surface.
+
+In this work we have trained a lineup of models that make forecasts at varying horizontal resolutions: $2.8^{\circ}$, $1.4^{\circ}$, and $0.7^{\circ}$, corresponding to truncated linear Gaussian grids TL$63$, TL$127$, TL$255$. The number in the grid name corresponds to the maximum total wavenumber of spherical harmonic that the grid can represent. These grids provide a framework for transforming data from grid space (nodal) to spherical harmonic representations with minimal loss of information. When solving model equations we use cubic truncation Gaussian grids T$62$, T$125$ and T$253$, that capture a similar number of spherical harmonics, while avoiding aliasing errors and minimizing the need to increase array dimensions above a multiple of 128, which is expensive on the Google TPU. See Table \ref{apx:table:gaussian_grids} for resolution details. All models use $32$ equidistant sigma levels for vertical discretization. We suspect that using higher vertical resolution with assimilation data from more levels could further improve the performance.
+
+\begin{table}[ht]
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Grid name} & \textbf{Longitude nodes} & \textbf{Latitude nodes} & \textbf{Max total wavenumber} \\ \hline
+TL63               & $128$                      & $64$                      & $63$                            \\ \hline
+TL127              & $256$                      & $128$                     & $127$                           \\ \hline
+TL255              & $512$                      & $256$                     & $255$                           \\ \hline
+T62                & $190$                      & $95$                      & $62$                            \\ \hline
+T125               & $379$                      & $190$                     & $125$                           \\ \hline
+T254               & $766$                      & $383$                     & $254$                           \\ \hline
+\end{tabular} \label{apx:table:gaussian_grids}
+\caption{Spatial and spectral resolutions of horizontal grids used by NeuralGCM.}
+\end{table}
+
 \subsection{Primitive equations}\label{apx:subsec:dycore_equations}
 The dynamical core of NeuralGCM solves the primitive equations, which represent a combination of (1) momentum equations, (2) the second law of thermodynamics, (3) a thermodynamic equation of state (ideal gas), (4) continuity equation and (5) hydrostatic approximation. For solving the equations we use a divergence-vorticity representation of the horizontal winds, resulting in equations for the following seven prognostic variables: divergence $\delta$, vorticity $\zeta$, temperature $T$, logarithm of the surface pressure $\log p_{s}$, as well as $3$ moisture species (specific humidity $q$, specific cloud ice $q_{c_i}$ and specific liquid cloud water content $q_{c_l}$). To facilitate efficient time integration of our models we split temperature $T$ into a uniform reference temperature on each sigma level $\bar{T}_{\sigma}$ and temperature deviations per level $T^{\prime}_{\sigma} = T_\sigma - \bar{T}_{\sigma}$. The resulting equations are:
 \begin{align}
@@ -28,3 +97,355 @@ Diagnostic quantities are computed as follows:
     T_{\nu} &= T(1 + \left(\frac{R_{vap}}{R} - 1 \right)q - q_{c_{i}} - q_{c_{l}})
 \end{align}
 where $\Phi_{s}=gz_{s}$ is the geopotential at the surface.
+
+\subsection{Numerics}\label{apx:subsec:dycore_numerics}
+Our choice of the numerical schemes for interpolation, integrals and diagnostics exactly follows Durran's book \cite{durran2010numerical} $\S8.6$, with the addition of moisture species (which are advected by the wind and only affect the dynamics through through their effect on the virtual temperature). We use semi-implicit time-integration scheme, where all right hand side terms are separated into groups that are treated either explicitly or implicitly. This avoids severe time step limitations due to fast moving gravity waves.
+
+Our choice of dynamical core was also informed by our desire to run efficiently on machine learning accelerators, in particular Google TPUs~\citeSI{Jouppi2023-rw}.
+TPUs have dedicated hardware for low-precision matrix-matrix multiplication, which conveniently is well suited for the bottleneck in spectral methods, which are forward and inverse spherical harmonic transformations. Accordingly, we use single-precision arithmetic throughout.
+We found that full single precision for spherical harmonic transformations was not required to obtain accurate results even on our largest grid sizes, and according use only three passes of bfloat16 matrix-multiplication rather than the six passes that would required for full single precision~\citeSI{Henry2019-it}.
+Our implementation supports parallelism across spatial dimensions (x, y, and z) for running on multiple accelerator cores, using XLA SPMD~\citeSI{Xu2021-fe}, with JAX's \texttt{shard\_map} for parallelizing key bottlenecks including matrix-multiplications in spherical harmonic transforms~\citeSI{shard_map}.
+
+\begin{thebibliography}{10}
+\expandafter\ifx\csname url\endcsname\relax
+\def\url#1{\burl{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\eprint}[2][]{\url{#2}}
+\providecommand{\doi}[1]{\url{https://doi.org/#1}}
+\bibcommenthead
+
+\expandafter\ifx\csname url\endcsname\relax
+    \def\url#1{\burl{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\eprint}[2][]{\url{#2}}
+\providecommand{\doi}[1]{\url{https://doi.org/#1}}
+\bibcommenthead
+
+\bibitem{Bauer2015}
+\bibinfo{author}{Bauer, P.}, \bibinfo{author}{Thorpe, A.} \& \bibinfo{author}{Brunet, G.}
+\newblock \bibinfo{title}{The quiet revolution of numerical weather prediction}.
+\newblock \emph{\bibinfo{journal}{Nature}} \textbf{\bibinfo{volume}{525}}, \bibinfo{pages}{47--55} (\bibinfo{year}{2015}).
+\newblock \urlprefix\url{http://dx.doi.org/10.1038/nature14956}.
+
+\bibitem{Balaji2022-kp}
+\bibinfo{author}{Balaji, V.} \emph{et~al.}
+\newblock \bibinfo{title}{Are general circulation models obsolete?}
+\newblock \emph{\bibinfo{journal}{Proc. Natl. Acad. Sci. U. S. A.}} \textbf{\bibinfo{volume}{119}}, \bibinfo{pages}{e2202075119} (\bibinfo{year}{2022}).
+\newblock \urlprefix\url{http://dx.doi.org/10.1073/pnas.2202075119}.
+
+\bibitem{hourdin2017_tuning}
+\bibinfo{author}{Hourdin, F.} \emph{et~al.}
+\newblock \bibinfo{title}{The art and science of climate model tuning}.
+\newblock \emph{\bibinfo{journal}{Bull. Am. Meteorol. Soc.}} \textbf{\bibinfo{volume}{98}}, \bibinfo{pages}{589--602} (\bibinfo{year}{2017}).
+\newblock \urlprefix\url{https://doi.org/10.1175/BAMS-D-15-00135.1}.
+
+\bibitem{bony2005marine}
+\bibinfo{author}{Bony, S.} \& \bibinfo{author}{Dufresne, J.-L.}
+\newblock \bibinfo{title}{Marine boundary layer clouds at the heart of tropical cloud feedback uncertainties in climate models}.
+\newblock \emph{\bibinfo{journal}{Geophysical Research Letters}} \textbf{\bibinfo{volume}{32}} (\bibinfo{year}{2005}).
+
+\bibitem{webb2013origins}
+\bibinfo{author}{Webb, M.~J.}, \bibinfo{author}{Lambert, F.~H.} \& \bibinfo{author}{Gregory, J.~M.}
+\newblock \bibinfo{title}{Origins of differences in climate sensitivity, forcing and feedback in climate models}.
+\newblock \emph{\bibinfo{journal}{Climate Dynamics}} \textbf{\bibinfo{volume}{40}}, \bibinfo{pages}{677--707} (\bibinfo{year}{2013}).
+
+\bibitem{sherwood2014spread}
+\bibinfo{author}{Sherwood, S.~C.}, \bibinfo{author}{Bony, S.} \& \bibinfo{author}{Dufresne, J.-L.}
+\newblock \bibinfo{title}{Spread in model climate sensitivity traced to atmospheric convective mixing}.
+\newblock \emph{\bibinfo{journal}{Nature}} \textbf{\bibinfo{volume}{505}}, \bibinfo{pages}{37--42} (\bibinfo{year}{2014}).
+
+\bibitem{PalmerStevens2019}
+\bibinfo{author}{Palmer, T.} \& \bibinfo{author}{Stevens, B.}
+\newblock \bibinfo{title}{The scientific challenge of understanding and estimating climate change}.
+\newblock \emph{\bibinfo{journal}{Proc. Natl. Acad. Sci. U. S. A.}} \textbf{\bibinfo{volume}{116}}, \bibinfo{pages}{24390--24395} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{http://dx.doi.org/10.1073/pnas.1906691116}.
+
+\bibitem{fischer2013robust}
+\bibinfo{author}{Fischer, E.~M.}, \bibinfo{author}{Beyerle, U.} \& \bibinfo{author}{Knutti, R.}
+\newblock \bibinfo{title}{Robust spatially aggregated projections of climate extremes}.
+\newblock \emph{\bibinfo{journal}{Nature Climate Change}} \textbf{\bibinfo{volume}{3}}, \bibinfo{pages}{1033--1038} (\bibinfo{year}{2013}).
+
+\bibitem{field2012managing}
+\bibinfo{author}{Field, C.~B.}
+\newblock \emph{\bibinfo{title}{Managing the risks of extreme events and disasters to advance climate change adaptation: special report of the intergovernmental panel on climate change}}  (\bibinfo{publisher}{Cambridge University Press}, \bibinfo{address}{Cambridge, UK}, \bibinfo{year}{2012}).
+
+\bibitem{rasp2023weatherbench}
+\bibinfo{author}{Rasp, S.} \emph{et~al.}
+\newblock \bibinfo{title}{{WeatherBench 2: A benchmark for the next generation of data-driven global weather models}} (\bibinfo{year}{2023}).
+\newblock \bibinfo{note}{Preprint at \url{http://arxiv.org/abs/2308.15560}}.
+
+\bibitem{keisler2022forecasting}
+\bibinfo{author}{Keisler, R.}
+\newblock \bibinfo{title}{Forecasting global weather with graph neural networks}.
+\newblock \emph{\bibinfo{journal}{arXiv preprint arXiv:2202.07575}}  (\bibinfo{year}{2022}).
+
+\bibitem{bi2023accurate}
+\bibinfo{author}{Bi, K.} \emph{et~al.}
+\newblock \bibinfo{title}{Accurate medium-range global weather forecasting with 3d neural networks}.
+\newblock \emph{\bibinfo{journal}{Nature}} \textbf{\bibinfo{volume}{619}}, \bibinfo{pages}{533--538} (\bibinfo{year}{2023}).
+
+\bibitem{lam2022graphcast}
+\bibinfo{author}{Lam, R.} \emph{et~al.}
+\newblock \bibinfo{title}{Learning skillful medium-range global weather forecasting}.
+\newblock \emph{\bibinfo{journal}{Science}} \textbf{\bibinfo{volume}{382}}, \bibinfo{pages}{1416--1421} (\bibinfo{year}{2023}).
+\newblock \urlprefix\url{https://www.science.org/doi/abs/10.1126/science.adi2336}.
+
+\bibitem{hersbach2020era5}
+\bibinfo{author}{Hersbach, H.} \emph{et~al.}
+\newblock \bibinfo{title}{The {ERA5} global reanalysis}.
+\newblock \emph{\bibinfo{journal}{Quarterly Journal of the Royal Meteorological Society}} \textbf{\bibinfo{volume}{146}}, \bibinfo{pages}{1999--2049} (\bibinfo{year}{2020}).
+
+\bibitem{Zhou2019-next-gen-GFS}
+\bibinfo{author}{Zhou, L.} \emph{et~al.}
+\newblock \bibinfo{title}{Toward convective-scale prediction within the next generation global prediction system}.
+\newblock \emph{\bibinfo{journal}{Bull. Am. Meteorol. Soc.}} \textbf{\bibinfo{volume}{100}}, \bibinfo{pages}{1225--1243} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://journals.ametsoc.org/view/journals/bams/100/7/bams-d-17-0246.1.xml}.
+
+\bibitem{bonavita2023limitations}
+\bibinfo{author}{Bonavita, M.}
+\newblock \bibinfo{title}{On the limitations of data-driven weather forecasting models}.
+\newblock \emph{\bibinfo{journal}{arXiv preprint arXiv:2309.08473}}  (\bibinfo{year}{2023}).
+
+\bibitem{weyn2020improving}
+\bibinfo{author}{Weyn, J.~A.}, \bibinfo{author}{Durran, D.~R.} \& \bibinfo{author}{Caruana, R.}
+\newblock \bibinfo{title}{Improving data-driven global weather prediction using deep convolutional neural networks on a cubed sphere}.
+\newblock \emph{\bibinfo{journal}{Journal of Advances in Modeling Earth Systems}} \textbf{\bibinfo{volume}{12}}, \bibinfo{pages}{e2020MS002109} (\bibinfo{year}{2020}).
+
+\bibitem{watt2023ace}
+\bibinfo{author}{Watt-Meyer, O.} \emph{et~al.}
+\newblock \bibinfo{title}{{ACE}: A fast, skillful learned global atmospheric model for climate prediction}.
+\newblock \emph{\bibinfo{journal}{arXiv preprint arXiv:2310.02074}}  (\bibinfo{year}{2023}).
+
+\bibitem{Bretherton2023-ym}
+\bibinfo{author}{Bretherton, C.~S.}
+\newblock \bibinfo{title}{Old dog, new trick: Reservoir computing advances machine learning for climate modeling}.
+\newblock \emph{\bibinfo{journal}{Geophysical Research Letters}} \textbf{\bibinfo{volume}{50}}, \bibinfo{pages}{e2023GL104174} (\bibinfo{year}{2023}).
+
+\bibitem{Reichstein2019review}
+\bibinfo{author}{Reichstein, M.} \emph{et~al.}
+\newblock \bibinfo{title}{Deep learning and process understanding for data-driven earth system science}.
+\newblock \emph{\bibinfo{journal}{Nature}} \textbf{\bibinfo{volume}{566}}, \bibinfo{pages}{195--204} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.1038/s41586-019-0912-1}.
+
+\bibitem{brenowitz2019spatially}
+\bibinfo{author}{Brenowitz, N.~D.} \& \bibinfo{author}{Bretherton, C.~S.}
+\newblock \bibinfo{title}{Spatially extended tests of a neural network parametrization trained by coarse-graining}.
+\newblock \emph{\bibinfo{journal}{Journal of Advances in Modeling Earth Systems}} \textbf{\bibinfo{volume}{11}}, \bibinfo{pages}{2728--2744} (\bibinfo{year}{2019}).
+
+\bibitem{rasp2018deep}
+\bibinfo{author}{Rasp, S.}, \bibinfo{author}{Pritchard, M.~S.} \& \bibinfo{author}{Gentine, P.}
+\newblock \bibinfo{title}{Deep learning to represent subgrid processes in climate models}.
+\newblock \emph{\bibinfo{journal}{Proceedings of the National Academy of Sciences}} \textbf{\bibinfo{volume}{115}}, \bibinfo{pages}{9684--9689} (\bibinfo{year}{2018}).
+
+\bibitem{yuval2020stable}
+\bibinfo{author}{Yuval, J.} \& \bibinfo{author}{O’Gorman, P.~A.}
+\newblock \bibinfo{title}{Stable machine-learning parameterization of subgrid processes for climate modeling at a range of resolutions}.
+\newblock \emph{\bibinfo{journal}{Nature communications}} \textbf{\bibinfo{volume}{11}}, \bibinfo{pages}{3295} (\bibinfo{year}{2020}).
+
+\bibitem{kwa2023machine}
+\bibinfo{author}{Kwa, A.} \emph{et~al.}
+\newblock \bibinfo{title}{Machine-learned climate model corrections from a global storm-resolving model: Performance across the annual cycle}.
+\newblock \emph{\bibinfo{journal}{Journal of Advances in Modeling Earth Systems}} \textbf{\bibinfo{volume}{15}}, \bibinfo{pages}{e2022MS003400} (\bibinfo{year}{2023}).
+
+\bibitem{arcomano2023hybrid}
+\bibinfo{author}{Arcomano, T.}, \bibinfo{author}{Szunyogh, I.}, \bibinfo{author}{Wikner, A.}, \bibinfo{author}{Hunt, B.~R.} \& \bibinfo{author}{Ott, E.}
+\newblock \bibinfo{title}{A hybrid atmospheric model incorporating machine learning can capture dynamical processes not captured by its physics-based component}.
+\newblock \emph{\bibinfo{journal}{Geophysical Research Letters}} \textbf{\bibinfo{volume}{50}}, \bibinfo{pages}{e2022GL102649} (\bibinfo{year}{2023}).
+
+\bibitem{han2023ensemble}
+\bibinfo{author}{Han, Y.}, \bibinfo{author}{Zhang, G.~J.} \& \bibinfo{author}{Wang, Y.}
+\newblock \bibinfo{title}{An ensemble of neural networks for moist physics processes, its generalizability and stable integration}.
+\newblock \emph{\bibinfo{journal}{Journal of Advances in Modeling Earth Systems}} \textbf{\bibinfo{volume}{15}}, \bibinfo{pages}{e2022MS003508} (\bibinfo{year}{2023}).
+
+\bibitem{Gelbrecht2023differentiable}
+\bibinfo{author}{Gelbrecht, M.}, \bibinfo{author}{White, A.}, \bibinfo{author}{Bathiany, S.} \& \bibinfo{author}{Boers, N.}
+\newblock \bibinfo{title}{Differentiable programming for earth system modeling}.
+\newblock \emph{\bibinfo{journal}{Geoscientific Model Development}} \textbf{\bibinfo{volume}{16}}, \bibinfo{pages}{3123--3135} (\bibinfo{year}{2023}).
+\newblock \urlprefix\url{https://gmd.copernicus.org/articles/16/3123/2023/}.
+
+\bibitem{bradbury2018jax}
+\bibinfo{author}{Bradbury, J.} \emph{et~al.}
+\newblock \bibinfo{title}{{JAX}: composable transformations of {P}ython+{N}um{P}y programs} (\bibinfo{year}{2018}).
+\newblock \urlprefix\url{http://github.com/google/jax}.
+
+\bibitem{Bourke1974-spectral}
+\bibinfo{author}{Bourke, W.}
+\newblock \bibinfo{title}{{A Multi-Level Spectral Model. I. Formulation and Hemispheric Integrations}}.
+\newblock \emph{\bibinfo{journal}{Mon. Weather Rev.}} \textbf{\bibinfo{volume}{102}}, \bibinfo{pages}{687--701} (\bibinfo{year}{1974}).
+\newblock \urlprefix\url{https://journals.ametsoc.org/view/journals/mwre/102/10/1520-0493_1974_102_0687_amlsmi_2_0_co_2.xml}.
+
+\bibitem{durran2010numerical}
+\bibinfo{author}{Durran, D.~R.}
+\newblock \emph{\bibinfo{title}{Numerical methods for fluid dynamics: With applications to geophysics}} \bibinfo{edition}{Second} edn, Vol.~\bibinfo{volume}{32} (\bibinfo{publisher}{Springer}, \bibinfo{address}{New York}, \bibinfo{year}{2010}).
+
+\bibitem{wang2022non}
+\bibinfo{author}{Wang, P.}, \bibinfo{author}{Yuval, J.} \& \bibinfo{author}{O’Gorman, P.~A.}
+\newblock \bibinfo{title}{Non-local parameterization of atmospheric subgrid processes with neural networks}.
+\newblock \emph{\bibinfo{journal}{Journal of Advances in Modeling Earth Systems}} \textbf{\bibinfo{volume}{14}}, \bibinfo{pages}{e2022MS002984} (\bibinfo{year}{2022}).
+
+\bibitem{daley1981normal}
+\bibinfo{author}{Daley, R.}
+\newblock \bibinfo{title}{Normal mode initialization}.
+\newblock \emph{\bibinfo{journal}{Reviews of Geophysics}} \textbf{\bibinfo{volume}{19}}, \bibinfo{pages}{450--468} (\bibinfo{year}{1981}).
+
+\bibitem{whitaker2013implicit}
+\bibinfo{author}{Whitaker, J.~S.} \& \bibinfo{author}{Kar, S.~K.}
+\newblock \bibinfo{title}{Implicit--explicit runge--kutta methods for fast--slow wave problems}.
+\newblock \emph{\bibinfo{journal}{Monthly weather review}} \textbf{\bibinfo{volume}{141}}, \bibinfo{pages}{3426--3434} (\bibinfo{year}{2013}).
+
+\bibitem{gilleland2009intercomparison}
+\bibinfo{author}{Gilleland, E.}, \bibinfo{author}{Ahijevych, D.}, \bibinfo{author}{Brown, B.~G.}, \bibinfo{author}{Casati, B.} \& \bibinfo{author}{Ebert, E.~E.}
+\newblock \bibinfo{title}{Intercomparison of spatial forecast verification methods}.
+\newblock \emph{\bibinfo{journal}{Weather and forecasting}} \textbf{\bibinfo{volume}{24}}, \bibinfo{pages}{1416--1430} (\bibinfo{year}{2009}).
+
+\bibitem{Gneiting2007ProperScoring}
+\bibinfo{author}{Gneiting, T.} \& \bibinfo{author}{Raftery, A.~E.}
+\newblock \bibinfo{title}{{Strictly Proper Scoring Rules, Prediction, and Estimation}}.
+\newblock \emph{\bibinfo{journal}{J. Am. Stat. Assoc.}} \textbf{\bibinfo{volume}{102}}, \bibinfo{pages}{359--378} (\bibinfo{year}{2007}).
+\newblock \urlprefix\url{https://doi.org/10.1198/016214506000001437}.
+
+\bibitem{rasp2018neural}
+\bibinfo{author}{Rasp, S.} \& \bibinfo{author}{Lerch, S.}
+\newblock \bibinfo{title}{Neural networks for postprocessing ensemble weather forecasts}.
+\newblock \emph{\bibinfo{journal}{Monthly Weather Review}} \textbf{\bibinfo{volume}{146}}, \bibinfo{pages}{3885--3900} (\bibinfo{year}{2018}).
+
+\bibitem{pacchiardi2021probabilistic}
+\bibinfo{author}{Pacchiardi, L.}, \bibinfo{author}{Adewoyin, R.}, \bibinfo{author}{Dueben, P.} \& \bibinfo{author}{Dutta, R.}
+\newblock \bibinfo{title}{Probabilistic forecasting with generative networks via scoring rule minimization}.
+\newblock \emph{\bibinfo{journal}{arXiv preprint arXiv:2112.08217}}  (\bibinfo{year}{2021}).
+
+\bibitem{Fortin2014-spread-skill}
+\bibinfo{author}{Fortin, V.}, \bibinfo{author}{Abaza, M.}, \bibinfo{author}{Anctil, F.} \& \bibinfo{author}{Turcotte, R.}
+\newblock \bibinfo{title}{Why should ensemble spread match the {RMSE} of the ensemble mean?}
+\newblock \emph{\bibinfo{journal}{J. Hydrometeorol.}} \textbf{\bibinfo{volume}{15}}, \bibinfo{pages}{1708--1713} (\bibinfo{year}{2014}).
+\newblock \urlprefix\url{http://journals.ametsoc.org/doi/10.1175/JHM-D-14-0008.1}.
+
+\bibitem{holton2004introduction}
+\bibinfo{author}{Holton, J.~R.}
+\newblock \emph{\bibinfo{title}{An introduction to dynamic meteorology}} \bibinfo{edition}{Fifth} edn (\bibinfo{publisher}{Elsevier Academic Press}, \bibinfo{address}{Waltham, MA, USA}, \bibinfo{year}{2004}).
+
+\bibitem{cheng2022impact}
+\bibinfo{author}{Cheng, K.-Y.} \emph{et~al.}
+\newblock \bibinfo{title}{Impact of warmer sea surface temperature on the global pattern of intense convection: insights from a global storm resolving model}.
+\newblock \emph{\bibinfo{journal}{Geophysical Research Letters}} \textbf{\bibinfo{volume}{49}}, \bibinfo{pages}{e2022GL099796} (\bibinfo{year}{2022}).
+
+\bibitem{stevens2019dyamond}
+\bibinfo{author}{Stevens, B.} \emph{et~al.}
+\newblock \bibinfo{title}{Dyamond: the dynamics of the atmospheric general circulation modeled on non-hydrostatic domains}.
+\newblock \emph{\bibinfo{journal}{Progress in Earth and Planetary Science}} \textbf{\bibinfo{volume}{6}}, \bibinfo{pages}{1--17} (\bibinfo{year}{2019}).
+
+\bibitem{ullrich2021tempestextremes}
+\bibinfo{author}{Ullrich, P.~A.} \emph{et~al.}
+\newblock \bibinfo{title}{Tempestextremes v2. 1: A community framework for feature detection, tracking, and analysis in large datasets}.
+\newblock \emph{\bibinfo{journal}{Geoscientific Model Development}} \textbf{\bibinfo{volume}{14}}, \bibinfo{pages}{5023--5048} (\bibinfo{year}{2021}).
+
+\bibitem{haimberger2008toward}
+\bibinfo{author}{Haimberger, L.}, \bibinfo{author}{Tavolato, C.} \& \bibinfo{author}{Sperka, S.}
+\newblock \bibinfo{title}{Toward elimination of the warm bias in historic radiosonde temperature records—some new results from a comprehensive intercomparison of upper-air data}.
+\newblock \emph{\bibinfo{journal}{Journal of Climate}} \textbf{\bibinfo{volume}{21}}, \bibinfo{pages}{4587--4606} (\bibinfo{year}{2008}).
+
+\bibitem{eyring2016overview}
+\bibinfo{author}{Eyring, V.} \emph{et~al.}
+\newblock \bibinfo{title}{Overview of the coupled model intercomparison project phase 6 (cmip6) experimental design and organization}.
+\newblock \emph{\bibinfo{journal}{Geoscientific Model Development}} \textbf{\bibinfo{volume}{9}}, \bibinfo{pages}{1937--1958} (\bibinfo{year}{2016}).
+
+\bibitem{mitchell2020vertical}
+\bibinfo{author}{Mitchell, D.~M.}, \bibinfo{author}{Lo, Y.~E.}, \bibinfo{author}{Seviour, W.~J.}, \bibinfo{author}{Haimberger, L.} \& \bibinfo{author}{Polvani, L.~M.}
+\newblock \bibinfo{title}{The vertical profile of recent tropical temperature trends: Persistent model biases in the context of internal variability}.
+\newblock \emph{\bibinfo{journal}{Environmental Research Letters}} \textbf{\bibinfo{volume}{15}}, \bibinfo{pages}{1040b4} (\bibinfo{year}{2020}).
+
+\bibitem{ruiz2013estimating}
+\bibinfo{author}{Ruiz, J.~J.}, \bibinfo{author}{Pulido, M.} \& \bibinfo{author}{Miyoshi, T.}
+\newblock \bibinfo{title}{Estimating model parameters with ensemble-based data assimilation: A review}.
+\newblock \emph{\bibinfo{journal}{Journal of the Meteorological Society of Japan. Ser. II}} \textbf{\bibinfo{volume}{91}}, \bibinfo{pages}{79--99} (\bibinfo{year}{2013}).
+
+\bibitem{schneider2017earth}
+\bibinfo{author}{Schneider, T.}, \bibinfo{author}{Lan, S.}, \bibinfo{author}{Stuart, A.} \& \bibinfo{author}{Teixeira, J.}
+    \newblock \bibinfo{title}{Earth system modeling 2.0: A blueprint for models that learn from observations and targeted high-resolution simulations}.
+    \newblock \emph{\bibinfo{journal}{Geophysical Research Letters}} \textbf{\bibinfo{volume}{44}}, \bibinfo{pages}{12--396} (\bibinfo{year}{2017}).
+    
+    \bibitem{Schneider2024opinion}
+    \bibinfo{author}{Schneider, T.}, \bibinfo{author}{Leung, L.~R.} \& \bibinfo{author}{Wills, R. C.~J.}
+    \newblock \bibinfo{title}{Opinion: Optimizing climate models with process-knowledge, resolution, and {AI}}.
+    \newblock \emph{\bibinfo{journal}{EGUsphere [preprint]}}  (\bibinfo{year}{2024}).
+    \newblock \urlprefix\url{https://egusphere.copernicus.org/preprints/2024/egusphere-2024-20/}.
+    
+    \bibitem{sutskever2014sequence}
+    \bibinfo{author}{Sutskever, I.}, \bibinfo{author}{Vinyals, O.} \& \bibinfo{author}{Le, Q.~V.}
+    \newblock \bibinfo{title}{Sequence to sequence learning with neural networks}.
+    \newblock \emph{\bibinfo{journal}{Advances in neural information processing systems}} \textbf{\bibinfo{volume}{27}} (\bibinfo{year}{2014}).
+
+\bibitem{Jouppi2023-rw}
+\bibinfo{author}{Jouppi, N.} \emph{et~al.}
+\newblock \emph{\bibinfo{title}{Tpu v4: An optically reconfigurable supercomputer for machine learning with hardware support for embeddings}}, ISCA '23 (\bibinfo{publisher}{Association for Computing Machinery}, \bibinfo{address}{New York, NY, USA}, \bibinfo{year}{2023}).
+\newblock \urlprefix\url{https://doi.org/10.1145/3579371.3589350}.
+
+\bibitem{Henry2019-it}
+\bibinfo{author}{Henry, G.}, \bibinfo{author}{Tang, P. T.~P.} \& \bibinfo{author}{Heinecke, A.}
+\newblock \emph{\bibinfo{title}{Leveraging the bfloat16 artificial intelligence datatype for higher-precision computations}} (\bibinfo{publisher}{IEEE}, \bibinfo{address}{Kyoto, Japan}, \bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://ieeexplore.ieee.org/document/8877427/}.
+
+\bibitem{Xu2021-fe}
+\bibinfo{author}{Xu, Y.} \emph{et~al.}
+\newblock \bibinfo{title}{{GSPMD}: General and scalable parallelization for {ML} computation graphs}  (\bibinfo{year}{2021}).
+\newblock \urlprefix\url{http://arxiv.org/abs/2105.04663}.
+
+\bibitem{shard_map}
+\bibinfo{author}{Douglas, S.}, \bibinfo{author}{Vikram, S.}, \bibinfo{author}{Bradbury, J.}, \bibinfo{author}{Zhang, Q.} \& \bibinfo{author}{Johnson, M.}
+\newblock \bibinfo{title}{shmap (shard\_map) for simple per-device code} (\bibinfo{year}{2023}).
+\newblock \urlprefix\url{https://jax.readthedocs.io/en/latest/jep/14273-shard-map.html}.
+\newblock \bibinfo{note}{Accessed: 2023-10-21}.
+
+\bibitem{Palmer2009SPPT}
+\bibinfo{author}{Palmer, T.~N.} \emph{et~al.}
+\newblock \bibinfo{title}{{Stochastic parametrization and model uncertainty}} (\bibinfo{year}{2009}).
+\newblock \urlprefix\url{https://www.ecmwf.int/sites/default/files/elibrary/2009/11577-stochastic-parametrization-and-model-uncertainty.pdf}.
+
+\bibitem{battaglia2018relational}
+\bibinfo{author}{Battaglia, P.~W.} \emph{et~al.}
+\newblock \bibinfo{title}{Relational inductive biases, deep learning, and graph networks}.
+\newblock \emph{\bibinfo{journal}{arXiv preprint arXiv:1806.01261}}  (\bibinfo{year}{2018}).
+
+\bibitem{jablonowski2011pros}
+\bibinfo{author}{Jablonowski, C.} \& \bibinfo{author}{Williamson, D.~L.}
+\newblock \bibinfo{title}{The pros and cons of diffusion, filters and fixers in atmospheric general circulation models}.
+\newblock \emph{\bibinfo{journal}{Numerical techniques for global atmospheric models}} \bibinfo{pages}{381--493} (\bibinfo{year}{2011}).
+
+\bibitem{Jablonowski2011-qf}
+\bibinfo{author}{Jablonowski, C.} \& \bibinfo{author}{Williamson, D.~L.}
+\newblock \bibinfo{title}{ in \textit{The pros and cons of diffusion, filters and fixers in atmospheric general circulation models}} (eds \bibinfo{editor}{Lauritzen, P.}, \bibinfo{editor}{Jablonowski, C.}, \bibinfo{editor}{Taylor, M.} \& \bibinfo{editor}{Nair, R.}) \emph{\bibinfo{booktitle}{Numerical Techniques for Global Atmospheric Models}} \bibinfo{pages}{381--493} (\bibinfo{publisher}{Springer Berlin Heidelberg}, \bibinfo{address}{Berlin, Heidelberg}, \bibinfo{year}{2011}).
+\newblock \urlprefix\url{https://doi.org/10.1007/978-3-642-11640-7_13}.
+
+\bibitem{kingma2014adam}
+\bibinfo{author}{Kingma, D.~P.} \& \bibinfo{author}{Ba, J.}
+\newblock \bibinfo{title}{Adam: A method for stochastic optimization}.
+\newblock \emph{\bibinfo{journal}{arXiv preprint arXiv:1412.6980}}  (\bibinfo{year}{2014}).
+
+\bibitem{metpy}
+\bibinfo{author}{May, R.~M.} \emph{et~al.}
+\newblock \bibinfo{title}{Metpy: A meteorological python library for data analysis and visualization}.
+\newblock \emph{\bibinfo{journal}{Bulletin of the American Meteorological Society}} \textbf{\bibinfo{volume}{103}}, \bibinfo{pages}{E2273 -- E2284} (\bibinfo{year}{2022}).
+\newblock \urlprefix\url{https://journals.ametsoc.org/view/journals/bams/103/10/BAMS-D-21-0125.1.xml}.
+
+\bibitem{roberts2020impact}
+\bibinfo{author}{Roberts, M.~J.} \emph{et~al.}
+\newblock \bibinfo{title}{Impact of model resolution on tropical cyclone simulation using the highresmip--primavera multimodel ensemble}.
+\newblock \emph{\bibinfo{journal}{Journal of Climate}} \textbf{\bibinfo{volume}{33}}, \bibinfo{pages}{2557--2583} (\bibinfo{year}{2020}).
+
+\bibitem{vallis2015response}
+\bibinfo{author}{Vallis, G.~K.}, \bibinfo{author}{Zurita-Gotor, P.}, \bibinfo{author}{Cairns, C.} \& \bibinfo{author}{Kidston, J.}
+\newblock \bibinfo{title}{Response of the large-scale structure of the atmosphere to global warming}.
+\newblock \emph{\bibinfo{journal}{Quarterly Journal of the Royal Meteorological Society}} \textbf{\bibinfo{volume}{141}}, \bibinfo{pages}{1479--1501} (\bibinfo{year}{2015}).
+
+\bibitem{beucler2024climate}
+\bibinfo{author}{Beucler, T.} \emph{et~al.}
+\newblock \bibinfo{title}{Climate-invariant machine learning}.
+\newblock \emph{\bibinfo{journal}{Science Advances}} \textbf{\bibinfo{volume}{10}}, \bibinfo{pages}{eadj7250} (\bibinfo{year}{2024}).
+
+\end{thebibliography}
+    
+\end{appendices}
+
+\end{document}

@@ -15,9 +15,9 @@ for i in *.raw; do cmp $i ~/$i; echo $i $?; done
 ```
 ## References
 
-- [https://github.com/neuralgcm/dinosaur](neuralgcm/dinosaur)
-- [https://doi.org/10.1038/s41586-024-07744-y](doi:10.1038/s41586-024-07744-y)
-- [https://static-content.springer.com/esm/art%3A10.1038%2Fs41586-024-07744-y/MediaObjects/41586_2024_7744_MOESM1_ESM.pdf](supplimentary)
+- [neuralgcm/dinosaur](https://github.com/neuralgcm/dinosaur)
+- [doi:10.1038/s41586-024-07744-y](https://doi.org/10.1038/s41586-024-07744-y)
+- [supplimentary](https://static-content.springer.com/esm/art%3A10.1038%2Fs41586-024-07744-y/MediaObjects/41586_2024_7744_MOESM1_ESM.pdf)
 - [docs/primitive.pdf](docs/primitive.pdf)
 - Durran, D. R. *Numerical methods for fluid dynamics: With applications to geophysics*, Second edn, Vol. 32 (Springer, New York, 2010)
 

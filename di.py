@@ -682,44 +682,6 @@ def _vertical_matvec_per_wavenumber(a, x):
     return einsum("lgh,...hml->...gml", a, x)
 
 
-def _get_implicit_term_matrix(eta, coords, reference_temperature):
-    eye = np.eye(coords.vertical.layers)[np.newaxis]
-    lam = coords.horizontal.laplacian_eigenvalues
-    g = get_geopotential_weights(coords.vertical)
-    r = ideal_gas_constant
-    h = get_temperature_implicit_weights(coords.vertical,
-                                         reference_temperature)
-    t = reference_temperature[:, np.newaxis]
-    thickness = coords.vertical.layer_thickness[np.newaxis, np.newaxis, :]
-    l = coords.horizontal.modal_shape[1]
-    j = k = coords.vertical.layers
-    row0 = np.concatenate(
-        [
-            np.broadcast_to(eye, [l, j, k]),
-            eta * np.einsum("l,jk->ljk", lam, g),
-            eta * r * np.einsum("l,jo->ljo", lam, t),
-        ],
-        axis=2,
-    )
-    row1 = np.concatenate(
-        [
-            eta * np.broadcast_to(h[np.newaxis], [l, j, k]),
-            np.broadcast_to(eye, [l, j, k]),
-            np.zeros([l, j, 1]),
-        ],
-        axis=2,
-    )
-    row2 = np.concatenate(
-        [
-            np.broadcast_to(eta * thickness, [l, 1, k]),
-            np.zeros([l, 1, k]),
-            np.ones([l, 1, 1]),
-        ],
-        axis=2,
-    )
-    return np.concatenate((row0, row1, row2), axis=1)
-
-
 def div_sec_lat(m_component, n_component, grid):
     m_component = grid.to_modal(m_component * grid.sec2_lat)
     n_component = grid.to_modal(n_component * grid.sec2_lat)
@@ -894,8 +856,42 @@ class PrimitiveEquations:
         )
 
     def implicit_inverse(self, state, step_size):
-        implicit_matrix = _get_implicit_term_matrix(step_size, self.coords,
-                                                    self.reference_temperature)
+        eye = np.eye(self.coords.vertical.layers)[np.newaxis]
+        lam = self.coords.horizontal.laplacian_eigenvalues
+        g = get_geopotential_weights(self.coords.vertical)
+        r = ideal_gas_constant
+        h = get_temperature_implicit_weights(self.coords.vertical,
+                                             self.reference_temperature)
+        t = reference_temperature[:, np.newaxis]
+        thickness = self.coords.vertical.layer_thickness[np.newaxis,
+                                                         np.newaxis, :]
+        l = self.coords.horizontal.modal_shape[1]
+        j = k = self.coords.vertical.layers
+        row0 = np.concatenate(
+            [
+                np.broadcast_to(eye, [l, j, k]),
+                step_size * np.einsum("l,jk->ljk", lam, g),
+                step_size * r * np.einsum("l,jo->ljo", lam, t),
+            ],
+            axis=2,
+        )
+        row1 = np.concatenate(
+            [
+                step_size * np.broadcast_to(h[np.newaxis], [l, j, k]),
+                np.broadcast_to(eye, [l, j, k]),
+                np.zeros([l, j, 1]),
+            ],
+            axis=2,
+        )
+        row2 = np.concatenate(
+            [
+                np.broadcast_to(step_size * thickness, [l, 1, k]),
+                np.zeros([l, 1, k]),
+                np.ones([l, 1, 1]),
+            ],
+            axis=2,
+        )
+        implicit_matrix = np.concatenate((row0, row1, row2), axis=1)
         assert implicit_matrix.dtype == np.float64
         layers = self.coords.vertical.layers
         div = slice(0, layers)

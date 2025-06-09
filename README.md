@@ -18,8 +18,9 @@ for i in *.raw; do cmp $i ~/$i; echo $i $?; done
 - [neuralgcm/dinosaur](https://github.com/neuralgcm/dinosaur)
 - [doi:10.1038/s41586-024-07744-y](https://doi.org/10.1038/s41586-024-07744-y)
 - [Supplementary information](https://static-content.springer.com/esm/art%3A10.1038%2Fs41586-024-07744-y/MediaObjects/41586_2024_7744_MOESM1_ESM.pdf)
-- [docs/primitive.pdf](docs/primitive.pdf)
 - Durran, D. R. *Numerical methods for fluid dynamics: With applications to geophysics*, Second edn, Vol. 32 (Springer, New York, 2010)
+- [docs/primitive.pdf](docs/primitive.pdf)
+- [docs/durran.pdf](docs/durran.pdf)
 
 > Our choice of the numerical schemes for interpolation, integrals and
 > diagnostics exactly follows Durran’s book [3] §8.6, with the

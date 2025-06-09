@@ -862,7 +862,7 @@ class PrimitiveEquations:
         r = ideal_gas_constant
         h = get_temperature_implicit_weights(self.coords.vertical,
                                              self.reference_temperature)
-        t = reference_temperature[:, np.newaxis]
+        t = self.reference_temperature[:, np.newaxis]
         thickness = self.coords.vertical.layer_thickness[np.newaxis,
                                                          np.newaxis, :]
         l = self.coords.horizontal.modal_shape[1]

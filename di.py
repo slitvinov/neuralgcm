@@ -899,6 +899,7 @@ class PrimitiveEquations:
         logp = slice(2 * layers, 2 * layers + 1)
 
         inverse = np.linalg.inv(implicit_matrix)
+        print(np.shape(implicit_matrix))
         assert not np.isnan(inverse).any()
         inverted_divergence = (
             _vertical_matvec_per_wavenumber(inverse[:, div, div],

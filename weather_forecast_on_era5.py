@@ -323,11 +323,15 @@ def digital_filter_initialization(equation, ode_solver, filters, time_span,
 
 layers = 32
 ref_temp_si = 250
+di.g.longitude_wavenumbers = 171
+di.g.total_wavenumbers = 172
+di.g.longitude_nodes = 512
+di.g.latitude_nodes = 256
 model_coords = di.CoordinateSystem(
-    di.Grid(longitude_wavenumbers=171,
-            total_wavenumbers=172,
-            longitude_nodes=512,
-            latitude_nodes=256),
+    di.Grid(longitude_wavenumbers=di.g.longitude_wavenumbers,
+            total_wavenumbers=di.g.total_wavenumbers,
+            longitude_nodes=di.g.longitude_nodes,
+            latitude_nodes=di.g.latitude_nodes),
     di.SigmaCoordinates(np.linspace(0, 1, layers + 1, dtype=np.float32)),
 )
 dt_si = 5 * units.minute

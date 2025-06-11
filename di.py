@@ -454,9 +454,12 @@ def exponential_filter(total_wavenumbers, attenuation=16, order=18, cutoff=0):
     return _make_filter_fn(scaling)
 
 
-def exponential_step_filter(total_wavenumbers, dt, tau=0.010938, order=18, cutoff=0):
-    filter_fn = exponential_filter(total_wavenumbers, dt / tau, order,
-                                   cutoff)
+def exponential_step_filter(total_wavenumbers,
+                            dt,
+                            tau=0.010938,
+                            order=18,
+                            cutoff=0):
+    filter_fn = exponential_filter(total_wavenumbers, dt / tau, order, cutoff)
     return runge_kutta_step_filter(filter_fn)
 
 

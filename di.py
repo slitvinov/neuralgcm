@@ -461,7 +461,8 @@ def exponential_step_filter(
     order=18,
     cutoff=0,
 ):
-    filter_fn = exponential_filter(grid.total_wavenumbers, dt / tau, order, cutoff)
+    filter_fn = exponential_filter(grid.total_wavenumbers, dt / tau, order,
+                                   cutoff)
     return runge_kutta_step_filter(filter_fn)
 
 

@@ -73,6 +73,39 @@ def get_divergence_perturbation(lat, lon):
             ((np.cos(lat_location) * np.sin(lon - lon_location)) /
              (np.sqrt(1 - x**2))))
 
+def to_modal(z):
+    return di.tree_map_over_nonscalars(transform, z)
+
+def to_nodal(x):
+    return di.tree_map_over_nonscalars(inverse_transform, x)
+
+def transform(x):
+    f, p, w = basis()
+    wx = w * x
+    fwx = di.einsum("im,...ij->...mj", f, wx)
+    pfwx = di.einsum("mjl,...mj->...ml", p, fwx)
+    return pfwx
+
+def inverse_transform(x):
+    f, p, w = basis()
+    px = di.einsum("mjl,...ml->...mj", p, x)
+    fpx = di.einsum("im,...mj->...ij", f, px)
+    return fpx
+
+def basis():
+    f = di.real_basis(
+        wavenumbers=longitude_wavenumbers,
+        nodes=longitude_nodes,
+    )
+    wf = 2 * np.pi / longitude_nodes
+    x, wp = scipy.special.roots_legendre(latitude_nodes)
+    w = wf * wp
+    p = di.evaluate(n_m=longitude_wavenumbers,
+                 n_l=total_wavenumbers,
+                 x=x)
+    p = np.repeat(p, 2, axis=0)
+    p = p[1:]
+    return f, p, w
 
 layers = 12
 gravity_acceleration = 7.2364082834567185e+01
@@ -85,10 +118,15 @@ p0 = 2.995499768455064e+19
 gamma = 31856.1
 kappa = 2 / 7
 r_gas = kappa * 0.0011628807950492582
+dt = 0.014584
+perturbation_radius = 0.1
+u_p = 1.0762192173688048e-03
+longitude_wavenumbers = 22
+total_wavenumbers=23
 longitude_nodes = 64
 latitude_nodes = 32
-grid = di.Grid(longitude_wavenumbers=22,
-               total_wavenumbers=23,
+grid = di.Grid(longitude_wavenumbers=longitude_wavenumbers,
+               total_wavenumbers=total_wavenumbers,
                longitude_nodes=longitude_nodes,
                latitude_nodes=latitude_nodes)
 vertical_grid = di.SigmaCoordinates(
@@ -104,20 +142,19 @@ reference_temperatures = np.stack(
     [get_reference_temperature(sigma) for sigma in vertical_grid.centers])
 nodal_vorticity = np.stack(
     [get_vorticity(lat, sigma) for sigma in vertical_grid.centers])
-modal_vorticity = grid.to_modal(nodal_vorticity)
+modal_vorticity = to_modal(nodal_vorticity)
 nodal_temperature_variation = np.stack(
     [get_temperature_variation(lat, sigma) for sigma in vertical_grid.centers])
 log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 steady_state = di.State(
     vorticity=modal_vorticity,
     divergence=np.zeros_like(modal_vorticity),
-    temperature_variation=grid.to_modal(nodal_temperature_variation),
-    log_surface_pressure=grid.to_modal(log_nodal_surface_pressure),
+    temperature_variation=to_modal(nodal_temperature_variation),
+    log_surface_pressure=to_modal(log_nodal_surface_pressure),
 )
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
-orography = grid.clip_wavenumbers(grid.to_modal(orography))
+orography = grid.clip_wavenumbers(to_modal(orography))
 primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
-dt = 0.014584
 step_fn = di.imex_runge_kutta(primitive, dt)
 filters = [
     di.exponential_step_filter(grid, dt),
@@ -131,14 +168,12 @@ final, trajectory = jax.block_until_ready(integrate_fn(steady_state))
 trajectory = jax.device_get(trajectory)
 lon_location = np.pi / 9
 lat_location = 2 * np.pi / 9
-perturbation_radius = 0.1
-u_p = 1.0762192173688048e-03
 nodal_vorticity = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in vertical_grid.centers])
 nodal_divergence = np.stack(
     [get_divergence_perturbation(lat, lon) for sigma in vertical_grid.centers])
-modal_vorticity = grid.to_modal(nodal_vorticity)
-modal_divergence = grid.to_modal(nodal_divergence)
+modal_vorticity = to_modal(nodal_vorticity)
+modal_divergence = to_modal(nodal_divergence)
 perturbation = di.State(
     vorticity=modal_vorticity,
     divergence=modal_divergence,
@@ -152,7 +187,7 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
-f0 = grid.to_nodal(trajectory.temperature_variation)
+f0 = to_nodal(trajectory.temperature_variation)
 temperature = f0 + reference_temperatures[:, np.newaxis, np.newaxis]
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)

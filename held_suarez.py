@@ -122,7 +122,6 @@ integrate_fn = jax.jit(
                             inner_steps=inner_steps,
                             start_with_input=True))
 save_every = 10 * units.minute
-times = save_every * np.arange(0, outer_steps)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 dt_si = 10 * units.minute
 save_every = 10 * units.day
@@ -162,7 +161,6 @@ integrate_fn = jax.jit(
     di.trajectory_from_step(step_fn,
                             outer_steps=outer_steps,
                             inner_steps=inner_steps))
-times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 start_time = 200
 dt_si = 10 * units.minute
@@ -186,7 +184,6 @@ integrate_fn = jax.jit(
         outer_steps=outer_steps,
         inner_steps=inner_steps,
     ))
-times = save_every * np.arange(1, outer_steps + 1)
 final, trajectory = jax.block_until_ready(integrate_fn(final))
 f0 = coords.horizontal.to_nodal(trajectory.temperature_variation)
 plt.contourf(f0[-1, 22, :, :])

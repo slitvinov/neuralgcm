@@ -113,7 +113,7 @@ dt = 4.3752000000000006e-02
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 integrator = di.imex_runge_kutta
 step_fn = integrator(primitive, dt)
-filters = [di.exponential_step_filter(coords.horizontal, dt)]
+filters = [di.exponential_step_filter(coords.horizontal.total_wavenumbers, dt)]
 step_fn = di.step_with_filters(step_fn, filters)
 integrate_fn = jax.jit(
     di.trajectory_from_step(step_fn,
@@ -145,7 +145,7 @@ primitive_with_hs = di.ImplicitExplicitODE(explicit_fn,
 
 step_fn = di.imex_runge_kutta(primitive_with_hs, dt)
 filters = [
-    di.exponential_step_filter(coords.horizontal,
+    di.exponential_step_filter(coords.horizontal.total_wavenumbers,
                                dt,
                                tau=0.0087504,
                                order=1.5,
@@ -163,7 +163,7 @@ outer_steps = 28
 dt = 8.7504000000000012e-02
 step_fn = di.imex_runge_kutta(primitive_with_hs, dt)
 filters = [
-    di.exponential_step_filter(coords.horizontal,
+    di.exponential_step_filter(coords.horizontal.total_wavenumbers,
                                dt,
                                tau=0.0087504,
                                order=1.5,

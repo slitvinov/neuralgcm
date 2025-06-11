@@ -151,7 +151,7 @@ grid = di.Grid(longitude_wavenumbers=di.g.longitude_wavenumbers,
                latitude_nodes=di.g.latitude_nodes)
 vertical_grid = di.SigmaCoordinates(boundaries)
 coords = di.CoordinateSystem(grid, vertical_grid)
-longitude = np.linspace(0, 2 * np.pi, longitude_nodes, endpoint=False)
+longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 sin_latitude, _ = scipy.special.roots_legendre(latitude_nodes)
 lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
 lat = np.arcsin(sin_lat)

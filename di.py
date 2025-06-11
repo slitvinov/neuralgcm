@@ -50,7 +50,7 @@ class Scale:
 DEFAULT_SCALE = Scale(
     6.37122e6 * units.m,
     1 / 2 / 7.292e-5 * units.s,
-    units.kilogram,
+    1 * units.kilogram,
 )
 
 gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)

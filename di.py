@@ -577,7 +577,7 @@ def get_sigma_ratios(coordinates):
 def get_geopotential_weights(coordinates):
     alpha = get_sigma_ratios(coordinates)
     weights = np.zeros([g.layers, g.layers])
-    for j in range(g..layers):
+    for j in range(g.layers):
         weights[j, j] = alpha[j]
         for k in range(j + 1, g..layers):
             weights[j, k] = alpha[k] + alpha[k - 1]

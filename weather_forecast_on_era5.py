@@ -64,8 +64,8 @@ class HybridCoordinates:
 
 def attach_data_array_units(array):
     attrs = dict(array.attrs)
-    units = attrs.pop("units", None)
-    data = units.parse_expression(units) * array.data
+    units0 = attrs.pop("units", None)
+    data = units.parse_expression(units0) * array.data
     return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
 
 

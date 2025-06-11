@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import di
 import scipy.special
 
+
 def get_reference_temperature(sigma):
     top_mean_t = t0 * sigma**(r_gas * gamma / gravity_acceleration)
     if sigma < sigma_tropo:
@@ -73,11 +74,14 @@ def get_divergence_perturbation(lat, lon):
             ((np.cos(lat_location) * np.sin(lon - lon_location)) /
              (np.sqrt(1 - x**2))))
 
+
 def to_modal(z):
     return di.tree_map_over_nonscalars(transform, z)
 
+
 def to_nodal(x):
     return di.tree_map_over_nonscalars(inverse_transform, x)
+
 
 def transform(x):
     f, p, w = basis()
@@ -86,11 +90,13 @@ def transform(x):
     pfwx = di.einsum("mjl,...mj->...ml", p, fwx)
     return pfwx
 
+
 def inverse_transform(x):
     f, p, w = basis()
     px = di.einsum("mjl,...ml->...mj", p, x)
     fpx = di.einsum("im,...mj->...ij", f, px)
     return fpx
+
 
 def basis():
     f = di.real_basis(
@@ -100,12 +106,11 @@ def basis():
     wf = 2 * np.pi / longitude_nodes
     x, wp = scipy.special.roots_legendre(latitude_nodes)
     w = wf * wp
-    p = di.evaluate(n_m=longitude_wavenumbers,
-                 n_l=total_wavenumbers,
-                 x=x)
+    p = di.evaluate(n_m=longitude_wavenumbers, n_l=total_wavenumbers, x=x)
     p = np.repeat(p, 2, axis=0)
     p = p[1:]
     return f, p, w
+
 
 layers = 12
 gravity_acceleration = 7.2364082834567185e+01
@@ -122,7 +127,7 @@ dt = 0.014584
 perturbation_radius = 0.1
 u_p = 1.0762192173688048e-03
 longitude_wavenumbers = 22
-total_wavenumbers=23
+total_wavenumbers = 23
 longitude_nodes = 64
 latitude_nodes = 32
 grid = di.Grid(longitude_wavenumbers=longitude_wavenumbers,

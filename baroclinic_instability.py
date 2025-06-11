@@ -94,10 +94,10 @@ di.g.longitude_wavenumbers = 22
 di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
 di.g.latitude_nodes = 32
-boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
-centers = (boundaries[1:] + boundaries[:-1]) / 2
+di.g.boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
+centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 grid = di.Grid()
-vertical_grid = di.SigmaCoordinates(boundaries)
+vertical_grid = di.SigmaCoordinates()
 coords = di.CoordinateSystem(grid, vertical_grid)
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)

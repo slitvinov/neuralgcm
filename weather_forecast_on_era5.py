@@ -317,9 +317,10 @@ di.g.longitude_wavenumbers = 171
 di.g.total_wavenumbers = 172
 di.g.longitude_nodes = 512
 di.g.latitude_nodes = 256
+di.g.boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
 model_coords = di.CoordinateSystem(
     di.Grid(),
-    di.SigmaCoordinates(np.linspace(0, 1, layers + 1, dtype=np.float32)),
+    di.SigmaCoordinates(),
 )
 dt_si = 5 * units.minute
 save_every = 15 * units.minute
@@ -392,8 +393,7 @@ raw_init_state = di.State(
     tracers=tracers,
 )
 orography = di.to_modal(orography_input)
-orography = di.exponential_filter(model_coords.horizontal.total_wavenumbers,
-                                  order=2)(orography)
+orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
 eq = di.PrimitiveEquations(ref_temps, orography, model_coords)
 res_factor = model_coords.horizontal.latitude_nodes / 128
 dt = DEFAULT_SCALE.nondimensionalize(dt_si)

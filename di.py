@@ -132,17 +132,14 @@ def _slice_shape_along_axis(x):
 
 class SigmaCoordinates:
 
-    def __init__(self, boundaries):
-        self.boundaries = boundaries
-
     @property
     def centers(self):
-        x = self.boundaries
+        x = g.boundaries
         return (x[1:] + x[:-1]) / 2
 
     @property
     def layer_thickness(self):
-        return np.diff(self.boundaries)
+        return np.diff(g.boundaries)
 
     @property
     def center_to_center(self):
@@ -150,7 +147,7 @@ class SigmaCoordinates:
 
     @property
     def layers(self):
-        return len(self.boundaries) - 1
+        return len(g.boundaries) - 1
 
     def __hash__(self):
         return hash(tuple(self.centers.tolist()))
@@ -256,6 +253,7 @@ def real_basis_derivative(u):
 
 
 class Grid:
+
     @functools.cached_property
     def nodal_axes(self):
         longitude = np.linspace(0,

@@ -60,12 +60,9 @@ di.g.longitude_wavenumbers = 22
 di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
 di.g.latitude_nodes = 32
+di.g.boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
 coords = di.CoordinateSystem(horizontal=di.Grid(),
-                             vertical=di.SigmaCoordinates(
-                                 np.linspace(0,
-                                             1,
-                                             layers + 1,
-                                             dtype=np.float32)))
+                             vertical=di.SigmaCoordinates())
 tref = 288.0
 rng_key = jax.random.PRNGKey(0)
 lon, sin_lat = coords.horizontal.nodal_mesh

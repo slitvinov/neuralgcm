@@ -105,7 +105,7 @@ initial_state = di.State(
 )
 ref_temps = np.full((coords.vertical.layers, ), tref)
 orography = coords.horizontal.clip_wavenumbers(
-    coords.horizontal.to_modal(orography), n=1)
+    coords.horizontal.to_modal(orography))
 
 inner_steps = 2
 outer_steps = 144

@@ -112,7 +112,7 @@ steady_state = di.State(
 )
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
 orography = coords.horizontal.clip_wavenumbers(
-    coords.horizontal.to_modal(orography), n=1)
+    coords.horizontal.to_modal(orography))
 primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
 dt = 0.014584
 step_fn = di.imex_runge_kutta(primitive, dt)

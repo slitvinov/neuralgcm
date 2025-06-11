@@ -305,10 +305,10 @@ class Grid:
         assert not np.isnan(inverse_eigenvalues).any()
         return x * inverse_eigenvalues
 
-    def clip_wavenumbers(self, x, n: int = 1):
+    def clip_wavenumbers(self, x):
 
         def clip(x):
-            mask = jnp.ones(self.modal_shape[-1], x.dtype).at[-n:].set(0)
+            mask = jnp.ones(self.modal_shape[-1], x.dtype).at[-1:].set(0)
             return x * mask
 
         return tree_map_over_nonscalars(clip, x)

@@ -260,14 +260,14 @@ class Grid:
     def nodal_axes(self):
         longitude = np.linspace(0,
                                 2 * np.pi,
-                                di.g.longitude_nodes,
+                                g.longitude_nodes,
                                 endpoint=False)
-        sin_latitude, _ = sps.roots_legendre(di.g.latitude_nodes)
+        sin_latitude, _ = sps.roots_legendre(g.latitude_nodes)
         return longitude, sin_latitude
 
     @functools.cached_property
     def nodal_shape(self):
-        return di.g.longitude_nodes, di.g.latitude_nodes
+        return g.longitude_nodes, g.latitude_nodes
 
     @functools.cached_property
     def nodal_mesh(self):

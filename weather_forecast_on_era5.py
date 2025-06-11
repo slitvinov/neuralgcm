@@ -283,7 +283,7 @@ def digital_filter_initialization(equation, ode_solver, filters, time_span,
 
 
 layers = 32
-ref_temp_si = 250 * units.degK
+ref_temp_si = 250
 model_coords = di.CoordinateSystem(
     di.Grid(longitude_wavenumbers=171,
             total_wavenumbers=172,

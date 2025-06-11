@@ -26,8 +26,8 @@ class g:
 
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
 def uv_nodal_to_vor_div_modal(grid, u_nodal, v_nodal, clip=True):
-    u_over_cos_lat = di.to_modal(u_nodal / grid.cos_lat)
-    v_over_cos_lat = di.to_modal(v_nodal / grid.cos_lat)
+    u_over_cos_lat = to_modal(u_nodal / grid.cos_lat)
+    v_over_cos_lat = to_modal(v_nodal / grid.cos_lat)
     vorticity = grid.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
     divergence = grid.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
     return vorticity, divergence

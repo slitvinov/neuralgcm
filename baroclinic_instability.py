@@ -115,8 +115,7 @@ steady_state = di.State(
     log_surface_pressure=grid.to_modal(log_nodal_surface_pressure),
 )
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
-orography = coords.horizontal.clip_wavenumbers(
-    coords.horizontal.to_modal(orography))
+orography = grid.clip_wavenumbers(grid.to_modal(orography))
 primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
 dt = 0.014584
 step_fn = di.imex_runge_kutta(primitive, dt)

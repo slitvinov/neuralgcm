@@ -75,23 +75,23 @@ def get_divergence_perturbation(lat, lon):
 
 
 layers = 12
+gravity_acceleration = 7.2364082834567185e+01
+sigma_tropo = 0.2
+sigma0 = 0.252
+u0 = 0.03766767260790817
+t0 = 288.0
+delta_t = 4.8e5
+p0 = 2.995499768455064e+19
+gamma = 31856.1
+kappa = 2 / 7
+r_gas = kappa * 0.0011628807950492582
 grid = di.Grid(longitude_wavenumbers=22,
                total_wavenumbers=23,
                longitude_nodes=64,
                latitude_nodes=32)
 vertical_grid = di.SigmaCoordinates(
     np.linspace(0, 1, layers + 1, dtype=np.float32))
-
-gravity_acceleration = 7.2364082834567185e+01
-sigma_tropo = 0.2
-sigma0 = 0.252
 coords = di.CoordinateSystem(grid, vertical_grid)
-u0 = 0.03766767260790817
-t0 = 288.0
-delta_t = 4.8e5
-p0 = 2.995499768455064e+19
-gamma = 31856.1
-r_gas = di.ideal_gas_constant
 lon, sin_lat = grid.nodal_mesh
 lat = np.arcsin(sin_lat)
 orography = get_geopotential(lat, 1.0) / gravity_acceleration

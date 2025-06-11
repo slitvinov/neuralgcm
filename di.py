@@ -51,11 +51,13 @@ DEFAULT_SCALE = Scale(
     6.37122e6 * units.m,
     1 / 2 / 7.292e-5 * units.s,
     1 * units.kilogram,
+    1 * units.degK,
 )
 
 gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 kappa = 2 / 7
 ideal_gas_constant = kappa * 0.0011628807950492582
+
 
 def cumsum(x, axis):
     if axis < 0:

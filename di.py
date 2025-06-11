@@ -445,7 +445,7 @@ def runge_kutta_step_filter(state_filter):
 
 
 def exponential_filter(grid, attenuation=16, order=18, cutoff=0):
-    _, total_wavenumber = grid.modal_axes
+    total_wavenumber = np.arange(self.total_wavenumbers)
     k = total_wavenumber / total_wavenumber.max()
     a = attenuation
     c = cutoff

@@ -24,6 +24,55 @@ class g:
     pass
 
 
+def to_modal(z):
+    return di.tree_map_over_nonscalars(transform, z)
+
+
+def to_nodal(x):
+    return di.tree_map_over_nonscalars(inverse_transform, x)
+
+
+def transform(x):
+    f, p, w = basis()
+    wx = w * x
+    fwx = di.einsum("im,...ij->...mj", f, wx)
+    pfwx = di.einsum("mjl,...mj->...ml", p, fwx)
+    return pfwx
+
+
+def inverse_transform(x):
+    f, p, w = basis()
+    px = di.einsum("mjl,...ml->...mj", p, x)
+    fpx = di.einsum("im,...mj->...ij", f, px)
+    return fpx
+
+
+def basis():
+    f = di.real_basis(
+        wavenumbers=di.g.longitude_wavenumbers,
+        nodes=di.g.longitude_nodes,
+    )
+    wf = 2 * np.pi / di.g.longitude_nodes
+    x, wp = scipy.special.roots_legendre(di.g.latitude_nodes)
+    w = wf * wp
+    p = di.evaluate(n_m=di.g.longitude_wavenumbers,
+                    n_l=di.g.total_wavenumbers,
+                    x=x)
+    p = np.repeat(p, 2, axis=0)
+    p = p[1:]
+    return f, p, w
+
+
+def clip_wavenumbers(x):
+
+    def clip(x):
+        modal_shape = 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
+        mask = jnp.ones(modal_shape[-1], x.dtype).at[-1:].set(0)
+        return x * mask
+
+    return di.tree_map_over_nonscalars(clip, x)
+
+
 def cumsum(x, axis):
     if axis < 0:
         axis = axis + x.ndim
@@ -224,19 +273,6 @@ class Grid:
         p = p[1:]
         return f, p, w
 
-    def inverse_transform(self, x):
-        f, p, w = self.basis
-        px = einsum("mjl,...ml->...mj", p, x)
-        fpx = einsum("im,...mj->...ij", f, px)
-        return fpx
-
-    def transform(self, x):
-        f, p, w = self.basis
-        wx = w * x
-        fwx = einsum("im,...ij->...mj", f, wx)
-        pfwx = einsum("mjl,...mj->...ml", p, fwx)
-        return pfwx
-
     @functools.cached_property
     def nodal_axes(self):
         longitude = np.linspace(0,
@@ -290,14 +326,6 @@ class Grid:
         _, l = self.modal_axes
         return -l * (l + 1) / (1.0**2)
 
-    def to_nodal(self, x):
-        f = self.inverse_transform
-        return tree_map_over_nonscalars(f, x)
-
-    def to_modal(self, z):
-        f = self.transform
-        return tree_map_over_nonscalars(f, z)
-
     def laplacian(self, x):
         return x * self.laplacian_eigenvalues
 
@@ -308,14 +336,6 @@ class Grid:
         inverse_eigenvalues[self.total_wavenumbers:] = 0
         assert not np.isnan(inverse_eigenvalues).any()
         return x * inverse_eigenvalues
-
-    def clip_wavenumbers(self, x):
-
-        def clip(x):
-            mask = jnp.ones(self.modal_shape[-1], x.dtype).at[-1:].set(0)
-            return x * mask
-
-        return tree_map_over_nonscalars(clip, x)
 
     @functools.cached_property
     def _derivative_recurrence_weights(self):
@@ -346,7 +366,7 @@ class Grid:
     def cos_lat_grad(self, x, clip: bool = True):
         raw = self.d_dlon(x) / 1.0, self.cos_lat_d_dlat(x) / 1.0
         if clip:
-            return self.clip_wavenumbers(raw)
+            return clip_wavenumbers(raw)
         return raw
 
     def k_cross(self, v):
@@ -359,7 +379,7 @@ class Grid:
     ):
         raw = (self.d_dlon(v[0]) + self.sec_lat_d_dlat_cos2(v[1])) / 1.0
         if clip:
-            return self.clip_wavenumbers(raw)
+            return clip_wavenumbers(raw)
         return raw
 
     def curl_cos_lat(
@@ -369,7 +389,7 @@ class Grid:
     ):
         raw = (self.d_dlon(v[1]) - self.sec_lat_d_dlat_cos2(v[0])) / 1.0
         if clip:
-            return self.clip_wavenumbers(raw)
+            return clip_wavenumbers(raw)
         return raw
 
 
@@ -535,13 +555,12 @@ class DiagnosticState:
 
 def compute_diagnostic_state(state, horizontal, vertical):
 
-    nodal_vorticity = horizontal.to_nodal(state.vorticity)
-    nodal_divergence = horizontal.to_nodal(state.divergence)
-    nodal_temperature_variation = horizontal.to_nodal(
-        state.temperature_variation)
-    tracers = horizontal.to_nodal(state.tracers)
+    nodal_vorticity = di.to_nodal(state.vorticity)
+    nodal_divergence = di.to_nodal(state.divergence)
+    nodal_temperature_variation = di.to_nodal(state.temperature_variation)
+    tracers = di.to_nodal(state.tracers)
     nodal_cos_lat_u = jax.tree_util.tree_map(
-        horizontal.to_nodal,
+        di.to_nodal,
         get_cos_lat_vector(state.vorticity,
                            state.divergence,
                            horizontal,
@@ -549,7 +568,7 @@ def compute_diagnostic_state(state, horizontal, vertical):
     )
     cos_lat_grad_log_sp = horizontal.cos_lat_grad(state.log_surface_pressure,
                                                   clip=False)
-    nodal_cos_lat_grad_log_sp = horizontal.to_nodal(cos_lat_grad_log_sp)
+    nodal_cos_lat_grad_log_sp = di.to_nodal(cos_lat_grad_log_sp)
     nodal_u_dot_grad_log_sp = sum(
         jax.tree_util.tree_map(
             lambda x, y: x * y * horizontal.sec2_lat,
@@ -645,8 +664,8 @@ def _vertical_matvec_per_wavenumber(a, x):
 
 
 def div_sec_lat(m_component, n_component, grid):
-    m_component = grid.to_modal(m_component * grid.sec2_lat)
-    n_component = grid.to_modal(n_component * grid.sec2_lat)
+    m_component = di.to_modal(m_component * grid.sec2_lat)
+    n_component = di.to_modal(n_component * grid.sec2_lat)
     return grid.div_cos_lat((m_component, n_component), clip=False)
 
 
@@ -682,8 +701,7 @@ class PrimitiveEquations:
     def kinetic_energy_tendency(self, aux_state):
         nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
         kinetic = nodal_cos_lat_u2.sum(0) * self.coords.horizontal.sec2_lat / 2
-        return -self.coords.horizontal.laplacian(
-            self.coords.horizontal.to_modal(kinetic))
+        return -self.coords.horizontal.laplacian(di.to_modal(kinetic))
 
     def orography_tendency(self):
         return -gravity_acceleration * self.coords.horizontal.laplacian(
@@ -702,10 +720,8 @@ class PrimitiveEquations:
         grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
         vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat
         vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat
-        combined_u = self.coords.horizontal.to_modal(nodal_vorticity_u +
-                                                     vertical_term_u)
-        combined_v = self.coords.horizontal.to_modal(nodal_vorticity_v +
-                                                     vertical_term_v)
+        combined_u = di.to_modal(nodal_vorticity_u + vertical_term_u)
+        combined_v = di.to_modal(nodal_vorticity_v + vertical_term_v)
         dζ_dt = -self.coords.horizontal.curl_cos_lat(
             (combined_u, combined_v), clip=False)
         d𝛅_dt = -self.coords.horizontal.div_cos_lat(
@@ -764,7 +780,7 @@ class PrimitiveEquations:
                                                  sigma_dot_full)
         tracers_vertical_nodal = jax.tree_util.tree_map(
             vertical_tendency_fn, aux_state.tracers)
-        to_modal_fn = self.coords.horizontal.to_modal
+        to_modal_fn = di.to_modal
         divergence_tendency = (divergence_dot + kinetic_energy_tendency +
                                orography_tendency)
         temperature_tendency = (to_modal_fn(dT_dt_horizontal_nodal +
@@ -784,7 +800,7 @@ class PrimitiveEquations:
             tracers=tracers_tendency,
             sim_time=None if state.sim_time is None else 1.0,
         )
-        return self.coords.horizontal.clip_wavenumbers(tendency)
+        return clip_wavenumbers(tendency)
 
     def implicit_terms(self, state: State):
         geopotential_diff = get_geopotential_diff(state.temperature_variation,

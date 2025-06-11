@@ -117,8 +117,8 @@ def vor_div_to_uv_nodal(grid, vorticity, divergence):
                                                  divergence,
                                                  grid,
                                                  clip=True)
-    u_nodal = grid.to_nodal(u_cos_lat) / grid.cos_lat
-    v_nodal = grid.to_nodal(v_cos_lat) / grid.cos_lat
+    u_nodal = di.to_nodal(u_cos_lat) / grid.cos_lat
+    v_nodal = di.to_nodal(v_cos_lat) / grid.cos_lat
     return u_nodal, v_nodal
 
 
@@ -126,18 +126,18 @@ def nodal_prognostics_and_diagnostics(state):
     coords = model_coords.horizontal
     u_nodal, v_nodal = vor_div_to_uv_nodal(coords, state.vorticity,
                                            state.divergence)
-    geopotential_nodal = coords.to_nodal(
+    geopotential_nodal = di.to_nodal(
         di.get_geopotential(
             state.temperature_variation,
             eq.reference_temperature,
             orography,
             model_coords.vertical,
         ))
-    vor_nodal = coords.to_nodal(state.vorticity)
-    div_nodal = coords.to_nodal(state.divergence)
-    sp_nodal = jnp.exp(coords.to_nodal(state.log_surface_pressure))
-    tracers_nodal = {k: coords.to_nodal(v) for k, v in state.tracers.items()}
-    t_nodal = (coords.to_nodal(state.temperature_variation) +
+    vor_nodal = di.to_nodal(state.vorticity)
+    div_nodal = di.to_nodal(state.divergence)
+    sp_nodal = jnp.exp(di.to_nodal(state.log_surface_pressure))
+    tracers_nodal = {k: di.to_nodal(v) for k, v in state.tracers.items()}
+    t_nodal = (di.to_nodal(state.temperature_variation) +
                ref_temps[:, np.newaxis, np.newaxis])
     vertical_velocity_nodal = compute_vertical_velocity(state, model_coords)
     state_nodal = {
@@ -162,9 +162,8 @@ def trajectory_to_xarray(trajectory):
         "geopotential": units("m^2/s^2"),
         "vertical_velocity": units("1/s"),
     }
-    orography_nodal = jax.device_put(
-        model_coords.horizontal.to_nodal(orography),
-        device=jax.devices("cpu")[0])
+    orography_nodal = jax.device_put(di.to_nodal(orography),
+                                     device=jax.devices("cpu")[0])
     trajectory_cpu = jax.device_put(trajectory, device=jax.devices("cpu")[0])
     traj_nodal_si = {
         k: DEFAULT_SCALE.dimensionalize(v, target_units[k]).magnitude
@@ -252,8 +251,8 @@ def compute_vertical_velocity(state, coords):
 
 @functools.partial(jax.jit, static_argnames=("grid", "clip"))
 def uv_nodal_to_vor_div_modal(grid, u_nodal, v_nodal, clip=True):
-    u_over_cos_lat = grid.to_modal(u_nodal / grid.cos_lat)
-    v_over_cos_lat = grid.to_modal(v_nodal / grid.cos_lat)
+    u_over_cos_lat = di.to_modal(u_nodal / grid.cos_lat)
+    v_over_cos_lat = di.to_modal(v_nodal / grid.cos_lat)
     vorticity = grid.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
     divergence = grid.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
     return vorticity, divergence
@@ -387,10 +386,9 @@ vorticity, divergence = uv_nodal_to_vor_div_modal(model_coords.horizontal,
                                                   u_nodal, v_nodal)
 ref_temps = ref_temp_si * np.ones((model_coords.vertical.layers, ))
 assert ref_temps.shape == (model_coords.vertical.layers, )
-temperature_variation = model_coords.horizontal.to_modal(
-    t_nodal - ref_temps.reshape(-1, 1, 1))
-log_sp = model_coords.horizontal.to_modal(np.log(sp_nodal))
-tracers = model_coords.horizontal.to_modal({
+temperature_variation = di.to_modal(t_nodal - ref_temps.reshape(-1, 1, 1))
+log_sp = di.to_modal(np.log(sp_nodal))
+tracers = di.to_modal({
     "specific_humidity":
     nodal_inputs["specific_humidity"],
     "specific_cloud_liquid_water_content":
@@ -405,7 +403,7 @@ raw_init_state = di.State(
     log_surface_pressure=log_sp,
     tracers=tracers,
 )
-orography = model_coords.horizontal.to_modal(orography_input)
+orography = di.to_modal(orography_input)
 orography = di.exponential_filter(model_coords.horizontal.total_wavenumbers,
                                   order=2)(orography)
 eq = di.PrimitiveEquations(ref_temps, orography, model_coords)

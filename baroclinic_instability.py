@@ -76,55 +76,6 @@ def get_divergence_perturbation(lat, lon):
              (np.sqrt(1 - x**2))))
 
 
-def to_modal(z):
-    return di.tree_map_over_nonscalars(transform, z)
-
-
-def to_nodal(x):
-    return di.tree_map_over_nonscalars(inverse_transform, x)
-
-
-def transform(x):
-    f, p, w = basis()
-    wx = w * x
-    fwx = di.einsum("im,...ij->...mj", f, wx)
-    pfwx = di.einsum("mjl,...mj->...ml", p, fwx)
-    return pfwx
-
-
-def inverse_transform(x):
-    f, p, w = basis()
-    px = di.einsum("mjl,...ml->...mj", p, x)
-    fpx = di.einsum("im,...mj->...ij", f, px)
-    return fpx
-
-
-def basis():
-    f = di.real_basis(
-        wavenumbers=di.g.longitude_wavenumbers,
-        nodes=di.g.longitude_nodes,
-    )
-    wf = 2 * np.pi / di.g.longitude_nodes
-    x, wp = scipy.special.roots_legendre(di.g.latitude_nodes)
-    w = wf * wp
-    p = di.evaluate(n_m=di.g.longitude_wavenumbers,
-                    n_l=di.g.total_wavenumbers,
-                    x=x)
-    p = np.repeat(p, 2, axis=0)
-    p = p[1:]
-    return f, p, w
-
-
-def clip_wavenumbers(x):
-
-    def clip(x):
-        modal_shape = 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
-        mask = jnp.ones(modal_shape[-1], x.dtype).at[-1:].set(0)
-        return x * mask
-
-    return di.tree_map_over_nonscalars(clip, x)
-
-
 layers = 12
 gravity_acceleration = 7.2364082834567185e+01
 sigma_tropo = 0.2
@@ -159,18 +110,18 @@ geopotential = np.stack([get_geopotential(lat, sigma) for sigma in centers])
 reference_temperatures = np.stack(
     [get_reference_temperature(sigma) for sigma in centers])
 nodal_vorticity = np.stack([get_vorticity(lat, sigma) for sigma in centers])
-modal_vorticity = to_modal(nodal_vorticity)
+modal_vorticity = di.to_modal(nodal_vorticity)
 nodal_temperature_variation = np.stack(
     [get_temperature_variation(lat, sigma) for sigma in centers])
 log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 steady_state = di.State(
     vorticity=modal_vorticity,
     divergence=np.zeros_like(modal_vorticity),
-    temperature_variation=to_modal(nodal_temperature_variation),
-    log_surface_pressure=to_modal(log_nodal_surface_pressure),
+    temperature_variation=di.to_modal(nodal_temperature_variation),
+    log_surface_pressure=di.to_modal(log_nodal_surface_pressure),
 )
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
-orography = clip_wavenumbers(to_modal(orography))
+orography = di.clip_wavenumbers(di.to_modal(orography))
 primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
 step_fn = di.imex_runge_kutta(primitive, dt)
 filters = [
@@ -189,8 +140,8 @@ nodal_vorticity = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in vertical_grid.centers])
 nodal_divergence = np.stack(
     [get_divergence_perturbation(lat, lon) for sigma in vertical_grid.centers])
-modal_vorticity = to_modal(nodal_vorticity)
-modal_divergence = to_modal(nodal_divergence)
+modal_vorticity = di.to_modal(nodal_vorticity)
+modal_divergence = di.to_modal(nodal_divergence)
 perturbation = di.State(
     vorticity=modal_vorticity,
     divergence=modal_divergence,
@@ -204,7 +155,7 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
-f0 = to_nodal(trajectory.temperature_variation)
+f0 = di.to_nodal(trajectory.temperature_variation)
 temperature = f0 + reference_temperatures[:, np.newaxis, np.newaxis]
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)

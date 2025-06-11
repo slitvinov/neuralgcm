@@ -33,14 +33,12 @@ def explicit_terms(state):
     )
     nodal_temperature = (ref_temps[:, np.newaxis, np.newaxis] +
                          aux_state.temperature_variation)
-    nodal_log_surface_pressure = coords.horizontal.to_nodal(
-        state.log_surface_pressure)
+    nodal_log_surface_pressure = di.to_nodal(state.log_surface_pressure)
     nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
     Teq = equilibrium_temperature(nodal_surface_pressure)
     nodal_temperature_tendency = -kt() * (nodal_temperature - Teq)
-    temperature_tendency = coords.horizontal.to_modal(
-        nodal_temperature_tendency)
-    velocity_tendency = coords.horizontal.to_modal(nodal_velocity_tendency)
+    temperature_tendency = di.to_modal(nodal_temperature_tendency)
+    velocity_tendency = di.to_modal(nodal_velocity_tendency)
     vorticity_tendency = coords.horizontal.curl_cos_lat(velocity_tendency)
     divergence_tendency = coords.horizontal.div_cos_lat(velocity_tendency)
     log_surface_pressure_tendency = jnp.zeros_like(state.log_surface_pressure)
@@ -81,7 +79,7 @@ p1 = 1.4977498842275320e+18
 orography = np.zeros_like(lat)
 nodal_vorticity = jnp.stack(
     [jnp.zeros_like(lat) for sigma in coords.vertical.centers])
-modal_vorticity = coords.horizontal.to_modal(nodal_vorticity)
+modal_vorticity = di.to_modal(nodal_vorticity)
 altitude_m = np.zeros_like(lat)
 g = 9.80665
 cp = 1004.68506
@@ -105,12 +103,10 @@ initial_state = di.State(
     vorticity=modal_vorticity,
     divergence=jnp.zeros_like(modal_vorticity),
     temperature_variation=jnp.zeros_like(modal_vorticity),
-    log_surface_pressure=(coords.horizontal.to_modal(
-        jnp.log(nodal_surface_pressure))),
+    log_surface_pressure=(di.to_modal(jnp.log(nodal_surface_pressure))),
 )
 ref_temps = np.full((coords.vertical.layers, ), tref)
-orography = coords.horizontal.clip_wavenumbers(
-    coords.horizontal.to_modal(orography))
+orography = di.clip_wavenumbers(di.to_modal(orography))
 
 inner_steps = 2
 outer_steps = 144
@@ -182,7 +178,7 @@ integrate_fn = jax.jit(
         inner_steps=inner_steps,
     ))
 final, trajectory = jax.block_until_ready(integrate_fn(final))
-f0 = coords.horizontal.to_nodal(trajectory.temperature_variation)
+f0 = di.to_nodal(trajectory.temperature_variation)
 plt.contourf(f0[-1, 22, :, :])
 plt.savefig("h.12.png")
 np.asarray(f0).tofile("h.12.raw")

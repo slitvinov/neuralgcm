@@ -131,7 +131,6 @@ def nodal_prognostics_and_diagnostics(state):
             state.temperature_variation,
             eq.reference_temperature,
             orography,
-            model_coords.vertical,
         ))
     vor_nodal = di.to_nodal(state.vorticity)
     div_nodal = di.to_nodal(state.divergence)
@@ -209,8 +208,7 @@ def conservative_regrid_weights(source_bounds, target_bounds):
 
 
 @functools.partial(jax.jit, static_argnums=(1, 2))
-def regrid_hybrid_to_sigma(fields, hybrid_coords, sigma_coords,
-                           surface_pressure):
+def regrid_hybrid_to_sigma(fields, hybrid_coords, surface_pressure):
 
     @jax.jit
     @functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")
@@ -326,7 +324,9 @@ dt_si = 5 * units.minute
 save_every = 15 * units.minute
 total_time = 2 * units.day + save_every
 dfi_timescale = 6 * units.hour
-output_level_indices = [di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1]
+output_level_indices = [
+    di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1
+]
 
 ds_arco_era5 = xarray.merge([
     open_era5(
@@ -365,7 +365,6 @@ sp_init_hpa = (ds_init.surface_pressure.transpose(
 nodal_inputs = regrid_hybrid_to_sigma(
     fields=model_level_inputs,
     hybrid_coords=source_vertical,
-    sigma_coords=model_coords.vertical,
     surface_pressure=sp_init_hpa,
 )
 u_nodal = nodal_inputs["u_component_of_wind"]

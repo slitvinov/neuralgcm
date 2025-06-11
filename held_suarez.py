@@ -71,8 +71,7 @@ lat = np.arcsin(sin_lat)
 p0 = 2.9954997684550640e+19
 p1 = 1.4977498842275320e+18
 orography = np.zeros_like(lat)
-nodal_vorticity = jnp.stack(
-    [jnp.zeros_like(lat) for sigma in di.g.centers])
+nodal_vorticity = jnp.stack([jnp.zeros_like(lat) for sigma in di.g.centers])
 modal_vorticity = di.to_modal(nodal_vorticity)
 altitude_m = np.zeros_like(lat)
 g = 9.80665

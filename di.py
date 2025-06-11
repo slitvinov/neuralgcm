@@ -130,7 +130,7 @@ def _slice_shape_along_axis(x):
     return tuple(x_shape)
 
 
-def centered_difference(x, coordinates):
+def centered_difference(x):
     dx = lax.slice_in_dim(x, 1, None, axis=-3) - lax.slice_in_dim(
         x, 0, -1, axis=-3)
     dx_axes = range(dx.ndim)
@@ -152,7 +152,7 @@ def cumulative_sigma_integral(x):
     return cumsum(xd𝜎, -3)
 
 
-def sigma_integral(x, coordinates):
+def sigma_integral(x):
     x_axes = range(x.ndim)
     d𝜎 = g.layer_thickness
     d𝜎_axes = [x_axes[-3]]
@@ -160,7 +160,7 @@ def sigma_integral(x, coordinates):
     return xd𝜎.sum(axis=-3, keepdims=True)
 
 
-def centered_vertical_advection(w, x, coordinates):
+def centered_vertical_advection(w, x):
     w_slc_shape = _slice_shape_along_axis(w)
     w_boundary_values = (
         jnp.zeros(w_slc_shape, dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
@@ -173,7 +173,7 @@ def centered_vertical_advection(w, x, coordinates):
     )
     w_boundary_top, w_boundary_bot = w_boundary_values
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
-    x_diff = centered_difference(x, coordinates)
+    x_diff = centered_difference(x)
     x_diff_boundary_top, x_diff_boundary_bot = dx_dsigma_boundary_values
     x_diff = jnp.concatenate(
         [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=-3)
@@ -369,6 +369,7 @@ def get_cos_lat_vector(vorticity, divergence, grid, clip=True):
 class CoordinateSystem:
     horizontal: Any
 
+
 class ImplicitExplicitODE:
 
     def __init__(self, explicit_terms, implicit_terms, implicit_inverse):
@@ -532,8 +533,8 @@ def compute_diagnostic_state(state, horizontal):
             nodal_cos_lat_grad_log_sp,
         ))
     f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp)
-    f_full = cumulative_sigma_integral(
-        nodal_divergence + nodal_u_dot_grad_log_sp)
+    f_full = cumulative_sigma_integral(nodal_divergence +
+                                       nodal_u_dot_grad_log_sp)
     sum_𝜎 = np.cumsum(g.layer_thickness)[:, np.newaxis, np.newaxis]
     sigma_dot_explicit = lax.slice_in_dim(
         sum_𝜎 * lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
@@ -558,7 +559,7 @@ def get_sigma_ratios():
     return alpha
 
 
-def get_geopotential_weights(coordinates):
+def get_geopotential_weights():
     alpha = get_sigma_ratios()
     weights = np.zeros([g.layers, g.layers])
     for j in range(g.layers):
@@ -569,19 +570,18 @@ def get_geopotential_weights(coordinates):
 
 
 def get_geopotential_diff(temperature):
-    weights = get_geopotential_weights(coordinates)
+    weights = get_geopotential_weights()
     return _vertical_matvec(weights, temperature)
 
 
-def get_geopotential(temperature_variation, reference_temperature, orography,
-                     coordinates):
+def get_geopotential(temperature_variation, reference_temperature, orography):
     surface_geopotential = orography * gravity_acceleration
     temperature = add_constant(temperature_variation, reference_temperature)
     geopotential_diff = get_geopotential_diff(temperature)
     return surface_geopotential + geopotential_diff
 
 
-def get_temperature_implicit_weights(coordinates, reference_temperature):
+def get_temperature_implicit_weights(reference_temperature):
     p = np.tril(np.ones([g.layers, g.layers]))
     alpha = get_sigma_ratios()[..., np.newaxis]
     p_alpha = p * alpha
@@ -601,9 +601,8 @@ def get_temperature_implicit_weights(coordinates, reference_temperature):
     return (h0 - k - k_shifted) * g.layer_thickness
 
 
-def get_temperature_implicit(divergence, coordinates, reference_temperature):
-    weights = -get_temperature_implicit_weights(coordinates,
-                                                reference_temperature)
+def get_temperature_implicit(divergence, reference_temperature):
+    weights = -get_temperature_implicit_weights(reference_temperature)
     return _vertical_matvec(weights, divergence)
 
 
@@ -638,7 +637,7 @@ class PrimitiveEquations:
         return self.reference_temperature[..., np.newaxis, np.newaxis]
 
     def _vertical_tendency(self, w, x):
-        return centered_vertical_advection(w, x, self.coords.vertical)
+        return centered_vertical_advection(w, x)
 
     def _t_omega_over_sigma_sp(self, temperature_field, g_term,
                                v_dot_grad_log_sp):
@@ -709,7 +708,7 @@ class PrimitiveEquations:
 
     def nodal_log_pressure_tendency(self, aux_state):
         g = aux_state.u_dot_grad_log_sp
-        return -sigma_integral(g, self.coords.vertical)
+        return -sigma_integral(g)
 
     def explicit_terms(self, state):
         aux_state = compute_diagnostic_state(state, self.coords.horizontal)
@@ -762,7 +761,6 @@ class PrimitiveEquations:
             geopotential_diff + rt_log_p)
         temperature_variation_implicit = get_temperature_implicit(
             state.divergence,
-            self.coords.vertical,
             self.reference_temperature,
         )
         log_surface_pressure_implicit = -_vertical_matvec(
@@ -781,10 +779,9 @@ class PrimitiveEquations:
     def implicit_inverse(self, state, step_size):
         eye = np.eye(g.layers)[np.newaxis]
         lam = self.coords.horizontal.laplacian_eigenvalues
-        geo = get_geopotential_weights(self.coords.vertical)
+        geo = get_geopotential_weights()
         r = ideal_gas_constant
-        h = get_temperature_implicit_weights(self.coords.vertical,
-                                             self.reference_temperature)
+        h = get_temperature_implicit_weights(self.reference_temperature)
         t = self.reference_temperature[:, np.newaxis]
         thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
         l = self.coords.horizontal.modal_shape[1]

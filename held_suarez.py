@@ -70,8 +70,6 @@ coords = di.CoordinateSystem(horizontal=di.Grid(longitude_wavenumbers=22,
                                              1,
                                              layers + 1,
                                              dtype=np.float32)))
-p0 = 100e3 * units.pascal
-p1 = 5e3 * units.pascal
 tref = 288.0
 rng_key = jax.random.PRNGKey(0)
 lon, sin_lat = coords.horizontal.nodal_mesh

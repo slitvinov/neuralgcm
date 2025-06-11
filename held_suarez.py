@@ -101,7 +101,7 @@ initial_state = di.State(
     temperature_variation=jnp.zeros_like(modal_vorticity),
     log_surface_pressure=(di.to_modal(jnp.log(nodal_surface_pressure))),
 )
-ref_temps = np.full((coords.vertical.layers, ), tref)
+ref_temps = np.full((di.g.layers, ), tref)
 orography = di.clip_wavenumbers(di.to_modal(orography))
 
 inner_steps = 2

@@ -217,7 +217,7 @@ def regrid_hybrid_to_sigma(fields, hybrid_coords, sigma_coords,
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     def regrid(surface_pressure, sigma_bounds, field):
-        assert sigma_bounds.shape == (sigma_coords.layers + 1, )
+        assert sigma_bounds.shape == (di.g.layers + 1, )
         hybrid_bounds = hybrid_coords.get_sigma_boundaries(surface_pressure)
         weights = conservative_regrid_weights(hybrid_bounds, sigma_bounds)
         result = jnp.einsum("ab,b->a", weights, field, precision="float32")

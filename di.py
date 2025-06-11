@@ -257,22 +257,6 @@ def real_basis_derivative(u):
 
 class Grid:
     @functools.cached_property
-    def basis(self):
-        f = real_basis(
-            wavenumbers=di.g.longitude_wavenumbers,
-            nodes=di.g.longitude_nodes,
-        )
-        wf = 2 * np.pi / di.g.longitude_nodes
-        x, wp = sps.roots_legendre(di.g.latitude_nodes)
-        w = wf * wp
-        p = evaluate(n_m=di.g.longitude_wavenumbers,
-                     n_l=di.g.total_wavenumbers,
-                     x=x)
-        p = np.repeat(p, 2, axis=0)
-        p = p[1:]
-        return f, p, w
-
-    @functools.cached_property
     def nodal_axes(self):
         longitude = np.linspace(0,
                                 2 * np.pi,

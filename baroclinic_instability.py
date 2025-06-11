@@ -105,7 +105,7 @@ def basis():
         nodes=di.g.longitude_nodes,
     )
     wf = 2 * np.pi / di.g.longitude_nodes
-    x, wp = scipy.special.roots_legendre(latitude_nodes)
+    x, wp = scipy.special.roots_legendre(di.g.latitude_nodes)
     w = wf * wp
     p = di.evaluate(n_m=di.g.longitude_wavenumbers,
                     n_l=di.g.total_wavenumbers,

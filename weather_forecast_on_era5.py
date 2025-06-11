@@ -329,7 +329,7 @@ dt_si = 5 * units.minute
 save_every = 15 * units.minute
 total_time = 2 * units.day + save_every
 dfi_timescale = 6 * units.hour
-output_level_indices = [layers // 4, layers // 2, 3 * layers // 4, -1]
+output_level_indices = [di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1]
 
 ds_arco_era5 = xarray.merge([
     open_era5(

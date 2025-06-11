@@ -76,7 +76,6 @@ def get_divergence_perturbation(lat, lon):
              (np.sqrt(1 - x**2))))
 
 
-layers = 12
 gravity_acceleration = 7.2364082834567185e+01
 sigma_tropo = 0.2
 sigma0 = 0.252
@@ -94,7 +93,8 @@ di.g.longitude_wavenumbers = 22
 di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
 di.g.latitude_nodes = 32
-di.g.boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
+di.g.layers = 12
+di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 grid = di.Grid()
 vertical_grid = di.SigmaCoordinates()

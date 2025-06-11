@@ -311,13 +311,13 @@ def digital_filter_initialization(equation, ode_solver, filters, time_span,
     return f
 
 
-layers = 32
 ref_temp_si = 250
 di.g.longitude_wavenumbers = 171
 di.g.total_wavenumbers = 172
 di.g.longitude_nodes = 512
 di.g.latitude_nodes = 256
-di.g.boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
+di.g.layers = 32
+di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 model_coords = di.CoordinateSystem(
     di.Grid(),

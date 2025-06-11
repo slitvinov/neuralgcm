@@ -140,12 +140,8 @@ class SigmaCoordinates:
     def center_to_center(self):
         return np.diff(self.centers)
 
-    @property
-    def layers(self):
-        return len(g.boundaries) - 1
-
     def __hash__(self):
-        return hash(tuple(self.centers.tolist()))
+        return hash(tuple(g.centers.tolist()))
 
 
 def centered_difference(x, coordinates):
@@ -580,10 +576,10 @@ def get_sigma_ratios(coordinates):
 
 def get_geopotential_weights(coordinates):
     alpha = get_sigma_ratios(coordinates)
-    weights = np.zeros([coordinates.layers, coordinates.layers])
-    for j in range(coordinates.layers):
+    weights = np.zeros([g.layers, g.layers])
+    for j in range(g..layers):
         weights[j, j] = alpha[j]
-        for k in range(j + 1, coordinates.layers):
+        for k in range(j + 1, g..layers):
             weights[j, k] = alpha[k] + alpha[k - 1]
     return ideal_gas_constant * weights
 
@@ -602,7 +598,7 @@ def get_geopotential(temperature_variation, reference_temperature, orography,
 
 
 def get_temperature_implicit_weights(coordinates, reference_temperature):
-    p = np.tril(np.ones([coordinates.layers, coordinates.layers]))
+    p = np.tril(np.ones([g.layers, g.layers]))
     alpha = get_sigma_ratios(coordinates)[..., np.newaxis]
     p_alpha = p * alpha
     p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
@@ -805,7 +801,7 @@ class PrimitiveEquations:
         )
 
     def implicit_inverse(self, state, step_size):
-        eye = np.eye(self.coords.vertical.layers)[np.newaxis]
+        eye = np.eye(g.layers)[np.newaxis]
         lam = self.coords.horizontal.laplacian_eigenvalues
         g = get_geopotential_weights(self.coords.vertical)
         r = ideal_gas_constant
@@ -815,7 +811,7 @@ class PrimitiveEquations:
         thickness = self.coords.vertical.layer_thickness[np.newaxis,
                                                          np.newaxis, :]
         l = self.coords.horizontal.modal_shape[1]
-        j = k = self.coords.vertical.layers
+        j = k = g.layers
         row0 = np.concatenate(
             [
                 np.broadcast_to(eye, [l, j, k]),
@@ -842,7 +838,7 @@ class PrimitiveEquations:
         )
         implicit_matrix = np.concatenate((row0, row1, row2), axis=1)
         assert implicit_matrix.dtype == np.float64
-        layers = self.coords.vertical.layers
+        layers = g.layers
         div = slice(0, layers)
         temp = slice(layers, 2 * layers)
         logp = slice(2 * layers, 2 * layers + 1)

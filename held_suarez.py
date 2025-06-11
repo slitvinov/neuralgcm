@@ -124,6 +124,7 @@ integrate_fn = jax.jit(
                             outer_steps=outer_steps,
                             inner_steps=inner_steps,
                             start_with_input=True))
+save_every = 10 * units.minute
 times = save_every * np.arange(0, outer_steps)
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 dt_si = 10 * units.minute

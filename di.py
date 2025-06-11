@@ -579,7 +579,7 @@ def get_geopotential_weights(coordinates):
     weights = np.zeros([g.layers, g.layers])
     for j in range(g.layers):
         weights[j, j] = alpha[j]
-        for k in range(j + 1, g..layers):
+        for k in range(j + 1, g.layers):
             weights[j, k] = alpha[k] + alpha[k - 1]
     return ideal_gas_constant * weights
 

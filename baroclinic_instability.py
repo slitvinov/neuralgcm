@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import di
 import scipy.special
+import jax.numpy as jnp
 
 
 def get_reference_temperature(sigma):
@@ -112,6 +113,16 @@ def basis():
     return f, p, w
 
 
+def clip_wavenumbers(x):
+
+    def clip(x):
+        modal_shape = 2 * longitude_wavenumbers - 1, total_wavenumbers
+        mask = jnp.ones(modal_shape[-1], x.dtype).at[-1:].set(0)
+        return x * mask
+
+    return di.tree_map_over_nonscalars(clip, x)
+
+
 layers = 12
 gravity_acceleration = 7.2364082834567185e+01
 sigma_tropo = 0.2
@@ -158,7 +169,7 @@ steady_state = di.State(
     log_surface_pressure=to_modal(log_nodal_surface_pressure),
 )
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
-orography = grid.clip_wavenumbers(to_modal(orography))
+orography = clip_wavenumbers(to_modal(orography))
 primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
 step_fn = di.imex_runge_kutta(primitive, dt)
 filters = [

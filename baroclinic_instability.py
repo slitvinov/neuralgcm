@@ -96,10 +96,7 @@ di.g.longitude_nodes = 64
 di.g.latitude_nodes = 32
 boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
 centers = (boundaries[1:] + boundaries[:-1]) / 2
-grid = di.Grid(longitude_wavenumbers=di.g.longitude_wavenumbers,
-               total_wavenumbers=di.g.total_wavenumbers,
-               longitude_nodes=di.g.longitude_nodes,
-               latitude_nodes=di.g.latitude_nodes)
+grid = di.Grid()
 vertical_grid = di.SigmaCoordinates(boundaries)
 coords = di.CoordinateSystem(grid, vertical_grid)
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)

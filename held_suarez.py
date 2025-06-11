@@ -60,11 +60,7 @@ di.g.longitude_wavenumbers = 22
 di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
 di.g.latitude_nodes = 32
-coords = di.CoordinateSystem(horizontal=di.Grid(
-    longitude_wavenumbers=di.g.longitude_wavenumbers,
-    total_wavenumbers=di.g.total_wavenumbers,
-    longitude_nodes=di.g.longitude_nodes,
-    latitude_nodes=di.g.latitude_nodes),
+coords = di.CoordinateSystem(horizontal=di.Grid(),
                              vertical=di.SigmaCoordinates(
                                  np.linspace(0,
                                              1,

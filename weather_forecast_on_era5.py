@@ -318,10 +318,7 @@ di.g.total_wavenumbers = 172
 di.g.longitude_nodes = 512
 di.g.latitude_nodes = 256
 model_coords = di.CoordinateSystem(
-    di.Grid(longitude_wavenumbers=di.g.longitude_wavenumbers,
-            total_wavenumbers=di.g.total_wavenumbers,
-            longitude_nodes=di.g.longitude_nodes,
-            latitude_nodes=di.g.latitude_nodes),
+    di.Grid(),
     di.SigmaCoordinates(np.linspace(0, 1, layers + 1, dtype=np.float32)),
 )
 dt_si = 5 * units.minute

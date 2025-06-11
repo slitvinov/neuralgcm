@@ -256,25 +256,17 @@ def real_basis_derivative(u):
 
 
 class Grid:
-
-    def __init__(self, longitude_wavenumbers, total_wavenumbers,
-                 longitude_nodes, latitude_nodes):
-        self.longitude_wavenumbers = longitude_wavenumbers
-        self.total_wavenumbers = total_wavenumbers
-        self.longitude_nodes = longitude_nodes
-        self.latitude_nodes = latitude_nodes
-
     @functools.cached_property
     def basis(self):
         f = real_basis(
-            wavenumbers=self.longitude_wavenumbers,
-            nodes=self.longitude_nodes,
+            wavenumbers=di.g.longitude_wavenumbers,
+            nodes=di.g.longitude_nodes,
         )
-        wf = 2 * np.pi / self.longitude_nodes
-        x, wp = sps.roots_legendre(self.latitude_nodes)
+        wf = 2 * np.pi / di.g.longitude_nodes
+        x, wp = sps.roots_legendre(di.g.latitude_nodes)
         w = wf * wp
-        p = evaluate(n_m=self.longitude_wavenumbers,
-                     n_l=self.total_wavenumbers,
+        p = evaluate(n_m=di.g.longitude_wavenumbers,
+                     n_l=di.g.total_wavenumbers,
                      x=x)
         p = np.repeat(p, 2, axis=0)
         p = p[1:]
@@ -284,14 +276,14 @@ class Grid:
     def nodal_axes(self):
         longitude = np.linspace(0,
                                 2 * np.pi,
-                                self.longitude_nodes,
+                                di.g.longitude_nodes,
                                 endpoint=False)
-        sin_latitude, _ = sps.roots_legendre(self.latitude_nodes)
+        sin_latitude, _ = sps.roots_legendre(di.g.latitude_nodes)
         return longitude, sin_latitude
 
     @functools.cached_property
     def nodal_shape(self):
-        return self.longitude_nodes, self.latitude_nodes
+        return di.g.longitude_nodes, di.g.latitude_nodes
 
     @functools.cached_property
     def nodal_mesh(self):
@@ -299,15 +291,15 @@ class Grid:
 
     @functools.cached_property
     def modal_axes(self):
-        m_pos = np.arange(1, self.longitude_wavenumbers)
+        m_pos = np.arange(1, di.g.longitude_wavenumbers)
         m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
         lon_wavenumbers = np.concatenate([[0], m_pos_neg])
-        tot_wavenumbers = np.arange(self.total_wavenumbers)
+        tot_wavenumbers = np.arange(di.g.total_wavenumbers)
         return lon_wavenumbers, tot_wavenumbers
 
     @functools.cached_property
     def modal_shape(self):
-        return 2 * self.longitude_wavenumbers - 1, self.total_wavenumbers
+        return 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
 
     @functools.cached_property
     def mask(self):
@@ -340,7 +332,7 @@ class Grid:
         with np.errstate(divide="ignore", invalid="ignore"):
             inverse_eigenvalues = 1 / self.laplacian_eigenvalues
         inverse_eigenvalues[0] = 0
-        inverse_eigenvalues[self.total_wavenumbers:] = 0
+        inverse_eigenvalues[di.g.total_wavenumbers:] = 0
         assert not np.isnan(inverse_eigenvalues).any()
         return x * inverse_eigenvalues
 

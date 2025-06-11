@@ -25,39 +25,37 @@ class g:
 
 
 def to_modal(z):
-    return di.tree_map_over_nonscalars(transform, z)
+    return tree_map_over_nonscalars(transform, z)
 
 
 def to_nodal(x):
-    return di.tree_map_over_nonscalars(inverse_transform, x)
+    return tree_map_over_nonscalars(inverse_transform, x)
 
 
 def transform(x):
     f, p, w = basis()
     wx = w * x
-    fwx = di.einsum("im,...ij->...mj", f, wx)
-    pfwx = di.einsum("mjl,...mj->...ml", p, fwx)
+    fwx = einsum("im,...ij->...mj", f, wx)
+    pfwx = einsum("mjl,...mj->...ml", p, fwx)
     return pfwx
 
 
 def inverse_transform(x):
     f, p, w = basis()
-    px = di.einsum("mjl,...ml->...mj", p, x)
-    fpx = di.einsum("im,...mj->...ij", f, px)
+    px = einsum("mjl,...ml->...mj", p, x)
+    fpx = einsum("im,...mj->...ij", f, px)
     return fpx
 
 
 def basis():
-    f = di.real_basis(
-        wavenumbers=di.g.longitude_wavenumbers,
-        nodes=di.g.longitude_nodes,
+    f = real_basis(
+        wavenumbers=g.longitude_wavenumbers,
+        nodes=g.longitude_nodes,
     )
-    wf = 2 * np.pi / di.g.longitude_nodes
-    x, wp = scipy.special.roots_legendre(di.g.latitude_nodes)
+    wf = 2 * np.pi / g.longitude_nodes
+    x, wp = scipy.special.roots_legendre(g.latitude_nodes)
     w = wf * wp
-    p = di.evaluate(n_m=di.g.longitude_wavenumbers,
-                    n_l=di.g.total_wavenumbers,
-                    x=x)
+    p = evaluate(n_m=g.longitude_wavenumbers, n_l=g.total_wavenumbers, x=x)
     p = np.repeat(p, 2, axis=0)
     p = p[1:]
     return f, p, w
@@ -66,11 +64,11 @@ def basis():
 def clip_wavenumbers(x):
 
     def clip(x):
-        modal_shape = 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
+        modal_shape = 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
         mask = jnp.ones(modal_shape[-1], x.dtype).at[-1:].set(0)
         return x * mask
 
-    return di.tree_map_over_nonscalars(clip, x)
+    return tree_map_over_nonscalars(clip, x)
 
 
 def cumsum(x, axis):
@@ -555,12 +553,12 @@ class DiagnosticState:
 
 def compute_diagnostic_state(state, horizontal, vertical):
 
-    nodal_vorticity = di.to_nodal(state.vorticity)
-    nodal_divergence = di.to_nodal(state.divergence)
-    nodal_temperature_variation = di.to_nodal(state.temperature_variation)
-    tracers = di.to_nodal(state.tracers)
+    nodal_vorticity = to_nodal(state.vorticity)
+    nodal_divergence = to_nodal(state.divergence)
+    nodal_temperature_variation = to_nodal(state.temperature_variation)
+    tracers = to_nodal(state.tracers)
     nodal_cos_lat_u = jax.tree_util.tree_map(
-        di.to_nodal,
+        to_nodal,
         get_cos_lat_vector(state.vorticity,
                            state.divergence,
                            horizontal,
@@ -568,7 +566,7 @@ def compute_diagnostic_state(state, horizontal, vertical):
     )
     cos_lat_grad_log_sp = horizontal.cos_lat_grad(state.log_surface_pressure,
                                                   clip=False)
-    nodal_cos_lat_grad_log_sp = di.to_nodal(cos_lat_grad_log_sp)
+    nodal_cos_lat_grad_log_sp = to_nodal(cos_lat_grad_log_sp)
     nodal_u_dot_grad_log_sp = sum(
         jax.tree_util.tree_map(
             lambda x, y: x * y * horizontal.sec2_lat,
@@ -664,8 +662,8 @@ def _vertical_matvec_per_wavenumber(a, x):
 
 
 def div_sec_lat(m_component, n_component, grid):
-    m_component = di.to_modal(m_component * grid.sec2_lat)
-    n_component = di.to_modal(n_component * grid.sec2_lat)
+    m_component = to_modal(m_component * grid.sec2_lat)
+    n_component = to_modal(n_component * grid.sec2_lat)
     return grid.div_cos_lat((m_component, n_component), clip=False)
 
 
@@ -701,7 +699,7 @@ class PrimitiveEquations:
     def kinetic_energy_tendency(self, aux_state):
         nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
         kinetic = nodal_cos_lat_u2.sum(0) * self.coords.horizontal.sec2_lat / 2
-        return -self.coords.horizontal.laplacian(di.to_modal(kinetic))
+        return -self.coords.horizontal.laplacian(to_modal(kinetic))
 
     def orography_tendency(self):
         return -gravity_acceleration * self.coords.horizontal.laplacian(
@@ -720,8 +718,8 @@ class PrimitiveEquations:
         grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
         vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat
         vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat
-        combined_u = di.to_modal(nodal_vorticity_u + vertical_term_u)
-        combined_v = di.to_modal(nodal_vorticity_v + vertical_term_v)
+        combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
+        combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
         dζ_dt = -self.coords.horizontal.curl_cos_lat(
             (combined_u, combined_v), clip=False)
         d𝛅_dt = -self.coords.horizontal.div_cos_lat(
@@ -780,7 +778,7 @@ class PrimitiveEquations:
                                                  sigma_dot_full)
         tracers_vertical_nodal = jax.tree_util.tree_map(
             vertical_tendency_fn, aux_state.tracers)
-        to_modal_fn = di.to_modal
+        to_modal_fn = to_modal
         divergence_tendency = (divergence_dot + kinetic_energy_tendency +
                                orography_tendency)
         temperature_tendency = (to_modal_fn(dT_dt_horizontal_nodal +

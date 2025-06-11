@@ -101,13 +101,15 @@ def inverse_transform(x):
 
 def basis():
     f = di.real_basis(
-        wavenumbers=longitude_wavenumbers,
-        nodes=longitude_nodes,
+        wavenumbers=di.g.longitude_wavenumbers,
+        nodes=di.g.longitude_nodes,
     )
     wf = 2 * np.pi / longitude_nodes
     x, wp = scipy.special.roots_legendre(latitude_nodes)
     w = wf * wp
-    p = di.evaluate(n_m=longitude_wavenumbers, n_l=total_wavenumbers, x=x)
+    p = di.evaluate(n_m=di.g.longitude_wavenumbers,
+                    n_l=di.g.total_wavenumbers,
+                    x=x)
     p = np.repeat(p, 2, axis=0)
     p = p[1:]
     return f, p, w
@@ -116,7 +118,7 @@ def basis():
 def clip_wavenumbers(x):
 
     def clip(x):
-        modal_shape = 2 * longitude_wavenumbers - 1, total_wavenumbers
+        modal_shape = 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
         mask = jnp.ones(modal_shape[-1], x.dtype).at[-1:].set(0)
         return x * mask
 
@@ -137,16 +139,16 @@ r_gas = kappa * 0.0011628807950492582
 dt = 0.014584
 perturbation_radius = 0.1
 u_p = 1.0762192173688048e-03
-longitude_wavenumbers = 22
-total_wavenumbers = 23
-longitude_nodes = 64
-latitude_nodes = 32
+di.g.longitude_wavenumbers = 22
+di.g.total_wavenumbers = 23
+di.g.longitude_nodes = 64
+di.g.latitude_nodes = 32
 boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
 centers = (boundaries[1:] + boundaries[:-1]) / 2
-grid = di.Grid(longitude_wavenumbers=longitude_wavenumbers,
-               total_wavenumbers=total_wavenumbers,
-               longitude_nodes=longitude_nodes,
-               latitude_nodes=latitude_nodes)
+grid = di.Grid(longitude_wavenumbers=di.g.longitude_wavenumbers,
+               total_wavenumbers=di.g.total_wavenumbers,
+               longitude_nodes=di.g.longitude_nodes,
+               latitude_nodes=di.g.latitude_nodes)
 vertical_grid = di.SigmaCoordinates(boundaries)
 coords = di.CoordinateSystem(grid, vertical_grid)
 longitude = np.linspace(0, 2 * np.pi, longitude_nodes, endpoint=False)

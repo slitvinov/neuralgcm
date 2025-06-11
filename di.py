@@ -19,6 +19,8 @@ gravity_acceleration = 7.2364082834567185e+01
 kappa = 2 / 7
 ideal_gas_constant = kappa * 0.0011628807950492582
 
+class g:
+    pass
 
 def cumsum(x, axis):
     if axis < 0:

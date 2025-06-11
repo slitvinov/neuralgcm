@@ -5,8 +5,6 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 
-units = di.units
-
 
 def kv():
     kv_coeff = kf * (np.maximum(0, (sigma - sigma_b) / (1 - sigma_b)))
@@ -121,11 +119,7 @@ integrate_fn = jax.jit(
                             outer_steps=outer_steps,
                             inner_steps=inner_steps,
                             start_with_input=True))
-save_every = 10 * units.minute
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
-dt_si = 10 * units.minute
-save_every = 10 * units.day
-total_time = 1200 * units.day
 inner_steps = 1440
 outer_steps = 120
 dt = 8.7504000000000012e-02
@@ -163,9 +157,6 @@ integrate_fn = jax.jit(
                             inner_steps=inner_steps))
 final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 start_time = 200
-dt_si = 10 * units.minute
-save_every = 6 * units.hours
-total_time = 1 * units.week
 inner_steps = 36
 outer_steps = 28
 dt = 8.7504000000000012e-02

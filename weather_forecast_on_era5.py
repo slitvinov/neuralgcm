@@ -1,14 +1,49 @@
+import dataclasses
 import di
+import functools
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
-import dataclasses
+import pint
 import xarray
-import functools
 
-units = di.units
+units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+Unit = units.Unit
+GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
+class Scale:
+    def __init__(self, *scales):
+        self.scales = {}
+        for quantity in scales:
+            self.scales[str(
+                quantity.dimensionality)] = quantity.to_base_units()
 
+    def scaling_factor(self, dimensionality):
+        factor = units.Quantity(1)
+        for dimension, exponent in dimensionality.items():
+            quantity = self.scales.get(dimension)
+            factor *= quantity**exponent
+        assert factor.check(dimensionality)
+        return factor
+
+    def nondimensionalize(self, quantity):
+        scaling_factor = self.scaling_factor(quantity.dimensionality)
+        nondimensionalized = (quantity / scaling_factor).to(
+            units.dimensionless)
+        return nondimensionalized.magnitude
+
+    def dimensionalize(self, value, unit):
+        scaling_factor = self.scaling_factor(unit.dimensionality)
+        dimensionalized = value * scaling_factor
+        return dimensionalized.to(unit)
+
+
+DEFAULT_SCALE = Scale(
+    6.37122e6 * units.m,
+    1 / 2 / 7.292e-5 * units.s,
+    1 * units.kilogram,
+    1 * units.degK,
+)
 
 class HybridCoordinates:
 
@@ -30,7 +65,7 @@ class HybridCoordinates:
 def attach_data_array_units(array):
     attrs = dict(array.attrs)
     units = attrs.pop("units", None)
-    data = di.units.parse_expression(units) * array.data
+    data = units.parse_expression(units) * array.data
     return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
 
 
@@ -39,7 +74,7 @@ def attach_xarray_units(ds):
 
 
 def xarray_nondimensionalize(ds):
-    return xarray.apply_ufunc(di.DEFAULT_SCALE.nondimensionalize, ds)
+    return xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds)
 
 
 def xarray_to_gcm_dict(ds, var_names=None):
@@ -128,7 +163,7 @@ def trajectory_to_xarray(trajectory):
         device=jax.devices("cpu")[0])
     trajectory_cpu = jax.device_put(trajectory, device=jax.devices("cpu")[0])
     traj_nodal_si = {
-        k: di.DEFAULT_SCALE.dimensionalize(v, target_units[k]).magnitude
+        k: DEFAULT_SCALE.dimensionalize(v, target_units[k]).magnitude
         for k, v in trajectory_cpu.items()
     }
     times = float(save_every / units.hour) * np.arange(outer_steps)
@@ -366,12 +401,12 @@ orography = model_coords.horizontal.to_modal(orography_input)
 orography = di.exponential_filter(model_coords.horizontal, order=2)(orography)
 eq = di.PrimitiveEquations(ref_temps, orography, model_coords)
 res_factor = model_coords.horizontal.latitude_nodes / 128
-dt = di.DEFAULT_SCALE.nondimensionalize(dt_si)
-tau = di.DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
+dt = DEFAULT_SCALE.nondimensionalize(dt_si)
+tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                          units.hours)
 hyperdiffusion_filter = horizontal_diffusion_step_filter(
     model_coords.horizontal, dt=dt, tau=tau, order=2)
-time_span = cutoff_period = di.DEFAULT_SCALE.nondimensionalize(dfi_timescale)
+time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 dfi = jax.jit(
     digital_filter_initialization(
         equation=eq,

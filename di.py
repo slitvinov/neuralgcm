@@ -6,53 +6,13 @@ import functools
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pint
 import scipy
 import scipy.special as sps
 import tree_math
 
 tree_map = jax.tree_util.tree_map
 einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
-units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-Unit = units.Unit
-GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
-
-
-class Scale:
-
-    def __init__(self, *scales):
-        self.scales = {}
-        for quantity in scales:
-            self.scales[str(
-                quantity.dimensionality)] = quantity.to_base_units()
-
-    def scaling_factor(self, dimensionality):
-        factor = units.Quantity(1)
-        for dimension, exponent in dimensionality.items():
-            quantity = self.scales.get(dimension)
-            factor *= quantity**exponent
-        assert factor.check(dimensionality)
-        return factor
-
-    def nondimensionalize(self, quantity):
-        scaling_factor = self.scaling_factor(quantity.dimensionality)
-        nondimensionalized = (quantity / scaling_factor).to(
-            units.dimensionless)
-        return nondimensionalized.magnitude
-
-    def dimensionalize(self, value, unit):
-        scaling_factor = self.scaling_factor(unit.dimensionality)
-        dimensionalized = value * scaling_factor
-        return dimensionalized.to(unit)
-
-
-DEFAULT_SCALE = Scale(
-    6.37122e6 * units.m,
-    1 / 2 / 7.292e-5 * units.s,
-    1 * units.kilogram,
-    1 * units.degK,
-)
 
 # gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 gravity_acceleration = 7.2364082834567185e+01

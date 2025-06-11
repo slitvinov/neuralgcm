@@ -54,7 +54,8 @@ DEFAULT_SCALE = Scale(
     1 * units.degK,
 )
 
-gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
+# gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
+gravity_acceleration = 7.2364082834567185e+01
 kappa = 2 / 7
 ideal_gas_constant = kappa * 0.0011628807950492582
 

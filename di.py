@@ -568,7 +568,7 @@ def get_geopotential_weights(coordinates):
     return ideal_gas_constant * weights
 
 
-def get_geopotential_diff(temperature, coordinates):
+def get_geopotential_diff(temperature):
     weights = get_geopotential_weights(coordinates)
     return _vertical_matvec(weights, temperature)
 
@@ -577,7 +577,7 @@ def get_geopotential(temperature_variation, reference_temperature, orography,
                      coordinates):
     surface_geopotential = orography * gravity_acceleration
     temperature = add_constant(temperature_variation, reference_temperature)
-    geopotential_diff = get_geopotential_diff(temperature, coordinates)
+    geopotential_diff = get_geopotential_diff(temperature)
     return surface_geopotential + geopotential_diff
 
 
@@ -753,9 +753,8 @@ class PrimitiveEquations:
         )
         return clip_wavenumbers(tendency)
 
-    def implicit_terms(self, state: State):
-        geopotential_diff = get_geopotential_diff(state.temperature_variation,
-                                                  self.coords.vertical)
+    def implicit_terms(self, state):
+        geopotential_diff = get_geopotential_diff(state.temperature_variation)
         rt_log_p = (ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)
         vorticity_implicit = jnp.zeros_like(state.vorticity)

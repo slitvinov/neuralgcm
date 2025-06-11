@@ -94,7 +94,6 @@ vertical_grid = di.SigmaCoordinates(
 coords = di.CoordinateSystem(grid, vertical_grid)
 lon, sin_lat = grid.nodal_mesh
 lat = np.arcsin(sin_lat)
-orography = get_geopotential(lat, 1.0) / gravity_acceleration
 geopotential = np.stack(
     [get_geopotential(lat, sigma) for sigma in vertical_grid.centers])
 reference_temperatures = np.stack(
@@ -111,8 +110,9 @@ steady_state = di.State(
     temperature_variation=grid.to_modal(nodal_temperature_variation),
     log_surface_pressure=grid.to_modal(log_nodal_surface_pressure),
 )
-
-orography = di.truncated_modal_orography(orography, coords)
+orography = get_geopotential(lat, 1.0) / gravity_acceleration
+orography = coords.horizontal.clip_wavenumbers(
+    coords.horizontal.to_modal(orography), n=1)
 primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
 dt = 0.014584
 step_fn = di.imex_runge_kutta(primitive, dt)

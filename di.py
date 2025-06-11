@@ -55,11 +55,11 @@ def shift(x, offset, axis):
         return pad_in_dim(sliced, (0, -offset), axis=axis)
 
 
-def tree_map_over_nonscalars(f, x, *, scalar_fn=lambda x: x):
+def tree_map_over_nonscalars(f, x):
 
     def g(x):
         x = jnp.asarray(x)
-        return f(x) if x.ndim else scalar_fn(x)
+        return f(x) if x.ndim else x
 
     return tree_map(g, x)
 

@@ -221,7 +221,7 @@ def regrid_hybrid_to_sigma(fields, hybrid_coords, sigma_coords,
         hybrid_bounds = hybrid_coords.get_sigma_boundaries(surface_pressure)
         weights = conservative_regrid_weights(hybrid_bounds, sigma_bounds)
         result = jnp.einsum("ab,b->a", weights, field, precision="float32")
-        assert result.shape[0] == sigma_coords.layers
+        assert result.shape[0] == di.g.layers
         return result
 
     return di.tree_map_over_nonscalars(

@@ -117,8 +117,7 @@ steady_state = di.State(
 
 orography = di.truncated_modal_orography(orography, coords)
 primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
-dt_s = 100 * units.s
-dt = di.DEFAULT_SCALE.nondimensionalize(dt_s)
+dt = 0.014584
 step_fn = di.imex_runge_kutta(primitive, dt)
 filters = [
     di.exponential_step_filter(grid, dt),
@@ -130,11 +129,10 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(steady_state))
 trajectory = jax.device_get(trajectory)
-u_perturb = 1.0 * units.m / units.s
 lon_location = np.pi / 9
 lat_location = 2 * np.pi / 9
 perturbation_radius = 0.1
-u_p = di.DEFAULT_SCALE.nondimensionalize(u_perturb)
+u_p = 1.0762192173688048e-03
 lon, sin_lat = grid.nodal_mesh
 lat = np.arcsin(sin_lat)
 nodal_vorticity = np.stack([

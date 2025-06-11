@@ -138,7 +138,7 @@ class SigmaCoordinates:
 
     @property
     def center_to_center(self):
-        return np.diff(self.centers)
+        return np.diff(g.centers)
 
     def __hash__(self):
         return hash(tuple(g.centers.tolist()))

@@ -61,6 +61,7 @@ di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
 di.g.latitude_nodes = 32
 di.g.boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
+di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 coords = di.CoordinateSystem(horizontal=di.Grid(),
                              vertical=di.SigmaCoordinates())
 tref = 288.0

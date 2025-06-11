@@ -133,11 +133,6 @@ def _slice_shape_along_axis(x):
 class SigmaCoordinates:
 
     @property
-    def centers(self):
-        x = g.boundaries
-        return (x[1:] + x[:-1]) / 2
-
-    @property
     def layer_thickness(self):
         return np.diff(g.boundaries)
 

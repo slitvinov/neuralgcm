@@ -130,12 +130,6 @@ def _slice_shape_along_axis(x):
     return tuple(x_shape)
 
 
-class SigmaCoordinates:
-
-    def __hash__(self):
-        return hash(tuple(g.centers.tolist()))
-
-
 def centered_difference(x, coordinates):
     dx = lax.slice_in_dim(x, 1, None, axis=-3) - lax.slice_in_dim(
         x, 0, -1, axis=-3)
@@ -374,8 +368,6 @@ def get_cos_lat_vector(vorticity, divergence, grid, clip=True):
 @dataclasses.dataclass(frozen=True)
 class CoordinateSystem:
     horizontal: Any
-    vertical: Any
-
 
 class ImplicitExplicitODE:
 
@@ -517,7 +509,7 @@ class DiagnosticState:
     tracers: Any
 
 
-def compute_diagnostic_state(state, horizontal, vertical):
+def compute_diagnostic_state(state, horizontal):
 
     nodal_vorticity = to_nodal(state.vorticity)
     nodal_divergence = to_nodal(state.divergence)
@@ -720,8 +712,7 @@ class PrimitiveEquations:
         return -sigma_integral(g, self.coords.vertical)
 
     def explicit_terms(self, state):
-        aux_state = compute_diagnostic_state(state, self.coords.horizontal,
-                                             self.coords.vertical)
+        aux_state = compute_diagnostic_state(state, self.coords.horizontal)
         vorticity_tendency, divergence_dot = self.curl_and_div_tendencies(
             aux_state)
         kinetic_energy_tendency = self.kinetic_energy_tendency(aux_state)

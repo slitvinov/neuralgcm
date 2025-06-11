@@ -25,8 +25,7 @@ def equilibrium_temperature(nodal_surface_pressure):
 
 
 def explicit_terms(state):
-    aux_state = di.compute_diagnostic_state(state, coords.horizontal,
-                                            coords.vertical)
+    aux_state = di.compute_diagnostic_state(state, coords.horizontal)
     nodal_velocity_tendency = jax.tree.map(
         lambda x: -kv() * x / coords.horizontal.cos_lat**2,
         aux_state.cos_lat_u,
@@ -64,8 +63,7 @@ di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
-coords = di.CoordinateSystem(horizontal=di.Grid(),
-                             vertical=di.SigmaCoordinates())
+coords = di.CoordinateSystem(di.Grid())
 tref = 288.0
 rng_key = jax.random.PRNGKey(0)
 lon, sin_lat = coords.horizontal.nodal_mesh

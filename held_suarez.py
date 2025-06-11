@@ -104,7 +104,9 @@ initial_state = di.State(
         jnp.log(nodal_surface_pressure))),
 )
 ref_temps = np.full((coords.vertical.layers, ), tref)
-orography = di.truncated_modal_orography(orography, coords)
+orography = coords.horizontal.clip_wavenumbers(
+    coords.horizontal.to_modal(orography), n=1)
+
 inner_steps = 2
 outer_steps = 144
 dt = 4.3752000000000006e-02

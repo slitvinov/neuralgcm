@@ -569,8 +569,8 @@ def compute_diagnostic_state(state, horizontal, vertical):
 
 
 def get_sigma_ratios(coordinates):
-    alpha = np.diff(np.log(coordinates.centers), append=0) / 2
-    alpha[-1] = -np.log(coordinates.centers[-1])
+    alpha = np.diff(np.log(g.centers), append=0) / 2
+    alpha[-1] = -np.log(g.centers[-1])
     return alpha
 
 

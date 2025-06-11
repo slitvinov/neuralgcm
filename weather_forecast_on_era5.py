@@ -358,7 +358,7 @@ ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
                                                   longitude=desired_lon))
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
-ds_init["orography"] /= di.GRAVITY_ACCELERATION
+ds_init["orography"] /= GRAVITY_ACCELERATION
 source_vertical = HybridCoordinates()
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)

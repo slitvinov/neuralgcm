@@ -342,8 +342,7 @@ v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]
 vorticity, divergence = uv_nodal_to_vor_div_modal(model_coords.horizontal,
                                                   u_nodal, v_nodal)
-ref_temps = di.DEFAULT_SCALE.nondimensionalize(ref_temp_si * np.ones(
-    (model_coords.vertical.layers, )))
+ref_temps = ref_temp_si * np.ones((model_coords.vertical.layers, ))
 assert ref_temps.shape == (model_coords.vertical.layers, )
 temperature_variation = model_coords.horizontal.to_modal(
     t_nodal - ref_temps.reshape(-1, 1, 1))

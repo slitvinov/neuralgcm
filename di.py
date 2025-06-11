@@ -531,9 +531,9 @@ def compute_diagnostic_state(state, horizontal):
             nodal_cos_lat_u,
             nodal_cos_lat_grad_log_sp,
         ))
-    f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp, vertical)
+    f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp)
     f_full = cumulative_sigma_integral(
-        nodal_divergence + nodal_u_dot_grad_log_sp, vertical)
+        nodal_divergence + nodal_u_dot_grad_log_sp)
     sum_𝜎 = np.cumsum(g.layer_thickness)[:, np.newaxis, np.newaxis]
     sigma_dot_explicit = lax.slice_in_dim(
         sum_𝜎 * lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
@@ -552,14 +552,14 @@ def compute_diagnostic_state(state, horizontal):
     )
 
 
-def get_sigma_ratios(coordinates):
+def get_sigma_ratios():
     alpha = np.diff(np.log(g.centers), append=0) / 2
     alpha[-1] = -np.log(g.centers[-1])
     return alpha
 
 
 def get_geopotential_weights(coordinates):
-    alpha = get_sigma_ratios(coordinates)
+    alpha = get_sigma_ratios()
     weights = np.zeros([g.layers, g.layers])
     for j in range(g.layers):
         weights[j, j] = alpha[j]
@@ -583,7 +583,7 @@ def get_geopotential(temperature_variation, reference_temperature, orography,
 
 def get_temperature_implicit_weights(coordinates, reference_temperature):
     p = np.tril(np.ones([g.layers, g.layers]))
-    alpha = get_sigma_ratios(coordinates)[..., np.newaxis]
+    alpha = get_sigma_ratios()[..., np.newaxis]
     p_alpha = p * alpha
     p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
     p_alpha_shifted[0] = 0
@@ -642,8 +642,8 @@ class PrimitiveEquations:
 
     def _t_omega_over_sigma_sp(self, temperature_field, g_term,
                                v_dot_grad_log_sp):
-        f = cumulative_sigma_integral(g_term, self.coords.vertical)
-        alpha = get_sigma_ratios(self.coords.vertical)
+        f = cumulative_sigma_integral(g_term)
+        alpha = get_sigma_ratios()
         alpha = alpha[:, np.newaxis, np.newaxis]
         del_𝜎 = g.layer_thickness[:, np.newaxis, np.newaxis]
         padding = [(1, 0), (0, 0), (0, 0)]

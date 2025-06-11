@@ -76,7 +76,6 @@ tref = 288.0
 rng_key = jax.random.PRNGKey(0)
 lon, sin_lat = coords.horizontal.nodal_mesh
 lat = np.arcsin(sin_lat)
-tref = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(tref))
 p0 = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(p0))
 p1 = di.DEFAULT_SCALE.nondimensionalize(units.Quantity(p1))
 orography = np.zeros_like(lat)

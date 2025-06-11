@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import di
 
+
 def get_reference_temperature(sigma):
     top_mean_t = t0 * sigma**(r_gas * gamma / di.gravity_acceleration)
     if sigma < sigma_tropo:

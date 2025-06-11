@@ -142,7 +142,7 @@ primitive_with_hs = di.ImplicitExplicitODE(explicit_fn,
 
 step_fn = di.imex_runge_kutta(primitive_with_hs, dt)
 filters = [
-    di.exponential_step_filter(coords.horizontal.total_wavenumbers,
+    di.exponential_step_filter(di.g.total_wavenumbers,
                                dt,
                                tau=0.0087504,
                                order=1.5,
@@ -160,7 +160,7 @@ outer_steps = 28
 dt = 8.7504000000000012e-02
 step_fn = di.imex_runge_kutta(primitive_with_hs, dt)
 filters = [
-    di.exponential_step_filter(coords.horizontal.total_wavenumbers,
+    di.exponential_step_filter(di.g.total_wavenumbers,
                                dt,
                                tau=0.0087504,
                                order=1.5,

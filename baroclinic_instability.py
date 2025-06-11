@@ -174,7 +174,7 @@ orography = clip_wavenumbers(to_modal(orography))
 primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
 step_fn = di.imex_runge_kutta(primitive, dt)
 filters = [
-    di.exponential_step_filter(total_wavenumbers, dt),
+    di.exponential_step_filter(di.g.total_wavenumbers, dt),
 ]
 step_fn = di.step_with_filters(step_fn, filters)
 inner_steps = 72

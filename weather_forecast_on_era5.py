@@ -395,7 +395,7 @@ raw_init_state = di.State(
 orography = di.to_modal(orography_input)
 orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
 eq = di.PrimitiveEquations(ref_temps, orography, model_coords)
-res_factor = model_coords.horizontal.latitude_nodes / 128
+res_factor = di.g.latitude_nodes / 128
 dt = DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)

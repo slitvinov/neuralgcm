@@ -95,7 +95,7 @@ di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
 di.g.latitude_nodes = 32
 di.g.boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
-centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
+di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 grid = di.Grid()
 vertical_grid = di.SigmaCoordinates()
 coords = di.CoordinateSystem(grid, vertical_grid)
@@ -103,13 +103,15 @@ longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
 lat = np.arcsin(sin_lat)
-geopotential = np.stack([get_geopotential(lat, sigma) for sigma in centers])
+geopotential = np.stack(
+    [get_geopotential(lat, sigma) for sigma in di.g.centers])
 reference_temperatures = np.stack(
-    [get_reference_temperature(sigma) for sigma in centers])
-nodal_vorticity = np.stack([get_vorticity(lat, sigma) for sigma in centers])
+    [get_reference_temperature(sigma) for sigma in di.g.centers])
+nodal_vorticity = np.stack(
+    [get_vorticity(lat, sigma) for sigma in di.g.centers])
 modal_vorticity = di.to_modal(nodal_vorticity)
 nodal_temperature_variation = np.stack(
-    [get_temperature_variation(lat, sigma) for sigma in centers])
+    [get_temperature_variation(lat, sigma) for sigma in di.g.centers])
 log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 steady_state = di.State(
     vorticity=modal_vorticity,
@@ -134,9 +136,9 @@ trajectory = jax.device_get(trajectory)
 lon_location = np.pi / 9
 lat_location = 2 * np.pi / 9
 nodal_vorticity = np.stack(
-    [get_vorticity_perturbation(lat, lon) for sigma in vertical_grid.centers])
+    [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])
 nodal_divergence = np.stack(
-    [get_divergence_perturbation(lat, lon) for sigma in vertical_grid.centers])
+    [get_divergence_perturbation(lat, lon) for sigma in di.g.centers])
 modal_vorticity = di.to_modal(nodal_vorticity)
 modal_divergence = di.to_modal(nodal_divergence)
 perturbation = di.State(

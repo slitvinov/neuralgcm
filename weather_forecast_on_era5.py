@@ -225,7 +225,7 @@ def regrid_hybrid_to_sigma(fields, hybrid_coords, sigma_coords,
         return result
 
     return di.tree_map_over_nonscalars(
-        lambda x: regrid(surface_pressure, sigma_coords.boundaries, x), fields)
+        lambda x: regrid(surface_pressure, di.g.boundaries, x), fields)
 
 
 def horizontal_diffusion_step_filter(grid, dt, tau, order=1):

@@ -2,7 +2,7 @@ import jax
 import numpy as np
 import matplotlib.pyplot as plt
 import di
-
+import scipy.special
 
 def get_reference_temperature(sigma):
     top_mean_t = t0 * sigma**(r_gas * gamma / gravity_acceleration)
@@ -85,14 +85,18 @@ p0 = 2.995499768455064e+19
 gamma = 31856.1
 kappa = 2 / 7
 r_gas = kappa * 0.0011628807950492582
+longitude_nodes = 64
+latitude_nodes = 32
 grid = di.Grid(longitude_wavenumbers=22,
                total_wavenumbers=23,
-               longitude_nodes=64,
-               latitude_nodes=32)
+               longitude_nodes=longitude_nodes,
+               latitude_nodes=latitude_nodes)
 vertical_grid = di.SigmaCoordinates(
     np.linspace(0, 1, layers + 1, dtype=np.float32))
 coords = di.CoordinateSystem(grid, vertical_grid)
-lon, sin_lat = grid.nodal_mesh
+longitude = np.linspace(0, 2 * np.pi, longitude_nodes, endpoint=False)
+sin_latitude, _ = scipy.special.roots_legendre(latitude_nodes)
+lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
 lat = np.arcsin(sin_lat)
 geopotential = np.stack(
     [get_geopotential(lat, sigma) for sigma in vertical_grid.centers])

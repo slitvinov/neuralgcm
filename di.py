@@ -144,7 +144,7 @@ def centered_difference(x, coordinates):
                   precision="float32")
 
 
-def cumulative_sigma_integral(x, coordinates):
+def cumulative_sigma_integral(x):
     x_axes = range(x.ndim)
     d𝜎 = g.layer_thickness
     d𝜎_axes = [x_axes[-3]]

@@ -181,7 +181,7 @@ def trajectory_to_xarray(trajectory):
         coords={
             "longitude": lon,
             "latitude": lat,
-            "sigma": model_coords.vertical.centers[output_level_indices],
+            "sigma": di.g.centers[output_level_indices],
             "time": times,
             "orography":
             (("longitude", "latitude"), orography_nodal.squeeze()),
@@ -319,6 +319,8 @@ di.g.latitude_nodes = 256
 di.g.layers = 32
 di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
+di.g.layer_thickness = np.diff(di.g.boundaries)
+di.g.center_to_center = np.diff(di.g.centers)
 model_coords = di.CoordinateSystem(
     di.Grid(),
     di.SigmaCoordinates(),

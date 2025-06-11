@@ -96,6 +96,9 @@ di.g.latitude_nodes = 32
 di.g.layers = 12
 di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
+di.g.layer_thickness = np.diff(di.g.boundaries)
+di.g.center_to_center = np.diff(di.g.centers)
+
 grid = di.Grid()
 vertical_grid = di.SigmaCoordinates()
 coords = di.CoordinateSystem(grid, vertical_grid)

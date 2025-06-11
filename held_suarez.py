@@ -62,6 +62,8 @@ di.g.latitude_nodes = 32
 di.g.layers = 24
 di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
+di.g.layer_thickness = np.diff(di.g.boundaries)
+di.g.center_to_center = np.diff(di.g.centers)
 coords = di.CoordinateSystem(horizontal=di.Grid(),
                              vertical=di.SigmaCoordinates())
 tref = 288.0
@@ -72,7 +74,7 @@ p0 = 2.9954997684550640e+19
 p1 = 1.4977498842275320e+18
 orography = np.zeros_like(lat)
 nodal_vorticity = jnp.stack(
-    [jnp.zeros_like(lat) for sigma in coords.vertical.centers])
+    [jnp.zeros_like(lat) for sigma in di.g.centers])
 modal_vorticity = di.to_modal(nodal_vorticity)
 altitude_m = np.zeros_like(lat)
 g = 9.80665
@@ -130,7 +132,7 @@ kf = 7.9361451413014747e-02
 ka = 1.9840362853253690e-03
 ks = 1.9840362853253687e-02
 
-sigma = coords.vertical.centers
+sigma = di.g.centers
 _, sin_lat = coords.horizontal.nodal_mesh
 lat = np.arcsin(sin_lat)
 

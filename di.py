@@ -132,14 +132,6 @@ def _slice_shape_along_axis(x):
 
 class SigmaCoordinates:
 
-    @property
-    def layer_thickness(self):
-        return np.diff(g.boundaries)
-
-    @property
-    def center_to_center(self):
-        return np.diff(g.centers)
-
     def __hash__(self):
         return hash(tuple(g.centers.tolist()))
 
@@ -148,7 +140,7 @@ def centered_difference(x, coordinates):
     dx = lax.slice_in_dim(x, 1, None, axis=-3) - lax.slice_in_dim(
         x, 0, -1, axis=-3)
     dx_axes = range(dx.ndim)
-    inv_d𝜎 = 1 / coordinates.center_to_center
+    inv_d𝜎 = 1 / g.center_to_center
     inv_d𝜎_axes = [dx_axes[-3]]
     return einsum(dx,
                   dx_axes,
@@ -160,7 +152,7 @@ def centered_difference(x, coordinates):
 
 def cumulative_sigma_integral(x, coordinates):
     x_axes = range(x.ndim)
-    d𝜎 = coordinates.layer_thickness
+    d𝜎 = g.layer_thickness
     d𝜎_axes = [x_axes[-3]]
     xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
     return cumsum(xd𝜎, -3)
@@ -168,7 +160,7 @@ def cumulative_sigma_integral(x, coordinates):
 
 def sigma_integral(x, coordinates):
     x_axes = range(x.ndim)
-    d𝜎 = coordinates.layer_thickness
+    d𝜎 = g.layer_thickness
     d𝜎_axes = [x_axes[-3]]
     xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
     return xd𝜎.sum(axis=-3, keepdims=True)
@@ -550,7 +542,7 @@ def compute_diagnostic_state(state, horizontal, vertical):
     f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp, vertical)
     f_full = cumulative_sigma_integral(
         nodal_divergence + nodal_u_dot_grad_log_sp, vertical)
-    sum_𝜎 = np.cumsum(vertical.layer_thickness)[:, np.newaxis, np.newaxis]
+    sum_𝜎 = np.cumsum(g.layer_thickness)[:, np.newaxis, np.newaxis]
     sigma_dot_explicit = lax.slice_in_dim(
         sum_𝜎 * lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
     sigma_dot_full = lax.slice_in_dim(
@@ -604,21 +596,17 @@ def get_temperature_implicit_weights(coordinates, reference_temperature):
     p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
     p_alpha_shifted[0] = 0
     h0 = (kappa * reference_temperature[..., np.newaxis] *
-          (p_alpha + p_alpha_shifted) /
-          coordinates.layer_thickness[..., np.newaxis])
+          (p_alpha + p_alpha_shifted) / g.layer_thickness[..., np.newaxis])
     temp_diff = np.diff(reference_temperature)
-    thickness_sum = coordinates.layer_thickness[:
-                                                -1] + coordinates.layer_thickness[
-                                                    1:]
+    thickness_sum = g.layer_thickness[:-1] + g.layer_thickness[1:]
     k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[...,
                                                                   np.newaxis]
-    thickness_cumulative = np.cumsum(coordinates.layer_thickness)[...,
-                                                                  np.newaxis]
+    thickness_cumulative = np.cumsum(g.layer_thickness)[..., np.newaxis]
     k1 = p - thickness_cumulative
     k = k0 * k1
     k_shifted = np.roll(k, 1, axis=0)
     k_shifted[0] = 0
-    return (h0 - k - k_shifted) * coordinates.layer_thickness
+    return (h0 - k - k_shifted) * g.layer_thickness
 
 
 def get_temperature_implicit(divergence, coordinates, reference_temperature):
@@ -665,7 +653,7 @@ class PrimitiveEquations:
         f = cumulative_sigma_integral(g_term, self.coords.vertical)
         alpha = get_sigma_ratios(self.coords.vertical)
         alpha = alpha[:, np.newaxis, np.newaxis]
-        del_𝜎 = self.coords.vertical.layer_thickness[:, np.newaxis, np.newaxis]
+        del_𝜎 = g.layer_thickness[:, np.newaxis, np.newaxis]
         padding = [(1, 0), (0, 0), (0, 0)]
         g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]) / del_𝜎
         return temperature_field * (v_dot_grad_log_sp - g_part)
@@ -788,7 +776,7 @@ class PrimitiveEquations:
             self.reference_temperature,
         )
         log_surface_pressure_implicit = -_vertical_matvec(
-            self.coords.vertical.layer_thickness[np.newaxis], state.divergence)
+            g.layer_thickness[np.newaxis], state.divergence)
         tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like,
                                                   state.tracers)
         return State(
@@ -808,8 +796,7 @@ class PrimitiveEquations:
         h = get_temperature_implicit_weights(self.coords.vertical,
                                              self.reference_temperature)
         t = self.reference_temperature[:, np.newaxis]
-        thickness = self.coords.vertical.layer_thickness[np.newaxis,
-                                                         np.newaxis, :]
+        thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
         l = self.coords.horizontal.modal_shape[1]
         j = k = g.layers
         row0 = np.concatenate(

@@ -25,7 +25,7 @@ def get_reference_geopotential(sigma):
         return top_mean_potential
 
 
-def get_geopotential(lat, lon, sigma):
+def get_geopotential(lat, sigma):
     sigma_nu = (sigma - sigma0) * np.pi / 2
     return get_reference_geopotential(sigma) + u0 * np.cos(sigma_nu)**1.5 * (
         ((-2 * np.sin(lat)**6 *
@@ -34,7 +34,7 @@ def get_geopotential(lat, lon, sigma):
                       (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * 0.5))
 
 
-def get_temperature_variation(lat, lon, sigma):
+def get_temperature_variation(lat, sigma):
     sigma_nu = (sigma - sigma0) * np.pi / 2
     cos_𝜎ν = np.cos(sigma_nu)
     sin_𝜎ν = np.sin(sigma_nu)
@@ -45,13 +45,13 @@ def get_temperature_variation(lat, lon, sigma):
                (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * 0.5)))
 
 
-def get_vorticity(lat, lon, sigma):
+def get_vorticity(lat, sigma):
     sigma_nu = (sigma - sigma0) * np.pi / 2
     return ((-4 * u0) * (np.cos(sigma_nu)**(3 / 2)) * np.sin(lat) *
             np.cos(lat) * (2 - 5 * np.sin(lat)**2))
 
 
-def get_vorticity_perturbation(lat, lon, sigma):
+def get_vorticity_perturbation(lat, lon):
     x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
         lat) * np.cos(lon - lon_location)
     r = np.arccos(x)
@@ -64,7 +64,7 @@ def get_vorticity_perturbation(lat, lon, sigma):
          (np.sqrt(1 - x**2))))
 
 
-def get_divergence_perturbation(lat, lon, sigma):
+def get_divergence_perturbation(lat, lon):
     x = np.sin(lat_location) * np.sin(lat) + np.cos(lat_location) * np.cos(
         lat) * np.cos(lon - lon_location)
     r = np.arccos(x)
@@ -93,18 +93,16 @@ gamma = 31856.1
 r_gas = di.ideal_gas_constant
 lon, sin_lat = grid.nodal_mesh
 lat = np.arcsin(sin_lat)
-orography = get_geopotential(lat, lon, 1.0) / di.gravity_acceleration
+orography = get_geopotential(lat, 1.0) / di.gravity_acceleration
 geopotential = np.stack(
-    [get_geopotential(lat, lon, sigma) for sigma in vertical_grid.centers])
+    [get_geopotential(lat, sigma) for sigma in vertical_grid.centers])
 reference_temperatures = np.stack(
     [get_reference_temperature(sigma) for sigma in vertical_grid.centers])
 nodal_vorticity = np.stack(
-    [get_vorticity(lat, lon, sigma) for sigma in vertical_grid.centers])
+    [get_vorticity(lat, sigma) for sigma in vertical_grid.centers])
 modal_vorticity = grid.to_modal(nodal_vorticity)
-nodal_temperature_variation = np.stack([
-    get_temperature_variation(lat, lon, sigma)
-    for sigma in vertical_grid.centers
-])
+nodal_temperature_variation = np.stack(
+    [get_temperature_variation(lat, sigma) for sigma in vertical_grid.centers])
 log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 steady_state = di.State(
     vorticity=modal_vorticity,
@@ -131,16 +129,10 @@ lon_location = np.pi / 9
 lat_location = 2 * np.pi / 9
 perturbation_radius = 0.1
 u_p = 1.0762192173688048e-03
-lon, sin_lat = grid.nodal_mesh
-lat = np.arcsin(sin_lat)
-nodal_vorticity = np.stack([
-    get_vorticity_perturbation(lat, lon, sigma)
-    for sigma in vertical_grid.centers
-])
-nodal_divergence = np.stack([
-    get_divergence_perturbation(lat, lon, sigma)
-    for sigma in vertical_grid.centers
-])
+nodal_vorticity = np.stack(
+    [get_vorticity_perturbation(lat, lon) for sigma in vertical_grid.centers])
+nodal_divergence = np.stack(
+    [get_divergence_perturbation(lat, lon) for sigma in vertical_grid.centers])
 modal_vorticity = grid.to_modal(nodal_vorticity)
 modal_divergence = grid.to_modal(nodal_divergence)
 perturbation = di.State(

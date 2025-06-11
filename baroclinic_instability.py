@@ -141,26 +141,25 @@ longitude_wavenumbers = 22
 total_wavenumbers = 23
 longitude_nodes = 64
 latitude_nodes = 32
+boundaries = np.linspace(0, 1, layers + 1, dtype=np.float32)
+centers = (boundaries[1:] + boundaries[:-1]) / 2
 grid = di.Grid(longitude_wavenumbers=longitude_wavenumbers,
                total_wavenumbers=total_wavenumbers,
                longitude_nodes=longitude_nodes,
                latitude_nodes=latitude_nodes)
-vertical_grid = di.SigmaCoordinates(
-    np.linspace(0, 1, layers + 1, dtype=np.float32))
+vertical_grid = di.SigmaCoordinates(boundaries)
 coords = di.CoordinateSystem(grid, vertical_grid)
 longitude = np.linspace(0, 2 * np.pi, longitude_nodes, endpoint=False)
 sin_latitude, _ = scipy.special.roots_legendre(latitude_nodes)
 lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
 lat = np.arcsin(sin_lat)
-geopotential = np.stack(
-    [get_geopotential(lat, sigma) for sigma in vertical_grid.centers])
+geopotential = np.stack([get_geopotential(lat, sigma) for sigma in centers])
 reference_temperatures = np.stack(
-    [get_reference_temperature(sigma) for sigma in vertical_grid.centers])
-nodal_vorticity = np.stack(
-    [get_vorticity(lat, sigma) for sigma in vertical_grid.centers])
+    [get_reference_temperature(sigma) for sigma in centers])
+nodal_vorticity = np.stack([get_vorticity(lat, sigma) for sigma in centers])
 modal_vorticity = to_modal(nodal_vorticity)
 nodal_temperature_variation = np.stack(
-    [get_temperature_variation(lat, sigma) for sigma in vertical_grid.centers])
+    [get_temperature_variation(lat, sigma) for sigma in centers])
 log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 steady_state = di.State(
     vorticity=modal_vorticity,

@@ -110,7 +110,7 @@ dt = 4.3752000000000006e-02
 primitive = di.PrimitiveEquations(ref_temps, orography, coords)
 integrator = di.imex_runge_kutta
 step_fn = integrator(primitive, dt)
-filters = [di.exponential_step_filter(coords.horizontal.total_wavenumbers, dt)]
+filters = [di.exponential_step_filter(di.g.total_wavenumbers, dt)]
 step_fn = di.step_with_filters(step_fn, filters)
 integrate_fn = jax.jit(
     di.trajectory_from_step(step_fn,

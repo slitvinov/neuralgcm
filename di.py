@@ -275,15 +275,15 @@ class Grid:
 
     @functools.cached_property
     def modal_axes(self):
-        m_pos = np.arange(1, di.g.longitude_wavenumbers)
+        m_pos = np.arange(1, g.longitude_wavenumbers)
         m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
         lon_wavenumbers = np.concatenate([[0], m_pos_neg])
-        tot_wavenumbers = np.arange(di.g.total_wavenumbers)
+        tot_wavenumbers = np.arange(g.total_wavenumbers)
         return lon_wavenumbers, tot_wavenumbers
 
     @functools.cached_property
     def modal_shape(self):
-        return 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
+        return 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
 
     @functools.cached_property
     def mask(self):
@@ -316,7 +316,7 @@ class Grid:
         with np.errstate(divide="ignore", invalid="ignore"):
             inverse_eigenvalues = 1 / self.laplacian_eigenvalues
         inverse_eigenvalues[0] = 0
-        inverse_eigenvalues[di.g.total_wavenumbers:] = 0
+        inverse_eigenvalues[g.total_wavenumbers:] = 0
         assert not np.isnan(inverse_eigenvalues).any()
         return x * inverse_eigenvalues
 

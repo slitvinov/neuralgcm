@@ -5,7 +5,7 @@ import di
 
 
 def get_reference_temperature(sigma):
-    top_mean_t = t0 * sigma**(r_gas * gamma / di.gravity_acceleration)
+    top_mean_t = t0 * sigma**(r_gas * gamma / gravity_acceleration)
     if sigma < sigma_tropo:
         return top_mean_t + delta_t * (sigma_tropo - sigma)**5
     else:
@@ -13,8 +13,8 @@ def get_reference_temperature(sigma):
 
 
 def get_reference_geopotential(sigma):
-    top_mean_potential = (t0 * di.gravity_acceleration / gamma) * (
-        1 - sigma**(r_gas * gamma / di.gravity_acceleration))
+    top_mean_potential = (t0 * gravity_acceleration / gamma) * (
+        1 - sigma**(r_gas * gamma / gravity_acceleration))
     if sigma < sigma_tropo:
         return top_mean_potential - r_gas * delta_t * (
             (np.log(sigma / sigma_tropo) + 137 / 60) * sigma_tropo**5 -
@@ -82,6 +82,7 @@ grid = di.Grid(longitude_wavenumbers=22,
 vertical_grid = di.SigmaCoordinates(
     np.linspace(0, 1, layers + 1, dtype=np.float32))
 
+gravity_acceleration = 7.2364082834567185e+01
 sigma_tropo = 0.2
 sigma0 = 0.252
 coords = di.CoordinateSystem(grid, vertical_grid)
@@ -93,7 +94,7 @@ gamma = 31856.1
 r_gas = di.ideal_gas_constant
 lon, sin_lat = grid.nodal_mesh
 lat = np.arcsin(sin_lat)
-orography = get_geopotential(lat, 1.0) / di.gravity_acceleration
+orography = get_geopotential(lat, 1.0) / gravity_acceleration
 geopotential = np.stack(
     [get_geopotential(lat, sigma) for sigma in vertical_grid.centers])
 reference_temperatures = np.stack(

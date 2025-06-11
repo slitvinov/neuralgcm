@@ -120,8 +120,6 @@ primitive = di.PrimitiveEquations(reference_temperatures, orography, coords)
 dt_s = 100 * units.s
 dt = di.DEFAULT_SCALE.nondimensionalize(dt_s)
 step_fn = di.imex_runge_kutta(primitive, dt)
-save_every = 2 * units.hour
-total_time = 1 * units.week
 filters = [
     di.exponential_step_filter(grid, dt),
 ]
@@ -157,8 +155,6 @@ perturbation = di.State(
 )
 
 state = steady_state + perturbation
-save_every = 2 * units.hour
-total_time = 2 * units.week
 outer_steps = 168
 integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)

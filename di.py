@@ -803,7 +803,7 @@ class PrimitiveEquations:
     def implicit_inverse(self, state, step_size):
         eye = np.eye(g.layers)[np.newaxis]
         lam = self.coords.horizontal.laplacian_eigenvalues
-        g = get_geopotential_weights(self.coords.vertical)
+        geo = get_geopotential_weights(self.coords.vertical)
         r = ideal_gas_constant
         h = get_temperature_implicit_weights(self.coords.vertical,
                                              self.reference_temperature)
@@ -815,7 +815,7 @@ class PrimitiveEquations:
         row0 = np.concatenate(
             [
                 np.broadcast_to(eye, [l, j, k]),
-                step_size * np.einsum("l,jk->ljk", lam, g),
+                step_size * np.einsum("l,jk->ljk", lam, geo),
                 step_size * r * np.einsum("l,jo->ljo", lam, t),
             ],
             axis=2,

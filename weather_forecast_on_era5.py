@@ -207,7 +207,7 @@ def conservative_regrid_weights(source_bounds, target_bounds):
     return weights
 
 
-@functools.partial(jax.jit, static_argnums=(1, 2))
+@functools.partial(jax.jit, static_argnums=(1, ))
 def regrid_hybrid_to_sigma(fields, hybrid_coords, surface_pressure):
 
     @jax.jit

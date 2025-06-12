@@ -89,6 +89,8 @@ r_gas = kappa * 0.0011628807950492582
 dt = 0.014584
 perturbation_radius = 0.1
 u_p = 1.0762192173688048e-03
+lon_location = np.pi / 9
+lat_location = 2 * np.pi / 9
 di.g.longitude_wavenumbers = 22
 di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
@@ -119,17 +121,14 @@ steady_state = di.State(
     log_surface_pressure=di.to_modal(log_nodal_surface_pressure),
 )
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
-orography = di.clip_wavenumbers(di.to_modal(orography))
 di.g.reference_temperature = reference_temperatures
-di.g.orography = orography
+di.g.orography = di.clip_wavenumbers(di.to_modal(orography))
 primitive = di.PrimitiveEquations()
 step_fn = di.imex_runge_kutta(primitive, dt)
 filters = [
     di.exponential_step_filter(di.g.total_wavenumbers, dt),
 ]
 step_fn = di.step_with_filters(step_fn, filters)
-lon_location = np.pi / 9
-lat_location = 2 * np.pi / 9
 nodal_vorticity = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])
 nodal_divergence = np.stack(

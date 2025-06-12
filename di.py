@@ -305,10 +305,6 @@ def _derivative_recurrence_weights():
     return a, b
 
 
-def d_dlon(x):
-    return real_basis_derivative(x)
-
-
 def cos_lat_d_dlat(x):
     _, l = modal_mesh()
     a, b = _derivative_recurrence_weights()
@@ -325,8 +321,8 @@ def sec_lat_d_dlat_cos2(x):
     return x_lm1 + x_lp1
 
 
-def cos_lat_grad(x, clip: bool = True):
-    raw = d_dlon(x) / 1.0, cos_lat_d_dlat(x) / 1.0
+def cos_lat_grad(x, clip=True):
+    raw = real_basis_derivative(x) / 1.0, cos_lat_d_dlat(x) / 1.0
     if clip:
         return clip_wavenumbers(raw)
     return raw
@@ -337,14 +333,14 @@ def k_cross(v):
 
 
 def div_cos_lat(v, clip=True):
-    raw = (d_dlon(v[0]) + sec_lat_d_dlat_cos2(v[1])) / 1.0
+    raw = (real_basis_derivative(v[0]) + sec_lat_d_dlat_cos2(v[1])) / 1.0
     if clip:
         return clip_wavenumbers(raw)
     return raw
 
 
 def curl_cos_lat(v, clip=True):
-    raw = (d_dlon(v[1]) - sec_lat_d_dlat_cos2(v[0])) / 1.0
+    raw = (real_basis_derivative(v[1]) - sec_lat_d_dlat_cos2(v[0])) / 1.0
     if clip:
         return clip_wavenumbers(raw)
     return raw

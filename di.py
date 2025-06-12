@@ -64,7 +64,7 @@ def basis():
     wf = 2 * np.pi / g.longitude_nodes
     x, wp = scipy.special.roots_legendre(g.latitude_nodes)
     w = wf * wp
-    p = evaluate(n_m=g.longitude_wavenumbers, n_l=g.total_wavenumbers, x=x)
+    p = evaluate(x)
     p = np.repeat(p, 2, axis=0)
     p = p[1:]
     return f, p, w
@@ -201,7 +201,9 @@ def _evaluate_rhombus(n_l, n_m, x):
     return p
 
 
-def evaluate(n_m, n_l, x):
+def evaluate(x):
+    n_m = g.longitude_wavenumbers
+    n_l = g.total_wavenumbers
     r = np.transpose(_evaluate_rhombus(n_l=n_l, n_m=n_m, x=x), (1, 2, 0))
     p = np.zeros((n_m, len(x), n_l))
     for m in range(n_m):

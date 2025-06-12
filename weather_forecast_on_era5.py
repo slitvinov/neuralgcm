@@ -328,8 +328,8 @@ ds = ds_arco_era5[[
 raw_orography = ds_arco_era5.geopotential_at_surface
 desired_lon = 180 / np.pi * di.nodal_axes()[0]
 desired_lat = 180 / np.pi * np.arcsin(di.nodal_axes()[1])
-ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
-                                                  longitude=desired_lon))
+ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
+ds_init = ds0.map(attach_data_array_units)
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init["orography"] /= GRAVITY_ACCELERATION

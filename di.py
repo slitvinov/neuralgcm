@@ -23,16 +23,6 @@ ideal_gas_constant = kappa * 0.0011628807950492582
 class g:
     pass
 
-
-@jax.jit
-def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
-    u_over_cos_lat = to_modal(u_nodal / cos_lat())
-    v_over_cos_lat = to_modal(v_nodal / cos_lat())
-    vorticity = curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
-    divergence = div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
-    return vorticity, divergence
-
-
 def to_modal(z):
     return tree_map_over_nonscalars(transform, z)
 

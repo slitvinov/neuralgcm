@@ -1,5 +1,4 @@
 for i
 do
-    echo "$ cat $i"
-    cat $i
+    awk '{print FILENAME ":", $0}' "$i"
 done

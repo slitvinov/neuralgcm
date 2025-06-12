@@ -392,8 +392,7 @@ res_factor = di.g.latitude_nodes / 128
 dt = DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)
-hyperdiffusion_filter = horizontal_diffusion_step_filter(model_coords,
-                                                         dt=dt,
+hyperdiffusion_filter = horizontal_diffusion_step_filter(dt=dt,
                                                          tau=tau,
                                                          order=2)
 time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)

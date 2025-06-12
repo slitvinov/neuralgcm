@@ -49,23 +49,6 @@ DEFAULT_SCALE = Scale(
 )
 
 
-class HybridCoordinates:
-
-    def __init__(self):
-        a_in_pa, self.b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
-                                                skiprows=1,
-                                                usecols=(1, 2),
-                                                delimiter="\t").T
-        self.a_boundaries = a_in_pa / 100
-
-    def __hash__(self):
-        return hash((tuple(self.a_boundaries.tolist()),
-                     tuple(self.b_boundaries.tolist())))
-
-    def get_sigma_boundaries(self, surface_pressure):
-        return self.a_boundaries / surface_pressure + self.b_boundaries
-
-
 def attach_data_array_units(array):
     attrs = dict(array.attrs)
     units0 = attrs.pop("units", None)
@@ -166,7 +149,7 @@ def trajectory_to_xarray(trajectory):
         for k, v in trajectory_cpu.items()
     }
     times = float(save_every / units.hour) * np.arange(outer_steps)
-    lon = 180 / np.pi * nodal_axes()[0]
+    lon = 180 / np.pi * di.nodal_axes()[0]
     lat = 180 / np.pi * np.arcsin(nodal_axes()[1])
     dims = ("time", "sigma", "longitude", "latitude")
     ds_result = xarray.Dataset(
@@ -213,7 +196,7 @@ def regrid_hybrid_to_sigma(fields, hybrid_coords, surface_pressure):
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     def regrid(surface_pressure, sigma_bounds, field):
         assert sigma_bounds.shape == (di.g.layers + 1, )
-        hybrid_bounds = hybrid_coords.get_sigma_boundaries(surface_pressure)
+        hybrid_bounds = a_boundaries / surface_pressure + b_boundaries
         weights = conservative_regrid_weights(hybrid_bounds, sigma_bounds)
         result = jnp.einsum("ab,b->a", weights, field, precision="float32")
         assert result.shape[0] == di.g.layers
@@ -350,6 +333,13 @@ ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init["orography"] /= GRAVITY_ACCELERATION
+
+a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
+                                   skiprows=1,
+                                   usecols=(1, 2),
+                                   delimiter="\t").T
+a_boundaries = a_in_pa / 100
+
 source_vertical = HybridCoordinates()
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)

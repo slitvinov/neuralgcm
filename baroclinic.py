@@ -111,17 +111,7 @@ geopotential = np.stack(
     [get_geopotential(lat, sigma) for sigma in di.g.centers])
 di.g.reference_temperature = np.stack(
     [get_reference_temperature(sigma) for sigma in di.g.centers])
-nodal_vorticity = np.stack(
-    [get_vorticity(lat, sigma) for sigma in di.g.centers])
-nodal_temperature_variation = np.stack(
-    [get_temperature_variation(lat, sigma) for sigma in di.g.centers])
-log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
-steady_state = di.State(
-    vorticity=di.to_modal(nodal_vorticity),
-    divergence=np.zeros(modal_shape, dtype),
-    temperature_variation=di.to_modal(nodal_temperature_variation),
-    log_surface_pressure=di.to_modal(log_nodal_surface_pressure),
-)
+vorticity = np.stack([get_vorticity(lat, sigma) for sigma in di.g.centers])
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
 di.g.orography = di.clip_wavenumbers(di.to_modal(orography))
 primitive = di.PrimitiveEquations()
@@ -130,16 +120,18 @@ filters = [
     di.exponential_step_filter(di.g.total_wavenumbers, dt),
 ]
 step_fn = di.step_with_filters(step_fn, filters)
-nodal_vorticity = np.stack(
+vorticity_perturbation = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])
-nodal_divergence = np.stack(
+divergence_perturbation = np.stack(
     [get_divergence_perturbation(lat, lon) for sigma in di.g.centers])
-perturbation = di.State(vorticity=di.to_modal(nodal_vorticity),
-                        divergence=di.to_modal(nodal_divergence),
-                        temperature_variation=np.zeros(modal_shape, dtype),
-                        log_surface_pressure=np.zeros(
-                            (1, modal_shape[1], modal_shape[2]), dtype))
-state = steady_state + perturbation
+temperature_variation = np.stack(
+    [get_temperature_variation(lat, sigma) for sigma in di.g.centers])
+log_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
+state = di.State(vorticity=di.to_modal(vorticity) +
+                 di.to_modal(vorticity_perturbation),
+                 divergence=di.to_modal(divergence_perturbation),
+                 temperature_variation=di.to_modal(temperature_variation),
+                 log_surface_pressure=di.to_modal(log_surface_pressure))
 inner_steps = 72
 outer_steps = 168
 integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)

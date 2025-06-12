@@ -215,13 +215,6 @@ def compute_vertical_velocity(state):
     return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
 
 
-def _dfi_lanczos_weights(time_span, cutoff_period, dt):
-    N = round(time_span / (2 * dt))
-    n = np.arange(1, N + 1)
-    w = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
-    return w
-
-
 @dataclasses.dataclass
 class TimeReversedImExODE(di.ImplicitExplicitODE):
     forward_eq: di.ImplicitExplicitODE
@@ -366,7 +359,9 @@ def fun(state):
     backward_step = di.step_with_filters(
         di.imex_runge_kutta(TimeReversedImExODE(eq), dt),
         [hyperdiffusion_filter])
-    weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
+    N = round(time_span / (2 * dt))
+    n = np.arange(1, N + 1)
+    weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
     init_weight = 1.0
     total_weight = init_weight + 2 * weights.sum()
     init_weight /= total_weight

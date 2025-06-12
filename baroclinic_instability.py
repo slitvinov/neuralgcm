@@ -126,12 +126,6 @@ filters = [
     di.exponential_step_filter(di.g.total_wavenumbers, dt),
 ]
 step_fn = di.step_with_filters(step_fn, filters)
-inner_steps = 72
-outer_steps = 84
-integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
-integrate_fn = jax.jit(integrate_fn)
-final, trajectory = jax.block_until_ready(integrate_fn(steady_state))
-trajectory = jax.device_get(trajectory)
 lon_location = np.pi / 9
 lat_location = 2 * np.pi / 9
 nodal_vorticity = np.stack(
@@ -148,6 +142,7 @@ perturbation = di.State(
 )
 
 state = steady_state + perturbation
+inner_steps = 72
 outer_steps = 168
 integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)

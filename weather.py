@@ -261,28 +261,6 @@ def accumulate_repeated(step_fn, weights, state, scan_fn=jax.lax.scan):
     (_, averaged), _ = scan_fn(f, init, weights)
     return averaged
 
-
-def digital_filter_initialization(equation, ode_solver, filters, time_span,
-                                  cutoff_period, dt):
-
-    def f(state):
-        forward_step = di.step_with_filters(ode_solver(equation, dt), filters)
-        backward_step = di.step_with_filters(
-            ode_solver(TimeReversedImExODE(equation), dt), filters)
-        weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
-        init_weight = 1.0
-        total_weight = init_weight + 2 * weights.sum()
-        init_weight /= total_weight
-        weights /= total_weight
-        init_term = di.tree_map(lambda x: x * init_weight, state)
-        forward_term = accumulate_repeated(forward_step, weights, state)
-        backward_term = accumulate_repeated(backward_step, weights, state)
-        return di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
-                           backward_term)
-
-    return f
-
-
 @jax.jit
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     u_over_cos_lat = di.to_modal(u_nodal / di.cos_lat())
@@ -385,15 +363,26 @@ hyperdiffusion_filter = horizontal_diffusion_step_filter(dt=dt,
                                                          tau=tau,
                                                          order=2)
 time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
-dfi = jax.jit(
-    digital_filter_initialization(
-        equation=eq,
-        ode_solver=di.imex_runge_kutta,
-        filters=[hyperdiffusion_filter],
-        time_span=time_span,
-        cutoff_period=cutoff_period,
-        dt=dt,
-    ))
+
+
+def fun(state):
+    forward_step = di.step_with_filters(ode_solver(equation, dt),
+                                        [hyperdiffusion_filter])
+    backward_step = di.step_with_filters(
+        ode_solver(TimeReversedImExODE(equation), dt), filters)
+    weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
+    init_weight = 1.0
+    total_weight = init_weight + 2 * weights.sum()
+    init_weight /= total_weight
+    weights /= total_weight
+    init_term = di.tree_map(lambda x: x * init_weight, state)
+    forward_term = accumulate_repeated(forward_step, weights, state)
+    backward_term = accumulate_repeated(backward_step, weights, state)
+    return di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
+                       backward_term)
+
+
+dfi = jax.jit(fun)
 dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
 
 inner_steps = int(save_every / dt_si)

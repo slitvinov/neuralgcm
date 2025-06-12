@@ -663,10 +663,6 @@ class PrimitiveEquations:
             aux_state.u_dot_grad_log_sp)
         return kappa * (mean_t_part + variation_t_part)
 
-    def nodal_log_pressure_tendency(self, aux_state):
-        g = aux_state.u_dot_grad_log_sp
-        return -sigma_integral(g)
-
     def explicit_terms(self, state):
         aux_state = compute_diagnostic_state(state)
         sec2_lat0 = sec2_lat()
@@ -697,7 +693,7 @@ class PrimitiveEquations:
             horizontal_tendency_fn, aux_state.tracers)
         dT_dt_vertical = self.nodal_temperature_vertical_tendency(aux_state)
         dT_dt_adiabatic = self.nodal_temperature_adiabatic_tendency(aux_state)
-        log_sp_tendency = self.nodal_log_pressure_tendency(aux_state)
+        log_sp_tendency = -sigma_integral(aux_state.u_dot_grad_log_sp)
         sigma_dot_full = aux_state.sigma_dot_full
         vertical_tendency_fn = functools.partial(self._vertical_tendency,
                                                  sigma_dot_full)

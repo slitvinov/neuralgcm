@@ -261,6 +261,7 @@ def accumulate_repeated(step_fn, weights, state, scan_fn=jax.lax.scan):
     (_, averaged), _ = scan_fn(f, init, weights)
     return averaged
 
+
 @jax.jit
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     u_over_cos_lat = di.to_modal(u_nodal / di.cos_lat())

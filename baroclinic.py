@@ -106,7 +106,7 @@ lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
 lat = np.arcsin(sin_lat)
 geopotential = np.stack(
     [get_geopotential(lat, sigma) for sigma in di.g.centers])
-reference_temperatures = np.stack(
+di.g.reference_temperatures = np.stack(
     [get_reference_temperature(sigma) for sigma in di.g.centers])
 nodal_vorticity = np.stack(
     [get_vorticity(lat, sigma) for sigma in di.g.centers])
@@ -121,7 +121,6 @@ steady_state = di.State(
     log_surface_pressure=di.to_modal(log_nodal_surface_pressure),
 )
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
-di.g.reference_temperature = reference_temperatures
 di.g.orography = di.clip_wavenumbers(di.to_modal(orography))
 primitive = di.PrimitiveEquations()
 step_fn = di.imex_runge_kutta(primitive, dt)
@@ -150,7 +149,7 @@ integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
 f0 = di.inverse_transform(trajectory.temperature_variation)
-temperature = f0 + reference_temperatures[:, np.newaxis, np.newaxis]
+temperature = f0 + di.g.reference_temperatures[:, np.newaxis, np.newaxis]
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
 plt.savefig("b.09.png")

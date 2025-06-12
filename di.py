@@ -182,7 +182,9 @@ def centered_vertical_advection(w, x):
                    lax.slice_in_dim(w_times_x_diff, 0, -1, axis=-3))
 
 
-def _evaluate_rhombus(n_l, n_m, x):
+def evaluate_rhombus(x):
+    n_m = g.longitude_wavenumbers
+    n_l = g.total_wavenumbers
     y = np.sqrt(1 - x * x)
     p = np.zeros((n_l, n_m, len(x)))
     p[0, 0] = p[0, 0] + 1 / np.sqrt(2)
@@ -204,7 +206,7 @@ def _evaluate_rhombus(n_l, n_m, x):
 def evaluate(x):
     n_m = g.longitude_wavenumbers
     n_l = g.total_wavenumbers
-    r = np.transpose(_evaluate_rhombus(n_l=n_l, n_m=n_m, x=x), (1, 2, 0))
+    r = np.transpose(evaluate_rhombus(x), (1, 2, 0))
     p = np.zeros((n_m, len(x), n_l))
     for m in range(n_m):
         p[m, :, m:n_l] = r[m, :, 0:n_l - m]

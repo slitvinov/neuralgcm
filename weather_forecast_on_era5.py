@@ -56,10 +56,6 @@ def attach_data_array_units(array):
     return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
 
 
-def attach_xarray_units(ds):
-    return ds.map(attach_data_array_units)
-
-
 def xarray_nondimensionalize(ds):
     return xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds)
 

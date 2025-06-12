@@ -618,9 +618,6 @@ class PrimitiveEquations:
         kinetic = nodal_cos_lat_u2.sum(0) * sec2_lat() / 2
         return -laplacian(to_modal(kinetic))
 
-    def orography_tendency(self):
-        return -gravity_acceleration * laplacian(g.orography)
-
     def nodal_temperature_vertical_tendency(self, aux_state):
         sigma_dot_explicit = aux_state.sigma_dot_explicit
         sigma_dot_full = aux_state.sigma_dot_full
@@ -669,7 +666,7 @@ class PrimitiveEquations:
         divergence_dot = -div_cos_lat((combined_u, combined_v), clip=False)
 
         kinetic_energy_tendency = self.kinetic_energy_tendency(aux_state)
-        orography_tendency = self.orography_tendency()
+        orography_tendency = -gravity_acceleration * laplacian(g.orography)
         horizontal_tendency_fn = functools.partial(
             self.horizontal_scalar_advection, aux_state=aux_state)
         dT_dt_horizontal_nodal, dT_dt_horizontal_modal = horizontal_tendency_fn(

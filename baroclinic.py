@@ -113,12 +113,11 @@ di.g.reference_temperature = np.stack(
     [get_reference_temperature(sigma) for sigma in di.g.centers])
 nodal_vorticity = np.stack(
     [get_vorticity(lat, sigma) for sigma in di.g.centers])
-modal_vorticity = di.to_modal(nodal_vorticity)
 nodal_temperature_variation = np.stack(
     [get_temperature_variation(lat, sigma) for sigma in di.g.centers])
 log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 steady_state = di.State(
-    vorticity=modal_vorticity,
+    vorticity=di.to_modal(nodal_vorticity),
     divergence=np.zeros(modal_shape, dtype),
     temperature_variation=di.to_modal(nodal_temperature_variation),
     log_surface_pressure=di.to_modal(log_nodal_surface_pressure),
@@ -135,10 +134,8 @@ nodal_vorticity = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])
 nodal_divergence = np.stack(
     [get_divergence_perturbation(lat, lon) for sigma in di.g.centers])
-modal_vorticity = di.to_modal(nodal_vorticity)
-modal_divergence = di.to_modal(nodal_divergence)
-perturbation = di.State(vorticity=modal_vorticity,
-                        divergence=modal_divergence,
+perturbation = di.State(vorticity=di.to_modal(nodal_vorticity),
+                        divergence=di.to_modal(nodal_divergence),
                         temperature_variation=np.zeros(modal_shape, dtype),
                         log_surface_pressure=np.zeros(
                             (1, modal_shape[1], modal_shape[2]), dtype))

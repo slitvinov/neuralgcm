@@ -24,12 +24,12 @@ class g:
     pass
 
 
-@functools.partial(jax.jit, static_argnames=("clip", ))
-def uv_nodal_to_vor_div_modal(u_nodal, v_nodal, clip=True):
+@jax.jit
+def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     u_over_cos_lat = to_modal(u_nodal / cos_lat())
     v_over_cos_lat = to_modal(v_nodal / cos_lat())
-    vorticity = curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
-    divergence = div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
+    vorticity = curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
+    divergence = div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
     return vorticity, divergence
 
 

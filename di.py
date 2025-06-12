@@ -608,7 +608,7 @@ def kinetic_energy_tendency0(aux_state):
     return -laplacian(to_modal(kinetic))
 
 
-def horizontal_scalar_advection(self, scalar, aux_state):
+def horizontal_scalar_advection(scalar, aux_state):
     u, v = aux_state.cos_lat_u
     nodal_terms = scalar * aux_state.divergence
     modal_terms = -div_sec_lat(u * scalar, v * scalar)

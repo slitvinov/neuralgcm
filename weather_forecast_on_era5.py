@@ -60,9 +60,8 @@ def xarray_nondimensionalize(ds):
     return xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds)
 
 
-def xarray_to_gcm_dict(ds, var_names=None):
-    if var_names is None:
-        var_names = ds.keys()
+def xarray_to_gcm_dict(ds):
+    var_names = ds.keys()
     result = {}
     for var_name in var_names:
         data = ds[var_name].transpose(..., "longitude", "latitude").data

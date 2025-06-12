@@ -167,18 +167,12 @@ def trajectory_to_xarray(trajectory):
     return ds_result
 
 
-def _interval_overlap(source_bounds, target_bounds):
-    upper = jnp.minimum(target_bounds[1:, jnp.newaxis],
-                        source_bounds[jnp.newaxis, 1:])
-    lower = jnp.maximum(target_bounds[:-1, jnp.newaxis],
-                        source_bounds[jnp.newaxis, :-1])
-    return jnp.maximum(upper - lower, 0)
-
-
-def conservative_regrid_weights(source_bounds, target_bounds):
-    weights = _interval_overlap(source_bounds, target_bounds)
+def conservative_regrid_weights(source, target):
+    upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
+    lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
+    weights = jnp.maximum(upper - lower, 0)
     weights /= jnp.sum(weights, axis=1, keepdims=True)
-    assert weights.shape == (target_bounds.size - 1, source_bounds.size - 1)
+    assert weights.shape == (target.size - 1, source.size - 1)
     return weights
 
 

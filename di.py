@@ -615,6 +615,12 @@ def horizontal_scalar_advection(scalar, aux_state):
     return nodal_terms, modal_terms
 
 
+def _make_filter_fn(scaling):
+    rescale = lambda x: scaling * x if np.shape(x) == np.broadcast_shapes(
+        np.shape(x), scaling.shape) else x
+    return functools.partial(jax.tree_util.tree_map, rescale)
+
+
 class PrimitiveEquations:
 
     def T_ref(self):
@@ -795,9 +801,3 @@ class PrimitiveEquations:
             state.tracers,
             sim_time=state.sim_time,
         )
-
-
-def _make_filter_fn(scaling):
-    rescale = lambda x: scaling * x if np.shape(x) == np.broadcast_shapes(
-        np.shape(x), scaling.shape) else x
-    return functools.partial(jax.tree_util.tree_map, rescale)

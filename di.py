@@ -616,9 +616,6 @@ class PrimitiveEquations:
     def T_ref(self):
         return self.reference_temperature[..., np.newaxis, np.newaxis]
 
-    def _vertical_tendency(self, w, x):
-        return centered_vertical_advection(w, x)
-
     def _t_omega_over_sigma_sp(self, temperature_field, g_term,
                                v_dot_grad_log_sp):
         f = cumulative_sigma_integral(g_term)
@@ -641,10 +638,11 @@ class PrimitiveEquations:
         sigma_dot_explicit = aux_state.sigma_dot_explicit
         sigma_dot_full = aux_state.sigma_dot_full
         temperature_variation = aux_state.temperature_variation
-        tendency = self._vertical_tendency(sigma_dot_full,
-                                           temperature_variation)
+        tendency = centered_vertical_advection(sigma_dot_full,
+                                               temperature_variation)
         if np.unique(self.T_ref.ravel()).size > 1:
-            tendency += self._vertical_tendency(sigma_dot_explicit, self.T_ref)
+            tendency += centered_vertical_advection(sigma_dot_explicit,
+                                                    self.T_ref)
         return tendency
 
     def horizontal_scalar_advection(self, scalar, aux_state):
@@ -671,8 +669,8 @@ class PrimitiveEquations:
         nodal_vorticity_u = -v * total_vorticity * sec2_lat0
         nodal_vorticity_v = u * total_vorticity * sec2_lat0
         d𝜎_dt = aux_state.sigma_dot_full
-        sigma_dot_u = -self._vertical_tendency(d𝜎_dt, u)
-        sigma_dot_v = -self._vertical_tendency(d𝜎_dt, v)
+        sigma_dot_u = -centered_vertical_advection(d𝜎_dt, u)
+        sigma_dot_v = -centered_vertical_advection(d𝜎_dt, v)
         rt = ideal_gas_constant * aux_state.temperature_variation
         grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
         vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat0

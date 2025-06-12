@@ -116,7 +116,6 @@ final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 inner_steps = 1440
 outer_steps = 120
 dt = 8.7504000000000012e-02
-primitive = di.PrimitiveEquations(ref_temps, orography)
 sigma_b = 0.7
 minT = 200
 maxT = 315

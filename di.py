@@ -617,12 +617,6 @@ def horizontal_scalar_advection(scalar, aux_state):
 
 class PrimitiveEquations:
 
-    @property
-    def coriolis_parameter(self):
-        _, sin_lat = nodal_mesh()
-        return sin_lat
-
-    @property
     def T_ref(self):
         return g.reference_temperature[..., np.newaxis, np.newaxis]
 
@@ -632,15 +626,15 @@ class PrimitiveEquations:
         temperature_variation = aux_state.temperature_variation
         tendency = centered_vertical_advection(sigma_dot_full,
                                                temperature_variation)
-        if np.unique(self.T_ref.ravel()).size > 1:
+        if np.unique(self.T_ref().ravel()).size > 1:
             tendency += centered_vertical_advection(sigma_dot_explicit,
-                                                    self.T_ref)
+                                                    self.T_ref())
         return tendency
 
     def nodal_temperature_adiabatic_tendency(self, aux_state):
         g_explicit = aux_state.u_dot_grad_log_sp
         g_full = g_explicit + aux_state.divergence
-        mean_t_part = _t_omega_over_sigma_sp(self.T_ref, g_explicit,
+        mean_t_part = _t_omega_over_sigma_sp(self.T_ref(), g_explicit,
                                              aux_state.u_dot_grad_log_sp)
         variation_t_part = _t_omega_over_sigma_sp(
             aux_state.temperature_variation, g_full,
@@ -651,7 +645,8 @@ class PrimitiveEquations:
         aux_state = compute_diagnostic_state(state)
         sec2_lat0 = sec2_lat()
         u, v = aux_state.cos_lat_u
-        total_vorticity = aux_state.vorticity + self.coriolis_parameter
+        _, coriolis_parameter = nodal_mesh()
+        total_vorticity = aux_state.vorticity + coriolis_parameter
         nodal_vorticity_u = -v * total_vorticity * sec2_lat0
         nodal_vorticity_v = u * total_vorticity * sec2_lat0
         d𝜎_dt = aux_state.sigma_dot_full
@@ -707,7 +702,7 @@ class PrimitiveEquations:
 
     def implicit_terms(self, state):
         geopotential_diff = get_geopotential_diff(state.temperature_variation)
-        rt_log_p = (ideal_gas_constant * self.T_ref *
+        rt_log_p = (ideal_gas_constant * self.T_ref() *
                     state.log_surface_pressure)
         vorticity_implicit = jnp.zeros_like(state.vorticity)
         divergence_implicit = -laplacian(geopotential_diff + rt_log_p)

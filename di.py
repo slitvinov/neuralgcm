@@ -23,6 +23,7 @@ ideal_gas_constant = kappa * 0.0011628807950492582
 class g:
     pass
 
+
 def to_modal(z):
     return tree_map_over_nonscalars(transform, z)
 
@@ -683,7 +684,7 @@ class PrimitiveEquations:
         dT_dt_adiabatic = self.nodal_temperature_adiabatic_tendency(aux_state)
         log_sp_tendency = -sigma_integral(aux_state.u_dot_grad_log_sp)
         sigma_dot_full = aux_state.sigma_dot_full
-        vertical_tendency_fn = functools.partial(self._vertical_tendency,
+        vertical_tendency_fn = functools.partial(centered_vertical_advection,
                                                  sigma_dot_full)
         tracers_vertical_nodal = jax.tree_util.tree_map(
             vertical_tendency_fn, aux_state.tracers)

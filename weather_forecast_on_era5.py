@@ -282,6 +282,7 @@ def digital_filter_initialization(equation, ode_solver, filters, time_span,
 
     return f
 
+
 @jax.jit
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     u_over_cos_lat = di.to_modal(u_nodal / cos_lat())

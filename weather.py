@@ -367,10 +367,10 @@ time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 
 
 def fun(state):
-    forward_step = di.step_with_filters(ode_solver(equation, dt),
+    forward_step = di.step_with_filters(di.imex_runge_kutta(equation, dt),
                                         [hyperdiffusion_filter])
     backward_step = di.step_with_filters(
-        ode_solver(TimeReversedImExODE(equation), dt), filters)
+        di.imex_runge_kutta(TimeReversedImExODE(equation), dt), filters)
     weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
     init_weight = 1.0
     total_weight = init_weight + 2 * weights.sum()

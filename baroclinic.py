@@ -76,6 +76,7 @@ def get_divergence_perturbation(lat, lon):
              (np.sqrt(1 - x**2))))
 
 
+dtype = np.dtype('float32')
 gravity_acceleration = 7.2364082834567185e+01
 sigma_tropo = 0.2
 sigma0 = 0.252
@@ -96,11 +97,13 @@ di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
 di.g.latitude_nodes = 32
 di.g.layers = 12
-di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
+di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=dtype)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
+modal_shape = di.g.layers, 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
+
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
 lat = np.arcsin(sin_lat)
@@ -116,7 +119,7 @@ nodal_temperature_variation = np.stack(
 log_nodal_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 steady_state = di.State(
     vorticity=modal_vorticity,
-    divergence=np.zeros_like(modal_vorticity),
+    divergence=np.zeros(modal_shape, dtype),
     temperature_variation=di.to_modal(nodal_temperature_variation),
     log_surface_pressure=di.to_modal(log_nodal_surface_pressure),
 )
@@ -134,13 +137,11 @@ nodal_divergence = np.stack(
     [get_divergence_perturbation(lat, lon) for sigma in di.g.centers])
 modal_vorticity = di.to_modal(nodal_vorticity)
 modal_divergence = di.to_modal(nodal_divergence)
-perturbation = di.State(
-    vorticity=modal_vorticity,
-    divergence=modal_divergence,
-    temperature_variation=np.zeros_like(modal_vorticity),
-    log_surface_pressure=np.zeros_like(modal_vorticity[:1, ...]),
-)
-
+perturbation = di.State(vorticity=modal_vorticity,
+                        divergence=modal_divergence,
+                        temperature_variation=np.zeros(modal_shape, dtype),
+                        log_surface_pressure=np.zeros(
+                            (1, modal_shape[1], modal_shape[2]), dtype))
 state = steady_state + perturbation
 inner_steps = 72
 outer_steps = 168

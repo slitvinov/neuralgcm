@@ -211,8 +211,8 @@ def evaluate(x):
 
 
 def real_basis():
-    wavenumbers = g.longitude_wavenumbers,
-    nodes = g.longitude_nodes,
+    wavenumbers = g.longitude_wavenumbers
+    nodes = g.longitude_nodes
     dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
     cos = np.real(dft[:, 1:])
     sin = -np.imag(dft[:, 1:])

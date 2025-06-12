@@ -145,7 +145,7 @@ def trajectory_to_xarray(trajectory):
     }
     times = float(save_every / units.hour) * np.arange(outer_steps)
     lon = 180 / np.pi * di.nodal_axes()[0]
-    lat = 180 / np.pi * np.arcsin(nodal_axes()[1])
+    lat = 180 / np.pi * np.arcsin(di.nodal_axes()[1])
     dims = ("time", "sigma", "longitude", "latitude")
     ds_result = xarray.Dataset(
         data_vars={

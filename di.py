@@ -637,25 +637,6 @@ class PrimitiveEquations:
     def orography_tendency(self):
         return -gravity_acceleration * laplacian(self.orography)
 
-    def curl_and_div_tendencies(self, aux_state):
-        sec2_lat0 = sec2_lat()
-        u, v = aux_state.cos_lat_u
-        total_vorticity = aux_state.vorticity + self.coriolis_parameter
-        nodal_vorticity_u = -v * total_vorticity * sec2_lat0
-        nodal_vorticity_v = u * total_vorticity * sec2_lat0
-        d𝜎_dt = aux_state.sigma_dot_full
-        sigma_dot_u = -self._vertical_tendency(d𝜎_dt, u)
-        sigma_dot_v = -self._vertical_tendency(d𝜎_dt, v)
-        rt = ideal_gas_constant * aux_state.temperature_variation
-        grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
-        vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat0
-        vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat0
-        combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
-        combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
-        dζ_dt = -curl_cos_lat((combined_u, combined_v), clip=False)
-        d𝛅_dt = -div_cos_lat((combined_u, combined_v), clip=False)
-        return (dζ_dt, d𝛅_dt)
-
     def nodal_temperature_vertical_tendency(self, aux_state):
         sigma_dot_explicit = aux_state.sigma_dot_explicit
         sigma_dot_full = aux_state.sigma_dot_full
@@ -688,8 +669,24 @@ class PrimitiveEquations:
 
     def explicit_terms(self, state):
         aux_state = compute_diagnostic_state(state)
-        vorticity_tendency, divergence_dot = self.curl_and_div_tendencies(
-            aux_state)
+        sec2_lat0 = sec2_lat()
+        u, v = aux_state.cos_lat_u
+        total_vorticity = aux_state.vorticity + self.coriolis_parameter
+        nodal_vorticity_u = -v * total_vorticity * sec2_lat0
+        nodal_vorticity_v = u * total_vorticity * sec2_lat0
+        d𝜎_dt = aux_state.sigma_dot_full
+        sigma_dot_u = -self._vertical_tendency(d𝜎_dt, u)
+        sigma_dot_v = -self._vertical_tendency(d𝜎_dt, v)
+        rt = ideal_gas_constant * aux_state.temperature_variation
+        grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
+        vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat0
+        vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat0
+        combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
+        combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
+        vorticity_tendency = -curl_cos_lat(
+            (combined_u, combined_v), clip=False)
+        divergence_dot = -div_cos_lat((combined_u, combined_v), clip=False)
+
         kinetic_energy_tendency = self.kinetic_energy_tendency(aux_state)
         orography_tendency = self.orography_tendency()
         horizontal_tendency_fn = functools.partial(

@@ -98,8 +98,6 @@ di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
-
-grid = di.Grid()
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
@@ -122,7 +120,7 @@ steady_state = di.State(
 )
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
 orography = di.clip_wavenumbers(di.to_modal(orography))
-primitive = di.PrimitiveEquations(reference_temperatures, orography, grid)
+primitive = di.PrimitiveEquations(reference_temperatures, orography)
 step_fn = di.imex_runge_kutta(primitive, dt)
 filters = [
     di.exponential_step_filter(di.g.total_wavenumbers, dt),

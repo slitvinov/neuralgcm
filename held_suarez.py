@@ -25,9 +25,9 @@ def equilibrium_temperature(nodal_surface_pressure):
 
 
 def explicit_terms(state):
-    aux_state = di.compute_diagnostic_state(state, coords)
+    aux_state = di.compute_diagnostic_state(state)
     nodal_velocity_tendency = jax.tree.map(
-        lambda x: -kv() * x / coords.cos_lat**2,
+        lambda x: -kv() * x / di.cos_lat()**2,
         aux_state.cos_lat_u,
     )
     nodal_temperature = (ref_temps[:, np.newaxis, np.newaxis] +
@@ -38,8 +38,8 @@ def explicit_terms(state):
     nodal_temperature_tendency = -kt() * (nodal_temperature - Teq)
     temperature_tendency = di.to_modal(nodal_temperature_tendency)
     velocity_tendency = di.to_modal(nodal_velocity_tendency)
-    vorticity_tendency = coords.curl_cos_lat(velocity_tendency)
-    divergence_tendency = coords.div_cos_lat(velocity_tendency)
+    vorticity_tendency = di.curl_cos_lat(velocity_tendency)
+    divergence_tendency = di.div_cos_lat(velocity_tendency)
     log_surface_pressure_tendency = jnp.zeros_like(state.log_surface_pressure)
     return di.State(
         vorticity=vorticity_tendency,
@@ -63,10 +63,9 @@ di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
-coords = di.Grid()
 tref = 288.0
 rng_key = jax.random.PRNGKey(0)
-lon, sin_lat = coords.nodal_mesh
+lon, sin_lat = di.nodal_mesh()
 lat = np.arcsin(sin_lat)
 p0 = 2.9954997684550640e+19
 p1 = 1.4977498842275320e+18
@@ -80,8 +79,7 @@ T0 = 288.16
 M = 0.02896968
 R0 = 8.314462618
 relative_pressure = (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
-surface_pressure = (p0 * np.ones((1, ) + coords.nodal_shape) *
-                    relative_pressure)
+surface_pressure = (p0 * np.ones((1, ) + di.nodal_shape()) * relative_pressure)
 keys = jax.random.split(rng_key, 2)
 lon0 = jax.random.uniform(keys[1], minval=np.pi / 2, maxval=3 * np.pi / 2)
 lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)
@@ -104,7 +102,7 @@ orography = di.clip_wavenumbers(di.to_modal(orography))
 inner_steps = 2
 outer_steps = 144
 dt = 4.3752000000000006e-02
-primitive = di.PrimitiveEquations(ref_temps, orography, coords)
+primitive = di.PrimitiveEquations(ref_temps, orography)
 integrator = di.imex_runge_kutta
 step_fn = integrator(primitive, dt)
 filters = [di.exponential_step_filter(di.g.total_wavenumbers, dt)]
@@ -118,7 +116,7 @@ final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
 inner_steps = 1440
 outer_steps = 120
 dt = 8.7504000000000012e-02
-primitive = di.PrimitiveEquations(ref_temps, orography, coords)
+primitive = di.PrimitiveEquations(ref_temps, orography)
 sigma_b = 0.7
 minT = 200
 maxT = 315
@@ -130,7 +128,7 @@ ka = 1.9840362853253690e-03
 ks = 1.9840362853253687e-02
 
 sigma = di.g.centers
-_, sin_lat = coords.nodal_mesh
+_, sin_lat = di.nodal_mesh()
 lat = np.arcsin(sin_lat)
 
 primitive_with_hs = di.ImplicitExplicitODE(explicit_fn,

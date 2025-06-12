@@ -24,12 +24,12 @@ class g:
     pass
 
 
-@functools.partial(jax.jit, static_argnames=("grid", "clip"))
-def uv_nodal_to_vor_div_modal(grid, u_nodal, v_nodal, clip=True):
-    u_over_cos_lat = to_modal(u_nodal / grid.cos_lat)
-    v_over_cos_lat = to_modal(v_nodal / grid.cos_lat)
-    vorticity = grid.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
-    divergence = grid.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
+@functools.partial(jax.jit, static_argnames=("clip", ))
+def uv_nodal_to_vor_div_modal(u_nodal, v_nodal, clip=True):
+    u_over_cos_lat = to_modal(u_nodal / cos_lat())
+    v_over_cos_lat = to_modal(v_nodal / cos_lat())
+    vorticity = curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
+    divergence = div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=clip)
     return vorticity, divergence
 
 
@@ -229,139 +229,140 @@ def real_basis_derivative(u):
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
-class Grid:
+def nodal_axes():
+    longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
+    sin_latitude, _ = sps.roots_legendre(g.latitude_nodes)
+    return longitude, sin_latitude
 
-    @functools.cached_property
-    def nodal_axes(self):
-        longitude = np.linspace(0,
-                                2 * np.pi,
-                                g.longitude_nodes,
-                                endpoint=False)
-        sin_latitude, _ = sps.roots_legendre(g.latitude_nodes)
-        return longitude, sin_latitude
 
-    @functools.cached_property
-    def nodal_shape(self):
-        return g.longitude_nodes, g.latitude_nodes
+def nodal_shape():
+    return g.longitude_nodes, g.latitude_nodes
 
-    @functools.cached_property
-    def nodal_mesh(self):
-        return np.meshgrid(*self.nodal_axes, indexing="ij")
 
-    @functools.cached_property
-    def modal_axes(self):
-        m_pos = np.arange(1, g.longitude_wavenumbers)
-        m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
-        lon_wavenumbers = np.concatenate([[0], m_pos_neg])
-        tot_wavenumbers = np.arange(g.total_wavenumbers)
-        return lon_wavenumbers, tot_wavenumbers
+def nodal_mesh():
+    return np.meshgrid(*nodal_axes(), indexing="ij")
 
-    @functools.cached_property
-    def modal_shape(self):
-        return 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
 
-    @functools.cached_property
-    def mask(self):
-        m, l = np.meshgrid(*self.modal_axes, indexing="ij")
-        return abs(m) <= l
+def modal_axes():
+    m_pos = np.arange(1, g.longitude_wavenumbers)
+    m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
+    lon_wavenumbers = np.concatenate([[0], m_pos_neg])
+    tot_wavenumbers = np.arange(g.total_wavenumbers)
+    return lon_wavenumbers, tot_wavenumbers
 
-    @functools.cached_property
-    def modal_mesh(self):
-        return np.meshgrid(*self.modal_axes, indexing="ij")
 
-    @functools.cached_property
-    def cos_lat(self):
-        _, sin_lat = self.nodal_axes
-        return np.sqrt(1 - sin_lat**2)
+def modal_shape():
+    return 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
 
-    @functools.cached_property
-    def sec2_lat(self):
-        _, sin_lat = self.nodal_axes
-        return 1 / (1 - sin_lat**2)
 
-    @functools.cached_property
-    def laplacian_eigenvalues(self):
-        _, l = self.modal_axes
-        return -l * (l + 1) / (1.0**2)
+def mask():
+    m, l = np.meshgrid(*modal_axes(), indexing="ij")
+    return abs(m) <= l
 
-    def laplacian(self, x):
-        return x * self.laplacian_eigenvalues
 
-    def inverse_laplacian(self, x):
-        with np.errstate(divide="ignore", invalid="ignore"):
-            inverse_eigenvalues = 1 / self.laplacian_eigenvalues
-        inverse_eigenvalues[0] = 0
-        inverse_eigenvalues[g.total_wavenumbers:] = 0
-        assert not np.isnan(inverse_eigenvalues).any()
-        return x * inverse_eigenvalues
+def modal_mesh():
+    return np.meshgrid(*modal_axes(), indexing="ij")
 
-    @functools.cached_property
-    def _derivative_recurrence_weights(self):
-        m, l = self.modal_mesh
-        a = np.sqrt(self.mask * (l**2 - m**2) / (4 * l**2 - 1))
-        a[:, 0] = 0
-        b = np.sqrt(self.mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
-        b[:, -1] = 0
-        return a, b
 
-    def d_dlon(self, x):
-        return real_basis_derivative(x)
+def cos_lat():
+    _, sin_lat = nodal_axes()
+    return np.sqrt(1 - sin_lat**2)
 
-    def cos_lat_d_dlat(self, x):
-        _, l = self.modal_mesh
-        a, b = self._derivative_recurrence_weights
-        x_lm1 = shift(((l + 1) * a) * x, -1, axis=-1)
-        x_lp1 = shift((-l * b) * x, +1, axis=-1)
-        return x_lm1 + x_lp1
 
-    def sec_lat_d_dlat_cos2(self, x):
-        _, l = self.modal_mesh
-        a, b = self._derivative_recurrence_weights
-        x_lm1 = shift(((l - 1) * a) * x, -1, axis=-1)
-        x_lp1 = shift((-(l + 2) * b) * x, +1, axis=-1)
-        return x_lm1 + x_lp1
+def sec2_lat():
+    _, sin_lat = nodal_axes()
+    return 1 / (1 - sin_lat**2)
 
-    def cos_lat_grad(self, x, clip: bool = True):
-        raw = self.d_dlon(x) / 1.0, self.cos_lat_d_dlat(x) / 1.0
-        if clip:
-            return clip_wavenumbers(raw)
-        return raw
 
-    def k_cross(self, v):
-        return -v[1], v[0]
+def laplacian_eigenvalues():
+    _, l = modal_axes()
+    return -l * (l + 1) / (1.0**2)
 
-    def div_cos_lat(
-        self,
-        v,
-        clip: bool = True,
-    ):
-        raw = (self.d_dlon(v[0]) + self.sec_lat_d_dlat_cos2(v[1])) / 1.0
-        if clip:
-            return clip_wavenumbers(raw)
-        return raw
 
-    def curl_cos_lat(
-        self,
-        v,
-        clip: bool = True,
-    ):
-        raw = (self.d_dlon(v[1]) - self.sec_lat_d_dlat_cos2(v[0])) / 1.0
-        if clip:
-            return clip_wavenumbers(raw)
-        return raw
+def laplacian(x):
+    return x * laplacian_eigenvalues()
+
+
+def inverse_laplacian(x):
+    with np.errstate(divide="ignore", invalid="ignore"):
+        inverse_eigenvalues = 1 / laplacian_eigenvalues()
+    inverse_eigenvalues[0] = 0
+    inverse_eigenvalues[g.total_wavenumbers:] = 0
+    assert not np.isnan(inverse_eigenvalues).any()
+    return x * inverse_eigenvalues
+
+
+def _derivative_recurrence_weights():
+    m, l = modal_mesh()
+    a = np.sqrt(mask() * (l**2 - m**2) / (4 * l**2 - 1))
+    a[:, 0] = 0
+    b = np.sqrt(mask() * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
+    b[:, -1] = 0
+    return a, b
+
+
+def d_dlon(x):
+    return real_basis_derivative(x)
+
+
+def cos_lat_d_dlat(x):
+    _, l = modal_mesh()
+    a, b = _derivative_recurrence_weights()
+    x_lm1 = shift(((l + 1) * a) * x, -1, axis=-1)
+    x_lp1 = shift((-l * b) * x, +1, axis=-1)
+    return x_lm1 + x_lp1
+
+
+def sec_lat_d_dlat_cos2(x):
+    _, l = modal_mesh()
+    a, b = _derivative_recurrence_weights()
+    x_lm1 = shift(((l - 1) * a) * x, -1, axis=-1)
+    x_lp1 = shift((-(l + 2) * b) * x, +1, axis=-1)
+    return x_lm1 + x_lp1
+
+
+def cos_lat_grad(x, clip: bool = True):
+    raw = d_dlon(x) / 1.0, cos_lat_d_dlat(x) / 1.0
+    if clip:
+        return clip_wavenumbers(raw)
+    return raw
+
+
+def k_cross(v):
+    return -v[1], v[0]
+
+
+def div_cos_lat(
+    v,
+    clip: bool = True,
+):
+    raw = (d_dlon(v[0]) + sec_lat_d_dlat_cos2(v[1])) / 1.0
+    if clip:
+        return clip_wavenumbers(raw)
+    return raw
+
+
+def curl_cos_lat(
+    v,
+    clip: bool = True,
+):
+    raw = (d_dlon(v[1]) - sec_lat_d_dlat_cos2(v[0])) / 1.0
+    if clip:
+        return clip_wavenumbers(raw)
+    return raw
 
 
 def add_constant(x: jnp.ndarray, c):
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
 
 
-def get_cos_lat_vector(vorticity, divergence, grid, clip=True):
-    stream_function = grid.inverse_laplacian(vorticity)
-    velocity_potential = grid.inverse_laplacian(divergence)
+def get_cos_lat_vector(vorticity, divergence, clip=True):
+    stream_function = inverse_laplacian(vorticity)
+    velocity_potential = inverse_laplacian(divergence)
     return jax.tree_util.tree_map(
         lambda x, y: x + y,
-        grid.cos_lat_grad(velocity_potential, clip=clip),
-        grid.k_cross(grid.cos_lat_grad(stream_function, clip=clip)),
+        cos_lat_grad(velocity_potential, clip=clip),
+        k_cross(cos_lat_grad(stream_function, clip=clip)),
     )
 
 
@@ -505,7 +506,7 @@ class DiagnosticState:
     tracers: Any
 
 
-def compute_diagnostic_state(state, horizontal):
+def compute_diagnostic_state(state):
 
     nodal_vorticity = to_nodal(state.vorticity)
     nodal_divergence = to_nodal(state.divergence)
@@ -513,17 +514,13 @@ def compute_diagnostic_state(state, horizontal):
     tracers = to_nodal(state.tracers)
     nodal_cos_lat_u = jax.tree_util.tree_map(
         to_nodal,
-        get_cos_lat_vector(state.vorticity,
-                           state.divergence,
-                           horizontal,
-                           clip=False),
+        get_cos_lat_vector(state.vorticity, state.divergence, clip=False),
     )
-    cos_lat_grad_log_sp = horizontal.cos_lat_grad(state.log_surface_pressure,
-                                                  clip=False)
+    cos_lat_grad_log_sp = cos_lat_grad(state.log_surface_pressure, clip=False)
     nodal_cos_lat_grad_log_sp = to_nodal(cos_lat_grad_log_sp)
     nodal_u_dot_grad_log_sp = sum(
         jax.tree_util.tree_map(
-            lambda x, y: x * y * horizontal.sec2_lat,
+            lambda x, y: x * y * sec2_lat(),
             nodal_cos_lat_u,
             nodal_cos_lat_grad_log_sp,
         ))
@@ -609,22 +606,21 @@ def _vertical_matvec_per_wavenumber(a, x):
     return einsum("lgh,...hml->...gml", a, x)
 
 
-def div_sec_lat(m_component, n_component, grid):
-    m_component = to_modal(m_component * grid.sec2_lat)
-    n_component = to_modal(n_component * grid.sec2_lat)
-    return grid.div_cos_lat((m_component, n_component), clip=False)
+def div_sec_lat(m_component, n_component):
+    m_component = to_modal(m_component * sec2_lat())
+    n_component = to_modal(n_component * sec2_lat())
+    return div_cos_lat((m_component, n_component), clip=False)
 
 
 class PrimitiveEquations:
 
-    def __init__(self, reference_temperature, orography, coords):
+    def __init__(self, reference_temperature, orography):
         self.reference_temperature = reference_temperature
         self.orography = orography
-        self.coords = coords
 
     @property
     def coriolis_parameter(self):
-        _, sin_lat = self.coords.nodal_mesh
+        _, sin_lat = nodal_mesh()
         return sin_lat
 
     @property
@@ -646,29 +642,29 @@ class PrimitiveEquations:
 
     def kinetic_energy_tendency(self, aux_state):
         nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
-        kinetic = nodal_cos_lat_u2.sum(0) * self.coords.sec2_lat / 2
-        return -self.coords.laplacian(to_modal(kinetic))
+        kinetic = nodal_cos_lat_u2.sum(0) * sec2_lat() / 2
+        return -laplacian(to_modal(kinetic))
 
     def orography_tendency(self):
-        return -gravity_acceleration * self.coords.laplacian(self.orography)
+        return -gravity_acceleration * laplacian(self.orography)
 
     def curl_and_div_tendencies(self, aux_state):
-        sec2_lat = self.coords.sec2_lat
+        sec2_lat0 = sec2_lat()
         u, v = aux_state.cos_lat_u
         total_vorticity = aux_state.vorticity + self.coriolis_parameter
-        nodal_vorticity_u = -v * total_vorticity * sec2_lat
-        nodal_vorticity_v = u * total_vorticity * sec2_lat
+        nodal_vorticity_u = -v * total_vorticity * sec2_lat0
+        nodal_vorticity_v = u * total_vorticity * sec2_lat0
         d𝜎_dt = aux_state.sigma_dot_full
         sigma_dot_u = -self._vertical_tendency(d𝜎_dt, u)
         sigma_dot_v = -self._vertical_tendency(d𝜎_dt, v)
         rt = ideal_gas_constant * aux_state.temperature_variation
         grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
-        vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat
-        vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat
+        vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat0
+        vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat0
         combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
         combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
-        dζ_dt = -self.coords.curl_cos_lat((combined_u, combined_v), clip=False)
-        d𝛅_dt = -self.coords.div_cos_lat((combined_u, combined_v), clip=False)
+        dζ_dt = -curl_cos_lat((combined_u, combined_v), clip=False)
+        d𝛅_dt = -div_cos_lat((combined_u, combined_v), clip=False)
         return (dζ_dt, d𝛅_dt)
 
     def nodal_temperature_vertical_tendency(self, aux_state):
@@ -684,7 +680,7 @@ class PrimitiveEquations:
     def horizontal_scalar_advection(self, scalar, aux_state):
         u, v = aux_state.cos_lat_u
         nodal_terms = scalar * aux_state.divergence
-        modal_terms = -div_sec_lat(u * scalar, v * scalar, self.coords)
+        modal_terms = -div_sec_lat(u * scalar, v * scalar)
         return nodal_terms, modal_terms
 
     def nodal_temperature_adiabatic_tendency(self, aux_state):
@@ -702,7 +698,7 @@ class PrimitiveEquations:
         return -sigma_integral(g)
 
     def explicit_terms(self, state):
-        aux_state = compute_diagnostic_state(state, self.coords)
+        aux_state = compute_diagnostic_state(state)
         vorticity_tendency, divergence_dot = self.curl_and_div_tendencies(
             aux_state)
         kinetic_energy_tendency = self.kinetic_energy_tendency(aux_state)
@@ -748,8 +744,7 @@ class PrimitiveEquations:
         rt_log_p = (ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)
         vorticity_implicit = jnp.zeros_like(state.vorticity)
-        divergence_implicit = -self.coords.laplacian(geopotential_diff +
-                                                     rt_log_p)
+        divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
         temperature_variation_implicit = get_temperature_implicit(
             state.divergence,
             self.reference_temperature,
@@ -769,13 +764,13 @@ class PrimitiveEquations:
 
     def implicit_inverse(self, state, step_size):
         eye = np.eye(g.layers)[np.newaxis]
-        lam = self.coords.laplacian_eigenvalues
+        lam = laplacian_eigenvalues()
         geo = get_geopotential_weights()
         r = ideal_gas_constant
         h = get_temperature_implicit_weights(self.reference_temperature)
         t = self.reference_temperature[:, np.newaxis]
         thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
-        l = self.coords.modal_shape[1]
+        l = modal_shape()[1]
         j = k = g.layers
         row0 = np.concatenate(
             [

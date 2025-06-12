@@ -187,8 +187,8 @@ def conservative_regrid_weights(source_bounds, target_bounds):
     return weights
 
 
-@functools.partial(jax.jit, static_argnums=(1, ))
-def regrid_hybrid_to_sigma(fields, hybrid_coords, surface_pressure):
+@jax.jit
+def regrid_hybrid_to_sigma(fields, surface_pressure):
 
     @jax.jit
     @functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")
@@ -339,19 +339,13 @@ a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
                                    usecols=(1, 2),
                                    delimiter="\t").T
 a_boundaries = a_in_pa / 100
-
-source_vertical = HybridCoordinates()
 ds_nondim_init = xarray_nondimensionalize(ds_init)
 model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
 sp_init_hpa = (ds_init.surface_pressure.transpose(
     "longitude", "latitude").data.to("hPa").magnitude)
-nodal_inputs = regrid_hybrid_to_sigma(
-    fields=model_level_inputs,
-    hybrid_coords=source_vertical,
-    surface_pressure=sp_init_hpa,
-)
+nodal_inputs = regrid_hybrid_to_sigma(model_level_inputs, sp_init_hpa)
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]

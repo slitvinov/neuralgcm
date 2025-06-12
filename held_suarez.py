@@ -169,7 +169,7 @@ integrate_fn = jax.jit(
         inner_steps=inner_steps,
     ))
 final, trajectory = jax.block_until_ready(integrate_fn(final))
-f0 = di.to_nodal(trajectory.temperature_variation)
+f0 = di.inverse_transform(trajectory.temperature_variation)
 plt.contourf(f0[-1, 22, :, :])
 plt.savefig("h.12.png")
 np.asarray(f0).tofile("h.12.raw")

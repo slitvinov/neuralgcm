@@ -336,20 +336,14 @@ def k_cross(v):
     return -v[1], v[0]
 
 
-def div_cos_lat(
-    v,
-    clip: bool = True,
-):
+def div_cos_lat(v, clip=True):
     raw = (d_dlon(v[0]) + sec_lat_d_dlat_cos2(v[1])) / 1.0
     if clip:
         return clip_wavenumbers(raw)
     return raw
 
 
-def curl_cos_lat(
-    v,
-    clip: bool = True,
-):
+def curl_cos_lat(v, clip=True):
     raw = (d_dlon(v[1]) - sec_lat_d_dlat_cos2(v[0])) / 1.0
     if clip:
         return clip_wavenumbers(raw)

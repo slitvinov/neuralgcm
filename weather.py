@@ -375,7 +375,6 @@ raw_init_state = di.State(
 )
 orography = di.to_modal(orography_input)
 orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
-di.g.reference_temperature = reference_temperature
 di.g.orography = orography
 eq = di.PrimitiveEquations()
 res_factor = di.g.latitude_nodes / 128

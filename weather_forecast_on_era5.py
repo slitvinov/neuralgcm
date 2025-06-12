@@ -353,7 +353,7 @@ nodal_inputs = regrid_hybrid_to_sigma(model_level_inputs, sp_init_hpa)
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]
-vorticity, divergence = di.uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
+vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
 ref_temps = ref_temp_si * np.ones((di.g.layers, ))
 assert ref_temps.shape == (di.g.layers, )
 temperature_variation = di.to_modal(t_nodal - ref_temps.reshape(-1, 1, 1))

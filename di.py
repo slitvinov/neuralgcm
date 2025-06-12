@@ -238,10 +238,6 @@ def nodal_axes():
     return longitude, sin_latitude
 
 
-def nodal_shape():
-    return g.longitude_nodes, g.latitude_nodes
-
-
 def nodal_mesh():
     return np.meshgrid(*nodal_axes(), indexing="ij")
 

@@ -79,7 +79,8 @@ T0 = 288.16
 M = 0.02896968
 R0 = 8.314462618
 relative_pressure = (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
-surface_pressure = (p0 * np.ones((1, ) + di.nodal_shape()) * relative_pressure)
+surface_pressure = p0 * np.ones(1, di.g.longitude_nodes,
+                                di.g.latitude_nodes) * relative_pressure
 keys = jax.random.split(rng_key, 2)
 lon0 = jax.random.uniform(keys[1], minval=np.pi / 2, maxval=3 * np.pi / 2)
 lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)

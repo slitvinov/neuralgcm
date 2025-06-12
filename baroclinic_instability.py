@@ -148,7 +148,7 @@ integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)
-f0 = di.to_nodal(trajectory.temperature_variation)
+f0 = di.inverse_transform(trajectory.temperature_variation)
 temperature = f0 + reference_temperatures[:, np.newaxis, np.newaxis]
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)

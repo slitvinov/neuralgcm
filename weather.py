@@ -104,7 +104,7 @@ def nodal_prognostics_and_diagnostics(state):
     geopotential_nodal = di.to_nodal(
         di.get_geopotential(
             state.temperature_variation,
-            eq.reference_temperature,
+            di.g.reference_temperature,
             orography,
         ))
     vor_nodal = di.to_nodal(state.vorticity)
@@ -112,7 +112,7 @@ def nodal_prognostics_and_diagnostics(state):
     sp_nodal = jnp.exp(di.to_nodal(state.log_surface_pressure))
     tracers_nodal = {k: di.to_nodal(v) for k, v in state.tracers.items()}
     t_nodal = (di.to_nodal(state.temperature_variation) +
-               ref_temps[:, np.newaxis, np.newaxis])
+               di.g.reference_temperature[:, np.newaxis, np.newaxis])
     vertical_velocity_nodal = compute_vertical_velocity(state)
     state_nodal = {
         "u_component_of_wind": u_nodal,
@@ -354,9 +354,9 @@ u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]
 vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
-ref_temps = ref_temp_si * np.ones((di.g.layers, ))
-assert ref_temps.shape == (di.g.layers, )
-temperature_variation = di.to_modal(t_nodal - ref_temps.reshape(-1, 1, 1))
+di.g.reference_temperature = ref_temp_si * np.ones((di.g.layers, ))
+temperature_variation = di.to_modal(
+    t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
 log_sp = di.to_modal(np.log(sp_nodal))
 tracers = di.to_modal({
     "specific_humidity":
@@ -375,7 +375,7 @@ raw_init_state = di.State(
 )
 orography = di.to_modal(orography_input)
 orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
-di.g.reference_temperature = ref_temps
+di.g.reference_temperature = reference_temperature
 di.g.orography = orography
 eq = di.PrimitiveEquations()
 res_factor = di.g.latitude_nodes / 128

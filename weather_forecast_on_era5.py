@@ -377,7 +377,7 @@ orography = di.to_modal(orography_input)
 orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
 di.g.reference_temperature = ref_temps
 di.g.orography = orography
-eq = di.PrimitiveEquations(ref_temps, orography)
+eq = di.PrimitiveEquations()
 res_factor = di.g.latitude_nodes / 128
 dt = DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *

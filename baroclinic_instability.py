@@ -122,7 +122,7 @@ orography = get_geopotential(lat, 1.0) / gravity_acceleration
 orography = di.clip_wavenumbers(di.to_modal(orography))
 di.g.reference_temperature = reference_temperatures
 di.g.orography = orography
-primitive = di.PrimitiveEquations(reference_temperatures, orography)
+primitive = di.PrimitiveEquations()
 step_fn = di.imex_runge_kutta(primitive, dt)
 filters = [
     di.exponential_step_filter(di.g.total_wavenumbers, dt),

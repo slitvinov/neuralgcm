@@ -594,10 +594,6 @@ def div_sec_lat(m_component, n_component):
 
 class PrimitiveEquations:
 
-    def __init__(self, reference_temperature, orography):
-        self.reference_temperature = reference_temperature
-        self.orography = orography
-
     @property
     def coriolis_parameter(self):
         _, sin_lat = nodal_mesh()
@@ -605,7 +601,7 @@ class PrimitiveEquations:
 
     @property
     def T_ref(self):
-        return self.reference_temperature[..., np.newaxis, np.newaxis]
+        return g.reference_temperature[..., np.newaxis, np.newaxis]
 
     def _t_omega_over_sigma_sp(self, temperature_field, g_term,
                                v_dot_grad_log_sp):
@@ -623,7 +619,7 @@ class PrimitiveEquations:
         return -laplacian(to_modal(kinetic))
 
     def orography_tendency(self):
-        return -gravity_acceleration * laplacian(self.orography)
+        return -gravity_acceleration * laplacian(g.orography)
 
     def nodal_temperature_vertical_tendency(self, aux_state):
         sigma_dot_explicit = aux_state.sigma_dot_explicit
@@ -718,7 +714,7 @@ class PrimitiveEquations:
         divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
         temperature_variation_implicit = get_temperature_implicit(
             state.divergence,
-            self.reference_temperature,
+            g.reference_temperature,
         )
         log_surface_pressure_implicit = -_vertical_matvec(
             g.layer_thickness[np.newaxis], state.divergence)
@@ -738,8 +734,8 @@ class PrimitiveEquations:
         lam = laplacian_eigenvalues()
         geo = get_geopotential_weights()
         r = ideal_gas_constant
-        h = get_temperature_implicit_weights(self.reference_temperature)
-        t = self.reference_temperature[:, np.newaxis]
+        h = get_temperature_implicit_weights(g.reference_temperature)
+        t = g.reference_temperature[:, np.newaxis]
         thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
         l = modal_shape()[1]
         j = k = g.layers

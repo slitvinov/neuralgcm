@@ -592,6 +592,29 @@ def div_sec_lat(m_component, n_component):
     return div_cos_lat((m_component, n_component), clip=False)
 
 
+def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
+    f = cumulative_sigma_integral(g_term)
+    alpha = get_sigma_ratios()
+    alpha = alpha[:, np.newaxis, np.newaxis]
+    del_𝜎 = g.layer_thickness[:, np.newaxis, np.newaxis]
+    padding = [(1, 0), (0, 0), (0, 0)]
+    g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]) / del_𝜎
+    return temperature_field * (v_dot_grad_log_sp - g_part)
+
+
+def kinetic_energy_tendency0(aux_state):
+    nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
+    kinetic = nodal_cos_lat_u2.sum(0) * sec2_lat() / 2
+    return -laplacian(to_modal(kinetic))
+
+
+def horizontal_scalar_advection(self, scalar, aux_state):
+    u, v = aux_state.cos_lat_u
+    nodal_terms = scalar * aux_state.divergence
+    modal_terms = -div_sec_lat(u * scalar, v * scalar)
+    return nodal_terms, modal_terms
+
+
 class PrimitiveEquations:
 
     @property
@@ -602,21 +625,6 @@ class PrimitiveEquations:
     @property
     def T_ref(self):
         return g.reference_temperature[..., np.newaxis, np.newaxis]
-
-    def _t_omega_over_sigma_sp(self, temperature_field, g_term,
-                               v_dot_grad_log_sp):
-        f = cumulative_sigma_integral(g_term)
-        alpha = get_sigma_ratios()
-        alpha = alpha[:, np.newaxis, np.newaxis]
-        del_𝜎 = g.layer_thickness[:, np.newaxis, np.newaxis]
-        padding = [(1, 0), (0, 0), (0, 0)]
-        g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]) / del_𝜎
-        return temperature_field * (v_dot_grad_log_sp - g_part)
-
-    def kinetic_energy_tendency(self, aux_state):
-        nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
-        kinetic = nodal_cos_lat_u2.sum(0) * sec2_lat() / 2
-        return -laplacian(to_modal(kinetic))
 
     def nodal_temperature_vertical_tendency(self, aux_state):
         sigma_dot_explicit = aux_state.sigma_dot_explicit
@@ -629,18 +637,12 @@ class PrimitiveEquations:
                                                     self.T_ref)
         return tendency
 
-    def horizontal_scalar_advection(self, scalar, aux_state):
-        u, v = aux_state.cos_lat_u
-        nodal_terms = scalar * aux_state.divergence
-        modal_terms = -div_sec_lat(u * scalar, v * scalar)
-        return nodal_terms, modal_terms
-
     def nodal_temperature_adiabatic_tendency(self, aux_state):
         g_explicit = aux_state.u_dot_grad_log_sp
         g_full = g_explicit + aux_state.divergence
-        mean_t_part = self._t_omega_over_sigma_sp(self.T_ref, g_explicit,
-                                                  aux_state.u_dot_grad_log_sp)
-        variation_t_part = self._t_omega_over_sigma_sp(
+        mean_t_part = _t_omega_over_sigma_sp(self.T_ref, g_explicit,
+                                             aux_state.u_dot_grad_log_sp)
+        variation_t_part = _t_omega_over_sigma_sp(
             aux_state.temperature_variation, g_full,
             aux_state.u_dot_grad_log_sp)
         return kappa * (mean_t_part + variation_t_part)
@@ -665,10 +667,10 @@ class PrimitiveEquations:
             (combined_u, combined_v), clip=False)
         divergence_dot = -div_cos_lat((combined_u, combined_v), clip=False)
 
-        kinetic_energy_tendency = self.kinetic_energy_tendency(aux_state)
+        kinetic_energy_tendency = kinetic_energy_tendency0(aux_state)
         orography_tendency = -gravity_acceleration * laplacian(g.orography)
-        horizontal_tendency_fn = functools.partial(
-            self.horizontal_scalar_advection, aux_state=aux_state)
+        horizontal_tendency_fn = functools.partial(horizontal_scalar_advection,
+                                                   aux_state=aux_state)
         dT_dt_horizontal_nodal, dT_dt_horizontal_modal = horizontal_tendency_fn(
             aux_state.temperature_variation)
         tracers_horizontal_nodal_and_modal = jax.tree_util.tree_map(

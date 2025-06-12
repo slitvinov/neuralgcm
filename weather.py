@@ -370,7 +370,8 @@ def fun(state):
     forward_step = di.step_with_filters(di.imex_runge_kutta(eq, dt),
                                         [hyperdiffusion_filter])
     backward_step = di.step_with_filters(
-        di.imex_runge_kutta(TimeReversedImExODE(eq), dt), filters)
+        di.imex_runge_kutta(TimeReversedImExODE(eq), dt),
+        [hyperdiffusion_filter])
     weights = _dfi_lanczos_weights(time_span, cutoff_period, dt)
     init_weight = 1.0
     total_weight = init_weight + 2 * weights.sum()

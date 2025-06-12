@@ -365,11 +365,6 @@ def get_cos_lat_vector(vorticity, divergence, grid, clip=True):
     )
 
 
-@dataclasses.dataclass(frozen=True)
-class CoordinateSystem:
-    horizontal: Any
-
-
 class ImplicitExplicitODE:
 
     def __init__(self, explicit_terms, implicit_terms, implicit_inverse):
@@ -629,7 +624,7 @@ class PrimitiveEquations:
 
     @property
     def coriolis_parameter(self):
-        _, sin_lat = self.coords.horizontal.nodal_mesh
+        _, sin_lat = self.coords.nodal_mesh
         return sin_lat
 
     @property
@@ -651,15 +646,14 @@ class PrimitiveEquations:
 
     def kinetic_energy_tendency(self, aux_state):
         nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
-        kinetic = nodal_cos_lat_u2.sum(0) * self.coords.horizontal.sec2_lat / 2
-        return -self.coords.horizontal.laplacian(to_modal(kinetic))
+        kinetic = nodal_cos_lat_u2.sum(0) * self.coords.sec2_lat / 2
+        return -self.coords.laplacian(to_modal(kinetic))
 
     def orography_tendency(self):
-        return -gravity_acceleration * self.coords.horizontal.laplacian(
-            self.orography)
+        return -gravity_acceleration * self.coords.laplacian(self.orography)
 
     def curl_and_div_tendencies(self, aux_state):
-        sec2_lat = self.coords.horizontal.sec2_lat
+        sec2_lat = self.coords.sec2_lat
         u, v = aux_state.cos_lat_u
         total_vorticity = aux_state.vorticity + self.coriolis_parameter
         nodal_vorticity_u = -v * total_vorticity * sec2_lat
@@ -673,10 +667,8 @@ class PrimitiveEquations:
         vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat
         combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
         combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
-        dζ_dt = -self.coords.horizontal.curl_cos_lat(
-            (combined_u, combined_v), clip=False)
-        d𝛅_dt = -self.coords.horizontal.div_cos_lat(
-            (combined_u, combined_v), clip=False)
+        dζ_dt = -self.coords.curl_cos_lat((combined_u, combined_v), clip=False)
+        d𝛅_dt = -self.coords.div_cos_lat((combined_u, combined_v), clip=False)
         return (dζ_dt, d𝛅_dt)
 
     def nodal_temperature_vertical_tendency(self, aux_state):
@@ -692,8 +684,7 @@ class PrimitiveEquations:
     def horizontal_scalar_advection(self, scalar, aux_state):
         u, v = aux_state.cos_lat_u
         nodal_terms = scalar * aux_state.divergence
-        modal_terms = -div_sec_lat(u * scalar, v * scalar,
-                                   self.coords.horizontal)
+        modal_terms = -div_sec_lat(u * scalar, v * scalar, self.coords)
         return nodal_terms, modal_terms
 
     def nodal_temperature_adiabatic_tendency(self, aux_state):
@@ -711,7 +702,7 @@ class PrimitiveEquations:
         return -sigma_integral(g)
 
     def explicit_terms(self, state):
-        aux_state = compute_diagnostic_state(state, self.coords.horizontal)
+        aux_state = compute_diagnostic_state(state, self.coords)
         vorticity_tendency, divergence_dot = self.curl_and_div_tendencies(
             aux_state)
         kinetic_energy_tendency = self.kinetic_energy_tendency(aux_state)
@@ -757,8 +748,8 @@ class PrimitiveEquations:
         rt_log_p = (ideal_gas_constant * self.T_ref *
                     state.log_surface_pressure)
         vorticity_implicit = jnp.zeros_like(state.vorticity)
-        divergence_implicit = -self.coords.horizontal.laplacian(
-            geopotential_diff + rt_log_p)
+        divergence_implicit = -self.coords.laplacian(geopotential_diff +
+                                                     rt_log_p)
         temperature_variation_implicit = get_temperature_implicit(
             state.divergence,
             self.reference_temperature,
@@ -778,13 +769,13 @@ class PrimitiveEquations:
 
     def implicit_inverse(self, state, step_size):
         eye = np.eye(g.layers)[np.newaxis]
-        lam = self.coords.horizontal.laplacian_eigenvalues
+        lam = self.coords.laplacian_eigenvalues
         geo = get_geopotential_weights()
         r = ideal_gas_constant
         h = get_temperature_implicit_weights(self.reference_temperature)
         t = self.reference_temperature[:, np.newaxis]
         thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
-        l = self.coords.horizontal.modal_shape[1]
+        l = self.coords.modal_shape[1]
         j = k = g.layers
         row0 = np.concatenate(
             [

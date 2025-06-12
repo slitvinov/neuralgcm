@@ -123,7 +123,7 @@ def vor_div_to_uv_nodal(grid, vorticity, divergence):
 
 
 def nodal_prognostics_and_diagnostics(state):
-    coords = model_coords.horizontal
+    coords = model_coords
     u_nodal, v_nodal = vor_div_to_uv_nodal(coords, state.vorticity,
                                            state.divergence)
     geopotential_nodal = di.to_nodal(
@@ -169,8 +169,8 @@ def trajectory_to_xarray(trajectory):
         for k, v in trajectory_cpu.items()
     }
     times = float(save_every / units.hour) * np.arange(outer_steps)
-    lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
-    lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
+    lon = 180 / np.pi * model_coords.nodal_axes[0]
+    lat = 180 / np.pi * np.arcsin(model_coords.nodal_axes[1])
     dims = ("time", "sigma", "longitude", "latitude")
     ds_result = xarray.Dataset(
         data_vars={
@@ -240,8 +240,8 @@ def horizontal_diffusion_filter(grid, scale, order=1):
 
 
 def compute_vertical_velocity(state, coords):
-    sigma_dot_boundaries = di.compute_diagnostic_state(
-        state, coords.horizontal).sigma_dot_full
+    sigma_dot_boundaries = di.compute_diagnostic_state(state,
+                                                       coords).sigma_dot_full
     assert sigma_dot_boundaries.ndim == 3
     sigma_dot_padded = jnp.pad(sigma_dot_boundaries, [(1, 1), (0, 0), (0, 0)])
     return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
@@ -319,7 +319,7 @@ di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
-model_coords = di.CoordinateSystem(di.Grid())
+model_coords = di.Grid()
 dt_si = 5 * units.minute
 save_every = 15 * units.minute
 total_time = 2 * units.day + save_every
@@ -348,8 +348,8 @@ ds = ds_arco_era5[[
     "surface_pressure",
 ]]
 raw_orography = ds_arco_era5.geopotential_at_surface
-desired_lon = 180 / np.pi * model_coords.horizontal.nodal_axes[0]
-desired_lat = 180 / np.pi * np.arcsin(model_coords.horizontal.nodal_axes[1])
+desired_lon = 180 / np.pi * model_coords.nodal_axes[0]
+desired_lat = 180 / np.pi * np.arcsin(model_coords.nodal_axes[1])
 ds_init = attach_xarray_units(ds.compute().interp(latitude=desired_lat,
                                                   longitude=desired_lon))
 ds_init["orography"] = attach_data_array_units(
@@ -370,8 +370,8 @@ nodal_inputs = regrid_hybrid_to_sigma(
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]
-vorticity, divergence = di.uv_nodal_to_vor_div_modal(model_coords.horizontal,
-                                                     u_nodal, v_nodal)
+vorticity, divergence = di.uv_nodal_to_vor_div_modal(model_coords, u_nodal,
+                                                     v_nodal)
 ref_temps = ref_temp_si * np.ones((di.g.layers, ))
 assert ref_temps.shape == (di.g.layers, )
 temperature_variation = di.to_modal(t_nodal - ref_temps.reshape(-1, 1, 1))
@@ -398,8 +398,10 @@ res_factor = di.g.latitude_nodes / 128
 dt = DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)
-hyperdiffusion_filter = horizontal_diffusion_step_filter(
-    model_coords.horizontal, dt=dt, tau=tau, order=2)
+hyperdiffusion_filter = horizontal_diffusion_step_filter(model_coords,
+                                                         dt=dt,
+                                                         tau=tau,
+                                                         order=2)
 time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 dfi = jax.jit(
     digital_filter_initialization(

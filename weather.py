@@ -356,8 +356,9 @@ time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 def fun(state):
     forward_step = di.step_with_filters(di.imex_runge_kutta(eq, dt),
                                         [hyperdiffusion_filter])
+    teq = TimeReversedImExODE(eq)
     backward_step = di.step_with_filters(
-        di.imex_runge_kutta(TimeReversedImExODE(eq), dt),
+        di.imex_runge_kutta(teq, dt),
         [hyperdiffusion_filter])
     N = round(time_span / (2 * dt))
     n = np.arange(1, N + 1)

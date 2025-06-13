@@ -51,7 +51,7 @@ def explicit_terms(state):
 
 def explicit_fn(x):
     return di.tree_map(lambda *args: sum([x for x in args if x is not None]),
-                       primitive.explicit_terms(x), explicit_terms(x))
+                       di.explicit_terms(x), explicit_terms(x))
 
 
 di.g.longitude_wavenumbers = 22

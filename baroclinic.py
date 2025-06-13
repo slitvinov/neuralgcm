@@ -77,7 +77,7 @@ def get_divergence_perturbation(lat, lon):
 
 
 def trajectory_from_step(step_fn, outer_steps, inner_steps):
-    step_fn = di.repeated(step_fn, inner_steps, jax.lax.scan)
+    step_fn = di.repeated(step_fn, inner_steps)
 
     def step(carry_in, _):
         carry_out = step_fn(carry_in)

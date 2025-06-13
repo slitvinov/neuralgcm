@@ -422,11 +422,11 @@ def step_with_filters(step_fn, filters):
     return _step_fn
 
 
-def repeated(fn, steps, scan_fn=jax.lax.scan):
+def repeated(fn, steps):
 
     def f_repeated(x_initial):
         gfun = lambda x, _: (fn(x), None)
-        x_final, _ = scan_fn(gfun, x_initial, xs=None, length=steps)
+        x_final, _ = jax.lax.scan(gfun, x_initial, xs=None, length=steps)
         return x_final
 
     return f_repeated
@@ -441,7 +441,7 @@ def trajectory_from_step(
     post_process_fn=lambda x: x,
 ):
     if inner_steps != 1:
-        step_fn = repeated(step_fn, inner_steps, jax.lax.scan)
+        step_fn = repeated(step_fn, inner_steps)
 
     def step(carry_in, _):
         carry_out = step_fn(carry_in)

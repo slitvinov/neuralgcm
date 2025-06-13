@@ -346,20 +346,7 @@ def get_cos_lat_vector(vorticity, divergence, clip=True):
     )
 
 
-class ImplicitExplicitODE:
-
-    def __init__(self, explicit_terms, implicit_terms, implicit_inverse):
-        self.explicit_terms = explicit_terms
-        self.implicit_terms = implicit_terms
-        self.implicit_inverse = implicit_inverse
-
-
-def imex_runge_kutta(eq, time_step):
-    return imex_runge_kutta0(eq.explicit_terms, eq.implicit_terms,
-                             eq.implicit_inverse, time_step)
-
-
-def imex_runge_kutta0(exp, imp, inv, time_step):
+def imex_runge_kutta(exp, imp, inv, time_step):
     dt = time_step
     F = tree_math.unwrap(exp)
     G = tree_math.unwrap(imp)

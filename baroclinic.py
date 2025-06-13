@@ -114,7 +114,7 @@ di.g.reference_temperature = np.stack(
 vorticity = np.stack([get_vorticity(lat, sigma) for sigma in di.g.centers])
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
 di.g.orography = di.clip_wavenumbers(di.to_modal(orography))
-step_fn = di.imex_runge_kutta0(di.explicit_terms, di.implicit_terms,
+step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                                di.implicit_inverse, dt)
 filters = [
     di.exponential_step_filter(di.g.total_wavenumbers, dt),

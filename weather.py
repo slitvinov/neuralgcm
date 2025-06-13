@@ -348,7 +348,7 @@ time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 
 def fun(state):
     forward_step = di.step_with_filters(
-        di.imex_runge_kutta0(di.explicit_terms, di.implicit_terms,
+        di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                              di.implicit_inverse, dt), [hyperdiffusion_filter])
     backward_step = di.step_with_filters(
         di.imex_runge_kutta(explicit_terms, implicit_terms, implicit_inverse,
@@ -374,7 +374,7 @@ dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
 step_fn = di.step_with_filters(
-    di.imex_runge_kutta0(di.explicit_terms, di.implicit_terms,
+    di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                          di.implicit_inverse, dt),
     [hyperdiffusion_filter],
 )

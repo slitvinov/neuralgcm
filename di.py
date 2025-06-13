@@ -593,12 +593,6 @@ def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
     return temperature_field * (v_dot_grad_log_sp - g_part)
 
 
-def kinetic_energy_tendency0(aux_state):
-    nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
-    kinetic = nodal_cos_lat_u2.sum(0) * sec2_lat() / 2
-    return -laplacian(to_modal(kinetic))
-
-
 def horizontal_scalar_advection(scalar, aux_state):
     u, v = aux_state.cos_lat_u
     nodal_terms = scalar * aux_state.divergence
@@ -657,8 +651,9 @@ def explicit_terms(state):
     combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
     vorticity_tendency = -curl_cos_lat((combined_u, combined_v), clip=False)
     divergence_dot = -div_cos_lat((combined_u, combined_v), clip=False)
-
-    kinetic_energy_tendency = kinetic_energy_tendency0(aux_state)
+    nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
+    kinetic = nodal_cos_lat_u2.sum(0) * sec2_lat() / 2
+    kinetic_energy_tendency = -laplacian(to_modal(kinetic))
     orography_tendency = -gravity_acceleration * laplacian(g.orography)
     horizontal_tendency_fn = functools.partial(horizontal_scalar_advection,
                                                aux_state=aux_state)

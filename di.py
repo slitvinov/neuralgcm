@@ -354,11 +354,16 @@ class ImplicitExplicitODE:
         self.implicit_inverse = implicit_inverse
 
 
-def imex_runge_kutta(equation, time_step):
+def imex_runge_kutta(eq, time_step):
+    return imex_runge_kutta0(eq.explicit_terms, eq.implicit_terms,
+                             eq.implicit_inverse, time_step)
+
+
+def imex_runge_kutta0(exp, imp, inv, time_step):
     dt = time_step
-    F = tree_math.unwrap(equation.explicit_terms)
-    G = tree_math.unwrap(equation.implicit_terms)
-    G_inv = tree_math.unwrap(equation.implicit_inverse, vector_argnums=0)
+    F = tree_math.unwrap(exp)
+    G = tree_math.unwrap(imp)
+    G_inv = tree_math.unwrap(inv, vector_argnums=0)
     a_ex = [[1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]]
     a_im = [[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]]
     b_ex = [1 / 2, -1 / 2, 1, 0]

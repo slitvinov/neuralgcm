@@ -357,12 +357,12 @@ def fun(state):
     forward_step = di.step_with_filters(di.imex_runge_kutta(eq, dt),
                                         [hyperdiffusion_filter])
     teq = TimeReversedImExODE(eq)
-    backward_step = di.step_with_filters(
-        di.imex_runge_kutta(teq, dt),
-        [hyperdiffusion_filter])
+    backward_step = di.step_with_filters(di.imex_runge_kutta(teq, dt),
+                                         [hyperdiffusion_filter])
     N = round(time_span / (2 * dt))
     n = np.arange(1, N + 1)
-    weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
+    weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span /
+                                             (cutoff_period * N))
     init_weight = 1.0
     total_weight = init_weight + 2 * weights.sum()
     init_weight /= total_weight

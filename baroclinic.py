@@ -75,6 +75,17 @@ def get_divergence_perturbation(lat, lon):
             ((np.cos(lat_location) * np.sin(lon - lon_location)) /
              (np.sqrt(1 - x**2))))
 
+def trajectory_from_step(step_fn, outer_steps, inner_steps):
+    step_fn = repeated(step_fn, inner_steps, jax.lax.scan)
+    def step(carry_in, _):
+        carry_out = step_fn(carry_in)
+        return carry_out, carry_out
+
+    def multistep(x):
+        return jax.lax.scan(step, x, xs=None, length=outer_steps)
+
+    return multistep
+
 
 dtype = np.dtype('float32')
 gravity_acceleration = 7.2364082834567185e+01
@@ -136,7 +147,7 @@ state = di.State(vorticity=di.to_modal(vorticity) +
                  log_surface_pressure=di.to_modal(log_surface_pressure))
 inner_steps = 72
 outer_steps = 168
-integrate_fn = di.trajectory_from_step(step_fn, outer_steps, inner_steps)
+integrate_fn = trajectory_from_step(step_fn, outer_steps, inner_steps)
 integrate_fn = jax.jit(integrate_fn)
 final, trajectory = jax.block_until_ready(integrate_fn(state))
 trajectory = jax.device_get(trajectory)

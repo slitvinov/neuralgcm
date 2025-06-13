@@ -75,8 +75,10 @@ def get_divergence_perturbation(lat, lon):
             ((np.cos(lat_location) * np.sin(lon - lon_location)) /
              (np.sqrt(1 - x**2))))
 
+
 def trajectory_from_step(step_fn, outer_steps, inner_steps):
-    step_fn = repeated(step_fn, inner_steps, jax.lax.scan)
+    step_fn = di.repeated(step_fn, inner_steps, jax.lax.scan)
+
     def step(carry_in, _):
         carry_out = step_fn(carry_in)
         return carry_out, carry_out

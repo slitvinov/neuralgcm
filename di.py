@@ -462,7 +462,6 @@ class State:
     temperature_variation: Any
     log_surface_pressure: Any
     tracers: Any = dataclasses.field(default_factory=dict)
-    sim_time: Any = None
 
 
 @tree_math.struct
@@ -693,7 +692,6 @@ def explicit_terms(state):
         temperature_variation=temperature_tendency,
         log_surface_pressure=log_surface_pressure_tendency,
         tracers=tracers_tendency,
-        sim_time=None if state.sim_time is None else 1.0,
     )
     return clip_wavenumbers(tendency)
 
@@ -716,7 +714,6 @@ def implicit_terms(state):
         temperature_variation=temperature_variation_implicit,
         log_surface_pressure=log_surface_pressure_implicit,
         tracers=tracers_implicit,
-        sim_time=None if state.sim_time is None else 0.0,
     )
 
 
@@ -789,5 +786,4 @@ def implicit_inverse(state, step_size):
         inverted_temperature_variation,
         inverted_log_surface_pressure,
         state.tracers,
-        sim_time=state.sim_time,
     )

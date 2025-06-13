@@ -106,7 +106,7 @@ dt = 4.3752000000000006e-02
 di.g.reference_temperature = ref_temps
 di.g.orography = orography
 step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
-                               di.implicit_inverse, dt)
+                              di.implicit_inverse, dt)
 filters = [di.exponential_step_filter(di.g.total_wavenumbers, dt)]
 step_fn = di.step_with_filters(step_fn, filters)
 integrate_fn = jax.jit(
@@ -132,7 +132,7 @@ sigma = di.g.centers
 _, sin_lat = di.nodal_mesh()
 lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
-                               di.implicit_inverse, dt)
+                              di.implicit_inverse, dt)
 filters = [
     di.exponential_step_filter(di.g.total_wavenumbers,
                                dt,
@@ -151,7 +151,7 @@ inner_steps = 36
 outer_steps = 28
 dt = 8.7504000000000012e-02
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
-                               di.implicit_inverse, dt)
+                              di.implicit_inverse, dt)
 filters = [
     di.exponential_step_filter(di.g.total_wavenumbers,
                                dt,

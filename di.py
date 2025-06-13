@@ -804,7 +804,3 @@ def implicit_inverse(state, step_size):
         state.tracers,
         sim_time=state.sim_time,
     )
-
-
-class PrimitiveEquations:
-    pass

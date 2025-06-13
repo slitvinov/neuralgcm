@@ -215,9 +215,7 @@ def compute_vertical_velocity(state):
     return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
 
 
-@dataclasses.dataclass
-class TimeReversedImExODE(di.ImplicitExplicitODE):
-    forward_eq: di.ImplicitExplicitODE
+class TimeReversedImExODE:
 
     def explicit_terms(self, state):
         forward_term = di.explicit_terms(state)
@@ -338,7 +336,6 @@ raw_init_state = di.State(
 orography = di.to_modal(orography_input)
 orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
 di.g.orography = orography
-eq = di.PrimitiveEquations()
 res_factor = di.g.latitude_nodes / 128
 dt = DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
@@ -353,7 +350,7 @@ def fun(state):
     forward_step = di.step_with_filters(
         di.imex_runge_kutta0(di.explicit_terms, di.implicit_terms,
                              di.implicit_inverse, dt), [hyperdiffusion_filter])
-    teq = TimeReversedImExODE(eq)
+    teq = TimeReversedImExODE()
     backward_step = di.step_with_filters(di.imex_runge_kutta(teq, dt),
                                          [hyperdiffusion_filter])
     N = round(time_span / (2 * dt))

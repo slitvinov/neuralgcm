@@ -105,7 +105,6 @@ outer_steps = 144
 dt = 4.3752000000000006e-02
 di.g.reference_temperature = ref_temps
 di.g.orography = orography
-primitive = di.PrimitiveEquations()
 step_fn = di.imex_runge_kutta0(di.explicit_terms, di.implicit_terms,
                                di.implicit_inverse, dt)
 filters = [di.exponential_step_filter(di.g.total_wavenumbers, dt)]

@@ -133,8 +133,7 @@ sigma = di.g.centers
 _, sin_lat = di.nodal_mesh()
 lat = np.arcsin(sin_lat)
 
-primitive_with_hs = di.ImplicitExplicitODE(explicit_fn,
-                                           di.implicit_terms,
+primitive_with_hs = di.ImplicitExplicitODE(explicit_fn, di.implicit_terms,
                                            di.implicit_inverse)
 
 step_fn = di.imex_runge_kutta0(explicit_fn, di.implicit_terms,

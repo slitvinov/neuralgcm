@@ -215,18 +215,18 @@ def compute_vertical_velocity(state):
     return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
 
 
-class TimeReversedImExODE:
+def explicit_terms(state):
+    forward_term = di.explicit_terms(state)
+    return di.tree_map(jnp.negative, forward_term)
 
-    def explicit_terms(self, state):
-        forward_term = di.explicit_terms(state)
-        return di.tree_map(jnp.negative, forward_term)
 
-    def implicit_terms(self, state):
-        forward_term = di.implicit_terms(state)
-        return di.tree_map(jnp.negative, forward_term)
+def implicit_terms(state):
+    forward_term = di.implicit_terms(state)
+    return di.tree_map(jnp.negative, forward_term)
 
-    def implicit_inverse(self, state, step_size):
-        return di.implicit_inverse(state, -step_size)
+
+def implicit_inverse(state, step_size):
+    return di.implicit_inverse(state, -step_size)
 
 
 def accumulate_repeated(step_fn, weights, state, scan_fn=jax.lax.scan):
@@ -350,9 +350,9 @@ def fun(state):
     forward_step = di.step_with_filters(
         di.imex_runge_kutta0(di.explicit_terms, di.implicit_terms,
                              di.implicit_inverse, dt), [hyperdiffusion_filter])
-    teq = TimeReversedImExODE()
-    backward_step = di.step_with_filters(di.imex_runge_kutta(teq, dt),
-                                         [hyperdiffusion_filter])
+    backward_step = di.step_with_filters(
+        di.imex_runge_kutta(explicit_terms, implicit_terms, implicit_inverse,
+                            dt), [hyperdiffusion_filter])
     N = round(time_span / (2 * dt))
     n = np.arange(1, N + 1)
     weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span /

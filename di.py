@@ -61,8 +61,7 @@ def basis():
 def clip_wavenumbers(x):
 
     def clip(x):
-        modal_shape = 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
-        mask = jnp.ones(modal_shape[-1], x.dtype).at[-1:].set(0)
+        mask = jnp.ones(g.total_wavenumbers, x.dtype).at[-1:].set(0)
         return x * mask
 
     return tree_map_over_nonscalars(clip, x)

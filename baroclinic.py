@@ -113,7 +113,9 @@ di.g.reference_temperature = np.stack(
     [get_reference_temperature(sigma) for sigma in di.g.centers])
 vorticity = np.stack([get_vorticity(lat, sigma) for sigma in di.g.centers])
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
-di.g.orography = di.clip_wavenumbers(di.to_modal(orography))
+mask = jnp.ones(g.total_wavenumbers, dtype).at[-1:].set(0)
+di.g.orography = orography * mask
+
 step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                               di.implicit_inverse, dt)
 filters = [

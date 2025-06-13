@@ -228,7 +228,7 @@ class TimeReversedImExODE(di.ImplicitExplicitODE):
         return di.tree_map(jnp.negative, forward_term)
 
     def implicit_inverse(self, state, step_size):
-        return self.forward_eq.implicit_inverse(state, -step_size)
+        return di.implicit_inverse(state, -step_size)
 
 
 def accumulate_repeated(step_fn, weights, state, scan_fn=jax.lax.scan):

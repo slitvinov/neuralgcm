@@ -626,183 +626,185 @@ def _make_filter_fn(scaling):
     return functools.partial(jax.tree_util.tree_map, rescale)
 
 
+def T_ref():
+    return g.reference_temperature[..., np.newaxis, np.newaxis]
+
+
+def nodal_temperature_vertical_tendency(aux_state):
+    sigma_dot_explicit = aux_state.sigma_dot_explicit
+    sigma_dot_full = aux_state.sigma_dot_full
+    temperature_variation = aux_state.temperature_variation
+    tendency = centered_vertical_advection(sigma_dot_full,
+                                           temperature_variation)
+    if np.unique(T_ref().ravel()).size > 1:
+        tendency += centered_vertical_advection(sigma_dot_explicit, T_ref())
+    return tendency
+
+
+def nodal_temperature_adiabatic_tendency(aux_state):
+    g_explicit = aux_state.u_dot_grad_log_sp
+    g_full = g_explicit + aux_state.divergence
+    mean_t_part = _t_omega_over_sigma_sp(T_ref(), g_explicit,
+                                         aux_state.u_dot_grad_log_sp)
+    variation_t_part = _t_omega_over_sigma_sp(aux_state.temperature_variation,
+                                              g_full,
+                                              aux_state.u_dot_grad_log_sp)
+    return kappa * (mean_t_part + variation_t_part)
+
+
+def explicit_terms(state):
+    aux_state = compute_diagnostic_state(state)
+    sec2_lat0 = sec2_lat()
+    u, v = aux_state.cos_lat_u
+    _, coriolis_parameter = nodal_mesh()
+    total_vorticity = aux_state.vorticity + coriolis_parameter
+    nodal_vorticity_u = -v * total_vorticity * sec2_lat0
+    nodal_vorticity_v = u * total_vorticity * sec2_lat0
+    d𝜎_dt = aux_state.sigma_dot_full
+    sigma_dot_u = -centered_vertical_advection(d𝜎_dt, u)
+    sigma_dot_v = -centered_vertical_advection(d𝜎_dt, v)
+    rt = ideal_gas_constant * aux_state.temperature_variation
+    grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
+    vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat0
+    vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat0
+    combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
+    combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
+    vorticity_tendency = -curl_cos_lat((combined_u, combined_v), clip=False)
+    divergence_dot = -div_cos_lat((combined_u, combined_v), clip=False)
+
+    kinetic_energy_tendency = kinetic_energy_tendency0(aux_state)
+    orography_tendency = -gravity_acceleration * laplacian(g.orography)
+    horizontal_tendency_fn = functools.partial(horizontal_scalar_advection,
+                                               aux_state=aux_state)
+    dT_dt_horizontal_nodal, dT_dt_horizontal_modal = horizontal_tendency_fn(
+        aux_state.temperature_variation)
+    tracers_horizontal_nodal_and_modal = jax.tree_util.tree_map(
+        horizontal_tendency_fn, aux_state.tracers)
+    dT_dt_vertical = nodal_temperature_vertical_tendency(aux_state)
+    dT_dt_adiabatic = nodal_temperature_adiabatic_tendency(aux_state)
+    log_sp_tendency = -sigma_integral(aux_state.u_dot_grad_log_sp)
+    sigma_dot_full = aux_state.sigma_dot_full
+    vertical_tendency_fn = functools.partial(centered_vertical_advection,
+                                             sigma_dot_full)
+    tracers_vertical_nodal = jax.tree_util.tree_map(vertical_tendency_fn,
+                                                    aux_state.tracers)
+    to_modal_fn = to_modal
+    divergence_tendency = (divergence_dot + kinetic_energy_tendency +
+                           orography_tendency)
+    temperature_tendency = (to_modal_fn(dT_dt_horizontal_nodal +
+                                        dT_dt_vertical + dT_dt_adiabatic) +
+                            dT_dt_horizontal_modal)
+    log_surface_pressure_tendency = to_modal_fn(log_sp_tendency)
+    tracers_tendency = jax.tree_util.tree_map(
+        lambda x, y_z: to_modal_fn(x + y_z[0]) + y_z[1],
+        tracers_vertical_nodal,
+        tracers_horizontal_nodal_and_modal,
+    )
+    tendency = State(
+        vorticity=vorticity_tendency,
+        divergence=divergence_tendency,
+        temperature_variation=temperature_tendency,
+        log_surface_pressure=log_surface_pressure_tendency,
+        tracers=tracers_tendency,
+        sim_time=None if state.sim_time is None else 1.0,
+    )
+    return clip_wavenumbers(tendency)
+
+
+def implicit_terms(state):
+    geopotential_diff = get_geopotential_diff(state.temperature_variation)
+    rt_log_p = (ideal_gas_constant * T_ref() * state.log_surface_pressure)
+    vorticity_implicit = jnp.zeros_like(state.vorticity)
+    divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
+    temperature_variation_implicit = get_temperature_implicit(
+        state.divergence,
+        g.reference_temperature,
+    )
+    log_surface_pressure_implicit = -_vertical_matvec(
+        g.layer_thickness[np.newaxis], state.divergence)
+    tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, state.tracers)
+    return State(
+        vorticity=vorticity_implicit,
+        divergence=divergence_implicit,
+        temperature_variation=temperature_variation_implicit,
+        log_surface_pressure=log_surface_pressure_implicit,
+        tracers=tracers_implicit,
+        sim_time=None if state.sim_time is None else 0.0,
+    )
+
+
+def implicit_inverse(state, step_size):
+    eye = np.eye(g.layers)[np.newaxis]
+    lam = laplacian_eigenvalues()
+    geo = get_geopotential_weights()
+    r = ideal_gas_constant
+    h = get_temperature_implicit_weights(g.reference_temperature)
+    t = g.reference_temperature[:, np.newaxis]
+    thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
+    l = modal_shape()[1]
+    j = k = g.layers
+    row0 = np.concatenate(
+        [
+            np.broadcast_to(eye, [l, j, k]),
+            step_size * np.einsum("l,jk->ljk", lam, geo),
+            step_size * r * np.einsum("l,jo->ljo", lam, t),
+        ],
+        axis=2,
+    )
+    row1 = np.concatenate(
+        [
+            step_size * np.broadcast_to(h[np.newaxis], [l, j, k]),
+            np.broadcast_to(eye, [l, j, k]),
+            np.zeros([l, j, 1]),
+        ],
+        axis=2,
+    )
+    row2 = np.concatenate(
+        [
+            np.broadcast_to(step_size * thickness, [l, 1, k]),
+            np.zeros([l, 1, k]),
+            np.ones([l, 1, 1]),
+        ],
+        axis=2,
+    )
+    implicit_matrix = np.concatenate((row0, row1, row2), axis=1)
+    assert implicit_matrix.dtype == np.float64
+    layers = g.layers
+    div = slice(0, layers)
+    temp = slice(layers, 2 * layers)
+    logp = slice(2 * layers, 2 * layers + 1)
+
+    inverse = np.linalg.inv(implicit_matrix)
+    assert not np.isnan(inverse).any()
+    inverted_divergence = (
+        _vertical_matvec_per_wavenumber(inverse[:, div, div], state.divergence)
+        + _vertical_matvec_per_wavenumber(inverse[:, div, temp],
+                                          state.temperature_variation) +
+        _vertical_matvec_per_wavenumber(inverse[:, div, logp],
+                                        state.log_surface_pressure))
+    inverted_temperature_variation = (
+        _vertical_matvec_per_wavenumber(inverse[:, temp, div],
+                                        state.divergence) +
+        _vertical_matvec_per_wavenumber(inverse[:, temp, temp],
+                                        state.temperature_variation) +
+        _vertical_matvec_per_wavenumber(inverse[:, temp, logp],
+                                        state.log_surface_pressure))
+    inverted_log_surface_pressure = (
+        _vertical_matvec_per_wavenumber(inverse[:, logp, div],
+                                        state.divergence) +
+        _vertical_matvec_per_wavenumber(inverse[:, logp, temp],
+                                        state.temperature_variation) +
+        _vertical_matvec_per_wavenumber(inverse[:, logp, logp],
+                                        state.log_surface_pressure))
+    return State(
+        state.vorticity,
+        inverted_divergence,
+        inverted_temperature_variation,
+        inverted_log_surface_pressure,
+        state.tracers,
+        sim_time=state.sim_time,
+    )
+
+
 class PrimitiveEquations:
-
-    def T_ref(self):
-        return g.reference_temperature[..., np.newaxis, np.newaxis]
-
-    def nodal_temperature_vertical_tendency(self, aux_state):
-        sigma_dot_explicit = aux_state.sigma_dot_explicit
-        sigma_dot_full = aux_state.sigma_dot_full
-        temperature_variation = aux_state.temperature_variation
-        tendency = centered_vertical_advection(sigma_dot_full,
-                                               temperature_variation)
-        if np.unique(self.T_ref().ravel()).size > 1:
-            tendency += centered_vertical_advection(sigma_dot_explicit,
-                                                    self.T_ref())
-        return tendency
-
-    def nodal_temperature_adiabatic_tendency(self, aux_state):
-        g_explicit = aux_state.u_dot_grad_log_sp
-        g_full = g_explicit + aux_state.divergence
-        mean_t_part = _t_omega_over_sigma_sp(self.T_ref(), g_explicit,
-                                             aux_state.u_dot_grad_log_sp)
-        variation_t_part = _t_omega_over_sigma_sp(
-            aux_state.temperature_variation, g_full,
-            aux_state.u_dot_grad_log_sp)
-        return kappa * (mean_t_part + variation_t_part)
-
-    def explicit_terms(self, state):
-        aux_state = compute_diagnostic_state(state)
-        sec2_lat0 = sec2_lat()
-        u, v = aux_state.cos_lat_u
-        _, coriolis_parameter = nodal_mesh()
-        total_vorticity = aux_state.vorticity + coriolis_parameter
-        nodal_vorticity_u = -v * total_vorticity * sec2_lat0
-        nodal_vorticity_v = u * total_vorticity * sec2_lat0
-        d𝜎_dt = aux_state.sigma_dot_full
-        sigma_dot_u = -centered_vertical_advection(d𝜎_dt, u)
-        sigma_dot_v = -centered_vertical_advection(d𝜎_dt, v)
-        rt = ideal_gas_constant * aux_state.temperature_variation
-        grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
-        vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat0
-        vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat0
-        combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
-        combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
-        vorticity_tendency = -curl_cos_lat(
-            (combined_u, combined_v), clip=False)
-        divergence_dot = -div_cos_lat((combined_u, combined_v), clip=False)
-
-        kinetic_energy_tendency = kinetic_energy_tendency0(aux_state)
-        orography_tendency = -gravity_acceleration * laplacian(g.orography)
-        horizontal_tendency_fn = functools.partial(horizontal_scalar_advection,
-                                                   aux_state=aux_state)
-        dT_dt_horizontal_nodal, dT_dt_horizontal_modal = horizontal_tendency_fn(
-            aux_state.temperature_variation)
-        tracers_horizontal_nodal_and_modal = jax.tree_util.tree_map(
-            horizontal_tendency_fn, aux_state.tracers)
-        dT_dt_vertical = self.nodal_temperature_vertical_tendency(aux_state)
-        dT_dt_adiabatic = self.nodal_temperature_adiabatic_tendency(aux_state)
-        log_sp_tendency = -sigma_integral(aux_state.u_dot_grad_log_sp)
-        sigma_dot_full = aux_state.sigma_dot_full
-        vertical_tendency_fn = functools.partial(centered_vertical_advection,
-                                                 sigma_dot_full)
-        tracers_vertical_nodal = jax.tree_util.tree_map(
-            vertical_tendency_fn, aux_state.tracers)
-        to_modal_fn = to_modal
-        divergence_tendency = (divergence_dot + kinetic_energy_tendency +
-                               orography_tendency)
-        temperature_tendency = (to_modal_fn(dT_dt_horizontal_nodal +
-                                            dT_dt_vertical + dT_dt_adiabatic) +
-                                dT_dt_horizontal_modal)
-        log_surface_pressure_tendency = to_modal_fn(log_sp_tendency)
-        tracers_tendency = jax.tree_util.tree_map(
-            lambda x, y_z: to_modal_fn(x + y_z[0]) + y_z[1],
-            tracers_vertical_nodal,
-            tracers_horizontal_nodal_and_modal,
-        )
-        tendency = State(
-            vorticity=vorticity_tendency,
-            divergence=divergence_tendency,
-            temperature_variation=temperature_tendency,
-            log_surface_pressure=log_surface_pressure_tendency,
-            tracers=tracers_tendency,
-            sim_time=None if state.sim_time is None else 1.0,
-        )
-        return clip_wavenumbers(tendency)
-
-    def implicit_terms(self, state):
-        geopotential_diff = get_geopotential_diff(state.temperature_variation)
-        rt_log_p = (ideal_gas_constant * self.T_ref() *
-                    state.log_surface_pressure)
-        vorticity_implicit = jnp.zeros_like(state.vorticity)
-        divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
-        temperature_variation_implicit = get_temperature_implicit(
-            state.divergence,
-            g.reference_temperature,
-        )
-        log_surface_pressure_implicit = -_vertical_matvec(
-            g.layer_thickness[np.newaxis], state.divergence)
-        tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like,
-                                                  state.tracers)
-        return State(
-            vorticity=vorticity_implicit,
-            divergence=divergence_implicit,
-            temperature_variation=temperature_variation_implicit,
-            log_surface_pressure=log_surface_pressure_implicit,
-            tracers=tracers_implicit,
-            sim_time=None if state.sim_time is None else 0.0,
-        )
-
-    def implicit_inverse(self, state, step_size):
-        eye = np.eye(g.layers)[np.newaxis]
-        lam = laplacian_eigenvalues()
-        geo = get_geopotential_weights()
-        r = ideal_gas_constant
-        h = get_temperature_implicit_weights(g.reference_temperature)
-        t = g.reference_temperature[:, np.newaxis]
-        thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
-        l = modal_shape()[1]
-        j = k = g.layers
-        row0 = np.concatenate(
-            [
-                np.broadcast_to(eye, [l, j, k]),
-                step_size * np.einsum("l,jk->ljk", lam, geo),
-                step_size * r * np.einsum("l,jo->ljo", lam, t),
-            ],
-            axis=2,
-        )
-        row1 = np.concatenate(
-            [
-                step_size * np.broadcast_to(h[np.newaxis], [l, j, k]),
-                np.broadcast_to(eye, [l, j, k]),
-                np.zeros([l, j, 1]),
-            ],
-            axis=2,
-        )
-        row2 = np.concatenate(
-            [
-                np.broadcast_to(step_size * thickness, [l, 1, k]),
-                np.zeros([l, 1, k]),
-                np.ones([l, 1, 1]),
-            ],
-            axis=2,
-        )
-        implicit_matrix = np.concatenate((row0, row1, row2), axis=1)
-        assert implicit_matrix.dtype == np.float64
-        layers = g.layers
-        div = slice(0, layers)
-        temp = slice(layers, 2 * layers)
-        logp = slice(2 * layers, 2 * layers + 1)
-
-        inverse = np.linalg.inv(implicit_matrix)
-        assert not np.isnan(inverse).any()
-        inverted_divergence = (
-            _vertical_matvec_per_wavenumber(inverse[:, div, div],
-                                            state.divergence) +
-            _vertical_matvec_per_wavenumber(inverse[:, div, temp],
-                                            state.temperature_variation) +
-            _vertical_matvec_per_wavenumber(inverse[:, div, logp],
-                                            state.log_surface_pressure))
-        inverted_temperature_variation = (
-            _vertical_matvec_per_wavenumber(inverse[:, temp, div],
-                                            state.divergence) +
-            _vertical_matvec_per_wavenumber(inverse[:, temp, temp],
-                                            state.temperature_variation) +
-            _vertical_matvec_per_wavenumber(inverse[:, temp, logp],
-                                            state.log_surface_pressure))
-        inverted_log_surface_pressure = (
-            _vertical_matvec_per_wavenumber(inverse[:, logp, div],
-                                            state.divergence) +
-            _vertical_matvec_per_wavenumber(inverse[:, logp, temp],
-                                            state.temperature_variation) +
-            _vertical_matvec_per_wavenumber(inverse[:, logp, logp],
-                                            state.log_surface_pressure))
-        return State(
-            state.vorticity,
-            inverted_divergence,
-            inverted_temperature_variation,
-            inverted_log_surface_pressure,
-            state.tracers,
-            sim_time=state.sim_time,
-        )
+    pass

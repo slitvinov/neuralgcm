@@ -369,7 +369,7 @@ def fun(state):
 
 
 dfi = jax.jit(fun)
-dfi_init_state = jax.block_until_ready(dfi(raw_init_state))
+dfi_init_state = dfi(raw_init_state)
 
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)
@@ -386,9 +386,9 @@ integrate_fn = jax.jit(
         start_with_input=True,
         post_process_fn=nodal_prognostics_and_diagnostics,
     ))
-out_state, trajectory = jax.block_until_ready(integrate_fn(dfi_init_state))
+out_state, trajectory = integrate_fn(dfi_init_state)
 ds_out = trajectory_to_xarray(trajectory)
-out_state, trajectory = jax.block_until_ready(integrate_fn(raw_init_state))
+out_state, trajectory = integrate_fn(raw_init_state)
 ds_out_unfiltered = trajectory_to_xarray(trajectory)
 ds_out.surface_pressure.sel(
     latitude=0, longitude=0,

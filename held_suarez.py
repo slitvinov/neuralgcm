@@ -114,7 +114,7 @@ integrate_fn = jax.jit(
                             outer_steps=outer_steps,
                             inner_steps=inner_steps,
                             start_with_input=True))
-final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
+final, trajectory = integrate_fn(initial_state)
 inner_steps = 1440
 outer_steps = 120
 dt = 8.7504000000000012e-02
@@ -145,7 +145,7 @@ integrate_fn = jax.jit(
     di.trajectory_from_step(step_fn,
                             outer_steps=outer_steps,
                             inner_steps=inner_steps))
-final, trajectory = jax.block_until_ready(integrate_fn(initial_state))
+final, trajectory = integrate_fn(initial_state)
 start_time = 200
 inner_steps = 36
 outer_steps = 28
@@ -166,7 +166,7 @@ integrate_fn = jax.jit(
         outer_steps=outer_steps,
         inner_steps=inner_steps,
     ))
-final, trajectory = jax.block_until_ready(integrate_fn(final))
+final, trajectory = integrate_fn(final)
 f0 = di.inverse_transform(trajectory.temperature_variation)
 plt.contourf(f0[-1, 22, :, :])
 plt.savefig("h.12.png")

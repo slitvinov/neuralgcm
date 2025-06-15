@@ -58,7 +58,29 @@ def basis():
     wf = 2 * np.pi / g.longitude_nodes
     x, wp = scipy.special.roots_legendre(g.latitude_nodes)
     w = wf * wp
-    p = evaluate(x)
+
+    n_m = g.longitude_wavenumbers
+    n_l = g.total_wavenumbers
+    y = np.sqrt(1 - x * x)
+    y = np.zeros((n_l, n_m, len(x)))
+    y[0, 0] = y[0, 0] + 1 / np.sqrt(2)
+    for m in range(1, n_m):
+        y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * y * y[0, m - 1]
+    m_max = n_m
+    for k in range(1, n_l):
+        m_max = min(n_m, n_l - k)
+        m = np.arange(m_max).reshape((-1, 1))
+        m2 = np.square(m)
+        mk2 = np.square(m + k)
+        mkp2 = np.square(m + k - 1)
+        a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
+        b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
+        y[k, :m_max] = a * (x * y[k - 1, :m_max] - b * y[k - 2, :m_max])
+
+    r = np.transpose(y, (1, 2, 0))
+    p = np.zeros((g.longitude_wavenumbers, len(x), g.total_wavenumbers))
+    for m in range(g.longitude_wavenumbers):
+        p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
     p = np.repeat(p, 2, axis=0)
     p = p[1:]
     return f, p, w
@@ -173,37 +195,6 @@ def centered_vertical_advection(w, x):
     w_times_x_diff = w * x_diff
     return -0.5 * (jax.lax.slice_in_dim(w_times_x_diff, 1, None, axis=-3) +
                    jax.lax.slice_in_dim(w_times_x_diff, 0, -1, axis=-3))
-
-
-def evaluate_rhombus(x):
-    n_m = g.longitude_wavenumbers
-    n_l = g.total_wavenumbers
-    y = np.sqrt(1 - x * x)
-    p = np.zeros((n_l, n_m, len(x)))
-    p[0, 0] = p[0, 0] + 1 / np.sqrt(2)
-    for m in range(1, n_m):
-        p[0, m] = -np.sqrt(1 + 1 / (2 * m)) * y * p[0, m - 1]
-    m_max = n_m
-    for k in range(1, n_l):
-        m_max = min(n_m, n_l - k)
-        m = np.arange(m_max).reshape((-1, 1))
-        m2 = np.square(m)
-        mk2 = np.square(m + k)
-        mkp2 = np.square(m + k - 1)
-        a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
-        b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
-        p[k, :m_max] = a * (x * p[k - 1, :m_max] - b * p[k - 2, :m_max])
-    return p
-
-
-def evaluate(x):
-    n_m = g.longitude_wavenumbers
-    n_l = g.total_wavenumbers
-    r = np.transpose(evaluate_rhombus(x), (1, 2, 0))
-    p = np.zeros((n_m, len(x), n_l))
-    for m in range(n_m):
-        p[m, :, m:n_l] = r[m, :, 0:n_l - m]
-    return p
 
 
 def real_basis_derivative(u):

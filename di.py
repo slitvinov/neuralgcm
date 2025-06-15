@@ -578,26 +578,26 @@ def _make_filter_fn(scaling):
     return functools.partial(jax.tree_util.tree_map, rescale)
 
 
-def T_ref():
-    return g.reference_temperature[..., np.newaxis, np.newaxis]
-
-
 def nodal_temperature_vertical_tendency(aux_state):
     sigma_dot_explicit = aux_state.sigma_dot_explicit
     sigma_dot_full = aux_state.sigma_dot_full
     temperature_variation = aux_state.temperature_variation
     tendency = centered_vertical_advection(sigma_dot_full,
                                            temperature_variation)
-    if np.unique(T_ref().ravel()).size > 1:
-        tendency += centered_vertical_advection(sigma_dot_explicit, T_ref())
+    if np.unique(g.reference_temperature[..., np.newaxis,
+                                         np.newaxis].ravel()).size > 1:
+        tendency += centered_vertical_advection(
+            sigma_dot_explicit, g.reference_temperature[..., np.newaxis,
+                                                        np.newaxis])
     return tendency
 
 
 def nodal_temperature_adiabatic_tendency(aux_state):
     g_explicit = aux_state.u_dot_grad_log_sp
     g_full = g_explicit + aux_state.divergence
-    mean_t_part = _t_omega_over_sigma_sp(T_ref(), g_explicit,
-                                         aux_state.u_dot_grad_log_sp)
+    mean_t_part = _t_omega_over_sigma_sp(
+        g.reference_temperature[..., np.newaxis, np.newaxis], g_explicit,
+        aux_state.u_dot_grad_log_sp)
     variation_t_part = _t_omega_over_sigma_sp(aux_state.temperature_variation,
                                               g_full,
                                               aux_state.u_dot_grad_log_sp)
@@ -665,7 +665,9 @@ def explicit_terms(state):
 
 def implicit_terms(state):
     geopotential_diff = get_geopotential_diff(state.temperature_variation)
-    rt_log_p = (ideal_gas_constant * T_ref() * state.log_surface_pressure)
+    rt_log_p = (ideal_gas_constant *
+                g.reference_temperature[..., np.newaxis, np.newaxis] *
+                state.log_surface_pressure)
     vorticity_implicit = jnp.zeros_like(state.vorticity)
     divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
     temperature_variation_implicit = get_temperature_implicit(state.divergence)

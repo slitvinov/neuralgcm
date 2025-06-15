@@ -59,16 +59,14 @@ def basis():
     x, wp = scipy.special.roots_legendre(g.latitude_nodes)
     w = wf * wp
 
-    n_m = g.longitude_wavenumbers
-    n_l = g.total_wavenumbers
     y = np.sqrt(1 - x * x)
-    y = np.zeros((n_l, n_m, len(x)))
+    y = np.zeros((g.total_wavenumbers, g.longitude_wavenumbers, len(x)))
     y[0, 0] = y[0, 0] + 1 / np.sqrt(2)
-    for m in range(1, n_m):
+    for m in range(1, g.longitude_wavenumbers):
         y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * y * y[0, m - 1]
-    m_max = n_m
-    for k in range(1, n_l):
-        m_max = min(n_m, n_l - k)
+    m_max = g.longitude_wavenumbers
+    for k in range(1, g.total_wavenumbers):
+        m_max = min(g.longitude_wavenumbers, g.total_wavenumbers - k)
         m = np.arange(m_max).reshape((-1, 1))
         m2 = np.square(m)
         mk2 = np.square(m + k)

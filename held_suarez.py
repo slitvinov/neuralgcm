@@ -29,7 +29,7 @@ def explicit_terms(state):
     Teq = equilibrium_temperature(nodal_surface_pressure)
     cutoff = np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b))
     kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
-    nodal_temperature_tendency = -kt() * (nodal_temperature - Teq)
+    nodal_temperature_tendency = -kt * (nodal_temperature - Teq)
     temperature_tendency = di.to_modal(nodal_temperature_tendency)
     velocity_tendency = di.to_modal(nodal_velocity_tendency)
     vorticity_tendency = di.curl_cos_lat(velocity_tendency)

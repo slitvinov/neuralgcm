@@ -63,6 +63,8 @@ di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=np.float32)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
+di.g.f, di.g.p, di.g.w = di.basis()
+
 tref = 288.0
 rng_key = jax.random.PRNGKey(0)
 lon, sin_lat = di.nodal_mesh()

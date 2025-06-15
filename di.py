@@ -31,17 +31,15 @@ def to_nodal(x):
 
 
 def transform(x):
-    f, p, w = basis()
-    wx = w * x
-    fwx = einsum("im,...ij->...mj", f, wx)
-    pfwx = einsum("mjl,...mj->...ml", p, fwx)
+    wx = g.w * x
+    fwx = einsum("im,...ij->...mj", g.f, wx)
+    pfwx = einsum("mjl,...mj->...ml", g.p, fwx)
     return pfwx
 
 
 def inverse_transform(x):
-    f, p, w = basis()
-    px = einsum("mjl,...ml->...mj", p, x)
-    fpx = einsum("im,...mj->...ij", f, px)
+    px = einsum("mjl,...ml->...mj", g.p, x)
+    fpx = einsum("im,...mj->...ij", g.f, px)
     return fpx
 
 

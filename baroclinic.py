@@ -114,6 +114,8 @@ di.g.boundaries = np.linspace(0, 1, di.g.layers + 1, dtype=dtype)
 di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
+di.g.f, di.g.p, di.g.w = di.basis()
+
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 modal_shape = di.g.layers, 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
 

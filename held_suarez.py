@@ -6,7 +6,7 @@ import numpy as np
 
 
 def equilibrium_temperature(nodal_surface_pressure):
-    p_over_p0 = (sigma[:, np.newaxis, np.newaxis] * nodal_surface_pressure /
+    p_over_p0 = (di.g.centers[:, np.newaxis, np.newaxis] * nodal_surface_pressure /
                  p0)
     temperature = p_over_p0**di.kappa * (maxT - dTy * np.sin(lat)**2 - dThz *
                                          jnp.log(p_over_p0) * np.cos(lat)**2)
@@ -15,7 +15,7 @@ def equilibrium_temperature(nodal_surface_pressure):
 
 def explicit_terms(state):
     aux_state = di.compute_diagnostic_state(state)
-    kv_coeff = kf * (np.maximum(0, (sigma - sigma_b) / (1 - sigma_b)))
+    kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))
     kv = kv_coeff[:, np.newaxis, np.newaxis]
     nodal_velocity_tendency = jax.tree.map(
         lambda x: -kv * x / di.cos_lat()**2,
@@ -27,7 +27,7 @@ def explicit_terms(state):
         state.log_surface_pressure)
     nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
     Teq = equilibrium_temperature(nodal_surface_pressure)
-    cutoff = np.maximum(0, (sigma - sigma_b) / (1 - sigma_b))
+    cutoff = np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b))
     kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
     nodal_temperature_tendency = -kt() * (nodal_temperature - Teq)
     temperature_tendency = di.to_modal(nodal_temperature_tendency)
@@ -123,8 +123,6 @@ p0 = 2.995499768455064e+19
 kf = 7.9361451413014747e-02
 ka = 1.9840362853253690e-03
 ks = 1.9840362853253687e-02
-
-sigma = di.g.centers
 _, sin_lat = di.nodal_mesh()
 lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,

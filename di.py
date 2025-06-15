@@ -46,7 +46,15 @@ def inverse_transform(x):
 
 
 def basis():
-    f = real_basis()
+    dft = scipy.linalg.dft(
+        g.longitude_nodes)[:, :g.longitude_wavenumbers] / np.sqrt(np.pi)
+    cos = np.real(dft[:, 1:])
+    sin = -np.imag(dft[:, 1:])
+    f = np.empty(shape=[g.longitude_nodes, 2 * g.longitude_wavenumbers - 1],
+                 dtype=np.float64)
+    f[:, 0] = 1 / np.sqrt(2 * np.pi)
+    f[:, 1::2] = cos
+    f[:, 2::2] = sin
     wf = 2 * np.pi / g.longitude_nodes
     x, wp = scipy.special.roots_legendre(g.latitude_nodes)
     w = wf * wp
@@ -196,19 +204,6 @@ def evaluate(x):
     for m in range(n_m):
         p[m, :, m:n_l] = r[m, :, 0:n_l - m]
     return p
-
-
-def real_basis():
-    wavenumbers = g.longitude_wavenumbers
-    nodes = g.longitude_nodes
-    dft = scipy.linalg.dft(nodes)[:, :wavenumbers] / np.sqrt(np.pi)
-    cos = np.real(dft[:, 1:])
-    sin = -np.imag(dft[:, 1:])
-    f = np.empty(shape=[nodes, 2 * wavenumbers - 1], dtype=np.float64)
-    f[:, 0] = 1 / np.sqrt(2 * np.pi)
-    f[:, 1::2] = cos
-    f[:, 2::2] = sin
-    return f
 
 
 def real_basis_derivative(u):

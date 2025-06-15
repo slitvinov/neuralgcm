@@ -552,7 +552,7 @@ def _vertical_matvec(a, x):
     return einsum("gh,...hml->...gml", a, x)
 
 
-def _vertical_matvec_per_wavenumber(a, x):
+def matvec(a, x):
     return einsum("lgh,...hml->...gml", a, x)
 
 
@@ -735,25 +735,17 @@ def implicit_inverse(state, step_size):
     inverse = np.linalg.inv(implicit_matrix)
     assert not np.isnan(inverse).any()
     inverted_divergence = (
-        _vertical_matvec_per_wavenumber(inverse[:, div, div], state.divergence)
-        + _vertical_matvec_per_wavenumber(inverse[:, div, temp],
-                                          state.temperature_variation) +
-        _vertical_matvec_per_wavenumber(inverse[:, div, logp],
-                                        state.log_surface_pressure))
+        matvec(inverse[:, div, div], state.divergence) +
+        matvec(inverse[:, div, temp], state.temperature_variation) +
+        matvec(inverse[:, div, logp], state.log_surface_pressure))
     inverted_temperature_variation = (
-        _vertical_matvec_per_wavenumber(inverse[:, temp, div],
-                                        state.divergence) +
-        _vertical_matvec_per_wavenumber(inverse[:, temp, temp],
-                                        state.temperature_variation) +
-        _vertical_matvec_per_wavenumber(inverse[:, temp, logp],
-                                        state.log_surface_pressure))
+        matvec(inverse[:, temp, div], state.divergence) +
+        matvec(inverse[:, temp, temp], state.temperature_variation) +
+        matvec(inverse[:, temp, logp], state.log_surface_pressure))
     inverted_log_surface_pressure = (
-        _vertical_matvec_per_wavenumber(inverse[:, logp, div],
-                                        state.divergence) +
-        _vertical_matvec_per_wavenumber(inverse[:, logp, temp],
-                                        state.temperature_variation) +
-        _vertical_matvec_per_wavenumber(inverse[:, logp, logp],
-                                        state.log_surface_pressure))
+        matvec(inverse[:, logp, div], state.divergence) +
+        matvec(inverse[:, logp, temp], state.temperature_variation) +
+        matvec(inverse[:, logp, logp], state.log_surface_pressure))
     return State(
         state.vorticity,
         inverted_divergence,

@@ -32,7 +32,8 @@ def explicit_terms(state):
     )
     nodal_temperature = (ref_temps[:, np.newaxis, np.newaxis] +
                          aux_state.temperature_variation)
-    nodal_log_surface_pressure = di.inverse_transform(state.log_surface_pressure)
+    nodal_log_surface_pressure = di.inverse_transform(
+        state.log_surface_pressure)
     nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
     Teq = equilibrium_temperature(nodal_surface_pressure)
     nodal_temperature_tendency = -kt() * (nodal_temperature - Teq)

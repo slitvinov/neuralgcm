@@ -129,7 +129,8 @@ di.g.reference_temperature = np.stack(
 vorticity = np.stack([get_vorticity(lat, sigma) for sigma in di.g.centers])
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
 mask = jnp.ones(di.g.total_wavenumbers, dtype).at[-1:].set(0)
-di.g.orography = di.to_modal(orography) * mask
+di.g.orography = di.transform(jnp.asarray(orography)) * mask
+exit()
 
 step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                               di.implicit_inverse, dt)
@@ -144,11 +145,12 @@ divergence_perturbation = np.stack(
 temperature_variation = np.stack(
     [get_temperature_variation(lat, sigma) for sigma in di.g.centers])
 log_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
-state = di.State(vorticity=di.to_modal(vorticity) +
-                 di.to_modal(vorticity_perturbation),
-                 divergence=di.to_modal(divergence_perturbation),
-                 temperature_variation=di.to_modal(temperature_variation),
-                 log_surface_pressure=di.to_modal(log_surface_pressure))
+state = di.State(
+    vorticity=di.transform(jnp.asarray(vorticity)) +
+    di.transform(jnp.asarray(vorticity_perturbation)),
+    divergence=di.transform(jnp.asarray(divergence_perturbation)),
+    temperature_variation=di.transform(jnp.asarray(temperature_variation)),
+    log_surface_pressure=di.transform(jnp.asarray(log_surface_pressure)))
 inner_steps = 72
 outer_steps = 168
 integrate_fn = trajectory_from_step(step_fn, outer_steps, inner_steps)

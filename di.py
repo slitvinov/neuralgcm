@@ -219,11 +219,6 @@ def modal_axes():
     tot_wavenumbers = np.arange(g.total_wavenumbers)
     return lon_wavenumbers, tot_wavenumbers
 
-
-def modal_shape():
-    return 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
-
-
 def mask():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")
     return abs(m) <= l
@@ -699,7 +694,7 @@ def implicit_inverse(state, step_size):
     h = get_temperature_implicit_weights(g.reference_temperature)
     t = g.reference_temperature[:, np.newaxis]
     thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
-    l = modal_shape()[1]
+    l = g.total_wavenumbers
     j = k = g.layers
     row0 = np.concatenate(
         [

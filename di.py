@@ -219,10 +219,6 @@ def modal_axes():
     tot_wavenumbers = np.arange(g.total_wavenumbers)
     return lon_wavenumbers, tot_wavenumbers
 
-def mask():
-    m, l = np.meshgrid(*modal_axes(), indexing="ij")
-    return abs(m) <= l
-
 
 def modal_mesh():
     return np.meshgrid(*modal_axes(), indexing="ij")
@@ -258,9 +254,11 @@ def inverse_laplacian(x):
 
 def _derivative_recurrence_weights():
     m, l = modal_mesh()
-    a = np.sqrt(mask() * (l**2 - m**2) / (4 * l**2 - 1))
+    m0, l0 = np.meshgrid(*modal_axes(), indexing="ij")
+    mask = abs(m0) <= l0
+    a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
     a[:, 0] = 0
-    b = np.sqrt(mask() * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
+    b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
     b[:, -1] = 0
     return a, b
 

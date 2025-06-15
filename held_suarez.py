@@ -6,8 +6,8 @@ import numpy as np
 
 
 def equilibrium_temperature(nodal_surface_pressure):
-    p_over_p0 = (di.g.centers[:, np.newaxis, np.newaxis] * nodal_surface_pressure /
-                 p0)
+    p_over_p0 = (di.g.centers[:, np.newaxis, np.newaxis] *
+                 nodal_surface_pressure / p0)
     temperature = p_over_p0**di.kappa * (maxT - dTy * np.sin(lat)**2 - dThz *
                                          jnp.log(p_over_p0) * np.cos(lat)**2)
     return jnp.maximum(minT, temperature)

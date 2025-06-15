@@ -1,5 +1,3 @@
-from __future__ import annotations
-from jax import lax
 from typing import Any
 import dataclasses
 import functools
@@ -11,7 +9,7 @@ import scipy.special as sps
 import tree_math
 
 tree_map = jax.tree_util.tree_map
-einsum = functools.partial(jnp.einsum, precision=lax.Precision.HIGHEST)
+einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 # gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
@@ -90,15 +88,15 @@ def pad_in_dim(x, pad_width, axis):
     padding_value = jnp.array(0, dtype=x.dtype)
     padding_config = [(0, 0, 0)] * x.ndim
     padding_config[axis] = pad_width + (0, )
-    return lax.pad(x, padding_value, padding_config)
+    return jax.lax.pad(x, padding_value, padding_config)
 
 
 def shift(x, offset, axis):
     if offset > 0:
-        sliced = lax.slice_in_dim(x, 0, x.shape[axis] - offset, axis=axis)
+        sliced = jax.lax.slice_in_dim(x, 0, x.shape[axis] - offset, axis=axis)
         return pad_in_dim(sliced, (offset, 0), axis=axis)
     else:
-        sliced = lax.slice_in_dim(x, -offset, x.shape[axis], axis=axis)
+        sliced = jax.lax.slice_in_dim(x, -offset, x.shape[axis], axis=axis)
         return pad_in_dim(sliced, (0, -offset), axis=axis)
 
 
@@ -118,7 +116,7 @@ def _slice_shape_along_axis(x):
 
 
 def centered_difference(x):
-    dx = lax.slice_in_dim(x, 1, None, axis=-3) - lax.slice_in_dim(
+    dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)
     dx_axes = range(dx.ndim)
     inv_d𝜎 = 1 / g.center_to_center
@@ -165,8 +163,8 @@ def centered_vertical_advection(w, x):
     x_diff = jnp.concatenate(
         [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=-3)
     w_times_x_diff = w * x_diff
-    return -0.5 * (lax.slice_in_dim(w_times_x_diff, 1, None, axis=-3) +
-                   lax.slice_in_dim(w_times_x_diff, 0, -1, axis=-3))
+    return -0.5 * (jax.lax.slice_in_dim(w_times_x_diff, 1, None, axis=-3) +
+                   jax.lax.slice_in_dim(w_times_x_diff, 0, -1, axis=-3))
 
 
 def evaluate_rhombus(x):
@@ -498,10 +496,10 @@ def compute_diagnostic_state(state):
     f_full = cumulative_sigma_integral(nodal_divergence +
                                        nodal_u_dot_grad_log_sp)
     sum_𝜎 = np.cumsum(g.layer_thickness)[:, np.newaxis, np.newaxis]
-    sigma_dot_explicit = lax.slice_in_dim(
-        sum_𝜎 * lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
-    sigma_dot_full = lax.slice_in_dim(
-        sum_𝜎 * lax.slice_in_dim(f_full, -1, None) - f_full, 0, -1)
+    sigma_dot_explicit = jax.lax.slice_in_dim(
+        sum_𝜎 * jax.lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
+    sigma_dot_full = jax.lax.slice_in_dim(
+        sum_𝜎 * jax.lax.slice_in_dim(f_full, -1, None) - f_full, 0, -1)
     return DiagnosticState(
         vorticity=nodal_vorticity,
         divergence=nodal_divergence,

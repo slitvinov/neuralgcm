@@ -516,15 +516,15 @@ def get_geopotential(temperature_variation, reference_temperature, orography):
     return surface_geopotential + geopotential_diff
 
 
-def get_temperature_implicit_weights(reference_temperature):
+def get_temperature_implicit_weights():
     p = np.tril(np.ones([g.layers, g.layers]))
     alpha = get_sigma_ratios()[..., np.newaxis]
     p_alpha = p * alpha
     p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
     p_alpha_shifted[0] = 0
-    h0 = (kappa * reference_temperature[..., np.newaxis] *
+    h0 = (kappa * g.reference_temperature[..., np.newaxis] *
           (p_alpha + p_alpha_shifted) / g.layer_thickness[..., np.newaxis])
-    temp_diff = np.diff(reference_temperature)
+    temp_diff = np.diff(g.reference_temperature)
     thickness_sum = g.layer_thickness[:-1] + g.layer_thickness[1:]
     k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[...,
                                                                   np.newaxis]
@@ -536,8 +536,8 @@ def get_temperature_implicit_weights(reference_temperature):
     return (h0 - k - k_shifted) * g.layer_thickness
 
 
-def get_temperature_implicit(divergence, reference_temperature):
-    weights = -get_temperature_implicit_weights(reference_temperature)
+def get_temperature_implicit(divergence):
+    weights = -get_temperature_implicit_weights()
     return _vertical_matvec(weights, divergence)
 
 
@@ -668,10 +668,7 @@ def implicit_terms(state):
     rt_log_p = (ideal_gas_constant * T_ref() * state.log_surface_pressure)
     vorticity_implicit = jnp.zeros_like(state.vorticity)
     divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
-    temperature_variation_implicit = get_temperature_implicit(
-        state.divergence,
-        g.reference_temperature,
-    )
+    temperature_variation_implicit = get_temperature_implicit(state.divergence)
     log_surface_pressure_implicit = -_vertical_matvec(
         g.layer_thickness[np.newaxis], state.divergence)
     tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, state.tracers)
@@ -689,7 +686,7 @@ def implicit_inverse(state, step_size):
     lam = laplacian_eigenvalues()
     geo = get_geopotential_weights()
     r = ideal_gas_constant
-    h = get_temperature_implicit_weights(g.reference_temperature)
+    h = get_temperature_implicit_weights()
     t = g.reference_temperature[:, np.newaxis]
     thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
     l = g.total_wavenumbers

@@ -245,8 +245,8 @@ def accumulate_repeated(step_fn, weights, state, scan_fn=jax.lax.scan):
 
 @jax.jit
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
-    u_over_cos_lat = di.to_modal(u_nodal / di.cos_lat())
-    v_over_cos_lat = di.to_modal(v_nodal / di.cos_lat())
+    u_over_cos_lat = di.transform(u_nodal / di.cos_lat())
+    v_over_cos_lat = di.transform(v_nodal / di.cos_lat())
     vorticity = di.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
     divergence = di.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
     return vorticity, divergence
@@ -319,7 +319,7 @@ vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
 di.g.reference_temperature = ref_temp_si * np.ones((di.g.layers, ))
 temperature_variation = di.to_modal(
     t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
-log_sp = di.to_modal(np.log(sp_nodal))
+log_sp = di.transform(jnp.log(sp_nodal))
 tracers = di.to_modal({
     "specific_humidity":
     nodal_inputs["specific_humidity"],
@@ -335,7 +335,7 @@ raw_init_state = di.State(
     log_surface_pressure=log_sp,
     tracers=tracers,
 )
-orography = di.to_modal(orography_input)
+orography = di.transform(jnp.asarray(orography_input))
 orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
 di.g.orography = orography
 res_factor = di.g.latitude_nodes / 128

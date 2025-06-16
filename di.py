@@ -719,11 +719,9 @@ def implicit_inverse(state, dt):
     )
     implicit_matrix = np.concatenate((row0, row1, row2), axis=1)
     assert implicit_matrix.dtype == np.float64
-    layers = g.layers
-    div = slice(0, layers)
-    temp = slice(layers, 2 * layers)
-    logp = slice(2 * layers, 2 * layers + 1)
-
+    div = slice(0, g.layers)
+    temp = slice(g.layers, 2 * g.layers)
+    logp = slice(2 * g.layers, 2 * g.layers + 1)
     inverse = np.linalg.inv(implicit_matrix)
     assert not np.isnan(inverse).any()
     inverted_divergence = (

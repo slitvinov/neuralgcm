@@ -30,8 +30,8 @@ def explicit_terms(state):
     cutoff = np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b))
     kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
     nodal_temperature_tendency = -kt * (nodal_temperature - Teq)
-    temperature_tendency = di.to_modal(nodal_temperature_tendency)
-    velocity_tendency = di.to_modal(nodal_velocity_tendency)
+    temperature_tendency = di.transform(nodal_temperature_tendency)
+    velocity_tendency = di.transform(nodal_velocity_tendency)
     vorticity_tendency = di.curl_cos_lat(velocity_tendency)
     divergence_tendency = di.div_cos_lat(velocity_tendency)
     log_surface_pressure_tendency = jnp.zeros_like(state.log_surface_pressure)
@@ -67,7 +67,7 @@ p0 = 2.9954997684550640e+19
 p1 = 1.4977498842275320e+18
 orography = np.zeros_like(lat)
 nodal_vorticity = jnp.stack([jnp.zeros_like(lat) for sigma in di.g.centers])
-modal_vorticity = di.to_modal(nodal_vorticity)
+modal_vorticity = di.transform(nodal_vorticity)
 altitude_m = np.zeros_like(lat)
 g = 9.80665
 cp = 1004.68506
@@ -91,10 +91,10 @@ initial_state = di.State(
     vorticity=modal_vorticity,
     divergence=jnp.zeros_like(modal_vorticity),
     temperature_variation=jnp.zeros_like(modal_vorticity),
-    log_surface_pressure=(di.to_modal(jnp.log(nodal_surface_pressure))),
+    log_surface_pressure=(di.transform(jnp.log(nodal_surface_pressure))),
 )
 ref_temps = np.full((di.g.layers, ), tref)
-orography = di.clip_wavenumbers(di.to_modal(orography))
+orography = di.clip_wavenumbers(di.transform(orography))
 
 inner_steps = 2
 outer_steps = 144

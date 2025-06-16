@@ -696,14 +696,14 @@ def implicit_inverse(state, step_size):
     row0 = np.concatenate(
         [
             np.broadcast_to(eye, [l, j, k]),
-            step_size * np.einsum("l,jk->ljk", lam, geo),
-            step_size * r * np.einsum("l,jo->ljo", lam, t),
+            np.einsum("l,jk->ljk", lam, geo),
+            r * np.einsum("l,jo->ljo", lam, t),
         ],
         axis=2,
     )
     row1 = np.concatenate(
         [
-            step_size * np.broadcast_to(h[np.newaxis], [l, j, k]),
+            np.broadcast_to(h[np.newaxis], [l, j, k]),
             np.broadcast_to(eye, [l, j, k]),
             np.zeros([l, j, 1]),
         ],
@@ -711,7 +711,7 @@ def implicit_inverse(state, step_size):
     )
     row2 = np.concatenate(
         [
-            np.broadcast_to(step_size * thickness, [l, 1, k]),
+            np.broadcast_to(thickness, [l, 1, k]),
             np.zeros([l, 1, k]),
             np.ones([l, 1, 1]),
         ],
@@ -724,7 +724,7 @@ def implicit_inverse(state, step_size):
     temp = slice(layers, 2 * layers)
     logp = slice(2 * layers, 2 * layers + 1)
 
-    inverse = np.linalg.inv(implicit_matrix)
+    inverse = np.linalg.inv(implicit_matrix) / step_size
     assert not np.isnan(inverse).any()
     inverted_divergence = (
         matvec(inverse[:, div, div], state.divergence) +

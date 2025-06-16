@@ -711,7 +711,7 @@ def implicit_inverse(state, dt):
     )
     row2 = np.concatenate(
         [
-            np.broadcast_to(dt * thickness, [l, 1, k]),
+            dt * np.broadcast_to(thickness, [l, 1, k]),
             np.zeros([l, 1, k]),
             np.ones([l, 1, 1]),
         ],

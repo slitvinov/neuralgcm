@@ -95,22 +95,8 @@ initial_state = di.State(
 )
 ref_temps = np.full((di.g.layers, ), tref)
 orography = di.clip_wavenumbers(di.transform(orography))
-
-inner_steps = 2
-outer_steps = 144
-dt = 4.3752000000000006e-02
 di.g.reference_temperature = ref_temps
 di.g.orography = orography
-step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
-                              di.implicit_inverse, dt)
-filters = [di.exponential_step_filter(di.g.total_wavenumbers, dt)]
-step_fn = di.step_with_filters(step_fn, filters)
-integrate_fn = jax.jit(
-    di.trajectory_from_step(step_fn,
-                            outer_steps=outer_steps,
-                            inner_steps=inner_steps,
-                            start_with_input=True))
-final, trajectory = integrate_fn(initial_state)
 inner_steps = 1440
 outer_steps = 120
 dt = 8.7504000000000012e-02
@@ -140,20 +126,8 @@ integrate_fn = jax.jit(
                             outer_steps=outer_steps,
                             inner_steps=inner_steps))
 final, trajectory = integrate_fn(initial_state)
-start_time = 200
 inner_steps = 36
 outer_steps = 28
-dt = 8.7504000000000012e-02
-step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
-                              di.implicit_inverse, dt)
-filters = [
-    di.exponential_step_filter(di.g.total_wavenumbers,
-                               dt,
-                               tau=0.0087504,
-                               order=1.5,
-                               cutoff=0.8),
-]
-step_fn = di.step_with_filters(step_fn, filters)
 integrate_fn = jax.jit(
     di.trajectory_from_step(
         step_fn,

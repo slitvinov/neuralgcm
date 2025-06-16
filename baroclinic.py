@@ -76,19 +76,6 @@ def get_divergence_perturbation(lat, lon):
              (np.sqrt(1 - x**2))))
 
 
-def trajectory_from_step(step_fn, outer_steps, inner_steps):
-    step_fn = di.repeated(step_fn, inner_steps)
-
-    def step(carry_in, _):
-        carry_out = step_fn(carry_in)
-        return carry_out, carry_out
-
-    def multistep(x):
-        return jax.lax.scan(step, x, xs=None, length=outer_steps)
-
-    return multistep
-
-
 dtype = np.dtype('float32')
 gravity_acceleration = 7.2364082834567185e+01
 sigma_tropo = 0.2
@@ -149,16 +136,15 @@ state = di.State(
     divergence=di.transform(jnp.asarray(divergence_perturbation)),
     temperature_variation=di.transform(jnp.asarray(temperature_variation)),
     log_surface_pressure=di.transform(jnp.asarray(log_surface_pressure)))
-inner_steps = 72
-outer_steps = 168
-integrate_fn = trajectory_from_step(step_fn, outer_steps, inner_steps)
-integrate_fn = jax.jit(integrate_fn)
-final, trajectory = integrate_fn(state)
-trajectory = jax.device_get(trajectory)
-f0 = di.inverse_transform(trajectory.temperature_variation)
+# 8640 = 72 * 120
+final, _ = jax.lax.scan(lambda x, _: (step_fn(x), None),
+                        state,
+                        xs=None,
+                        length=8640)
+f0 = di.inverse_transform(final.temperature_variation)
 temperature = f0 + di.g.reference_temperature[:, np.newaxis, np.newaxis]
 levels = [(220 + 10 * i) for i in range(10)]
-plt.contourf(temperature[119, 22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
+plt.contourf(temperature[22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
 plt.savefig("b.09.png")
-np.asarray(temperature).tofile("b.09.raw")
 plt.close()
+np.asarray(temperature).tofile("b.09.raw")

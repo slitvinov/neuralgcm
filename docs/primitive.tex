@@ -106,6 +106,62 @@ TPUs have dedicated hardware for low-precision matrix-matrix multiplication, whi
 We found that full single precision for spherical harmonic transformations was not required to obtain accurate results even on our largest grid sizes, and according use only three passes of bfloat16 matrix-multiplication rather than the six passes that would required for full single precision~\citeSI{Henry2019-it}.
 Our implementation supports parallelism across spatial dimensions (x, y, and z) for running on multiple accelerator cores, using XLA SPMD~\citeSI{Xu2021-fe}, with JAX's \texttt{shard\_map} for parallelizing key bottlenecks including matrix-multiplications in spherical harmonic transforms~\citeSI{shard_map}.
 
+\section{Time integration}\label{apx:sec:time_integration}
+In NeuralGCM, the state of the atmosphere is advanced in time by integrating model equations that combine effects from the dynamical core and learned physics parameterizations. This is done iteratively using Implicit-Explicit integration scheme~\cite{whitaker2013implicit} described in \ref{apx:subsec:sil3}. Integration time step varies with resolution, as shown in Table \ref{apx:table:timestep_filters}. This results in iterative updates to the model state every $4$-$30$ minutes, depending on model resolution. In contrast, data-driven methods commonly make predictions at $6$-hour jumps \cite{lam2022graphcast,keisler2022forecasting}.
+Throughout time integration, dynamical core tendencies are computed at every time step, while learned physics tendencies are only recomputed once every $60$ minutes for our lowest resolution ($2.8^{\circ}$) model and every $30$ minutes for all others. This is done to avoid excessive backpropagation through the neural networks in learned physics. At higher resolutions it might be advantageous to include more frequent updates to learned physics tendencies to be able to account for short-time processes (rather than statistical effect that varies smoothly in time). 
+Similar to traditional spectral GCMs we introduce spectral filters to improve numerical stability~\citeSI{jablonowski2011pros}, which are described in \ref{apx:subsec:timestep_filtering}.
+
+\subsection{Time integration scheme}\label{apx:subsec:sil3}
+
+As is typical for atmospheric models, in NeuralGCM we use semi-implicit ODE solvers to the solve the primitive equations, by partitioning dynamical tendencies into ``implicit'' and ``explicit'' terms. ``Implicit'' tendencies include linear terms of Eq.~\ref{eq:primitive_equations} that give rise to the low amplitude, fast moving gravity waves. These terms are treated implicitly, allowing for longer stable time steps, while the rest of the terms are computed explicitly.
+
+Rather than the traditional semi-implicit leapfrog method, we use implicit-explicit Runge-Kutta methods to avoid the complexity of keeping track of multiple time-steps and time-filtering required by the traditional semi-implicit leapfrog method.
+Specifically, we use the semi-implicit Lorenz three cycle scheme (SIL3), which was developed specifically for global spectral weather models~\cite{whitaker2013implicit}. 
+
+
+\begin{table}[h]
+\begin{tabular}{ cc }
+    \begin{tabular}{c|cccc}
+    $1 / 3$ & $1 / 3$ & & & \\
+    $2 / 3$ & $1 / 6$ & $1 / 2$ & & \\
+    1 & $1 / 2$ & $-1 / 2$ & 1 & \\
+    \hline & $1 / 2$ & $-1 / 2$ & 1 & 0 
+    \end{tabular}
+    \begin{tabular}{c|cccc}
+    $1 / 3$ & $1 / 6$ & $1 / 6$ & & \\
+    $1 / 3$ & $0$ & $1 / 3$ & & \\
+    1 & $3 / 8$ & $0$ & $3 / 8$ & $1 / 4$ \\
+    \hline & $3 / 8$ & $0$ & $3 / 8$ & $1 / 4$
+    \end{tabular}
+\end{tabular}
+\caption{Butcher tableau for the IMEX SIL3 scheme.}\label{apx:table:butcher_tableau}
+\end{table}
+
+\subsection{Filtering}\label{apx:subsec:timestep_filtering}
+During time integration we use two exponential filters of different strengths (``hard'' and ``soft'').
+These filters correspond to hyper-diffusion, a standard component of spectral atmospheric models used to stabilize dynamics~\citeSI{Jablonowski2011-qf}. 
+Each transform a scalar field $x_{hml}$ in spherical harmonic representation as:
+\begin{equation}
+    x_{hml} \rightarrow x_{hml} * e^{-a\left(\frac{k-c}{1-c}\right)^{2p}}
+\end{equation}
+with filter attenuation $a$, filter cutoff $c$, filter order $p$, and normalized total wavenumber $k\equiv\frac{l}{l_{max}}$.
+
+Filter parameters used by different NeuralGCM models are summarized in Table \ref{apx:table:timestep_filters}, where filter attenuation is specified via attenuation time $\alpha$ and time step $dt$ via $a=\frac{\alpha}{dt}$. Both hard and soft filters are applied to the model state at the end of each integration step. We additionally apply hard filter to the outputs of learned physics parameterizations to avoid injection of high frequency noise in each model step. The filtering strength sets the true length scale of the simulation, which is generally slightly larger than the grid spacing.
+
+\begin{table}[h]
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+Model resolution & Time step [minutes] & Filter & Attenuation time [minutes] & Order & Cutoff \\ \hline
+\multirow{2}{*}{$2.8^{\circ}$} & \multirow{2}{*}{12} & hard & 4 & 10 & 0.4 \\ 
+ &  & soft & 120 & 3 & 0.0 \\ \hline
+\multirow{2}{*}{$1.4^{\circ}$} & \multirow{2}{*}{6} & hard & 8 & 6 & 0.4 \\ 
+ &  & soft & 120 & 3 & 0.0 \\ \hline
+\multirow{2}{*}{$0.7^{\circ}$} & \multirow{2}{*}{3.75} & hard & 4 & 6 & 0.4 \\ 
+ &  & soft & 120 & 3 & 0.0 \\ \hline
+\end{tabular}
+\caption{Time step and filtering parameters of NeuralGCM models.}\label{apx:table:timestep_filters}
+\end{table}
+
 \begin{thebibliography}{10}
 \expandafter\ifx\csname url\endcsname\relax
 \def\url#1{\burl{#1}}\fi

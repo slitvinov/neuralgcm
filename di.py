@@ -718,24 +718,22 @@ def implicit_inverse(state, dt):
         axis=2,
     )
     implicit_matrix = np.concatenate((row0, row1, row2), axis=1)
-    assert implicit_matrix.dtype == np.float64
+    inverse = np.linalg.inv(implicit_matrix)
     div = slice(0, g.layers)
     temp = slice(g.layers, 2 * g.layers)
     logp = slice(2 * g.layers, 2 * g.layers + 1)
-    inverse = np.linalg.inv(implicit_matrix)
-    assert not np.isnan(inverse).any()
-    inverted_divergence = (
-        matvec(inverse[:, div, div], state.divergence) +
-        matvec(inverse[:, div, temp], state.temperature_variation) +
-        matvec(inverse[:, div, logp], state.log_surface_pressure))
-    inverted_temperature_variation = (
-        matvec(inverse[:, temp, div], state.divergence) +
-        matvec(inverse[:, temp, temp], state.temperature_variation) +
-        matvec(inverse[:, temp, logp], state.log_surface_pressure))
-    inverted_log_surface_pressure = (
-        matvec(inverse[:, logp, div], state.divergence) +
-        matvec(inverse[:, logp, temp], state.temperature_variation) +
-        matvec(inverse[:, logp, logp], state.log_surface_pressure))
+    inverted_divergence = matvec(
+        inverse[:, div, div], state.divergence) + matvec(
+            inverse[:, div, temp], state.temperature_variation) + matvec(
+                inverse[:, div, logp], state.log_surface_pressure)
+    inverted_temperature_variation = matvec(
+        inverse[:, temp, div], state.divergence) + matvec(
+            inverse[:, temp, temp], state.temperature_variation) + matvec(
+                inverse[:, temp, logp], state.log_surface_pressure)
+    inverted_log_surface_pressure = matvec(
+        inverse[:, logp, div], state.divergence) + matvec(
+            inverse[:, logp, temp], state.temperature_variation) + matvec(
+                inverse[:, logp, logp], state.log_surface_pressure)
     return State(
         state.vorticity,
         inverted_divergence,

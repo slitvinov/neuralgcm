@@ -111,6 +111,8 @@ ka = 1.9840362853253690e-03
 ks = 1.9840362853253687e-02
 _, sin_lat = di.nodal_mesh()
 lat = np.arcsin(sin_lat)
+step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
+                              di.implicit_inverse, dt)
 filters = [
     di.exponential_step_filter(di.g.total_wavenumbers,
                                dt,

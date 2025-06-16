@@ -318,8 +318,7 @@ def get_cos_lat_vector(vorticity, divergence, clip=True):
     )
 
 
-def imex_runge_kutta(exp, imp, inv, time_step):
-    dt = time_step
+def imex_runge_kutta(exp, imp, inv, dt):
     F = tree_math.unwrap(exp)
     G = tree_math.unwrap(imp)
     G_inv = tree_math.unwrap(inv, vector_argnums=0)

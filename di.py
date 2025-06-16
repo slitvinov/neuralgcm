@@ -683,7 +683,7 @@ def implicit_terms(state):
     )
 
 
-def implicit_inverse(state, step_size):
+def implicit_inverse(state, dt):
     eye = np.eye(g.layers)[np.newaxis]
     lam = laplacian_eigenvalues()
     geo = get_geopotential_weights()
@@ -696,14 +696,14 @@ def implicit_inverse(state, step_size):
     row0 = np.concatenate(
         [
             np.broadcast_to(eye, [l, j, k]),
-            step_size * np.einsum("l,jk->ljk", lam, geo),
-            step_size * r * np.einsum("l,jo->ljo", lam, t),
+            dt * np.einsum("l,jk->ljk", lam, geo),
+            dt * r * np.einsum("l,jo->ljo", lam, t),
         ],
         axis=2,
     )
     row1 = np.concatenate(
         [
-            step_size * np.broadcast_to(h[np.newaxis], [l, j, k]),
+            dt * np.broadcast_to(h[np.newaxis], [l, j, k]),
             np.broadcast_to(eye, [l, j, k]),
             np.zeros([l, j, 1]),
         ],
@@ -711,7 +711,7 @@ def implicit_inverse(state, step_size):
     )
     row2 = np.concatenate(
         [
-            np.broadcast_to(step_size * thickness, [l, 1, k]),
+            np.broadcast_to(dt * thickness, [l, 1, k]),
             np.zeros([l, 1, k]),
             np.ones([l, 1, 1]),
         ],

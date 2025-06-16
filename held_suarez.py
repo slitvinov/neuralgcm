@@ -31,7 +31,7 @@ def explicit_terms(state):
     kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
     nodal_temperature_tendency = -kt * (nodal_temperature - Teq)
     temperature_tendency = di.transform(nodal_temperature_tendency)
-    velocity_tendency = di.transform(nodal_velocity_tendency)
+    velocity_tendency = di.transform(jnp.asarray(nodal_velocity_tendency))
     vorticity_tendency = di.curl_cos_lat(velocity_tendency)
     divergence_tendency = di.div_cos_lat(velocity_tendency)
     log_surface_pressure_tendency = jnp.zeros_like(state.log_surface_pressure)

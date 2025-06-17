@@ -377,9 +377,7 @@ def step_fn0(x_initial):
 
 
 def step(frame, _):
-    carry_out = step_fn0(frame)
-    return carry_out, nodal_prognostics_and_diagnostics(frame)
-
+    return step_fn0(frame), nodal_prognostics_and_diagnostics(frame)
 
 def integrate_fn(x):
     return jax.lax.scan(step, x, xs=None, length=outer_steps)

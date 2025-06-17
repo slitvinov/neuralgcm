@@ -5,14 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def equilibrium_temperature(nodal_surface_pressure):
-    p_over_p0 = (di.g.centers[:, np.newaxis, np.newaxis] *
-                 nodal_surface_pressure / p0)
-    temperature = p_over_p0**di.kappa * (maxT - dTy * np.sin(lat)**2 - dThz *
-                                         jnp.log(p_over_p0) * np.cos(lat)**2)
-    return jnp.maximum(minT, temperature)
-
-
 def explicit_terms(state):
     aux_state = di.compute_diagnostic_state(state)
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))
@@ -26,7 +18,11 @@ def explicit_terms(state):
     nodal_log_surface_pressure = di.inverse_transform(
         state.log_surface_pressure)
     nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
-    Teq = equilibrium_temperature(nodal_surface_pressure)
+    p_over_p0 = (di.g.centers[:, np.newaxis, np.newaxis] *
+                 nodal_surface_pressure / p0)
+    temperature = p_over_p0**di.kappa * (maxT - dTy * np.sin(lat)**2 - dThz *
+                                         jnp.log(p_over_p0) * np.cos(lat)**2)
+    Teq = jnp.maximum(minT, temperature)
     cutoff = np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b))
     kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
     nodal_temperature_tendency = -kt * (nodal_temperature - Teq)

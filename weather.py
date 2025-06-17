@@ -371,7 +371,7 @@ step_fn = di.step_with_filters(
 
 
 def step_fn0(x_initial):
-    gfun = lambda x, _: (fn(x), None)
+    gfun = lambda x, _: (step_fn(x), None)
     x_final, _ = jax.lax.scan(gfun, x_initial, xs=None, length=inner_steps)
     return x_final
 

@@ -194,13 +194,6 @@ def regrid_hybrid_to_sigma(fields, surface_pressure):
     return di.tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, di.g.boundaries, x), fields)
 
-
-def horizontal_diffusion_filter(scale, order=1):
-    eigenvalues = di.laplacian_eigenvalues()
-    scaling = jnp.exp(-scale * (-eigenvalues)**order)
-    return di._make_filter_fn(scaling)
-
-
 def compute_vertical_velocity(state):
     sigma_dot_boundaries = di.compute_diagnostic_state(state).sigma_dot_full
     assert sigma_dot_boundaries.ndim == 3
@@ -389,9 +382,11 @@ dt = DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)
 
-eigenvalues = di.laplacian_eigenvalues()
 scale = dt / (tau * abs(eigenvalues[-1])**order)
-filter_fn = horizontal_diffusion_filter(scale, order=2)
+eigenvalues = di.laplacian_eigenvalues()
+scaling = jnp.exp(-scale * (-eigenvalues)**2)
+filter_fn = di._make_filter_fn(scaling)
+
 hyperdiffusion_filter = di.runge_kutta_step_filter(filter_fn)
 time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 dfi = jax.jit(fun)

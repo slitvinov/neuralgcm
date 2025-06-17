@@ -195,13 +195,6 @@ def regrid_hybrid_to_sigma(fields, surface_pressure):
         lambda x: regrid(surface_pressure, di.g.boundaries, x), fields)
 
 
-def horizontal_diffusion_step_filter(dt, tau, order=1):
-    eigenvalues = di.laplacian_eigenvalues()
-    scale = dt / (tau * abs(eigenvalues[-1])**order)
-    filter_fn = horizontal_diffusion_filter(scale, order)
-    return di.runge_kutta_step_filter(filter_fn)
-
-
 def horizontal_diffusion_filter(scale, order=1):
     eigenvalues = di.laplacian_eigenvalues()
     scaling = jnp.exp(-scale * (-eigenvalues)**order)
@@ -306,7 +299,6 @@ def fun(state):
                        backward_term)
 
 
-ref_temp_si = 250
 di.g.longitude_wavenumbers = 171
 di.g.total_wavenumbers = 172
 di.g.longitude_nodes = 512
@@ -370,7 +362,7 @@ u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]
 vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
-di.g.reference_temperature = ref_temp_si * np.ones((di.g.layers, ))
+di.g.reference_temperature = 250 * np.ones((di.g.layers, ))
 temperature_variation = di.to_modal(
     t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
 log_sp = di.to_modal(np.log(sp_nodal))
@@ -396,11 +388,12 @@ res_factor = di.g.latitude_nodes / 128
 dt = DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)
-hyperdiffusion_filter = horizontal_diffusion_step_filter(dt=dt,
-                                                         tau=tau,
-                                                         order=2)
-time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 
+eigenvalues = di.laplacian_eigenvalues()
+scale = dt / (tau * abs(eigenvalues[-1])**order)
+filter_fn = horizontal_diffusion_filter(scale, order=2)
+hyperdiffusion_filter = di.runge_kutta_step_filter(filter_fn)
+time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 dfi = jax.jit(fun)
 dfi_init_state = dfi(raw_init_state)
 

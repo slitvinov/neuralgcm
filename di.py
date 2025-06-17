@@ -394,38 +394,6 @@ def step_with_filters(step_fn, filters):
     return _step_fn
 
 
-def repeated(fn, steps):
-
-    def f_repeated(x_initial):
-        gfun = lambda x, _: (fn(x), None)
-        x_final, _ = jax.lax.scan(gfun, x_initial, xs=None, length=steps)
-        return x_final
-
-    return f_repeated
-
-
-def trajectory_from_step(
-    step_fn,
-    outer_steps,
-    inner_steps,
-    *,
-    start_with_input=False,
-    post_process_fn=lambda x: x,
-):
-    if inner_steps != 1:
-        step_fn = repeated(step_fn, inner_steps)
-
-    def step(carry_in, _):
-        carry_out = step_fn(carry_in)
-        frame = carry_in if start_with_input else carry_out
-        return carry_out, post_process_fn(frame)
-
-    def multistep(x):
-        return jax.lax.scan(step, x, xs=None, length=outer_steps)
-
-    return multistep
-
-
 @tree_math.struct
 class State:
     vorticity: Any

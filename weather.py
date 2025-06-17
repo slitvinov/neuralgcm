@@ -252,6 +252,60 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     return vorticity, divergence
 
 
+def repeated(fn, steps):
+
+    def f_repeated(x_initial):
+        gfun = lambda x, _: (fn(x), None)
+        x_final, _ = jax.lax.scan(gfun, x_initial, xs=None, length=steps)
+        return x_final
+
+    return f_repeated
+
+
+def trajectory_from_step(
+    step_fn,
+    outer_steps,
+    inner_steps,
+    *,
+    start_with_input=False,
+    post_process_fn=lambda x: x,
+):
+    if inner_steps != 1:
+        step_fn = repeated(step_fn, inner_steps)
+
+    def step(carry_in, _):
+        carry_out = step_fn(carry_in)
+        frame = carry_in if start_with_input else carry_out
+        return carry_out, post_process_fn(frame)
+
+    def multistep(x):
+        return jax.lax.scan(step, x, xs=None, length=outer_steps)
+
+    return multistep
+
+
+def fun(state):
+    forward_step = di.step_with_filters(
+        di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
+                            di.implicit_inverse, dt), [hyperdiffusion_filter])
+    backward_step = di.step_with_filters(
+        di.imex_runge_kutta(explicit_terms, implicit_terms, implicit_inverse,
+                            dt), [hyperdiffusion_filter])
+    N = round(time_span / (2 * dt))
+    n = np.arange(1, N + 1)
+    weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span /
+                                             (cutoff_period * N))
+    init_weight = 1.0
+    total_weight = init_weight + 2 * weights.sum()
+    init_weight /= total_weight
+    weights /= total_weight
+    init_term = di.tree_map(lambda x: x * init_weight, state)
+    forward_term = accumulate_repeated(forward_step, weights, state)
+    backward_term = accumulate_repeated(backward_step, weights, state)
+    return di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
+                       backward_term)
+
+
 ref_temp_si = 250
 di.g.longitude_wavenumbers = 171
 di.g.total_wavenumbers = 172
@@ -347,29 +401,6 @@ hyperdiffusion_filter = horizontal_diffusion_step_filter(dt=dt,
                                                          order=2)
 time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
 
-
-def fun(state):
-    forward_step = di.step_with_filters(
-        di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
-                            di.implicit_inverse, dt), [hyperdiffusion_filter])
-    backward_step = di.step_with_filters(
-        di.imex_runge_kutta(explicit_terms, implicit_terms, implicit_inverse,
-                            dt), [hyperdiffusion_filter])
-    N = round(time_span / (2 * dt))
-    n = np.arange(1, N + 1)
-    weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span /
-                                             (cutoff_period * N))
-    init_weight = 1.0
-    total_weight = init_weight + 2 * weights.sum()
-    init_weight /= total_weight
-    weights /= total_weight
-    init_term = di.tree_map(lambda x: x * init_weight, state)
-    forward_term = accumulate_repeated(forward_step, weights, state)
-    backward_term = accumulate_repeated(backward_step, weights, state)
-    return di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
-                       backward_term)
-
-
 dfi = jax.jit(fun)
 dfi_init_state = dfi(raw_init_state)
 
@@ -381,7 +412,7 @@ step_fn = di.step_with_filters(
     [hyperdiffusion_filter],
 )
 integrate_fn = jax.jit(
-    di.trajectory_from_step(
+    trajectory_from_step(
         step_fn,
         outer_steps=outer_steps,
         inner_steps=inner_steps,

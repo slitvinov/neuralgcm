@@ -249,28 +249,6 @@ def repeated(fn, steps):
     return f_repeated
 
 
-def trajectory_from_step(
-    step_fn,
-    outer_steps,
-    inner_steps,
-    *,
-    start_with_input=False,
-    post_process_fn=lambda x: x,
-):
-    if inner_steps != 1:
-        step_fn = repeated(step_fn, inner_steps)
-
-    def step(carry_in, _):
-        carry_out = step_fn(carry_in)
-        frame = carry_in if start_with_input else carry_out
-        return carry_out, post_process_fn(frame)
-
-    def multistep(x):
-        return jax.lax.scan(step, x, xs=None, length=outer_steps)
-
-    return multistep
-
-
 def fun(state):
     forward_step = di.step_with_filters(
         di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
@@ -400,14 +378,19 @@ step_fn = di.step_with_filters(
                         di.implicit_inverse, dt),
     [hyperdiffusion_filter],
 )
-integrate_fn = jax.jit(
-    trajectory_from_step(
-        step_fn,
-        outer_steps=outer_steps,
-        inner_steps=inner_steps,
-        start_with_input=True,
-        post_process_fn=nodal_prognostics_and_diagnostics,
-    ))
+step_fn0 = repeated(step_fn, inner_steps)
+
+
+def step(carry_in, _):
+    carry_out = step_fn0(carry_in)
+    frame = carry_in
+    return carry_out, nodal_prognostics_and_diagnostics(frame)
+
+
+def integrate_fn(x):
+    return jax.lax.scan(step, x, xs=None, length=outer_steps)
+
+
 out_state, trajectory = integrate_fn(dfi_init_state)
 ds_out = trajectory_to_xarray(trajectory)
 out_state, trajectory = integrate_fn(raw_init_state)

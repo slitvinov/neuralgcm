@@ -171,15 +171,6 @@ def trajectory_to_xarray(trajectory):
     return ds_result
 
 
-def conservative_regrid_weights(source, target):
-    upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
-    lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
-    weights = jnp.maximum(upper - lower, 0)
-    weights /= jnp.sum(weights, axis=1, keepdims=True)
-    assert weights.shape == (target.size - 1, source.size - 1)
-    return weights
-
-
 @jax.jit
 def regrid_hybrid_to_sigma(fields, surface_pressure):
 
@@ -187,10 +178,14 @@ def regrid_hybrid_to_sigma(fields, surface_pressure):
     @functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
-    def regrid(surface_pressure, sigma_bounds, field):
-        assert sigma_bounds.shape == (di.g.layers + 1, )
-        hybrid_bounds = a_boundaries / surface_pressure + b_boundaries
-        weights = conservative_regrid_weights(hybrid_bounds, sigma_bounds)
+    def regrid(surface_pressure, target, field):
+        assert target.shape == (di.g.layers + 1, )
+        source = a_boundaries / surface_pressure + b_boundaries
+        upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
+        lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
+        weights = jnp.maximum(upper - lower, 0)
+        weights /= jnp.sum(weights, axis=1, keepdims=True)
+        assert weights.shape == (target.size - 1, source.size - 1)
         result = jnp.einsum("ab,b->a", weights, field, precision="float32")
         assert result.shape[0] == di.g.layers
         return result

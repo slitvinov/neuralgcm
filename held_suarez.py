@@ -86,19 +86,15 @@ perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *
                 jnp.exp(-((lat - lat0)**2) /
                         (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
 nodal_surface_pressure = surface_pressure + p1 * perturbation
-
-initial_state = di.State(
+state = di.State(
     vorticity=modal_vorticity,
     divergence=jnp.zeros_like(modal_vorticity),
     temperature_variation=jnp.zeros_like(modal_vorticity),
     log_surface_pressure=(di.transform(jnp.log(nodal_surface_pressure))),
 )
 ref_temps = np.full((di.g.layers, ), tref)
-orography = di.clip_wavenumbers(di.transform(orography))
 di.g.reference_temperature = ref_temps
-di.g.orography = orography
-inner_steps = 1440
-outer_steps = 120
+di.g.orography = di.clip_wavenumbers(di.transform(orography))
 dt = 8.7504000000000012e-02
 sigma_b = 0.7
 minT = 200
@@ -121,22 +117,12 @@ filters = [
                                cutoff=0.8),
 ]
 step_fn = di.step_with_filters(step_fn, filters)
-integrate_fn = jax.jit(
-    di.trajectory_from_step(step_fn,
-                            outer_steps=outer_steps,
-                            inner_steps=inner_steps))
-final, trajectory = integrate_fn(initial_state)
-inner_steps = 36
-outer_steps = 28
-integrate_fn = jax.jit(
-    di.trajectory_from_step(
-        step_fn,
-        outer_steps=outer_steps,
-        inner_steps=inner_steps,
-    ))
-final, trajectory = integrate_fn(final)
-f0 = di.inverse_transform(trajectory.temperature_variation)
-plt.contourf(f0[-1, 22, :, :])
+final, _ = jax.lax.scan(lambda x, _: (step_fn(x), None),
+                        state,
+                        xs=None,
+                        length=173808)
+f0 = di.inverse_transform(final.temperature_variation)
+plt.contourf(f0[22, :, :])
 plt.savefig("h.12.png")
 np.asarray(f0).tofile("h.12.raw")
 plt.close()

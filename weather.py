@@ -239,16 +239,6 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     return vorticity, divergence
 
 
-def repeated(fn, steps):
-
-    def f_repeated(x_initial):
-        gfun = lambda x, _: (fn(x), None)
-        x_final, _ = jax.lax.scan(gfun, x_initial, xs=None, length=steps)
-        return x_final
-
-    return f_repeated
-
-
 def fun(state):
     forward_step = di.step_with_filters(
         di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
@@ -378,12 +368,16 @@ step_fn = di.step_with_filters(
                         di.implicit_inverse, dt),
     [hyperdiffusion_filter],
 )
-step_fn0 = repeated(step_fn, inner_steps)
 
 
-def step(carry_in, _):
-    carry_out = step_fn0(carry_in)
-    frame = carry_in
+def step_fn0(x_initial):
+    gfun = lambda x, _: (fn(x), None)
+    x_final, _ = jax.lax.scan(gfun, x_initial, xs=None, length=inner_steps)
+    return x_final
+
+
+def step(frame, _):
+    carry_out = step_fn0(frame)
     return carry_out, nodal_prognostics_and_diagnostics(frame)
 
 

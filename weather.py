@@ -194,6 +194,7 @@ def regrid_hybrid_to_sigma(fields, surface_pressure):
     return di.tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, di.g.boundaries, x), fields)
 
+
 def compute_vertical_velocity(state):
     sigma_dot_boundaries = di.compute_diagnostic_state(state).sigma_dot_full
     assert sigma_dot_boundaries.ndim == 3

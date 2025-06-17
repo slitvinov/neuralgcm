@@ -383,8 +383,8 @@ dt = DEFAULT_SCALE.nondimensionalize(dt_si)
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)
 
-scale = dt / (tau * abs(eigenvalues[-1])**2)
 eigenvalues = di.laplacian_eigenvalues()
+scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 filter_fn = di._make_filter_fn(scaling)
 

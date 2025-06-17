@@ -13,6 +13,11 @@ Save reference raw files
 ```
 for i in *.raw; do cmp $i ~/$i; echo $i $?; done
 ```
+
+## Data
+
+https://github.com/google-research/arco-era5
+
 ## References
 
 - [neuralgcm/dinosaur](https://github.com/neuralgcm/dinosaur)

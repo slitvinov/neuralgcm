@@ -113,7 +113,11 @@ def nodal_prognostics_and_diagnostics(state):
     tracers_nodal = {k: di.to_nodal(v) for k, v in state.tracers.items()}
     t_nodal = (di.to_nodal(state.temperature_variation) +
                di.g.reference_temperature[:, np.newaxis, np.newaxis])
-    vertical_velocity_nodal = compute_vertical_velocity(state)
+    sigma_dot_boundaries = di.compute_diagnostic_state(state).sigma_dot_full
+    assert sigma_dot_boundaries.ndim == 3
+    sigma_dot_padded = jnp.pad(sigma_dot_boundaries, [(1, 1), (0, 0), (0, 0)])
+    vertical_velocity_nodal = 0.5 * (sigma_dot_padded[1:] +
+                                     sigma_dot_padded[:-1])
     state_nodal = {
         "u_component_of_wind": u_nodal,
         "v_component_of_wind": v_nodal,
@@ -193,13 +197,6 @@ def regrid_hybrid_to_sigma(fields, surface_pressure):
 
     return di.tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, di.g.boundaries, x), fields)
-
-
-def compute_vertical_velocity(state):
-    sigma_dot_boundaries = di.compute_diagnostic_state(state).sigma_dot_full
-    assert sigma_dot_boundaries.ndim == 3
-    sigma_dot_padded = jnp.pad(sigma_dot_boundaries, [(1, 1), (0, 0), (0, 0)])
-    return 0.5 * (sigma_dot_padded[1:] + sigma_dot_padded[:-1])
 
 
 def explicit_terms(state):
@@ -378,6 +375,7 @@ def step_fn0(x_initial):
 
 def step(frame, _):
     return step_fn0(frame), nodal_prognostics_and_diagnostics(frame)
+
 
 def integrate_fn(x):
     return jax.lax.scan(step, x, xs=None, length=outer_steps)

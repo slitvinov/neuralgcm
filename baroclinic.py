@@ -138,7 +138,6 @@ state = di.State(
     divergence=di.transform(jnp.asarray(divergence_perturbation)),
     temperature_variation=di.transform(jnp.asarray(temperature_variation)),
     log_surface_pressure=di.transform(jnp.asarray(log_surface_pressure)))
-# 8640 = 72 * 120
 final, _ = jax.lax.scan(lambda x, _: (step_fn(x), None),
                         state,
                         xs=None,

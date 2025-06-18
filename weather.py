@@ -56,18 +56,6 @@ def attach_data_array_units(array):
     return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
 
 
-def xarray_to_gcm_dict(ds_nondim_init):
-    var_names = ds_nondim_init.keys()
-    result = {}
-    for var_name in var_names:
-        data = ds_nondim_init[var_name].transpose(..., "longitude",
-                                                  "latitude").data
-        if data.ndim == 2:
-            data = data[np.newaxis, ...]
-        result[var_name] = data
-    return result
-
-
 def open_era5(path, time):
     ds = xarray.open_zarr(path,
                           chunks=None,
@@ -299,7 +287,14 @@ a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
                                    delimiter="\t").T
 a_boundaries = a_in_pa / 100
 ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)
-model_level_inputs = xarray_to_gcm_dict(ds_nondim_init)
+var_names = ds_nondim_init.keys()
+model_level_inputs = {}
+for var_name in var_names:
+    data = ds_nondim_init[var_name].transpose(..., "longitude",
+                                              "latitude").data
+    if data.ndim == 2:
+        data = data[np.newaxis, ...]
+    model_level_inputs[var_name] = data
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
 sp_init_hpa = (ds_init.surface_pressure.transpose(

@@ -225,6 +225,10 @@ di.g.f, di.g.p, di.g.w = di.basis()
 output_level_indices = [
     di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1
 ]
+longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
+sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
+desired_lon = 180 / np.pi * longitude
+desired_lat = 180 / np.pi * np.arcsin(sin_latitude)
 ds_arco_era5 = xarray.merge([
     open_era5(
         "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3",
@@ -244,10 +248,6 @@ ds = ds_arco_era5[[
     "specific_cloud_ice_water_content",
     "surface_pressure",
 ]]
-longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
-sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
-desired_lon = 180 / np.pi * longitude
-desired_lat = 180 / np.pi * np.arcsin(sin_latitude)
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 ds_init = ds0.map(attach_data_array_units)
 raw_orography = ds_arco_era5.geopotential_at_surface

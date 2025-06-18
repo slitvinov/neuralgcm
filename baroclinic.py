@@ -105,10 +105,7 @@ di.g.f, di.g.p, di.g.w = di.basis()
 tau = 0.010938
 order = 18
 cutoff = 0
-
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
-modal_shape = di.g.layers, 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
-
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
 lat = np.arcsin(sin_lat)

@@ -229,7 +229,7 @@ sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 desired_lat = np.rad2deg(np.arcsin(sin_latitude))
 desired_lon = np.linspace(0, 360, di.g.longitude_nodes, endpoint=False)
 if os.path.exists("weather.h5"):
-    era = xr.open_dataset("weather.h5")
+    era = xarray.open_dataset("weather.h5")
 else:
     era = xarray.merge([
         open(

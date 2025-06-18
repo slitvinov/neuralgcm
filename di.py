@@ -225,7 +225,7 @@ def sec2_lat():
 
 
 def laplacian_eigenvalues():
-    _, l = modal_axes()
+    l = np.arange(g.total_wavenumbers)
     return -l * (l + 1) / (1.0**2)
 
 

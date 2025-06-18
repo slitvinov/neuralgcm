@@ -6,6 +6,7 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pint
+import scipy
 import xarray
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)

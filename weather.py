@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pint
 import scipy
 import xarray
@@ -57,11 +58,10 @@ def attach_data_array_units(array):
     return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
 
 
-def open_era5(path, time):
-    ds = xarray.open_zarr(path,
-                          chunks=None,
-                          storage_options=dict(token="anon"))
-    return ds.sel(time=time)
+def open(path):
+    return xarray.open_zarr(
+        path, chunks=None,
+        storage_options=dict(token="anon")).sel("19900501T00")
 
 
 @jax.jit
@@ -229,20 +229,17 @@ sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 desired_lat = np.rad2deg(np.arcsin(sin_latitude))
 desired_lon = np.linspace(0, 360, di.g.longitude_nodes, endpoint=False)
 if os.path.exists("weather.h5"):
-    era5 = xr.open_dataset("weather.h5")
+    era = xr.open_dataset("weather.h5")
 else:
-    era5 = xarray.merge([
-        open_era5(
-            "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3",
-            time="19900501T00",
+    era = xarray.merge([
+        open(
+            "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
         ).drop_dims("level"),
-        open_era5(
-            "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1",
-            time="19900501T00",
-        ),
+        open(
+            "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1")
     ])
-    era5.to_netcdf("weather.h5")
-ds = era5[[
+    era.to_netcdf("weather.h5")
+ds = era[[
     "u_component_of_wind",
     "v_component_of_wind",
     "temperature",
@@ -253,7 +250,7 @@ ds = era5[[
 ]]
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 ds_init = ds0.map(attach_data_array_units)
-raw_orography = era5.geopotential_at_surface
+raw_orography = era.geopotential_at_surface
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init["orography"] /= GRAVITY_ACCELERATION

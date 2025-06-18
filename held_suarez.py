@@ -109,7 +109,7 @@ _, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
 lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
                               di.implicit_inverse, dt)
-filter_fn = di.exponential_filter(total_wavenumbers, dt / tau, order, cutoff)
+filter_fn = di.exponential_filter(di.g.total_wavenumbers, dt / tau, order, cutoff)
 filters = [di.runge_kutta_step_filter(filter_fn)]
 step_fn = di.step_with_filters(step_fn, filters)
 final, _ = jax.lax.scan(lambda x, _: (step_fn(x), None),

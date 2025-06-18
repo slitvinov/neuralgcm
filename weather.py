@@ -225,9 +225,8 @@ di.g.f, di.g.p, di.g.w = di.basis()
 output_level_indices = [
     di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1
 ]
-longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
-desired_lon = 180 / np.pi * longitude
+desired_lon = np.linspace(0, 360, di.g.longitude_nodes, endpoint=False)
 desired_lat = 180 / np.pi * np.arcsin(sin_latitude)
 ds_arco_era5 = xarray.merge([
     open_era5(

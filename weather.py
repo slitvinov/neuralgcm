@@ -243,11 +243,13 @@ ds = ds_arco_era5[[
     "specific_cloud_ice_water_content",
     "surface_pressure",
 ]]
-raw_orography = ds_arco_era5.geopotential_at_surface
-desired_lon = 180 / np.pi * di.nodal_axes()[0]
-desired_lat = 180 / np.pi * np.arcsin(di.nodal_axes()[1])
+longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
+sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
+desired_lon = 180 / np.pi * longitude
+desired_lat = 180 / np.pi * np.arcsin(sin_latitude)
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 ds_init = ds0.map(attach_data_array_units)
+raw_orography = ds_arco_era5.geopotential_at_surface
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init["orography"] /= GRAVITY_ACCELERATION

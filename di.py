@@ -207,16 +207,13 @@ def nodal_axes():
     sin_latitude, _ = sps.roots_legendre(g.latitude_nodes)
     return longitude, sin_latitude
 
+
 def modal_axes():
     m_pos = np.arange(1, g.longitude_wavenumbers)
     m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
     lon_wavenumbers = np.concatenate([[0], m_pos_neg])
     tot_wavenumbers = np.arange(g.total_wavenumbers)
     return lon_wavenumbers, tot_wavenumbers
-
-
-def modal_mesh():
-    return np.meshgrid(*modal_axes(), indexing="ij")
 
 
 def cos_lat():
@@ -248,7 +245,7 @@ def inverse_laplacian(x):
 
 
 def _derivative_recurrence_weights():
-    m, l = modal_mesh()
+    m, l = np.meshgrid(*modal_axes(), indexing="ij")
     m0, l0 = np.meshgrid(*modal_axes(), indexing="ij")
     mask = abs(m0) <= l0
     a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
@@ -259,7 +256,7 @@ def _derivative_recurrence_weights():
 
 
 def cos_lat_d_dlat(x):
-    _, l = modal_mesh()
+    _, l = np.meshgrid(*modal_axes(), indexing="ij")
     a, b = _derivative_recurrence_weights()
     x_lm1 = shift(((l + 1) * a) * x, -1, axis=-1)
     x_lp1 = shift((-l * b) * x, +1, axis=-1)
@@ -267,7 +264,7 @@ def cos_lat_d_dlat(x):
 
 
 def sec_lat_d_dlat_cos2(x):
-    _, l = modal_mesh()
+    _, l = np.meshgrid(*modal_axes(), indexing="ij")
     a, b = _derivative_recurrence_weights()
     x_lm1 = shift(((l - 1) * a) * x, -1, axis=-1)
     x_lp1 = shift((-(l + 2) * b) * x, +1, axis=-1)

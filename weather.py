@@ -71,17 +71,6 @@ def xarray_to_gcm_dict(ds):
     return result
 
 
-def slice_levels(output, level_indices):
-
-    def get_horizontal(x):
-        if x.shape[0] == 1:
-            return x
-        else:
-            return x[level_indices, ...]
-
-    return jax.tree.map(get_horizontal, output)
-
-
 def open_era5(path, time):
     ds = xarray.open_zarr(path,
                           chunks=None,
@@ -129,7 +118,14 @@ def nodal_prognostics_and_diagnostics(state):
         "surface_pressure": sp_nodal,
         **tracers_nodal,
     }
-    return slice_levels(state_nodal, output_level_indices)
+
+    def get_horizontal(x):
+        if x.shape[0] == 1:
+            return x
+        else:
+            return x[output_level_indices, ...]
+
+    return jax.tree.map(get_horizontal, state_nodal)
 
 
 def trajectory_to_xarray(trajectory):

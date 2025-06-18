@@ -43,12 +43,14 @@ def explicit_fn(x):
     return di.tree_map(lambda *args: sum([x for x in args if x is not None]),
                        di.explicit_terms(x), explicit_terms(x))
 
+
 def exponential_step_filter(total_wavenumbers,
                             dt,
                             tau=0.010938,
                             order=18,
                             cutoff=0):
-    filter_fn = di.exponential_filter(total_wavenumbers, dt / tau, order, cutoff)
+    filter_fn = di.exponential_filter(total_wavenumbers, dt / tau, order,
+                                      cutoff)
     return di.runge_kutta_step_filter(filter_fn)
 
 
@@ -114,11 +116,11 @@ lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
                               di.implicit_inverse, dt)
 filters = [
-    di.exponential_step_filter(di.g.total_wavenumbers,
-                               dt,
-                               tau=0.0087504,
-                               order=1.5,
-                               cutoff=0.8),
+    exponential_step_filter(di.g.total_wavenumbers,
+                            dt,
+                            tau=0.0087504,
+                            order=1.5,
+                            cutoff=0.8),
 ]
 step_fn = di.step_with_filters(step_fn, filters)
 final, _ = jax.lax.scan(lambda x, _: (step_fn(x), None),

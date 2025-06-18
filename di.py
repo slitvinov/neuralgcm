@@ -363,6 +363,7 @@ def exponential_filter(total_wavenumbers, attenuation=16, order=18, cutoff=0):
     scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
     return _make_filter_fn(scaling)
 
+
 def step_with_filters(step_fn, filters):
 
     def _step_fn(u):

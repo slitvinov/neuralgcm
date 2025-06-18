@@ -75,13 +75,6 @@ def get_divergence_perturbation(lat, lon):
             ((np.cos(lat_location) * np.sin(lon - lon_location)) /
              (np.sqrt(1 - x**2))))
 
-def exponential_step_filter(total_wavenumbers,
-                            dt,
-                            tau=0.010938,
-                            order=18,
-                            cutoff=0):
-    filter_fn = di.exponential_filter(total_wavenumbers, dt / tau, order, cutoff)
-    return di.runge_kutta_step_filter(filter_fn)
 
 dtype = np.dtype('float32')
 gravity_acceleration = 7.2364082834567185e+01
@@ -109,6 +102,9 @@ di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
+tau = 0.010938
+order = 18
+cutoff = 0
 
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 modal_shape = di.g.layers, 2 * di.g.longitude_wavenumbers - 1, di.g.total_wavenumbers
@@ -126,9 +122,8 @@ mask = jnp.ones(di.g.total_wavenumbers, dtype).at[-1:].set(0)
 di.g.orography = di.transform(jnp.asarray(orography)) * mask
 step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                               di.implicit_inverse, dt)
-filters = [
-    exponential_step_filter(di.g.total_wavenumbers, dt),
-]
+filter_fn = di.exponential_filter(total_wavenumbers, dt / tau, order, cutoff)
+filters = [di.runge_kutta_step_filter(filter_fn)]
 step_fn = di.step_with_filters(step_fn, filters)
 vorticity_perturbation = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])

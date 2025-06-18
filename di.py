@@ -207,11 +207,6 @@ def nodal_axes():
     sin_latitude, _ = sps.roots_legendre(g.latitude_nodes)
     return longitude, sin_latitude
 
-
-def nodal_mesh():
-    return np.meshgrid(*nodal_axes(), indexing="ij")
-
-
 def modal_axes():
     m_pos = np.arange(1, g.longitude_wavenumbers)
     m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
@@ -575,7 +570,7 @@ def explicit_terms(state):
     aux_state = compute_diagnostic_state(state)
     sec2_lat0 = sec2_lat()
     u, v = aux_state.cos_lat_u
-    _, coriolis_parameter = nodal_mesh()
+    _, coriolis_parameter = np.meshgrid(*nodal_axes(), indexing="ij")
     total_vorticity = aux_state.vorticity + coriolis_parameter
     nodal_vorticity_u = -v * total_vorticity * sec2_lat0
     nodal_vorticity_v = u * total_vorticity * sec2_lat0

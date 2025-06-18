@@ -57,7 +57,7 @@ di.g.f, di.g.p, di.g.w = di.basis()
 
 tref = 288.0
 rng_key = jax.random.PRNGKey(0)
-lon, sin_lat = di.nodal_mesh()
+lon, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
 lat = np.arcsin(sin_lat)
 p0 = 2.9954997684550640e+19
 p1 = 1.4977498842275320e+18
@@ -101,7 +101,7 @@ p0 = 2.995499768455064e+19
 kf = 7.9361451413014747e-02
 ka = 1.9840362853253690e-03
 ks = 1.9840362853253687e-02
-_, sin_lat = di.nodal_mesh()
+_, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
 lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
                               di.implicit_inverse, dt)

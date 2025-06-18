@@ -229,9 +229,9 @@ sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 desired_lat = np.rad2deg(np.arcsin(sin_latitude))
 desired_lon = np.linspace(0, 360, di.g.longitude_nodes, endpoint=False)
 if os.path.exists("weather.h5"):
-    ds_arco_era5 = xr.open_dataset("weather.h5")
+    era5 = xr.open_dataset("weather.h5")
 else:
-    ds_arco_era5 = xarray.merge([
+    era5 = xarray.merge([
         open_era5(
             "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3",
             time="19900501T00",
@@ -241,9 +241,8 @@ else:
             time="19900501T00",
         ),
     ])
-    ds_arco_era5.to_netcdf("weather.h5")
-
-ds = ds_arco_era5[[
+    era5.to_netcdf("weather.h5")
+ds = era5[[
     "u_component_of_wind",
     "v_component_of_wind",
     "temperature",
@@ -254,7 +253,7 @@ ds = ds_arco_era5[[
 ]]
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 ds_init = ds0.map(attach_data_array_units)
-raw_orography = ds_arco_era5.geopotential_at_surface
+raw_orography = era5.geopotential_at_surface
 ds_init["orography"] = attach_data_array_units(
     raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
 ds_init["orography"] /= GRAVITY_ACCELERATION

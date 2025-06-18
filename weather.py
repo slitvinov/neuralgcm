@@ -224,7 +224,6 @@ di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 
 save_every = 15 * units.minute
-dfi_timescale = 6 * units.hour
 output_level_indices = [
     di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1
 ]
@@ -312,7 +311,7 @@ scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 filter_fn = di._make_filter_fn(scaling)
 hyperdiffusion_filter = di.runge_kutta_step_filter(filter_fn)
-time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
+time_span = cutoff_period = 3.1501440000000001e+00
 forward_step = di.step_with_filters(
     di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                         di.implicit_inverse, dt), [hyperdiffusion_filter])

@@ -212,28 +212,6 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     return vorticity, divergence
 
 
-def fun(raw_init_state):
-    forward_step = di.step_with_filters(
-        di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
-                            di.implicit_inverse, dt), [hyperdiffusion_filter])
-    backward_step = di.step_with_filters(
-        di.imex_runge_kutta(explicit_terms, implicit_terms, implicit_inverse,
-                            dt), [hyperdiffusion_filter])
-    N = round(time_span / (2 * dt))
-    n = np.arange(1, N + 1)
-    weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span /
-                                             (cutoff_period * N))
-    init_weight = 1.0
-    total_weight = init_weight + 2 * weights.sum()
-    init_weight /= total_weight
-    weights /= total_weight
-    init_term = di.tree_map(lambda x: x * init_weight, raw_init_state)
-    forward_term = accumulate_repeated(forward_step, weights, raw_init_state)
-    backward_term = accumulate_repeated(backward_step, weights, raw_init_state)
-    return di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
-                       backward_term)
-
-
 di.g.longitude_wavenumbers = 171
 di.g.total_wavenumbers = 172
 di.g.longitude_nodes = 512
@@ -335,11 +313,26 @@ eigenvalues = di.laplacian_eigenvalues()
 scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 filter_fn = di._make_filter_fn(scaling)
-
 hyperdiffusion_filter = di.runge_kutta_step_filter(filter_fn)
 time_span = cutoff_period = DEFAULT_SCALE.nondimensionalize(dfi_timescale)
-dfi = jax.jit(fun)
-dfi_init_state = dfi(raw_init_state)
+forward_step = di.step_with_filters(
+    di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
+                        di.implicit_inverse, dt), [hyperdiffusion_filter])
+backward_step = di.step_with_filters(
+    di.imex_runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt),
+    [hyperdiffusion_filter])
+N = round(time_span / (2 * dt))
+n = np.arange(1, N + 1)
+weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
+init_weight = 1.0
+total_weight = init_weight + 2 * weights.sum()
+init_weight /= total_weight
+weights /= total_weight
+init_term = di.tree_map(lambda x: x * init_weight, raw_init_state)
+forward_term = accumulate_repeated(forward_step, weights, raw_init_state)
+backward_term = accumulate_repeated(backward_step, weights, raw_init_state)
+dfi_init_state = di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
+                             backward_term)
 
 inner_steps = int(save_every / dt_si)
 outer_steps = int(total_time / save_every)

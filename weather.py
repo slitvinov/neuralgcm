@@ -223,9 +223,7 @@ di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 
-dt_si = 5 * units.minute
 save_every = 15 * units.minute
-total_time = 2 * units.day + save_every
 dfi_timescale = 6 * units.hour
 output_level_indices = [
     di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1
@@ -305,7 +303,7 @@ orography = di.to_modal(orography_input)
 orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
 di.g.orography = orography
 res_factor = di.g.latitude_nodes / 128
-dt = DEFAULT_SCALE.nondimensionalize(dt_si)
+dt = 4.3752000000000006e-02
 tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
                                       units.hours)
 
@@ -334,8 +332,8 @@ backward_term = accumulate_repeated(backward_step, weights, raw_init_state)
 dfi_init_state = di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
                              backward_term)
 
-inner_steps = int(save_every / dt_si)
-outer_steps = int(total_time / save_every)
+inner_steps = 3
+outer_steps = 193
 step_fn = di.step_with_filters(
     di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                         di.implicit_inverse, dt),

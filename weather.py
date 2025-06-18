@@ -343,9 +343,9 @@ step_fn = di.step_with_filters(
 )
 
 
-def step_fn0(x_initial):
+def step_fn0(frame):
     gfun = lambda x, _: (step_fn(x), None)
-    x_final, _ = jax.lax.scan(gfun, x_initial, xs=None, length=inner_steps)
+    x_final, _ = jax.lax.scan(gfun, frame, xs=None, length=inner_steps)
     return x_final
 
 
@@ -353,13 +353,15 @@ def step(frame, _):
     return step_fn0(frame), nodal_prognostics_and_diagnostics(frame)
 
 
-def integrate_fn(x):
-    return jax.lax.scan(step, x, xs=None, length=outer_steps)
-
-
-out_state, trajectory = integrate_fn(dfi_init_state)
+out_state, trajectory = jax.lax.scan(step,
+                                     dfi_init_state,
+                                     xs=None,
+                                     length=outer_steps)
 ds_out = trajectory_to_xarray(trajectory)
-out_state, trajectory = integrate_fn(raw_init_state)
+out_state, trajectory = jax.lax.scan(step,
+                                     raw_init_state,
+                                     xs=None,
+                                     length=outer_steps)
 ds_out_unfiltered = trajectory_to_xarray(trajectory)
 ds_out.surface_pressure.sel(
     latitude=0, longitude=0,

@@ -75,6 +75,13 @@ def get_divergence_perturbation(lat, lon):
             ((np.cos(lat_location) * np.sin(lon - lon_location)) /
              (np.sqrt(1 - x**2))))
 
+def exponential_step_filter(total_wavenumbers,
+                            dt,
+                            tau=0.010938,
+                            order=18,
+                            cutoff=0):
+    filter_fn = di.exponential_filter(total_wavenumbers, dt / tau, order, cutoff)
+    return di.runge_kutta_step_filter(filter_fn)
 
 dtype = np.dtype('float32')
 gravity_acceleration = 7.2364082834567185e+01
@@ -120,7 +127,7 @@ di.g.orography = di.transform(jnp.asarray(orography)) * mask
 step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                               di.implicit_inverse, dt)
 filters = [
-    di.exponential_step_filter(di.g.total_wavenumbers, dt),
+    exponential_step_filter(di.g.total_wavenumbers, dt),
 ]
 step_fn = di.step_with_filters(step_fn, filters)
 vorticity_perturbation = np.stack(

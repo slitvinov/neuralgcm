@@ -43,6 +43,14 @@ def explicit_fn(x):
     return di.tree_map(lambda *args: sum([x for x in args if x is not None]),
                        di.explicit_terms(x), explicit_terms(x))
 
+def exponential_step_filter(total_wavenumbers,
+                            dt,
+                            tau=0.010938,
+                            order=18,
+                            cutoff=0):
+    filter_fn = di.exponential_filter(total_wavenumbers, dt / tau, order, cutoff)
+    return di.runge_kutta_step_filter(filter_fn)
+
 
 di.g.longitude_wavenumbers = 22
 di.g.total_wavenumbers = 23

@@ -220,12 +220,12 @@ def modal_mesh():
 
 
 def cos_lat():
-    _, sin_lat = nodal_axes()
+    sin_lat = sps.roots_legendre(g.latitude_nodes)
     return np.sqrt(1 - sin_lat**2)
 
 
 def sec2_lat():
-    _, sin_lat = nodal_axes()
+    sin_lat = sps.roots_legendre(g.latitude_nodes)
     return 1 / (1 - sin_lat**2)
 
 

@@ -5,7 +5,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import scipy
-import scipy.special as sps
 import tree_math
 
 tree_map = jax.tree_util.tree_map
@@ -204,7 +203,7 @@ def real_basis_derivative(u):
 
 def nodal_axes():
     longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
-    sin_latitude, _ = sps.roots_legendre(g.latitude_nodes)
+    sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
     return longitude, sin_latitude
 
 
@@ -215,12 +214,12 @@ def modal_axes():
 
 
 def cos_lat():
-    sin_lat, _ = sps.roots_legendre(g.latitude_nodes)
+    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
     return np.sqrt(1 - sin_lat**2)
 
 
 def sec2_lat():
-    sin_lat, _ = sps.roots_legendre(g.latitude_nodes)
+    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
     return 1 / (1 - sin_lat**2)
 
 

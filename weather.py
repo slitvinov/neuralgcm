@@ -212,7 +212,7 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     return vorticity, divergence
 
 
-def fun(state):
+def fun(raw_init_state):
     forward_step = di.step_with_filters(
         di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                             di.implicit_inverse, dt), [hyperdiffusion_filter])
@@ -227,9 +227,9 @@ def fun(state):
     total_weight = init_weight + 2 * weights.sum()
     init_weight /= total_weight
     weights /= total_weight
-    init_term = di.tree_map(lambda x: x * init_weight, state)
-    forward_term = accumulate_repeated(forward_step, weights, state)
-    backward_term = accumulate_repeated(backward_step, weights, state)
+    init_term = di.tree_map(lambda x: x * init_weight, raw_init_state)
+    forward_term = accumulate_repeated(forward_step, weights, raw_init_state)
+    backward_term = accumulate_repeated(backward_step, weights, raw_init_state)
     return di.tree_map(lambda *xs: sum(xs), init_term, forward_term,
                        backward_term)
 

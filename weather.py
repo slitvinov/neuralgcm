@@ -243,8 +243,8 @@ ds = ds_arco_era5[[
     "specific_cloud_ice_water_content",
     "surface_pressure",
 ]]
-longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
-sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
+longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
+sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 desired_lon = 180 / np.pi * longitude
 desired_lat = 180 / np.pi * np.arcsin(sin_latitude)
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)

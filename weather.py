@@ -227,7 +227,7 @@ output_level_indices = [
 ]
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 desired_lon = np.linspace(0, 360, di.g.longitude_nodes, endpoint=False)
-desired_lat = 180 / np.pi * np.arcsin(sin_latitude)
+desired_lat = np.rad2deg(np.arcsin(sin_latitude))
 ds_arco_era5 = xarray.merge([
     open_era5(
         "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3",

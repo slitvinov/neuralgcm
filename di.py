@@ -211,9 +211,7 @@ def nodal_axes():
 def modal_axes():
     m_pos = np.arange(1, g.longitude_wavenumbers)
     m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
-    lon_wavenumbers = np.concatenate([[0], m_pos_neg])
-    tot_wavenumbers = np.arange(g.total_wavenumbers)
-    return lon_wavenumbers, tot_wavenumbers
+    return np.concatenate([[0], m_pos_neg]), np.arange(g.total_wavenumbers)
 
 
 def cos_lat():

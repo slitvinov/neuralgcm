@@ -240,6 +240,7 @@ ds_nondim_init["specific_cloud_liquid_water_content"] = ds1[
     "specific_cloud_liquid_water_content"]
 ds_nondim_init["specific_cloud_ice_water_content"] = ds1[
     "specific_cloud_ice_water_content"]
+ds_nondim_init["surface_pressure"] = ds1["surface_pressure"] / (1 / uL / uT**2)
 
 var_names = ds_nondim_init.keys()
 model_level_inputs = {}

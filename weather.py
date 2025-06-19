@@ -329,7 +329,7 @@ trajectory["surface_pressure"].sel(
     latitude=0, longitude=0, method="nearest").plot.line(label="unfiltered")
 plt.legend()
 plt.savefig("w.00.png")
-np.asarray(ds_out.surface_pressure.data).tofile("w.00.raw")
+np.asarray(trajectory["surface_pressure"].data).tofile("w.00.raw")
 plt.close()
 trajectory0["specific_humidit"].thin(time=4 * 24).isel(sigma=1).plot.imshow(
     col="time",
@@ -343,7 +343,7 @@ trajectory0["specific_humidit"].thin(time=4 * 24).isel(sigma=1).plot.imshow(
     vmax=0.01,
 )
 plt.savefig("w.01.png")
-np.asarray(ds_out0.specific_humidity.data).tofile("w.01.raw")
+np.asarray(trajectory0["specific_humidity"].data).tofile("w.01.raw")
 plt.close()
 trajectory0["specific_cloud_liquid_water_content"].thin(time=4 * 24).isel(
     sigma=2).plot.imshow(

@@ -122,6 +122,7 @@ def nodal_prognostics_and_diagnostics(state):
 def trajectory_to_xarray(trajectory):
     target_units = {k: v.data.units for k, v in ds_init.items()}
     target_units |= {
+        "orography": units(),
         "vorticity": units("1/s"),
         "divergence": units("1/s"),
         "geopotential": units("m^2/s^2"),

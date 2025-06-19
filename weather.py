@@ -265,8 +265,7 @@ orography = di.exponential_filter(di.g.total_wavenumbers, order=2)(orography)
 di.g.orography = orography
 res_factor = di.g.latitude_nodes / 128
 dt = 4.3752000000000006e-02
-tau = DEFAULT_SCALE.nondimensionalize(8.6 / (2.4**np.log2(res_factor)) *
-                                      units.hours)
+tau = 3600 * 8.6 / (2.4**np.log2(res_factor)) / uT
 
 eigenvalues = di.laplacian_eigenvalues()
 scale = dt / (tau * abs(eigenvalues[-1])**2)

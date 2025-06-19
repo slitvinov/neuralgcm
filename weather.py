@@ -120,13 +120,18 @@ def nodal_prognostics_and_diagnostics(state):
 
 
 def trajectory_to_xarray(trajectory):
-    target_units = {k: v.data.units for k, v in ds_init.items()}
-    target_units |= {
-        "orography": units(),
-        "vorticity": units("1/s"),
+    target_units = {
         "divergence": units("1/s"),
         "geopotential": units("m^2/s^2"),
+        "orography": units(),
+        "specific_cloud_ice_water_content": units("1/kg"),
+        "specific_cloud_liquid_water_content": units("1/kg"),
+        "specific_humidity.units": units("1/kg"),
+        "temperature": units("K"),
+        "u_component_of_wind": units("m/s"),
+        "v_component_of_wind": units("m/s"),
         "vertical_velocity": units("1/s"),
+        "vorticity": units("1/s"),
     }
     orography_nodal = jax.device_put(di.to_nodal(orography),
                                      device=jax.devices("cpu")[0])

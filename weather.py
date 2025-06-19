@@ -198,6 +198,11 @@ output_level_indices = [
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 desired_lat = np.rad2deg(np.arcsin(sin_latitude))
 desired_lon = np.linspace(0, 360, di.g.longitude_nodes, endpoint=False)
+a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
+                                   skiprows=1,
+                                   usecols=(1, 2),
+                                   delimiter="\t").T
+a_boundaries = a_in_pa / 100
 if os.path.exists("weather.h5"):
     era = xarray.open_dataset("weather.h5")
 else:
@@ -218,18 +223,11 @@ ds = era[[
     "specific_cloud_ice_water_content",
     "surface_pressure",
 ]]
-
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 ds1 = ds0.copy()
 ds_init = ds0.map(attach_data_array_units)
 ds_init["orography"] = era.geopotential_at_surface.interp(
     latitude=desired_lat, longitude=desired_lon) / (uL * GRAVITY_ACCELERATION)
-a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
-                                   skiprows=1,
-                                   usecols=(1, 2),
-                                   delimiter="\t").T
-a_boundaries = a_in_pa / 100
-
 ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)
 
 ds_nondim_init["u_component_of_wind"] = ds1["u_component_of_wind"] / (uL / uT)

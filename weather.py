@@ -234,6 +234,12 @@ ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)
 
 ds_nondim_init["u_component_of_wind"] = ds1["u_component_of_wind"] / (uL / uT)
 ds_nondim_init["v_component_of_wind"] = ds1["v_component_of_wind"] / (uL / uT)
+ds_nondim_init["temperature"] = ds1["temperature"]
+ds_nondim_init["specific_humidity"] = ds1["specific_humidity"]
+ds_nondim_init["specific_cloud_liquid_water_content"] = ds1[
+    "specific_cloud_liquid_water_content"]
+ds_nondim_init["specific_cloud_ice_water_content"] = ds1[
+    "specific_cloud_ice_water_content"]
 
 var_names = ds_nondim_init.keys()
 model_level_inputs = {}

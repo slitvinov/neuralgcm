@@ -32,7 +32,10 @@ class Scale:
         return factor
 
     def nondimensionalize(self, quantity):
-        scaling_factor = self.scaling_factor(quantity.dimensionality)
+        try:
+            scaling_factor = self.scaling_factor(quantity.dimensionality)
+        except AttributeErrror:
+            return quantity
         nondimensionalized = (quantity / scaling_factor).to(
             units.dimensionless)
         return nondimensionalized.magnitude

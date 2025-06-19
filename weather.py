@@ -363,21 +363,20 @@ out_state, trajectory0 = jax.lax.scan(step,
                                      dfi_init_state,
                                      xs=None,
                                      length=outer_steps)
-ds_out0 = trajectory_to_xarray(trajectory0)
 out_state, trajectory = jax.lax.scan(step,
                                      raw_init_state,
                                      xs=None,
                                      length=outer_steps)
-trajectory0.surface_pressure.sel(
+trajectory0["surface_pressure"].sel(
     latitude=0, longitude=0,
     method="nearest").plot.line(label="digital filter initialization")
-trajectory.surface_pressure.sel(
+trajectory["surface_pressure"].sel(
     latitude=0, longitude=0, method="nearest").plot.line(label="unfiltered")
 plt.legend()
 plt.savefig("w.00.png")
 np.asarray(ds_out.surface_pressure.data).tofile("w.00.raw")
 plt.close()
-ds_out0.specific_humidity.thin(time=4 * 24).isel(sigma=1).plot.imshow(
+trajectory0["specific_humidit"].thin(time=4 * 24).isel(sigma=1).plot.imshow(
     col="time",
     x="longitude",
     y="latitude",
@@ -391,7 +390,7 @@ ds_out0.specific_humidity.thin(time=4 * 24).isel(sigma=1).plot.imshow(
 plt.savefig("w.01.png")
 np.asarray(ds_out0.specific_humidity.data).tofile("w.01.raw")
 plt.close()
-ds_out0.specific_cloud_liquid_water_content.thin(time=4 *
+trajectory0["specific_cloud_liquid_water_content"].thin(time=4 *
                                                 24).isel(sigma=2).plot.imshow(
                                                     col="time",
                                                     x="longitude",
@@ -404,5 +403,5 @@ ds_out0.specific_cloud_liquid_water_content.thin(time=4 *
                                                     vmax=1e-4,
                                                 )
 plt.savefig("w.02.png")
-np.asarray(ds_out0.specific_cloud_liquid_water_content.data).tofile("w.02.raw")
+np.asarray(trajectory0.specific_cloud_liquid_water_content.data).tofile("w.02.raw")
 plt.close()

@@ -227,7 +227,12 @@ a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
                                    usecols=(1, 2),
                                    delimiter="\t").T
 a_boundaries = a_in_pa / 100
+
 ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)
+
+ds_nondim_init["u_component_of_wind"] = ds_init["u_component_of_wind"] / (uL /
+                                                                          uT)
+
 var_names = ds_nondim_init.keys()
 model_level_inputs = {}
 for var_name in var_names:

@@ -64,9 +64,9 @@ def attach_data_array_units(array):
 
 
 def open(path):
-    return xarray.open_zarr(
-        path, chunks=None,
-        storage_options=dict(token="anon")).sel("19900501T00")
+    x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
+    print(x)
+    return x.sel("19900501T00")
 
 
 @jax.jit

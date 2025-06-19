@@ -218,7 +218,9 @@ ds = era[[
     "specific_cloud_ice_water_content",
     "surface_pressure",
 ]]
+
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
+ds1 = ds0.copy()
 ds_init = ds0.map(attach_data_array_units)
 ds_init["orography"] = era.geopotential_at_surface.interp(
     latitude=desired_lat, longitude=desired_lon) / (uL * GRAVITY_ACCELERATION)
@@ -230,7 +232,8 @@ a_boundaries = a_in_pa / 100
 
 ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)
 
-ds_nondim_init["u_component_of_wind"] = ds0["u_component_of_wind"].magnitude / (uL / uT)
+ds_nondim_init["u_component_of_wind"] = ds1["u_component_of_wind"] / (uL / uT)
+ds_nondim_init["v_component_of_wind"] = ds1["v_component_of_wind"] / (uL / uT)
 
 var_names = ds_nondim_init.keys()
 model_level_inputs = {}

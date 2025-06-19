@@ -321,7 +321,7 @@ out_state, trajectory = jax.lax.scan(step,
                                      raw_init_state,
                                      xs=None,
                                      length=outer_steps)
-np.asarray(trajectory["surface_pressure"].data).tofile("w.00.raw")
-np.asarray(trajectory0["specific_humidity"].data).tofile("w.01.raw")
+np.asarray(trajectory["surface_pressure"]).tofile("w.00.raw")
+np.asarray(trajectory0["specific_humidity"]).tofile("w.01.raw")
 np.asarray(
-    trajectory0["specific_cloud_liquid_water_content"].data).tofile("w.02.raw")
+    trajectory0["specific_cloud_liquid_water_content"]).tofile("w.02.raw")

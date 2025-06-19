@@ -359,5 +359,5 @@ trajectory0["specific_cloud_liquid_water_content"].thin(time=4 * 24).isel(
     )
 plt.savefig("w.02.png")
 np.asarray(
-    trajectory0.specific_cloud_liquid_water_content.data).tofile("w.02.raw")
+    trajectory0["specific_cloud_liquid_water_content"].data).tofile("w.02.raw")
 plt.close()

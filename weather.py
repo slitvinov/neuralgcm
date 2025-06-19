@@ -230,7 +230,7 @@ a_boundaries = a_in_pa / 100
 
 ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)
 
-ds_nondim_init["u_component_of_wind"] = ds0["u_component_of_wind"].magnitude() / (uL / uT)
+ds_nondim_init["u_component_of_wind"] = ds0["u_component_of_wind"].magnitude / (uL / uT)
 
 var_names = ds_nondim_init.keys()
 model_level_inputs = {}

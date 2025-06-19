@@ -79,13 +79,13 @@ def vor_div_to_uv_nodal(vorticity, divergence):
     return u_nodal, v_nodal
 
 
-def add_constant(x: jnp.ndarray, c):
+def add_constant(x, c):
     return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
 
 def nodal_prognostics_and_diagnostics(state):
     u_nodal, v_nodal = vor_div_to_uv_nodal(state.vorticity, state.divergence)
     surface_geopotential = orography * di.gravity_acceleration
-    temperature = di.add_constant(state.temperature_variation, di.g.reference_temperature)
+    temperature = add_constant(state.temperature_variation, di.g.reference_temperature)
     geopotential_diff = di.get_geopotential_diff(temperature)
     geopotential_nodal = surface_geopotential + geopotential_diff
     vor_nodal = di.to_nodal(state.vorticity)

@@ -250,8 +250,7 @@ for var_name in var_names:
     model_level_inputs[var_name] = data
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
-sp_init_hpa = ds1.surface_pressure.transpose("longitude", "latitude") / 100
-
+sp_init_hpa = (ds1.surface_pressure.transpose("longitude", "latitude").data / 100
 nodal_inputs = regrid_hybrid_to_sigma(model_level_inputs, sp_init_hpa)
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]

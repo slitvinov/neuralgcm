@@ -119,51 +119,6 @@ def nodal_prognostics_and_diagnostics(state):
     return jax.tree.map(get_horizontal, state_nodal)
 
 
-def trajectory_to_xarray(trajectory):
-    target_units = {
-        "divergence": units("1/s"),
-        "geopotential": units("m^2/s^2"),
-        "orography": units("1"),
-        "specific_cloud_ice_water_content": units("1/kg"),
-        "specific_cloud_liquid_water_content": units("1/kg"),
-        "specific_humidity": units("1/kg"),
-        "surface_pressure" : units("Pa"),
-        "temperature": units("K"),
-        "u_component_of_wind": units("m/s"),
-        "v_component_of_wind": units("m/s"),
-        "vertical_velocity": units("1/s"),
-        "vorticity": units("1/s"),
-    }
-    orography_nodal = jax.device_put(di.to_nodal(orography),
-                                     device=jax.devices("cpu")[0])
-    trajectory_cpu = jax.device_put(trajectory, device=jax.devices("cpu")[0])
-    traj_nodal_si = {
-        k: DEFAULT_SCALE.dimensionalize(v, target_units[k]).magnitude
-        for k, v in trajectory_cpu.items()
-    }
-    lon = 180 / np.pi * di.nodal_axes()[0]
-    lat = 180 / np.pi * np.arcsin(di.nodal_axes()[1])
-    dims = ("time", "sigma", "longitude", "latitude")
-    ds_result = xarray.Dataset(
-        data_vars={
-            k: (dims, v)
-            for k, v in traj_nodal_si.items() if k != "surface_pressure"
-        },
-        coords={
-            "longitude": lon,
-            "latitude": lat,
-            "sigma": di.g.centers[output_level_indices],
-            "time": times,
-            "orography":
-            (("longitude", "latitude"), orography_nodal.squeeze()),
-        },
-    ).assign(surface_pressure=(
-        ("time", "longitude", "latitude"),
-        traj_nodal_si["surface_pressure"].squeeze(axis=-3),
-    ))
-    return ds_result
-
-
 @jax.jit
 def regrid_hybrid_to_sigma(fields, surface_pressure):
 
@@ -360,9 +315,9 @@ def step(frame, _):
 
 
 out_state, trajectory0 = jax.lax.scan(step,
-                                     dfi_init_state,
-                                     xs=None,
-                                     length=outer_steps)
+                                      dfi_init_state,
+                                      xs=None,
+                                      length=outer_steps)
 out_state, trajectory = jax.lax.scan(step,
                                      raw_init_state,
                                      xs=None,
@@ -390,18 +345,19 @@ trajectory0["specific_humidit"].thin(time=4 * 24).isel(sigma=1).plot.imshow(
 plt.savefig("w.01.png")
 np.asarray(ds_out0.specific_humidity.data).tofile("w.01.raw")
 plt.close()
-trajectory0["specific_cloud_liquid_water_content"].thin(time=4 *
-                                                24).isel(sigma=2).plot.imshow(
-                                                    col="time",
-                                                    x="longitude",
-                                                    y="latitude",
-                                                    col_wrap=3,
-                                                    aspect=2,
-                                                    size=3.5,
-                                                    cmap="RdBu",
-                                                    vmin=-1e-4,
-                                                    vmax=1e-4,
-                                                )
+trajectory0["specific_cloud_liquid_water_content"].thin(time=4 * 24).isel(
+    sigma=2).plot.imshow(
+        col="time",
+        x="longitude",
+        y="latitude",
+        col_wrap=3,
+        aspect=2,
+        size=3.5,
+        cmap="RdBu",
+        vmin=-1e-4,
+        vmax=1e-4,
+    )
 plt.savefig("w.02.png")
-np.asarray(trajectory0.specific_cloud_liquid_water_content.data).tofile("w.02.raw")
+np.asarray(
+    trajectory0.specific_cloud_liquid_water_content.data).tofile("w.02.raw")
 plt.close()

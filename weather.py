@@ -359,20 +359,20 @@ def step(frame, _):
     return step_fn0(frame), nodal_prognostics_and_diagnostics(frame)
 
 
-out_state, trajectory = jax.lax.scan(step,
+out_state, trajectory0 = jax.lax.scan(step,
                                      dfi_init_state,
                                      xs=None,
                                      length=outer_steps)
-ds_out = trajectory_to_xarray(trajectory)
+ds_out = trajectory_to_xarray(trajectory0)
 out_state, trajectory = jax.lax.scan(step,
                                      raw_init_state,
                                      xs=None,
                                      length=outer_steps)
 ds_out_unfiltered = trajectory_to_xarray(trajectory)
-ds_out.surface_pressure.sel(
+trajectory0.surface_pressure.sel(
     latitude=0, longitude=0,
     method="nearest").plot.line(label="digital filter initialization")
-ds_out_unfiltered.surface_pressure.sel(
+trajectory.surface_pressure.sel(
     latitude=0, longitude=0, method="nearest").plot.line(label="unfiltered")
 plt.legend()
 plt.savefig("w.00.png")

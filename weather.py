@@ -65,9 +65,7 @@ def attach_data_array_units(array):
 
 def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
-    print(x)
     return x.sel(time="19900501T00")
-
 
 @jax.jit
 def vor_div_to_uv_nodal(vorticity, divergence):

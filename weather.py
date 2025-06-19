@@ -123,7 +123,7 @@ def trajectory_to_xarray(trajectory):
     target_units = {
         "divergence": units("1/s"),
         "geopotential": units("m^2/s^2"),
-        "orography": units(),
+        "orography": units("1"),
         "specific_cloud_ice_water_content": units("1/kg"),
         "specific_cloud_liquid_water_content": units("1/kg"),
         "specific_humidity.units": units("1/kg"),

@@ -126,7 +126,7 @@ def trajectory_to_xarray(trajectory):
         "orography": units("1"),
         "specific_cloud_ice_water_content": units("1/kg"),
         "specific_cloud_liquid_water_content": units("1/kg"),
-        "specific_humidity.units": units("1/kg"),
+        "specific_humidity": units("1/kg"),
         "temperature": units("K"),
         "u_component_of_wind": units("m/s"),
         "v_component_of_wind": units("m/s"),

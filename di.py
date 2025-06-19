@@ -456,13 +456,6 @@ def get_geopotential_diff(temperature):
     return _vertical_matvec(weights, temperature)
 
 
-def get_geopotential(temperature_variation, reference_temperature, orography):
-    surface_geopotential = orography * gravity_acceleration
-    temperature = add_constant(temperature_variation, reference_temperature)
-    geopotential_diff = get_geopotential_diff(temperature)
-    return surface_geopotential + geopotential_diff
-
-
 def get_temperature_implicit_weights():
     p = np.tril(np.ones([g.layers, g.layers]))
     alpha = get_sigma_ratios()[..., np.newaxis]

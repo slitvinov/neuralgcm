@@ -78,10 +78,17 @@ def vor_div_to_uv_nodal(vorticity, divergence):
     return u_nodal, v_nodal
 
 
+def get_geopotential(temperature_variation, reference_temperature, orography):
+    surface_geopotential = orography * gravity_acceleration
+    temperature = add_constant(temperature_variation, reference_temperature)
+    geopotential_diff = get_geopotential_diff(temperature)
+    return surface_geopotential + geopotential_diff
+
+
 def nodal_prognostics_and_diagnostics(state):
     u_nodal, v_nodal = vor_div_to_uv_nodal(state.vorticity, state.divergence)
     geopotential_nodal = di.to_nodal(
-        di.get_geopotential(
+        get_geopotential(
             state.temperature_variation,
             di.g.reference_temperature,
             orography,

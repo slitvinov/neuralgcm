@@ -84,7 +84,7 @@ def add_constant(x: jnp.ndarray, c):
 
 
 def get_geopotential(temperature_variation, reference_temperature, orography):
-    surface_geopotential = orography * gravity_acceleration
+    surface_geopotential = orography * di.gravity_acceleration
     temperature = di.add_constant(temperature_variation, reference_temperature)
     geopotential_diff = di.get_geopotential_diff(temperature)
     return surface_geopotential + geopotential_diff

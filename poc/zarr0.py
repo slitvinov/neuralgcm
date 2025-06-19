@@ -2,7 +2,7 @@ import xarray
 def open_era5(path, time):
     ds = xarray.open_zarr(path,
                           chunks=None,
-                          storage_options={"token" : "anon", "fjkldjcache_storage": "."})
+                          storage_options={"token" : "anon", "cache_storage": "."})
     return ds.sel(time=time)
 
 ds_arco_era5 = xarray.merge([

@@ -211,7 +211,7 @@ else:
         open(
             "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1")
     ])
-    era = xarray.to_netcdf("weather.h5")
+    era.to_netcdf("weather.h5")
 ds = era[[
     "u_component_of_wind",
     "v_component_of_wind",

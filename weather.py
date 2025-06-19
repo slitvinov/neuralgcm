@@ -12,6 +12,7 @@ import xarray
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 Unit = units.Unit
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
+_CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 
 class Scale:
@@ -78,10 +79,14 @@ def vor_div_to_uv_nodal(vorticity, divergence):
     return u_nodal, v_nodal
 
 
+def add_constant(x: jnp.ndarray, c):
+    return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
+
+
 def get_geopotential(temperature_variation, reference_temperature, orography):
     surface_geopotential = orography * gravity_acceleration
-    temperature = add_constant(temperature_variation, reference_temperature)
-    geopotential_diff = get_geopotential_diff(temperature)
+    temperature = di.add_constant(temperature_variation, reference_temperature)
+    geopotential_diff = di.get_geopotential_diff(temperature)
     return surface_geopotential + geopotential_diff
 
 

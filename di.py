@@ -9,7 +9,6 @@ import tree_math
 
 tree_map = jax.tree_util.tree_map
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-_CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 # gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 gravity_acceleration = 7.2364082834567185e+01
@@ -291,10 +290,6 @@ def curl_cos_lat(v, clip=True):
     if clip:
         return clip_wavenumbers(raw)
     return raw
-
-
-def add_constant(x: jnp.ndarray, c):
-    return x.at[..., 0, 0].add(_CONSTANT_NORMALIZATION_FACTOR * c)
 
 
 def get_cos_lat_vector(vorticity, divergence, clip=True):

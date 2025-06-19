@@ -12,7 +12,7 @@ import xarray
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 Unit = units.Unit
-GRAVITY_ACCELERATION = 9.80616 * units.m / units.s**2
+GRAVITY_ACCELERATION = 9.80616#  * units.m / units.s**2
 
 
 class Scale:
@@ -42,10 +42,11 @@ class Scale:
         dimensionalized = value * scaling_factor
         return dimensionalized.to(unit)
 
-
+uL = 6.37122e6
+uT = 1 / 2 / 7.292e-5
 DEFAULT_SCALE = Scale(
-    6.37122e6 * units.m,
-    1 / 2 / 7.292e-5 * units.s,
+    uL * units.m,
+    uT * units.s,
     1 * units.kilogram,
     1 * units.degK,
 )
@@ -250,11 +251,9 @@ ds = era[[
 ]]
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 ds_init = ds0.map(attach_data_array_units)
-raw_orography = era.geopotential_at_surface
 ds_init["orography"] = attach_data_array_units(
-    raw_orography.interp(latitude=desired_lat, longitude=desired_lon))
-ds_init["orography"] /= GRAVITY_ACCELERATION
-
+    era.geopotential_at_surface.interp(latitude=desired_lat, longitude=desired_lon))
+ds_init["orography"] /= (uL * GRAVITY_ACCELERATION)
 a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
                                    skiprows=1,
                                    usecols=(1, 2),

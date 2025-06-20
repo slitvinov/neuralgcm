@@ -178,24 +178,16 @@ ds = era[[
 ds1 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 sp_init_hpa = ds1.surface_pressure.transpose("longitude",
                                              "latitude").data / 100
-ds_nondim_init = ds1.copy()
-ds_nondim_init["orography"] = ds1["geopotential_at_surface"] / (
-    uL * GRAVITY_ACCELERATION)
-ds_nondim_init["u_component_of_wind"] = ds1["u_component_of_wind"] / (uL / uT)
-ds_nondim_init["v_component_of_wind"] = ds1["v_component_of_wind"] / (uL / uT)
-ds_nondim_init["temperature"] = ds1["temperature"]
-ds_nondim_init["specific_humidity"] = ds1["specific_humidity"]
-ds_nondim_init["specific_cloud_liquid_water_content"] = ds1[
-    "specific_cloud_liquid_water_content"]
-ds_nondim_init["specific_cloud_ice_water_content"] = ds1[
-    "specific_cloud_ice_water_content"]
-ds_nondim_init["surface_pressure"] = ds1["surface_pressure"] / (1 / uL / uT**2)
+ds1 = ds1.copy()
+ds1["orography"] = ds1["geopotential_at_surface"] / (uL * GRAVITY_ACCELERATION)
+ds1["u_component_of_wind"] /= uL / uT
+ds1["v_component_of_wind"] /= uL / uT
+ds1["surface_pressure"] /= 1 / uL / uT**2
 
-var_names = ds_nondim_init.keys()
+var_names = ds1.keys()
 model_level_inputs = {}
 for var_name in var_names:
-    data = ds_nondim_init[var_name].transpose(..., "longitude",
-                                              "latitude").data
+    data = ds1[var_name].transpose(..., "longitude", "latitude").data
     if data.ndim == 2:
         data = data[np.newaxis, ...]
     model_level_inputs[var_name] = data

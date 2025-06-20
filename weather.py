@@ -67,6 +67,7 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
+
 @jax.jit
 def vor_div_to_uv_nodal(vorticity, divergence):
     u_cos_lat, v_cos_lat = di.get_cos_lat_vector(vorticity,
@@ -226,8 +227,8 @@ ds1 = ds0.copy()
 ds_init = ds0.map(attach_data_array_units)
 ds_init["orography"] = era.geopotential_at_surface.interp(
     latitude=desired_lat, longitude=desired_lon) / (uL * GRAVITY_ACCELERATION)
-ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)
-
+# ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)
+ds_nondim_init = ds_init.copy()
 ds_nondim_init["u_component_of_wind"] = ds1["u_component_of_wind"] / (uL / uT)
 ds_nondim_init["v_component_of_wind"] = ds1["v_component_of_wind"] / (uL / uT)
 ds_nondim_init["temperature"] = ds1["temperature"]
@@ -248,7 +249,8 @@ for var_name in var_names:
     model_level_inputs[var_name] = data
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
-sp_init_hpa = ds1.surface_pressure.transpose("longitude", "latitude").data / 100
+sp_init_hpa = ds1.surface_pressure.transpose("longitude",
+                                             "latitude").data / 100
 nodal_inputs = regrid_hybrid_to_sigma(model_level_inputs, sp_init_hpa)
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]

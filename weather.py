@@ -173,12 +173,12 @@ ds = era[[
     "specific_cloud_liquid_water_content",
     "specific_cloud_ice_water_content",
     "surface_pressure",
+    "geopotential_at_surface",
 ]]
-ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
-ds1 = ds0.copy()
-ds_nondim_init = ds0.copy()
-ds_nondim_init["orography"] = era.geopotential_at_surface.interp(
-    latitude=desired_lat, longitude=desired_lon) / (uL * GRAVITY_ACCELERATION)
+ds1 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
+ds_nondim_init = ds1.copy()
+ds_nondim_init["orography"] = ds1["geopotential_at_surface"] / (
+    uL * GRAVITY_ACCELERATION)
 ds_nondim_init["u_component_of_wind"] = ds1["u_component_of_wind"] / (uL / uT)
 ds_nondim_init["v_component_of_wind"] = ds1["v_component_of_wind"] / (uL / uT)
 ds_nondim_init["temperature"] = ds1["temperature"]

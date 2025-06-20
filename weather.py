@@ -105,11 +105,10 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     divergence = di.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
     return vorticity, divergence
 
-
 @jax.jit
-@functools.partial(jax.vmap, in_axes=(None, -1), out_axes=-1)
-@functools.partial(jax.vmap, in_axes=(None, -1), out_axes=-1)
-def regrid(target, field):
+@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
+@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
+def regrid(surface_pressure, target, field):
     source = a_boundaries / surface_pressure + b_boundaries
     upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
     lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
@@ -169,8 +168,8 @@ ds1["v_component_of_wind"] /= uL / uT
 ds1["surface_pressure"] /= 1 / uL / uT**2
 orography_input = ds1["orography"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
-surface_pressure = ds1["surface_pressure"].transpose(..., "longitude",
-                                                     "latitude").data[np.newaxis, ...]
+sp_nodal = ds1["surface_pressure"].transpose(..., "longitude",
+                                             "latitude").data[np.newaxis, ...]
 M = {}
 M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
@@ -190,7 +189,7 @@ M["v_component_of_wind"] = ds1["v_component_of_wind"].transpose(
     ..., "longitude", "latitude").data
 
 nodal_inputs = {
-    key: regrid(di.g.boundaries, val)
+    key: regrid(sp_init_hpa, di.g.boundaries, val)
     for key, val in M.items()
 }
 u_nodal = nodal_inputs["u_component_of_wind"]

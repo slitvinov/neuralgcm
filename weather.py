@@ -176,7 +176,7 @@ ds = era[[
 ]]
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 ds1 = ds0.copy()
-ds_nondim_init = ds_init.copy()
+ds_nondim_init = ds0.copy()
 ds_nondim_init["orography"] = era.geopotential_at_surface.interp(
     latitude=desired_lat, longitude=desired_lon) / (uL * GRAVITY_ACCELERATION)
 ds_nondim_init["u_component_of_wind"] = ds1["u_component_of_wind"] / (uL / uT)

@@ -106,6 +106,18 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     return vorticity, divergence
 
 
+@jax.jit
+@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
+@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
+def regrid(surface_pressure, target, field):
+    source = a_boundaries / surface_pressure + b_boundaries
+    upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
+    lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
+    weights = jnp.maximum(upper - lower, 0)
+    weights /= jnp.sum(weights, axis=1, keepdims=True)
+    return jnp.einsum("ab,b->a", weights, field, precision="float32")
+
+
 di.g.longitude_wavenumbers = 171
 di.g.total_wavenumbers = 172
 di.g.longitude_nodes = 512
@@ -176,19 +188,6 @@ M["u_component_of_wind"] = ds1["u_component_of_wind"].transpose(
     ..., "longitude", "latitude").data
 M["v_component_of_wind"] = ds1["v_component_of_wind"].transpose(
     ..., "longitude", "latitude").data
-
-
-@jax.jit
-@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
-@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
-def regrid(surface_pressure, target, field):
-    source = a_boundaries / surface_pressure + b_boundaries
-    upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
-    lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
-    weights = jnp.maximum(upper - lower, 0)
-    weights /= jnp.sum(weights, axis=1, keepdims=True)
-    return jnp.einsum("ab,b->a", weights, field, precision="float32")
-
 
 nodal_inputs = {
     key: regrid(sp_init_hpa, di.g.boundaries, val)

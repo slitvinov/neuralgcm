@@ -179,7 +179,6 @@ M["v_component_of_wind"] = ds1["v_component_of_wind"].transpose(
 
 
 @jax.jit
-@functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 def regrid(surface_pressure, target, field):

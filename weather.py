@@ -77,16 +77,12 @@ def regrid_hybrid_to_sigma(fields, surface_pressure):
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
     def regrid(surface_pressure, target, field):
-        assert target.shape == (di.g.layers + 1, )
         source = a_boundaries / surface_pressure + b_boundaries
         upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
         lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
         weights = jnp.maximum(upper - lower, 0)
         weights /= jnp.sum(weights, axis=1, keepdims=True)
-        assert weights.shape == (target.size - 1, source.size - 1)
-        result = jnp.einsum("ab,b->a", weights, field, precision="float32")
-        assert result.shape[0] == di.g.layers
-        return result
+        return jnp.einsum("ab,b->a", weights, field, precision="float32")
 
     return di.tree_map_over_nonscalars(
         lambda x: regrid(surface_pressure, di.g.boundaries, x), fields)

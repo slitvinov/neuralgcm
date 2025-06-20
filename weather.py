@@ -188,6 +188,8 @@ model_level_inputs["orography"] = ds1["orography"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
 model_level_inputs["surface_pressure"] = ds1["surface_pressure"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
+model_level_inputs["specific_cloud_liquid_water_content"] = ds1[
+    "specific_cloud_liquid_water_content"].transpose(..., "longitude", "latitude").data
 model_level_inputs["specific_cloud_ice_water_content"] = ds1[
     "specific_cloud_ice_water_content"].transpose(..., "longitude", "latitude").data
 model_level_inputs["specific_humidity"] = ds1["specific_humidity"].transpose(

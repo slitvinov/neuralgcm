@@ -185,6 +185,7 @@ model_level_inputs = {}
 for var_name in var_names:
     data = ds1[var_name].transpose(..., "longitude", "latitude").data
     if data.ndim == 2:
+        print(var_name)
         data = data[np.newaxis, ...]
     model_level_inputs[var_name] = data
 sp_nodal = model_level_inputs.pop("surface_pressure")

@@ -191,9 +191,10 @@ def regrid(surface_pressure, target, field):
     return jnp.einsum("ab,b->a", weights, field, precision="float32")
 
 
-nodal_inputs = di.tree_map_over_nonscalars(
-    lambda x: regrid(sp_init_hpa, di.g.boundaries, x), M)
-
+nodal_inputs = {
+    key: regrid(sp_init_hpa, di.g.boundaries, val)
+    for key, val in M.items()
+}
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]

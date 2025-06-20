@@ -195,9 +195,8 @@ for var_name in var_names:
     data = ds_nondim_init[var_name].transpose(..., "longitude",
                                               "latitude").data
     if data.ndim == 2:
-        data = data[np.newaxis, ...]
-    else:
         assert 0
+        data = data[np.newaxis, ...]
     model_level_inputs[var_name] = data
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")

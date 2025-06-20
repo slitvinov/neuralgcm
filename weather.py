@@ -180,11 +180,7 @@ ds1["u_component_of_wind"] /= uL / uT
 ds1["v_component_of_wind"] /= uL / uT
 ds1["surface_pressure"] /= 1 / uL / uT**2
 
-var_names = ds1.keys()
 model_level_inputs = {}
-for var_name in var_names:
-    data = ds1[var_name].transpose(..., "longitude", "latitude").data
-    model_level_inputs[var_name] = data
 model_level_inputs["geopotential_at_surface"] = ds1[
     "geopotential_at_surface"].transpose(..., "longitude",
                                          "latitude").data[np.newaxis, ...]
@@ -192,14 +188,16 @@ model_level_inputs["orography"] = ds1["orography"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
 model_level_inputs["surface_pressure"] = ds1["surface_pressure"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
-'''
-3 specific_cloud_ice_water_content
-3 specific_cloud_liquid_water_content
-3 specific_humidity
-3 temperature
-3 u_component_of_wind
-3 v_component_of_wind
-'''
+model_level_inputs["specific_cloud_ice_water_content"] = ds1[
+    "specific_cloud_ice_water_content"].transpose(..., "longitude", "latitude")
+model_level_inputs["specific_humidity"] = ds1["specific_humidity"].transpose(
+    ..., "longitude", "latitude")
+model_level_inputs["temperature"] = ds1["temperature"].transpose(
+    ..., "longitude", "latitude")
+model_level_inputs["u_component_of_wind"] = ds1[
+    "u_component_of_wind"].transpose(..., "longitude", "latitude")
+model_level_inputs["v_component_of_wind"] = ds1[
+    "v_component_of_wind"].transpose(..., "longitude", "latitude")
 
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")

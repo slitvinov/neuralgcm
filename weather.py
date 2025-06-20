@@ -174,19 +174,17 @@ ds = era[[
 ds1 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 sp_init_hpa = ds1.surface_pressure.transpose("longitude",
                                              "latitude").data / 100
-ds1 = ds1.copy()
 ds1["orography"] = ds1["geopotential_at_surface"] / (uL * GRAVITY_ACCELERATION)
 ds1["u_component_of_wind"] /= uL / uT
 ds1["v_component_of_wind"] /= uL / uT
 ds1["surface_pressure"] /= 1 / uL / uT**2
-
-M = {}
-M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
-    ..., "longitude", "latitude").data[np.newaxis, ...]
 orography_input = ds1["orography"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
 sp_nodal = ds1["surface_pressure"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
+M = {}
+M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
+    ..., "longitude", "latitude").data[np.newaxis, ...]
 M["specific_cloud_liquid_water_content"] = ds1[
     "specific_cloud_liquid_water_content"].transpose(..., "longitude",
                                                      "latitude").data

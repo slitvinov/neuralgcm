@@ -5,7 +5,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import os
-import pint
 import scipy
 import xarray
 
@@ -14,53 +13,8 @@ Unit = units.Unit
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
-
-class Scale:
-
-    def __init__(self, *scales):
-        self.scales = {}
-        for quantity in scales:
-            self.scales[str(
-                quantity.dimensionality)] = quantity.to_base_units()
-
-    def scaling_factor(self, dimensionality):
-        factor = units.Quantity(1)
-        for dimension, exponent in dimensionality.items():
-            quantity = self.scales.get(dimension)
-            factor *= quantity**exponent
-        assert factor.check(dimensionality)
-        return factor
-
-    def nondimensionalize(self, quantity):
-        try:
-            scaling_factor = self.scaling_factor(quantity.dimensionality)
-        except AttributeError:
-            return quantity
-        nondimensionalized = (quantity / scaling_factor).to(
-            units.dimensionless)
-        return nondimensionalized.magnitude
-
-    def dimensionalize(self, value, unit):
-        scaling_factor = self.scaling_factor(unit.dimensionality)
-        dimensionalized = value * scaling_factor
-        return dimensionalized.to(unit)
-
-
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
-DEFAULT_SCALE = Scale(
-    uL * units.m,
-    uT * units.s,
-    1 * units.kilogram,
-    1 * units.degK,
-)
-
-
-def attach_data_array_units(array):
-    attrs = dict(array.attrs)
-    units0 = attrs.pop("units", None)
-    data = units.parse_expression(units0) * array.data
-    return xarray.DataArray(data, array.coords, array.dims, attrs=attrs)
 
 
 def open(path):

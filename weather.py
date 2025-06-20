@@ -105,7 +105,6 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     divergence = di.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
     return vorticity, divergence
 
-
 @jax.jit
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
@@ -115,7 +114,7 @@ def regrid(surface_pressure, target, field):
     lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
     weights = jnp.maximum(upper - lower, 0)
     weights /= jnp.sum(weights, axis=1, keepdims=True)
-    jnp.dot(weights, field, precision="float32")
+    return jnp.einsum("ab,b->a", weights, field, precision="float32")
 
 
 di.g.longitude_wavenumbers = 171

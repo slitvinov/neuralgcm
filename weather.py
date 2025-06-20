@@ -15,6 +15,7 @@ uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
 
 
+
 def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
@@ -160,8 +161,7 @@ ds = era[[
     "geopotential_at_surface",
 ]]
 ds1 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
-sp_init_hpa = ds1.surface_pressure.transpose("longitude",
-                                             "latitude").data / 100
+sp_init_hpa = ds1["surface_pressure"].data.T / 100
 ds1["orography"] = ds1["geopotential_at_surface"] / (uL * GRAVITY_ACCELERATION)
 ds1["u_component_of_wind"] /= uL / uT
 ds1["v_component_of_wind"] /= uL / uT

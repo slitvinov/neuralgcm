@@ -184,12 +184,23 @@ var_names = ds1.keys()
 model_level_inputs = {}
 for var_name in var_names:
     data = ds1[var_name].transpose(..., "longitude", "latitude").data
-    if data.ndim == 2:
-        print(2, var_name)
-        data = data[np.newaxis, ...]
-    else:
-        print(3, var_name)
     model_level_inputs[var_name] = data
+model_level_inputs["geopotential_at_surface"] = ds1[
+    "geopotential_at_surface"].transpose(..., "longitude",
+                                         "latitude").data[np.newaxis, ...]
+model_level_inputs["orography"] = ds1["orography"].transpose(
+    ..., "longitude", "latitude").data[np.newaxis, ...]
+model_level_inputs["surface_pressure"] = ds1["surface_pressure"].transpose(
+    ..., "longitude", "latitude").data[np.newaxis, ...]
+'''
+3 specific_cloud_ice_water_content
+3 specific_cloud_liquid_water_content
+3 specific_humidity
+3 temperature
+3 u_component_of_wind
+3 v_component_of_wind
+'''
+
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
 nodal_inputs = regrid_hybrid_to_sigma(model_level_inputs, sp_init_hpa)

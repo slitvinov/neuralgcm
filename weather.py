@@ -69,25 +69,6 @@ def nodal_prognostics_and_diagnostics(state):
     return jax.tree.map(get_horizontal, state_nodal)
 
 
-@jax.jit
-def regrid_hybrid_to_sigma(fields, surface_pressure):
-
-    @jax.jit
-    @functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")
-    @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
-    @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
-    def regrid(surface_pressure, target, field):
-        source = a_boundaries / surface_pressure + b_boundaries
-        upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
-        lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
-        weights = jnp.maximum(upper - lower, 0)
-        weights /= jnp.sum(weights, axis=1, keepdims=True)
-        return jnp.einsum("ab,b->a", weights, field, precision="float32")
-
-    return di.tree_map_over_nonscalars(
-        lambda x: regrid(surface_pressure, di.g.boundaries, x), fields)
-
-
 def explicit_terms(state):
     forward_term = di.explicit_terms(state)
     return di.tree_map(jnp.negative, forward_term)
@@ -196,7 +177,23 @@ M["u_component_of_wind"] = ds1["u_component_of_wind"].transpose(
 M["v_component_of_wind"] = ds1["v_component_of_wind"].transpose(
     ..., "longitude", "latitude").data
 
-nodal_inputs = regrid_hybrid_to_sigma(M, sp_init_hpa)
+
+@jax.jit
+@functools.partial(jnp.vectorize, signature="(x,y),(a),(b,x,y)->(c,x,y)")
+@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
+@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
+def regrid(surface_pressure, target, field):
+    source = a_boundaries / surface_pressure + b_boundaries
+    upper = jnp.minimum(target[1:, jnp.newaxis], source[jnp.newaxis, 1:])
+    lower = jnp.maximum(target[:-1, jnp.newaxis], source[jnp.newaxis, :-1])
+    weights = jnp.maximum(upper - lower, 0)
+    weights /= jnp.sum(weights, axis=1, keepdims=True)
+    return jnp.einsum("ab,b->a", weights, field, precision="float32")
+
+
+nodal_inputs = di.tree_map_over_nonscalars(
+    lambda x: regrid(sp_init_hpa, di.g.boundaries, x), M)
+
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]

@@ -180,30 +180,31 @@ ds1["u_component_of_wind"] /= uL / uT
 ds1["v_component_of_wind"] /= uL / uT
 ds1["surface_pressure"] /= 1 / uL / uT**2
 
-model_level_inputs = {}
-model_level_inputs["geopotential_at_surface"] = ds1[
-    "geopotential_at_surface"].transpose(..., "longitude",
-                                         "latitude").data[np.newaxis, ...]
-model_level_inputs["orography"] = ds1["orography"].transpose(
+M = {}
+M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
-model_level_inputs["surface_pressure"] = ds1["surface_pressure"].transpose(
+M["orography"] = ds1["orography"].transpose(..., "longitude",
+                                            "latitude").data[np.newaxis, ...]
+M["surface_pressure"] = ds1["surface_pressure"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
-model_level_inputs["specific_cloud_liquid_water_content"] = ds1[
-    "specific_cloud_liquid_water_content"].transpose(..., "longitude", "latitude").data
-model_level_inputs["specific_cloud_ice_water_content"] = ds1[
-    "specific_cloud_ice_water_content"].transpose(..., "longitude", "latitude").data
-model_level_inputs["specific_humidity"] = ds1["specific_humidity"].transpose(
+M["specific_cloud_liquid_water_content"] = ds1[
+    "specific_cloud_liquid_water_content"].transpose(..., "longitude",
+                                                     "latitude").data
+M["specific_cloud_ice_water_content"] = ds1[
+    "specific_cloud_ice_water_content"].transpose(..., "longitude",
+                                                  "latitude").data
+M["specific_humidity"] = ds1["specific_humidity"].transpose(
     ..., "longitude", "latitude").data
-model_level_inputs["temperature"] = ds1["temperature"].transpose(
+M["temperature"] = ds1["temperature"].transpose(..., "longitude",
+                                                "latitude").data
+M["u_component_of_wind"] = ds1["u_component_of_wind"].transpose(
     ..., "longitude", "latitude").data
-model_level_inputs["u_component_of_wind"] = ds1[
-    "u_component_of_wind"].transpose(..., "longitude", "latitude").data
-model_level_inputs["v_component_of_wind"] = ds1[
-    "v_component_of_wind"].transpose(..., "longitude", "latitude").data
+M["v_component_of_wind"] = ds1["v_component_of_wind"].transpose(
+    ..., "longitude", "latitude").data
 
-sp_nodal = model_level_inputs.pop("surface_pressure")
-orography_input = model_level_inputs.pop("orography")
-nodal_inputs = regrid_hybrid_to_sigma(model_level_inputs, sp_init_hpa)
+sp_nodal = M.pop("surface_pressure")
+orography_input = M.pop("orography")
+nodal_inputs = regrid_hybrid_to_sigma(M, sp_init_hpa)
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]
 t_nodal = nodal_inputs["temperature"]

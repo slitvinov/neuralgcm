@@ -189,15 +189,15 @@ model_level_inputs["orography"] = ds1["orography"].transpose(
 model_level_inputs["surface_pressure"] = ds1["surface_pressure"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
 model_level_inputs["specific_cloud_ice_water_content"] = ds1[
-    "specific_cloud_ice_water_content"].transpose(..., "longitude", "latitude")
+    "specific_cloud_ice_water_content"].transpose(..., "longitude", "latitude").data
 model_level_inputs["specific_humidity"] = ds1["specific_humidity"].transpose(
-    ..., "longitude", "latitude")
+    ..., "longitude", "latitude").data
 model_level_inputs["temperature"] = ds1["temperature"].transpose(
-    ..., "longitude", "latitude")
+    ..., "longitude", "latitude").data
 model_level_inputs["u_component_of_wind"] = ds1[
-    "u_component_of_wind"].transpose(..., "longitude", "latitude")
+    "u_component_of_wind"].transpose(..., "longitude", "latitude").data
 model_level_inputs["v_component_of_wind"] = ds1[
-    "v_component_of_wind"].transpose(..., "longitude", "latitude")
+    "v_component_of_wind"].transpose(..., "longitude", "latitude").data
 
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")

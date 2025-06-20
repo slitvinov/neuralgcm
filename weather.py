@@ -8,8 +8,6 @@ import os
 import scipy
 import xarray
 
-units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-Unit = units.Unit
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
 _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
@@ -178,7 +176,6 @@ ds = era[[
 ]]
 ds0 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 ds1 = ds0.copy()
-ds_init = ds0.map(attach_data_array_units)
 ds_init["orography"] = era.geopotential_at_surface.interp(
     latitude=desired_lat, longitude=desired_lon) / (uL * GRAVITY_ACCELERATION)
 # ds_nondim_init = xarray.apply_ufunc(DEFAULT_SCALE.nondimensionalize, ds_init)

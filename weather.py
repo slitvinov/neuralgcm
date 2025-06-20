@@ -176,6 +176,8 @@ ds = era[[
     "geopotential_at_surface",
 ]]
 ds1 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
+sp_init_hpa = ds1.surface_pressure.transpose("longitude",
+                                             "latitude").data / 100
 ds_nondim_init = ds1.copy()
 ds_nondim_init["orography"] = ds1["geopotential_at_surface"] / (
     uL * GRAVITY_ACCELERATION)
@@ -199,8 +201,6 @@ for var_name in var_names:
     model_level_inputs[var_name] = data
 sp_nodal = model_level_inputs.pop("surface_pressure")
 orography_input = model_level_inputs.pop("orography")
-sp_init_hpa = ds1.surface_pressure.transpose("longitude",
-                                             "latitude").data / 100
 nodal_inputs = regrid_hybrid_to_sigma(model_level_inputs, sp_init_hpa)
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]

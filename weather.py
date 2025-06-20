@@ -183,10 +183,10 @@ ds1["surface_pressure"] /= 1 / uL / uT**2
 M = {}
 M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
-M["orography"] = ds1["orography"].transpose(..., "longitude",
-                                            "latitude").data[np.newaxis, ...]
-M["surface_pressure"] = ds1["surface_pressure"].transpose(
-    ..., "longitude", "latitude").data[np.newaxis, ...]
+orography_input = ds1["orography"].transpose(..., "longitude",
+                                             "latitude").data[np.newaxis, ...]
+sp_nodal = ds1["surface_pressure"].transpose(..., "longitude",
+                                             "latitude").data[np.newaxis, ...]
 M["specific_cloud_liquid_water_content"] = ds1[
     "specific_cloud_liquid_water_content"].transpose(..., "longitude",
                                                      "latitude").data
@@ -202,8 +202,6 @@ M["u_component_of_wind"] = ds1["u_component_of_wind"].transpose(
 M["v_component_of_wind"] = ds1["v_component_of_wind"].transpose(
     ..., "longitude", "latitude").data
 
-sp_nodal = M.pop("surface_pressure")
-orography_input = M.pop("orography")
 nodal_inputs = regrid_hybrid_to_sigma(M, sp_init_hpa)
 u_nodal = nodal_inputs["u_component_of_wind"]
 v_nodal = nodal_inputs["v_component_of_wind"]

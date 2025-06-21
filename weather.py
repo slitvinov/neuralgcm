@@ -173,13 +173,14 @@ temperature = np.empty(shape)
 xi = np.meshgrid(desired_lat, desired_lon)
 points = lat, lon
 
+M = {}
 for key, val, scale in [("u_component_of_wind", u_component_of_wind, uL / uT),
                         ("v_component_of_wind", v_component_of_wind, uL / uT),
                         ("temperature", temperature, 1)]:
     source = era[key].data
     for i in range(nhyb):
         val[i] = scipy.interpolate.interpn(points, source[i], xi)
-    val /= scale
+    M[key] = val / scale
 
 sp_init_hpa = ds1["surface_pressure"].data.T / 100
 ds1["orography"] = ds1["geopotential_at_surface"] / (uL * GRAVITY_ACCELERATION)
@@ -188,7 +189,6 @@ orography_input = ds1["orography"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
 sp_nodal = ds1["surface_pressure"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
-M = {}
 M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
 M["specific_cloud_liquid_water_content"] = ds1[
@@ -199,9 +199,6 @@ M["specific_cloud_ice_water_content"] = ds1[
                                                   "latitude").data
 M["specific_humidity"] = ds1["specific_humidity"].transpose(
     ..., "longitude", "latitude").data
-M["temperature"] = temperature
-M["u_component_of_wind"] = u_component_of_wind
-M["v_component_of_wind"] = v_component_of_wind
 
 nodal_inputs = {
     key: regrid(sp_init_hpa, di.g.boundaries, val)

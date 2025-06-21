@@ -167,16 +167,13 @@ lat = era["latitude"].data
 lon = era["longitude"].data
 nhyb = len(hyb)
 shape = nhyb, len(desired_lon), len(desired_lat)
-u_component_of_wind = np.empty(shape)
-v_component_of_wind = np.empty(shape)
-temperature = np.empty(shape)
 xi = np.meshgrid(desired_lat, desired_lon)
 points = lat, lon
-
 M = {}
 for key, val, scale in [("u_component_of_wind", u_component_of_wind, uL / uT),
                         ("v_component_of_wind", v_component_of_wind, uL / uT),
                         ("temperature", temperature, 1)]:
+    val = np.empty(shape)
     source = era[key].data
     for i in range(nhyb):
         val[i] = scipy.interpolate.interpn(points, source[i], xi)

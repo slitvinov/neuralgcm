@@ -183,7 +183,6 @@ for key, scale in [
     for i in range(nhyb):
         val[i] = scipy.interpolate.interpn(points, source[i], xi)
     M[key] = val / scale
-
 sp_init_hpa = ds1["surface_pressure"].data.T / 100
 ds1["orography"] = ds1["geopotential_at_surface"] / (uL * GRAVITY_ACCELERATION)
 ds1["surface_pressure"] /= 1 / uL / uT**2
@@ -191,8 +190,6 @@ orography_input = ds1["orography"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
 sp_nodal = ds1["surface_pressure"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
-M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
-    ..., "longitude", "latitude").data[np.newaxis, ...]
 nodal_inputs = {
     key: regrid(sp_init_hpa, di.g.boundaries, val)
     for key, val in M.items()

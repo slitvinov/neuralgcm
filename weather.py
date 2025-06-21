@@ -193,9 +193,6 @@ sp_nodal = ds1["surface_pressure"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
 M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
-M["specific_cloud_liquid_water_content"] = ds1[
-    "specific_cloud_liquid_water_content"].transpose(..., "longitude",
-                                                     "latitude").data
 M["specific_humidity"] = ds1["specific_humidity"].transpose(
     ..., "longitude", "latitude").data
 

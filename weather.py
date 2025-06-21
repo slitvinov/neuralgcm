@@ -149,19 +149,17 @@ else:
         open(
             "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1")
     ])
+    era = era[[
+        "u_component_of_wind",
+        "v_component_of_wind",
+        "temperature",
+        "specific_humidity",
+        "specific_cloud_liquid_water_content",
+        "specific_cloud_ice_water_content",
+        "surface_pressure",
+        "geopotential_at_surface",
+    ]]
     era.to_netcdf("weather.h5")
-ds = era[[
-    "u_component_of_wind",
-    "v_component_of_wind",
-    "temperature",
-    "specific_humidity",
-    "specific_cloud_liquid_water_content",
-    "specific_cloud_ice_water_content",
-    "surface_pressure",
-    "geopotential_at_surface",
-]]
-
-ds1 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
 hyb = era["hybrid"].data
 lat = era["latitude"].data
 lon = era["longitude"].data
@@ -184,7 +182,8 @@ for key, scale in [
         val[i] = scipy.interpolate.interpn(points, source[i], xi)
     M[key] = val / scale
 sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)
-oro = scipy.interpolate.interpn(points, era["geopotential_at_surface"].data, xi)
+oro = scipy.interpolate.interpn(points, era["geopotential_at_surface"].data,
+                                xi)
 sp_init_hpa = sp / 100
 sp_nodal = sp[np.newaxis, ...] / (1 / uL / uT**2)
 orography_input = oro[np.newaxis, ...] / (uL * GRAVITY_ACCELERATION)

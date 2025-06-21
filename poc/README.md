@@ -34,9 +34,15 @@ gs://gcp-public-data-arco-era5/raw/date-variable-pressure_level/1990/05/01/u_com
 ```
 
 ```
-$ gsutil ls gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501*
-gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501_hres_dve.grb2
-gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501_hres_o3q.grb2
-gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501_hres_qrqs.grb2
-gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501_hres_tw.grb2
+$ gsutil ls -lh gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501*
+  5.04 GiB  2022-10-03T04:44:02Z  gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501_hres_dve.grb2
+ 11.25 GiB  2022-10-03T04:49:02Z  gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501_hres_o3q.grb2
+   3.5 GiB  2022-10-03T04:44:02Z  gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501_hres_qrqs.grb2
+  5.04 GiB  2022-10-03T04:49:47Z  gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501_hres_tw.grb2
+TOTAL: 4 objects, 26664833880 bytes (24.83 GiB)
 ```
+
+dve: Divergence and vorticity at various levels
+o3q: Ozone and specific humidity-related variables
+qrqs: Cloud and precipitation-related variables like rain/snow mixing ratios
+tw: Temperature and wind components

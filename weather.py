@@ -171,7 +171,6 @@ u_component_of_wind = np.empty(shape)
 v_component_of_wind = np.empty(shape)
 temperature = np.empty(shape)
 xi = np.meshgrid(desired_lat, desired_lon)
-u = era["u_component_of_wind"].data
 points = lat, lon
 
 for key, val, scale in [("u_component_of_wind", u_component_of_wind, uL / uT),
@@ -184,8 +183,6 @@ for key, val, scale in [("u_component_of_wind", u_component_of_wind, uL / uT),
 
 sp_init_hpa = ds1["surface_pressure"].data.T / 100
 ds1["orography"] = ds1["geopotential_at_surface"] / (uL * GRAVITY_ACCELERATION)
-ds1["u_component_of_wind"] /= uL / uT
-ds1["v_component_of_wind"] /= uL / uT
 ds1["surface_pressure"] /= 1 / uL / uT**2
 orography_input = ds1["orography"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]

@@ -184,12 +184,10 @@ for key, scale in [
         val[i] = scipy.interpolate.interpn(points, source[i], xi)
     M[key] = val / scale
 sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)
+oro = scipy.interpolate.interpn(points, era["geopotential_at_surface"].data, xi)
 sp_init_hpa = sp / 100
-ds1["orography"] = ds1["geopotential_at_surface"] / (uL * GRAVITY_ACCELERATION)
-ds1["surface_pressure"] /= 1 / uL / uT**2
-orography_input = ds1["orography"].transpose(..., "longitude",
-                                             "latitude").data[np.newaxis, ...]
 sp_nodal = sp[np.newaxis, ...] / (1 / uL / uT**2)
+orography_input = oro[np.newaxis, ...] / (uL * GRAVITY_ACCELERATION)
 nodal_inputs = {
     key: regrid(sp_init_hpa, di.g.boundaries, val)
     for key, val in M.items()

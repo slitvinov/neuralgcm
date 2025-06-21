@@ -46,3 +46,7 @@ dve: Divergence and vorticity at various levels
 o3q: Ozone and specific humidity-related variables
 qrqs: Cloud and precipitation-related variables like rain/snow mixing ratios
 tw: Temperature and wind components
+
+- https://old.wmo.int/extranet/pages/prog/www/WMOCodes/Guides/GRIB/GRIB2_062006.pdf
+- https://github.com/ecmwf/cfgrib
+- https://get.ecmwf.int/repository/test-data/cfgrib/era5-levels-members.grib

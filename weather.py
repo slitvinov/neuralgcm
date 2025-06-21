@@ -15,7 +15,6 @@ uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
 
 
-
 def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
@@ -106,6 +105,7 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     divergence = di.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
     return vorticity, divergence
 
+
 @jax.jit
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
@@ -160,7 +160,28 @@ ds = era[[
     "surface_pressure",
     "geopotential_at_surface",
 ]]
+
 ds1 = ds.compute().interp(latitude=desired_lat, longitude=desired_lon)
+hyb = era["hybrid"].data
+lat = era["latitude"].data
+lon = era["longitude"].data
+nhyb = len(hyb)
+shape = nhyb, len(desired_lon), len(desired_lat)
+u_component_of_wind = np.empty(shape)
+v_component_of_wind = np.empty(shape)
+temperature = np.empty(shape)
+xi = np.meshgrid(desired_lat, desired_lon)
+u = era["u_component_of_wind"].data
+points = lat, lon
+
+for key, val, scale in [("u_component_of_wind", u_component_of_wind, uL / uT),
+                        ("v_component_of_wind", v_component_of_wind, uL / uT),
+                        ("temperature", temperature, 1)]:
+    source = era[key].data
+    for i in range(nhyb):
+        val[i] = scipy.interpolate.interpn(points, source[i], xi)
+    val /= scale
+
 sp_init_hpa = ds1["surface_pressure"].data.T / 100
 ds1["orography"] = ds1["geopotential_at_surface"] / (uL * GRAVITY_ACCELERATION)
 ds1["u_component_of_wind"] /= uL / uT
@@ -181,12 +202,9 @@ M["specific_cloud_ice_water_content"] = ds1[
                                                   "latitude").data
 M["specific_humidity"] = ds1["specific_humidity"].transpose(
     ..., "longitude", "latitude").data
-M["temperature"] = ds1["temperature"].transpose(..., "longitude",
-                                                "latitude").data
-M["u_component_of_wind"] = ds1["u_component_of_wind"].transpose(
-    ..., "longitude", "latitude").data
-M["v_component_of_wind"] = ds1["v_component_of_wind"].transpose(
-    ..., "longitude", "latitude").data
+M["temperature"] = temperature
+M["u_component_of_wind"] = u_component_of_wind
+M["v_component_of_wind"] = v_component_of_wind
 
 nodal_inputs = {
     key: regrid(sp_init_hpa, di.g.boundaries, val)

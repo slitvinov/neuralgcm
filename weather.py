@@ -106,7 +106,6 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     return vorticity, divergence
 
 
-@jax.jit
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 def regrid(surface_pressure, target, field):
@@ -167,6 +166,12 @@ nhyb = len(hyb)
 shape = nhyb, len(desired_lon), len(desired_lat)
 xi = np.meshgrid(desired_lat, desired_lon)
 points = lat, lon
+sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)
+oro = scipy.interpolate.interpn(points, era["geopotential_at_surface"].data,
+                                xi)
+sp_init_hpa = sp / 100
+sp_nodal = sp[np.newaxis, ...] / (1 / uL / uT**2)
+orography_input = oro[np.newaxis, ...] / (uL * GRAVITY_ACCELERATION)
 M = {}
 for key, scale in [
     ("u_component_of_wind", uL / uT),
@@ -177,35 +182,23 @@ for key, scale in [
     ("specific_humidity", 1),
 ]:
     val = np.empty(shape)
-    source = era[key].data
     for i in range(nhyb):
-        val[i] = scipy.interpolate.interpn(points, source[i], xi)
-    M[key] = val / scale
-sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)
-oro = scipy.interpolate.interpn(points, era["geopotential_at_surface"].data,
-                                xi)
-sp_init_hpa = sp / 100
-sp_nodal = sp[np.newaxis, ...] / (1 / uL / uT**2)
-orography_input = oro[np.newaxis, ...] / (uL * GRAVITY_ACCELERATION)
-nodal_inputs = {
-    key: regrid(sp_init_hpa, di.g.boundaries, val)
-    for key, val in M.items()
-}
-u_nodal = nodal_inputs["u_component_of_wind"]
-v_nodal = nodal_inputs["v_component_of_wind"]
-t_nodal = nodal_inputs["temperature"]
+        val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
+    M[key] = regrid(sp_init_hpa, di.g.boundaries, val / scale)
+u_nodal = M["u_component_of_wind"]
+v_nodal = M["v_component_of_wind"]
+t_nodal = M["temperature"]
 vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
 di.g.reference_temperature = 250 * np.ones((di.g.layers, ))
-temperature_variation = di.to_modal(
-    t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
+temperature_variation = di.transform(t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
 log_sp = di.to_modal(np.log(sp_nodal))
 tracers = di.to_modal({
     "specific_humidity":
-    nodal_inputs["specific_humidity"],
+    M["specific_humidity"],
     "specific_cloud_liquid_water_content":
-    nodal_inputs["specific_cloud_liquid_water_content"],
+    M["specific_cloud_liquid_water_content"],
     "specific_cloud_ice_water_content":
-    nodal_inputs["specific_cloud_ice_water_content"],
+    M["specific_cloud_ice_water_content"],
 })
 raw_init_state = di.State(
     vorticity=vorticity,

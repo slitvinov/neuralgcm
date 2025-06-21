@@ -170,8 +170,14 @@ shape = nhyb, len(desired_lon), len(desired_lat)
 xi = np.meshgrid(desired_lat, desired_lon)
 points = lat, lon
 M = {}
-for key, scale in [("u_component_of_wind", uL / uT),
-                   ("v_component_of_wind", uL / uT), ("temperature", 1)]:
+for key, scale in [
+    ("u_component_of_wind", uL / uT),
+    ("v_component_of_wind", uL / uT),
+    ("temperature", 1),
+    ("specific_cloud_liquid_water_content", 1),
+    ("specific_cloud_ice_water_content", 1),
+    ("specific_humidity", 1),
+]:
     val = np.empty(shape)
     source = era[key].data
     for i in range(nhyb):
@@ -187,14 +193,6 @@ sp_nodal = ds1["surface_pressure"].transpose(..., "longitude",
                                              "latitude").data[np.newaxis, ...]
 M["geopotential_at_surface"] = ds1["geopotential_at_surface"].transpose(
     ..., "longitude", "latitude").data[np.newaxis, ...]
-M["specific_cloud_liquid_water_content"] = ds1[
-    "specific_cloud_liquid_water_content"].transpose(..., "longitude",
-                                                     "latitude").data
-M["specific_cloud_ice_water_content"] = ds1[
-    "specific_cloud_ice_water_content"].transpose(..., "longitude",
-                                                  "latitude").data
-M["specific_humidity"] = ds1["specific_humidity"].transpose(
-    ..., "longitude", "latitude").data
 
 nodal_inputs = {
     key: regrid(sp_init_hpa, di.g.boundaries, val)

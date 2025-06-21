@@ -170,9 +170,8 @@ shape = nhyb, len(desired_lon), len(desired_lat)
 xi = np.meshgrid(desired_lat, desired_lon)
 points = lat, lon
 M = {}
-for key, val, scale in [("u_component_of_wind", u_component_of_wind, uL / uT),
-                        ("v_component_of_wind", v_component_of_wind, uL / uT),
-                        ("temperature", temperature, 1)]:
+for key, scale in [("u_component_of_wind", uL / uT),
+                   ("v_component_of_wind", uL / uT), ("temperature", 1)]:
     val = np.empty(shape)
     source = era[key].data
     for i in range(nhyb):

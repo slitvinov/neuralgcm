@@ -124,14 +124,16 @@ def step_with_filters(fun):
 
     return step
 
+
 def exponential_filter(attenuation=16, order=18, cutoff=0):
-    total_wavenumber = np.arange(g.total_wavenumbers)
+    total_wavenumber = np.arange(di.g.total_wavenumbers)
     k = total_wavenumber / total_wavenumber.max()
     a = attenuation
     c = cutoff
     p = order
     scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
-    return _make_filter_fn(scaling)
+    return di._make_filter_fn(scaling)
+
 
 di.g.longitude_wavenumbers = 171
 di.g.total_wavenumbers = 172

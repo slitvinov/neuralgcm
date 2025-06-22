@@ -18,6 +18,6 @@ assert section_length == 21
 # f.close()
 
 year = struct.unpack(">H", section[12 : 14])
-month = struct.unpack("B", section[15])
-day = struct.unpack("B", section[16])
+month = section[15]
+day = section[16]
 print(f"{year=} {month=} {day=}")

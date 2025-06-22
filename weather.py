@@ -117,15 +117,6 @@ def regrid(surface_pressure, target, field):
     return jnp.einsum("ab,b->a", weights, field, precision="float32")
 
 
-def runge_kutta_step_filter(state_filter):
-
-    def _filter(u, u_next):
-        del u
-        return state_filter(u_next)
-
-    return _filter
-
-
 def step_with_filters(fun):
 
     def step(u):
@@ -235,8 +226,7 @@ tau = 3600 * 8.6 / (2.4**np.log2(res_factor)) / uT
 eigenvalues = di.laplacian_eigenvalues()
 scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
-filter_fn = di._make_filter_fn(scaling)
-hyperdiffusion_filter = runge_kutta_step_filter(filter_fn)
+xhyperdiffusion_filter = di._make_filter_fn(scaling)
 time_span = cutoff_period = 3.1501440000000001e+00
 forward_step = step_with_filters(
     di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,

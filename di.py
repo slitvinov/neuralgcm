@@ -186,13 +186,11 @@ def centered_vertical_advection(w, x):
 
 
 def real_basis_derivative(u):
-    axis = -2
-    i = jnp.arange(u.shape[axis]).reshape((-1, ) + (1, ) * (-1 - axis))
+    i = jnp.arange(u.shape[-2]).reshape(-1, 1)
     j = (i + 1) // 2
-    u_down = shift(u, -1, axis)
-    u_up = shift(u, +1, axis)
+    u_down = shift(u, -1, -2)
+    u_up = shift(u, 1, -2)
     return j * jnp.where(i % 2, u_down, -u_up)
-
 
 def nodal_axes():
     longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)

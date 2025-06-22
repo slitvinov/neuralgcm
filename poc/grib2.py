@@ -32,7 +32,10 @@ section_length, = struct.unpack(">L", f.read(4))
 section = b'0000' + f.read(section_length - 4)
 
 npoint, = struct.unpack(">L", section[6:10])
-assert section[10] == 0, "number of octets for optional list"
-assert section[11] == 0, "number of octets for optional list"
+# assert section[10] == 0, "number of octets for optional list"
+# assert section[11] == 0, "number of octets for optional list"
+
+grid_template_number = struct.unpack(">H", section[12:14])
+print(f"{grid_template_number="}
 
 print(f"{npoint=}")

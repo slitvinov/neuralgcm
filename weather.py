@@ -126,15 +126,12 @@ def runge_kutta_step_filter(state_filter):
     return _filter
 
 
-def step_with_filters(step_fn, filters):
+def step_with_filters(fun):
 
-    def _step_fn(u):
-        u_next = step_fn(u)
-        for filter_fn in filters:
-            u_next = filter_fn(u, u_next)
-        return u_next
+    def step(u):
+        return hyperdiffusion_filter(fun(u))
 
-    return _step_fn
+    return step
 
 
 di.g.longitude_wavenumbers = 171
@@ -243,10 +240,9 @@ hyperdiffusion_filter = runge_kutta_step_filter(filter_fn)
 time_span = cutoff_period = 3.1501440000000001e+00
 forward_step = step_with_filters(
     di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
-                        di.implicit_inverse, dt), [hyperdiffusion_filter])
+                        di.implicit_inverse, dt))
 backward_step = step_with_filters(
-    di.imex_runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt),
-    [hyperdiffusion_filter])
+    di.imex_runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
 N = round(time_span / (2 * dt))
 n = np.arange(1, N + 1)
 weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
@@ -265,9 +261,7 @@ outer_steps = 193
 times = 0.25 * np.arange(outer_steps)
 step_fn = step_with_filters(
     di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
-                        di.implicit_inverse, dt),
-    [hyperdiffusion_filter],
-)
+                        di.implicit_inverse, dt))
 
 
 def step_fn0(frame):

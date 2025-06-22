@@ -135,7 +135,7 @@ state = di.State(
     divergence=di.transform(jnp.asarray(divergence_perturbation)),
     temperature_variation=di.transform(jnp.asarray(temperature_variation)),
     log_surface_pressure=di.transform(jnp.asarray(log_surface_pressure)))
-final, _ = jax.lax.scan(lambda x, _: (filter_fn(step_fn(u)), None),
+final, _ = jax.lax.scan(lambda x, _: (filter_fn(step_fn(x)), None),
                         state,
                         xs=None,
                         length=8640)

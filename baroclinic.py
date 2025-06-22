@@ -124,16 +124,6 @@ a = dt / tau
 scaling = jnp.exp((k > 0) * (-a) * k**(2 * order))
 filter_fn = di._make_filter_fn(scaling)
 
-
-def rescale(x):
-    return scaling * x if np.shape(x) == np.broadcast_shapes(
-        np.shape(x), scaling.shape) else x
-
-
-def filter_fn(state):
-    jax.tree_util.tree_map(rescale, step_fn(state))
-
-
 vorticity_perturbation = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])
 divergence_perturbation = np.stack(
@@ -147,7 +137,7 @@ state = di.State(
     divergence=di.transform(jnp.asarray(divergence_perturbation)),
     temperature_variation=di.transform(jnp.asarray(temperature_variation)),
     log_surface_pressure=di.transform(jnp.asarray(log_surface_pressure)))
-final, _ = jax.lax.scan(lambda x, _: (filter_fn(x), None),
+final, _ = jax.lax.scan(lambda x, _: (filter_fn(step_fn(x)), None),
                         state,
                         xs=None,
                         length=8640)

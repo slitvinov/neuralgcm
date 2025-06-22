@@ -44,23 +44,18 @@ def inverse_transform(x):
 def basis():
     dft = scipy.linalg.dft(
         g.longitude_nodes)[:, :g.longitude_wavenumbers] / np.sqrt(np.pi)
-    cos = np.real(dft[:, 1:])
-    sin = -np.imag(dft[:, 1:])
-    f = np.empty(shape=[g.longitude_nodes, 2 * g.longitude_wavenumbers - 1],
-                 dtype=np.float64)
+    f = np.empty((g.longitude_nodes, 2 * g.longitude_wavenumbers - 1))
     f[:, 0] = 1 / np.sqrt(2 * np.pi)
-    f[:, 1::2] = cos
-    f[:, 2::2] = sin
-    wf = 2 * np.pi / g.longitude_nodes
-    x, wp = scipy.special.roots_legendre(g.latitude_nodes)
-    w = wf * wp
-
+    f[:, 1::2] = np.real(dft[:, 1:])
+    f[:, 2::2] = -np.imag(dft[:, 1:])
+    x, w = scipy.special.roots_legendre(g.latitude_nodes)
+    w *= 2 * np.pi / g.longitude_nodes
     q = np.sqrt(1 - x * x)
-    y = np.zeros((g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
-    y[0, 0] = y[0, 0] + 1 / np.sqrt(2)
+    y = np.zeros(
+        (g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
+    y[0, 0] = 1 / np.sqrt(2)
     for m in range(1, g.longitude_wavenumbers):
         y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
-    m_max = g.longitude_wavenumbers
     for k in range(1, g.total_wavenumbers):
         m_max = min(g.longitude_wavenumbers, g.total_wavenumbers - k)
         m = np.arange(m_max).reshape((-1, 1))
@@ -70,14 +65,13 @@ def basis():
         a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
         b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
         y[k, :m_max] = a * (x * y[k - 1, :m_max] - b * y[k - 2, :m_max])
-
     r = np.transpose(y, (1, 2, 0))
-    p = np.zeros((g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))
+    p = np.zeros(
+        (g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))
     for m in range(g.longitude_wavenumbers):
         p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
     p = np.repeat(p, 2, axis=0)
-    p = p[1:]
-    return f, p, w
+    return f, p[1:], w
 
 
 def clip_wavenumbers(x):

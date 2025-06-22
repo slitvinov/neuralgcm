@@ -253,15 +253,10 @@ step_fn = step_with_filters(
     di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                         di.implicit_inverse, dt))
 
-
-def step_fn0(frame):
+def step(frame, _):
     gfun = lambda x, _: (step_fn(x), None)
     x_final, _ = jax.lax.scan(gfun, frame, xs=None, length=inner_steps)
-    return x_final
-
-
-def step(frame, _):
-    return step_fn0(frame), nodal_prognostics_and_diagnostics(frame)
+    return x_final, nodal_prognostics_and_diagnostics(frame)
 
 
 out_state, trajectory0 = jax.lax.scan(step,

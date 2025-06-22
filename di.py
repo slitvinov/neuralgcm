@@ -56,7 +56,7 @@ def basis():
     w = wf * wp
 
     q = np.sqrt(1 - x * x)
-    y = np.zeros((g.total_wavenumbers, g.longitude_wavenumbers, len(x)))
+    y = np.zeros((g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
     y[0, 0] = y[0, 0] + 1 / np.sqrt(2)
     for m in range(1, g.longitude_wavenumbers):
         y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
@@ -72,7 +72,7 @@ def basis():
         y[k, :m_max] = a * (x * y[k - 1, :m_max] - b * y[k - 2, :m_max])
 
     r = np.transpose(y, (1, 2, 0))
-    p = np.zeros((g.longitude_wavenumbers, len(x), g.total_wavenumbers))
+    p = np.zeros((g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))
     for m in range(g.longitude_wavenumbers):
         p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
     p = np.repeat(p, 2, axis=0)

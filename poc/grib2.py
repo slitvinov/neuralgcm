@@ -25,4 +25,5 @@ print(f"{significance=} {year=} {month=} {day=}")
 
 section = f.read(6)
 section_length, = struct.unpack(">L", section[:4])
+print(section_length)
 assert section_length == 6

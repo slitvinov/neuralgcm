@@ -326,8 +326,7 @@ def imex_runge_kutta(exp, imp, inv, dt):
                             for j in range(num_steps) if b_ex[j])
         im_terms = dt * sum(b_im[j] * g[j]
                             for j in range(num_steps) if b_im[j])
-        y_next = y0 + ex_terms + im_terms
-        return y_next
+        return y0 + ex_terms + im_terms
 
     return step_fn
 

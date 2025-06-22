@@ -18,7 +18,7 @@ assert section_length == 21
 # f.close()
 
 significance = section[11]
-year = struct.unpack(">H", section[12 : 14])
+year, = struct.unpack(">H", section[12 : 14])
 month = section[15]
 day = section[16]
 print(f"{significance=} {year=} {month=} {day=}")
@@ -35,7 +35,9 @@ npoint, = struct.unpack(">L", section[6:10])
 # assert section[10] == 0, "number of octets for optional list"
 # assert section[11] == 0, "number of octets for optional list"
 
-grid_template_number = struct.unpack(">H", section[12:14])
+grid_template_number, = struct.unpack(">H", section[12:14])
 
-print(f"{grid_template_number=}")
+Grid = { 40 : "Gaussian Latitude/Longitude",
+         50 : "Spherical Harmonic Coefficients"}
+print(f"{Grid{grid_template_number}=}")
 print(f"{npoint=}")

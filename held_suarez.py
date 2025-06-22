@@ -107,7 +107,7 @@ lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
                               di.implicit_inverse, dt)
 
-total_wavenumber = np.arange(g.total_wavenumbers)
+total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = di.g.total_wavenumber / total_wavenumber.max()
 a = dt / tau
 c = cutoff

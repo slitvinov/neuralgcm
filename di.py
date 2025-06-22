@@ -433,11 +433,6 @@ def get_temperature_implicit_weights():
     return (h0 - k - k_shifted) * g.layer_thickness
 
 
-def get_temperature_implicit(divergence):
-    weights = -get_temperature_implicit_weights()
-    return _vertical_matvec(weights, divergence)
-
-
 def _vertical_matvec(a, x):
     return einsum("gh,...hml->...gml", a, x)
 
@@ -559,7 +554,8 @@ def implicit_terms(state):
                 state.log_surface_pressure)
     vorticity_implicit = jnp.zeros_like(state.vorticity)
     divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
-    temperature_variation_implicit = get_temperature_implicit(state.divergence)
+    weights = -get_temperature_implicit_weights()
+    temperature_variation_implicit = _vertical_matvec(weights, divergence)
     log_surface_pressure_implicit = -_vertical_matvec(
         g.layer_thickness[np.newaxis], state.divergence)
     tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, state.tracers)

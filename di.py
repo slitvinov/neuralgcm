@@ -555,7 +555,7 @@ def implicit_terms(state):
     vorticity_implicit = jnp.zeros_like(state.vorticity)
     divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
     weights = -get_temperature_implicit_weights()
-    temperature_variation_implicit = _vertical_matvec(weights, divergence)
+    temperature_variation_implicit = _vertical_matvec(weights, state.divergence)
     log_surface_pressure_implicit = -_vertical_matvec(
         g.layer_thickness[np.newaxis], state.divergence)
     tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, state.tracers)

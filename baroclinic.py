@@ -121,13 +121,9 @@ step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                               di.implicit_inverse, dt)
 filter_fn = di.exponential_filter(di.g.total_wavenumbers, dt / tau, order,
                                   cutoff)
-filters = [di.runge_kutta_step_filter(filter_fn)]
-
+filt = di.runge_kutta_step_filter(filter_fn)
 def step_fn0(u):
-    u_next = step_fn(u)
-    for filter_fn in filters:
-        u_next = filter_fn(u, u_next)
-    return u_next
+    return filt(u, step_fn(u))
 
 vorticity_perturbation = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])

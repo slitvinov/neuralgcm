@@ -12,8 +12,10 @@ assert edition == 2
 total_length, = struct.unpack(">Q", indicator[8:])
 print(f"{discipline=} {edition=} {total_length=}")
 
-section_length = struct.unpack(">L", f.read(4)) 
-
-print(f"{section_length=}")
-
+section = f.read(21)
+section_length, = struct.unpack(">L", section[:4])
+assert section_length == 21
 # f.close()
+
+year = struct.unpack(">L", section[12 : 14])
+print(f"{year=}")

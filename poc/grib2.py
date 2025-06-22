@@ -1,7 +1,7 @@
 import struct
+import sys
 
-f = open("era5-levels-members.grib", "rb")
-
+f = open(sys.argv[1], "rb")
 indicator = f.read(16)
 magic = indicator[:4]
 assert magic == b'GRIB'

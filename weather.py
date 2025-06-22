@@ -190,7 +190,8 @@ v_nodal = M["v_component_of_wind"]
 t_nodal = M["temperature"]
 vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
 di.g.reference_temperature = 250 * np.ones((di.g.layers, ))
-temperature_variation = di.transform(t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
+temperature_variation = di.transform(
+    t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
 log_sp = di.to_modal(np.log(sp_nodal))
 tracers = di.to_modal({
     "specific_humidity":

@@ -121,10 +121,6 @@ step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                               di.implicit_inverse, dt)
 filter_fn = di.exponential_filter(di.g.total_wavenumbers, dt / tau, order,
                                   cutoff)
-def _filter(u, u_next):
-    return filter_fn(u_next)
-def step_fn0(u):
-    return _filter(u, step_fn(u))
 
 vorticity_perturbation = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])
@@ -139,7 +135,7 @@ state = di.State(
     divergence=di.transform(jnp.asarray(divergence_perturbation)),
     temperature_variation=di.transform(jnp.asarray(temperature_variation)),
     log_surface_pressure=di.transform(jnp.asarray(log_surface_pressure)))
-final, _ = jax.lax.scan(lambda x, _: (step_fn0(x), None),
+final, _ = jax.lax.scan(lambda x, _: (filter_fn(step_fn(u)), None),
                         state,
                         xs=None,
                         length=8640)

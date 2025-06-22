@@ -489,18 +489,6 @@ def nodal_temperature_vertical_tendency(aux_state):
     return tendency
 
 
-def nodal_temperature_adiabatic_tendency(aux_state):
-    g_explicit = aux_state.u_dot_grad_log_sp
-    g_full = g_explicit + aux_state.divergence
-    mean_t_part = _t_omega_over_sigma_sp(
-        g.reference_temperature[..., np.newaxis, np.newaxis], g_explicit,
-        aux_state.u_dot_grad_log_sp)
-    variation_t_part = _t_omega_over_sigma_sp(aux_state.temperature_variation,
-                                              g_full,
-                                              aux_state.u_dot_grad_log_sp)
-    return kappa * (mean_t_part + variation_t_part)
-
-
 def explicit_terms(state):
     aux_state = compute_diagnostic_state(state)
     sec2_lat0 = sec2_lat()
@@ -531,7 +519,15 @@ def explicit_terms(state):
     tracers_horizontal_nodal_and_modal = jax.tree_util.tree_map(
         horizontal_tendency_fn, aux_state.tracers)
     dT_dt_vertical = nodal_temperature_vertical_tendency(aux_state)
-    dT_dt_adiabatic = nodal_temperature_adiabatic_tendency(aux_state)
+    g_explicit = aux_state.u_dot_grad_log_sp
+    g_full = g_explicit + aux_state.divergence
+    mean_t_part = _t_omega_over_sigma_sp(
+        g.reference_temperature[..., np.newaxis, np.newaxis], g_explicit,
+        aux_state.u_dot_grad_log_sp)
+    variation_t_part = _t_omega_over_sigma_sp(aux_state.temperature_variation,
+                                              g_full,
+                                              aux_state.u_dot_grad_log_sp)
+    dT_dt_adiabatic = kappa * (mean_t_part + variation_t_part)
     log_sp_tendency = -sigma_integral(aux_state.u_dot_grad_log_sp)
     sigma_dot_full = aux_state.sigma_dot_full
     vertical_tendency_fn = functools.partial(centered_vertical_advection,

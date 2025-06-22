@@ -119,7 +119,13 @@ mask = jnp.ones(di.g.total_wavenumbers, dtype).at[-1:].set(0)
 di.g.orography = di.transform(jnp.asarray(orography)) * mask
 step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
                               di.implicit_inverse, dt)
-filter_fn = di.exponential_filter(dt / tau, order, cutoff)
+total_wavenumber = np.arange(di.g.total_wavenumbers)
+k = total_wavenumber / total_wavenumber.max()
+a = dt / tau
+c = cutoff
+scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * order))))
+filter_fn = di._make_filter_fn(scaling)
+
 vorticity_perturbation = np.stack(
     [get_vorticity_perturbation(lat, lon) for sigma in di.g.centers])
 divergence_perturbation = np.stack(

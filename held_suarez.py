@@ -61,7 +61,6 @@ lon, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
 lat = np.arcsin(sin_lat)
 p0 = 2.9954997684550640e+19
 p1 = 1.4977498842275320e+18
-orography = np.zeros_like(lat)
 nodal_vorticity = jnp.stack([jnp.zeros_like(lat) for sigma in di.g.centers])
 modal_vorticity = di.transform(nodal_vorticity)
 altitude_m = np.zeros_like(lat)
@@ -90,7 +89,7 @@ state = di.State(
 )
 ref_temps = np.full((di.g.layers, ), tref)
 di.g.reference_temperature = ref_temps
-di.g.orography = di.clip_wavenumbers(di.transform(orography))
+di.g.orography = np.zeros_like(lat)
 dt = 8.7504000000000012e-02
 sigma_b = 0.7
 minT = 200

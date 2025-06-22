@@ -9,7 +9,7 @@ discipline = indicator[6]
 edition = indicator[7]
 length = indicator[8:]
 print(f"{discipline=} {edition=} {length=}")
-for fmt in "LlqQ":
+for fmt in "qQ":
     for b in "<>=":
         print(b + fmt, struct.unpack(b + fmt, length))
 f.close()

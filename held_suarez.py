@@ -56,7 +56,6 @@ di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 
 tref = 288.0
-rng_key = jax.random.PRNGKey(0)
 lon, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
 lat = np.arcsin(sin_lat)
 p0 = 2.9954997684550640e+19
@@ -72,10 +71,8 @@ R0 = 8.314462618
 relative_pressure = (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
 surface_pressure = p0 * np.ones(
     (1, di.g.longitude_nodes, di.g.latitude_nodes)) * relative_pressure
-keys = jax.random.split(rng_key, 2)
-lon0 = jax.random.uniform(keys[1], minval=np.pi / 2, maxval=3 * np.pi / 2)
-lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)
-print(f"held_suarez {lon0:.16e}, {lat0:.16e}")
+lon0=1.9018228054046631e+00
+lat0=8.9859783649444580e-02
 stddev = np.pi / 20
 k = 4
 perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *

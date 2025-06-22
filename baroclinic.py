@@ -121,7 +121,7 @@ step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
 a = dt / tau
-scaling = jnp.exp(- (k > 0) * a * k**(2 * order))
+scaling = jnp.exp((k > 0) * (-a) * k**(2 * order))
 filter_fn = di._make_filter_fn(scaling)
 
 vorticity_perturbation = np.stack(

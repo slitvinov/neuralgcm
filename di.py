@@ -331,16 +331,6 @@ def imex_runge_kutta(exp, imp, inv, dt):
     return step_fn
 
 
-def exponential_filter(attenuation=16, order=18, cutoff=0):
-    total_wavenumber = np.arange(g.total_wavenumbers)
-    k = total_wavenumber / total_wavenumber.max()
-    a = attenuation
-    c = cutoff
-    p = order
-    scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
-    return _make_filter_fn(scaling)
-
-
 @tree_math.struct
 class State:
     vorticity: Any

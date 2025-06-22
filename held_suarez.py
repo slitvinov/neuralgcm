@@ -71,8 +71,8 @@ R0 = 8.314462618
 relative_pressure = (1 - g * altitude_m / (cp * T0))**(cp * M / R0)
 surface_pressure = p0 * np.ones(
     (1, di.g.longitude_nodes, di.g.latitude_nodes)) * relative_pressure
-lon0=1.9018228054046631e+00
-lat0=8.9859783649444580e-02
+lon0 = 1.9018228054046631e+00
+lat0 = 8.9859783649444580e-02
 stddev = np.pi / 20
 k = 4
 perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *
@@ -106,7 +106,14 @@ _, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
 lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
                               di.implicit_inverse, dt)
-filter_fn = di.exponential_filter(dt / tau, order, cutoff)
+
+total_wavenumber = np.arange(g.total_wavenumbers)
+k = di.g.total_wavenumber / total_wavenumber.max()
+a = dt / tau
+c = cutoff
+scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * order))))
+filter_fn = di._make_filter_fn(scaling)
+
 final, _ = jax.lax.scan(lambda x, _: (filter_fn(step_fn(x)), None),
                         state,
                         xs=None,

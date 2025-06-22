@@ -125,16 +125,6 @@ def step_with_filters(fun):
     return step
 
 
-def exponential_filter(attenuation=16, order=18, cutoff=0):
-    total_wavenumber = np.arange(di.g.total_wavenumbers)
-    k = total_wavenumber / total_wavenumber.max()
-    a = attenuation
-    c = cutoff
-    p = order
-    scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
-    return di._make_filter_fn(scaling)
-
-
 di.g.longitude_wavenumbers = 171
 di.g.total_wavenumbers = 172
 di.g.longitude_nodes = 512
@@ -227,7 +217,13 @@ raw_init_state = di.State(
     tracers=tracers,
 )
 orography = di.to_modal(orography_input)
-orography = exponential_filter(order=2)(orography)
+total_wavenumber = np.arange(di.g.total_wavenumbers)
+k = total_wavenumber / total_wavenumber.max()
+a = 16
+order = 2
+scaling = jnp.exp((k > 0) * (-a) * k**(2 * order))
+exponential_filter = di._make_filter_fn(scaling)
+orography = exponential_filter(orography)
 di.g.orography = orography
 res_factor = di.g.latitude_nodes / 128
 dt = 4.3752000000000006e-02

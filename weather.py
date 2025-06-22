@@ -216,14 +216,9 @@ raw_init_state = di.State(
     log_surface_pressure=log_sp,
     tracers=tracers,
 )
-orography = di.to_modal(orography_input)
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
-a = 16
-order = 2
-scaling = jnp.exp((k > 0) * (-a) * k**(2 * order))
-exponential_filter = di._make_filter_fn(scaling)
-orography = exponential_filter(orography)
+orography = di.to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
 di.g.orography = orography
 res_factor = di.g.latitude_nodes / 128
 dt = 4.3752000000000006e-02

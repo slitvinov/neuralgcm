@@ -475,20 +475,6 @@ def _make_filter_fn(scaling):
     return functools.partial(jax.tree_util.tree_map, rescale)
 
 
-def nodal_temperature_vertical_tendency(aux_state):
-    sigma_dot_explicit = aux_state.sigma_dot_explicit
-    sigma_dot_full = aux_state.sigma_dot_full
-    temperature_variation = aux_state.temperature_variation
-    tendency = centered_vertical_advection(sigma_dot_full,
-                                           temperature_variation)
-    if np.unique(g.reference_temperature[..., np.newaxis,
-                                         np.newaxis].ravel()).size > 1:
-        tendency += centered_vertical_advection(
-            sigma_dot_explicit, g.reference_temperature[..., np.newaxis,
-                                                        np.newaxis])
-    return tendency
-
-
 def explicit_terms(state):
     aux_state = compute_diagnostic_state(state)
     sec2_lat0 = sec2_lat()
@@ -518,7 +504,17 @@ def explicit_terms(state):
         aux_state.temperature_variation)
     tracers_horizontal_nodal_and_modal = jax.tree_util.tree_map(
         horizontal_tendency_fn, aux_state.tracers)
-    dT_dt_vertical = nodal_temperature_vertical_tendency(aux_state)
+    sigma_dot_explicit = aux_state.sigma_dot_explicit
+    sigma_dot_full = aux_state.sigma_dot_full
+    temperature_variation = aux_state.temperature_variation
+    tendency = centered_vertical_advection(sigma_dot_full,
+                                           temperature_variation)
+    if np.unique(g.reference_temperature[..., np.newaxis,
+                                         np.newaxis].ravel()).size > 1:
+        tendency += centered_vertical_advection(
+            sigma_dot_explicit, g.reference_temperature[..., np.newaxis,
+                                                        np.newaxis])
+    dT_dt_vertical = tendency
     g_explicit = aux_state.u_dot_grad_log_sp
     g_full = g_explicit + aux_state.divergence
     mean_t_part = _t_omega_over_sigma_sp(

@@ -1,4 +1,5 @@
 from typing import Any
+import dataclasses
 import functools
 import jax
 import jax.numpy as jnp
@@ -346,7 +347,7 @@ class State:
     divergence: Any
     temperature_variation: Any
     log_surface_pressure: Any
-    tracers: Any
+    tracers: Any = dataclasses.field(default_factory=dict)
 
 
 @tree_math.struct

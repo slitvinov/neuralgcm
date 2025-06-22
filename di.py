@@ -339,15 +339,6 @@ def imex_runge_kutta(exp, imp, inv, dt):
     return step_fn
 
 
-def runge_kutta_step_filter(state_filter):
-
-    def _filter(u, u_next):
-        del u
-        return state_filter(u_next)
-
-    return _filter
-
-
 def exponential_filter(total_wavenumbers, attenuation=16, order=18, cutoff=0):
     total_wavenumber = np.arange(total_wavenumbers)
     k = total_wavenumber / total_wavenumber.max()
@@ -356,17 +347,6 @@ def exponential_filter(total_wavenumbers, attenuation=16, order=18, cutoff=0):
     p = order
     scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * p))))
     return _make_filter_fn(scaling)
-
-
-def step_with_filters(step_fn, filters):
-
-    def _step_fn(u):
-        u_next = step_fn(u)
-        for filter_fn in filters:
-            u_next = filter_fn(u, u_next)
-        return u_next
-
-    return _step_fn
 
 
 @tree_math.struct

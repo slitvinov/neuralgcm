@@ -339,8 +339,8 @@ def imex_runge_kutta(exp, imp, inv, dt):
     return step_fn
 
 
-def exponential_filter(total_wavenumbers, attenuation=16, order=18, cutoff=0):
-    total_wavenumber = np.arange(total_wavenumbers)
+def exponential_filter(attenuation=16, order=18, cutoff=0):
+    total_wavenumber = np.arange(g.total_wavenumbers)
     k = total_wavenumber / total_wavenumber.max()
     a = attenuation
     c = cutoff

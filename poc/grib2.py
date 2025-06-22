@@ -39,5 +39,5 @@ grid_template_number, = struct.unpack(">H", section[12:14])
 
 Grid = { 40 : "Gaussian Latitude/Longitude",
          50 : "Spherical Harmonic Coefficients"}
-print(f"{Grid{grid_template_number}=}")
+print(f"{Grid[grid_template_number]=}")
 print(f"{npoint=}")

@@ -104,7 +104,6 @@ di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 tau = 0.010938
 order = 18
-cutoff = 0
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 lon, sin_lat = np.meshgrid(longitude, sin_latitude, indexing="ij")
@@ -122,8 +121,7 @@ step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
 a = dt / tau
-c = cutoff
-scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * order))))
+scaling = jnp.exp(- (k > 0) * a * k**(2 * order))
 filter_fn = di._make_filter_fn(scaling)
 
 vorticity_perturbation = np.stack(

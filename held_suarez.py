@@ -75,6 +75,7 @@ surface_pressure = p0 * np.ones(
 keys = jax.random.split(rng_key, 2)
 lon0 = jax.random.uniform(keys[1], minval=np.pi / 2, maxval=3 * np.pi / 2)
 lat0 = jax.random.uniform(keys[0], minval=-np.pi / 4, maxval=np.pi / 4)
+print(f"held_suarez {lon0:.16e}, {lat0:.16e}")
 stddev = np.pi / 20
 k = 4
 perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *

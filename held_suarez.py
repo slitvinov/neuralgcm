@@ -89,7 +89,7 @@ state = di.State(
 )
 ref_temps = np.full((di.g.layers, ), tref)
 di.g.reference_temperature = ref_temps
-di.g.orography = np.zeros_like(lat)
+di.g.orography = di.transform(np.zeros_like(lat))
 dt = 8.7504000000000012e-02
 sigma_b = 0.7
 minT = 200

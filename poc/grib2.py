@@ -17,7 +17,8 @@ section_length, = struct.unpack(">L", section[:4])
 assert section_length == 21
 # f.close()
 
+significance = section[11]
 year = struct.unpack(">H", section[12 : 14])
 month = section[15]
 day = section[16]
-print(f"{year=} {month=} {day=}")
+print(f"{significance=} {year=} {month=} {day=}")

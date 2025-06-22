@@ -23,7 +23,10 @@ month = section[15]
 day = section[16]
 print(f"{significance=} {year=} {month=} {day=}")
 
-section = f.read(6)
-section_length, = struct.unpack(">L", section[:4])
-print(section_length)
-assert section_length == 6
+# Local Use Section
+section_length, = struct.unpack(">L", f.read(4))
+f.read(section_length - 4)
+
+# Grid Definition Section
+section_length, = struct.unpack(">L", f.read(4))
+section = b'0000' + f.read(section_length - 4)

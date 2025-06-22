@@ -192,6 +192,7 @@ def real_basis_derivative(u):
     u_up = shift(u, 1, -2)
     return j * jnp.where(i % 2, u_down, -u_up)
 
+
 def nodal_axes():
     longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
     sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
@@ -260,7 +261,7 @@ def sec_lat_d_dlat_cos2(x):
 
 
 def cos_lat_grad(x, clip=True):
-    raw = real_basis_derivative(x) / 1.0, cos_lat_d_dlat(x) / 1.0
+    raw = real_basis_derivative(x), cos_lat_d_dlat(x)
     if clip:
         return clip_wavenumbers(raw)
     return raw
@@ -271,14 +272,14 @@ def k_cross(v):
 
 
 def div_cos_lat(v, clip=True):
-    raw = (real_basis_derivative(v[0]) + sec_lat_d_dlat_cos2(v[1])) / 1.0
+    raw = real_basis_derivative(v[0]) + sec_lat_d_dlat_cos2(v[1])
     if clip:
         return clip_wavenumbers(raw)
     return raw
 
 
 def curl_cos_lat(v, clip=True):
-    raw = (real_basis_derivative(v[1]) - sec_lat_d_dlat_cos2(v[0])) / 1.0
+    raw = real_basis_derivative(v[1]) - sec_lat_d_dlat_cos2(v[0])
     if clip:
         return clip_wavenumbers(raw)
     return raw

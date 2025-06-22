@@ -30,3 +30,6 @@ f.read(section_length - 4)
 # Grid Definition Section
 section_length, = struct.unpack(">L", f.read(4))
 section = b'0000' + f.read(section_length - 4)
+
+npoint = struct.unpack(">L", section[6:10])
+print(f"{npoint=}")

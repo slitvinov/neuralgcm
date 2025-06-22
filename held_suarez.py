@@ -108,7 +108,7 @@ step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
                               di.implicit_inverse, dt)
 
 total_wavenumber = np.arange(di.g.total_wavenumbers)
-k = di.g.total_wavenumber / total_wavenumber.max()
+k = total_wavenumber / total_wavenumber.max()
 a = dt / tau
 c = cutoff
 scaling = jnp.exp((k > c) * (-a * (((k - c) / (1 - c))**(2 * order))))

@@ -43,11 +43,6 @@ def nodal_prognostics_and_diagnostics(state):
     tracers_nodal = {k: di.to_nodal(v) for k, v in state.tracers.items()}
     t_nodal = (di.to_nodal(state.temperature_variation) +
                di.g.reference_temperature[:, np.newaxis, np.newaxis])
-    sigma_dot_boundaries = di.compute_diagnostic_state(state).sigma_dot_full
-    assert sigma_dot_boundaries.ndim == 3
-    sigma_dot_padded = jnp.pad(sigma_dot_boundaries, [(1, 1), (0, 0), (0, 0)])
-    vertical_velocity_nodal = 0.5 * (sigma_dot_padded[1:] +
-                                     sigma_dot_padded[:-1])
     state_nodal = {
         "surface_pressure": sp_nodal,
         **tracers_nodal,

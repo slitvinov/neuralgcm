@@ -83,9 +83,8 @@ def clip_wavenumbers(x):
     return tree_map_over_nonscalars(clip, x)
 
 
-def cumsum(x, axis):
-    if axis < 0:
-        axis = axis + x.ndim
+def cumsum(x):
+    axis = x.ndim - 3
     size = x.shape[axis]
     i = jnp.arange(size)[:, jnp.newaxis]
     j = jnp.arange(size)[jnp.newaxis, :]
@@ -152,7 +151,7 @@ def cumulative_sigma_integral(x):
     d𝜎 = g.layer_thickness
     d𝜎_axes = [x_axes[-3]]
     xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
-    return cumsum(xd𝜎, -3)
+    return cumsum(xd𝜎)
 
 
 def sigma_integral(x):

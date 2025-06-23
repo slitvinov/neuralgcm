@@ -8,9 +8,9 @@ b_im = [3 / 8, 0, 3 / 8, 1 / 4]
 num_steps = len(b_ex)
 
 trace = []
-C = 10
+C = 100
 F = lambda y: math.sin(dt * istep)
-G = lambda y: -C * y
+G = lambda y: - C * y
 # G_inv solves (I - gamma * G') Y = Y_star, where G' = diff(G, y)
 G_inv = lambda Y_star, gamma: Y_star / (1 + C * gamma)
 dt = 0.1
@@ -48,8 +48,7 @@ def f(t):
     q = math.exp(C*t)
     return (C * q * math.sin(t) - q * math.cos(t) + p + 2) / (p + 1) / q
 
-
 times = [i * dt for i in range(nsteps)]
 plt.plot(times, trace, 'o')
 plt.plot(times, [f(t) for t in times])
-plt.savefig("runge.png")
+plt.savefig(f"runge.{C:6.2e}.png")

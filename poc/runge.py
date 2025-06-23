@@ -10,12 +10,12 @@ num_steps = len(b_ex)
 trace = []
 C = 100
 F = lambda y: math.sin(dt * istep)
-G = lambda y: - C * y
+G = lambda y: -C * y
 # G_inv solves (I - gamma * G') Y = Y_star, where G' = diff(G, y)
 G_inv = lambda Y_star, gamma: Y_star / (1 + C * gamma)
-dt = 0.1
+dt = 0.025
 y0 = 1.0
-nsteps = 50
+nsteps = 200
 istep = 0
 
 while istep < nsteps:
@@ -45,8 +45,9 @@ def f(t):
     ''' 'diff(y, t) = -C*y + sin(t), y = 1
     '''
     p = C**2
-    q = math.exp(C*t)
+    q = math.exp(C * t)
     return (C * q * math.sin(t) - q * math.cos(t) + p + 2) / (p + 1) / q
+
 
 times = [i * dt for i in range(nsteps)]
 plt.plot(times, trace, 'o')

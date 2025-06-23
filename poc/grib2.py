@@ -6,7 +6,7 @@ indicator = f.read(16)
 magic = indicator[:4]
 assert magic == b'GRIB'
 discipline = indicator[6]
-assert discipline == 0 # Meteorological Products
+assert discipline == 0  # Meteorological Products
 edition = indicator[7]
 assert edition == 2
 total_length, = struct.unpack(">Q", indicator[8:])
@@ -18,7 +18,7 @@ assert section_length == 21
 # f.close()
 
 significance = section[11]
-year, = struct.unpack(">H", section[12 : 14])
+year, = struct.unpack(">H", section[12:14])
 month = section[15]
 day = section[16]
 print(f"{significance=} {year=} {month=} {day=}")
@@ -37,7 +37,9 @@ npoint, = struct.unpack(">L", section[6:10])
 
 grid_template_number, = struct.unpack(">H", section[12:14])
 
-Grid = { 40 : "Gaussian Latitude/Longitude",
-         50 : "Spherical Harmonic Coefficients"}
+Grid = {
+    40: "Gaussian Latitude/Longitude",
+    50: "Spherical Harmonic Coefficients"
+}
 print(f"{Grid[grid_template_number]=}")
 print(f"{npoint=}")

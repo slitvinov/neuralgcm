@@ -10,7 +10,7 @@ num_steps = len(b_ex)
 trace = []
 C = 0.1
 F = lambda y: math.sin(dt * istep)
-G = lambda y: - C * y
+G = lambda y: -C * y
 dt = 0.1
 y0 = 1.0
 nsteps = 50
@@ -21,12 +21,14 @@ while istep < nsteps:
     istep += 1
     y0 += dt * (F(y0) + G(y0))
 
+
 def f(t):
     ''' 'diff(y, t) = -C*y + sin(t), y = 1
     '''
     p = C**2
-    q = math.exp(C*t)
+    q = math.exp(C * t)
     return (C * q * math.sin(t) - q * math.cos(t) + p + 2) / (p + 1) / q
+
 
 times = [i * dt for i in range(nsteps)]
 plt.plot(times, trace, 'o')

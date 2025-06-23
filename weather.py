@@ -19,30 +19,9 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
-
-@jax.jit
-def vor_div_to_uv_nodal(vorticity, divergence):
-    u_cos_lat, v_cos_lat = di.get_cos_lat_vector(vorticity,
-                                                 divergence,
-                                                 clip=True)
-    u_nodal = di.to_nodal(u_cos_lat) / di.cos_lat()
-    v_nodal = di.to_nodal(v_cos_lat) / di.cos_lat()
-    return u_nodal, v_nodal
-
-
 def nodal_prognostics_and_diagnostics(state):
-    u_nodal, v_nodal = vor_div_to_uv_nodal(state.vorticity, state.divergence)
-    surface_geopotential = orography * di.gravity_acceleration
-    temperature = state.temperature_variation.at[..., 0, 0].add(
-        _CONSTANT_NORMALIZATION_FACTOR * di.g.reference_temperature)
-    geopotential_diff = di.get_geopotential_diff(temperature)
-    geopotential_nodal = surface_geopotential + geopotential_diff
-    vor_nodal = di.to_nodal(state.vorticity)
-    div_nodal = di.to_nodal(state.divergence)
     sp_nodal = jnp.exp(di.to_nodal(state.log_surface_pressure))
     tracers_nodal = {k: di.to_nodal(v) for k, v in state.tracers.items()}
-    t_nodal = (di.to_nodal(state.temperature_variation) +
-               di.g.reference_temperature[:, np.newaxis, np.newaxis])
     state_nodal = {
         "surface_pressure": sp_nodal,
         **tracers_nodal,

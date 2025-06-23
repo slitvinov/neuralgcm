@@ -83,24 +83,6 @@ def clip_wavenumbers(x):
     return tree_map_over_nonscalars(clip, x)
 
 
-def cumsum(x):
-    axis = x.ndim - 3
-    size = x.shape[axis]
-    i = jnp.arange(size)[:, jnp.newaxis]
-    j = jnp.arange(size)[jnp.newaxis, :]
-    w = jnp.less_equal(i, j).astype(np.float32)
-    out_axes = list(range(x.ndim))
-    out_axes[axis] = x.ndim
-    return jnp.einsum(
-        w,
-        [axis, x.ndim],
-        x,
-        list(range(x.ndim)),
-        out_axes,
-        precision=("bfloat16", "highest"),
-    )
-
-
 def pad_in_dim(x, pad_width, axis):
     padding_value = jnp.array(0, dtype=x.dtype)
     padding_config = [(0, 0, 0)] * x.ndim
@@ -151,7 +133,21 @@ def cumulative_sigma_integral(x):
     d𝜎 = g.layer_thickness
     d𝜎_axes = [x_axes[-3]]
     xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
-    return cumsum(xd𝜎)
+    axis = xd𝜎.ndim - 3
+    size = xd𝜎.shape[axis]
+    i = jnp.arange(size)[:, jnp.newaxis]
+    j = jnp.arange(size)[jnp.newaxis, :]
+    w = jnp.less_equal(i, j).astype(np.float32)
+    out_axes = list(range(xd𝜎.ndim))
+    out_axes[axis] = xd𝜎.ndim
+    return jnp.einsum(
+        w,
+        [axis, xd𝜎.ndim],
+        xd𝜎,
+        list(range(xd𝜎.ndim)),
+        out_axes,
+        precision=("bfloat16", "highest"),
+    )
 
 
 def sigma_integral(x):
@@ -553,7 +549,8 @@ def implicit_terms(state):
     vorticity_implicit = jnp.zeros_like(state.vorticity)
     divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
     weights = -get_temperature_implicit_weights()
-    temperature_variation_implicit = _vertical_matvec(weights, state.divergence)
+    temperature_variation_implicit = _vertical_matvec(weights,
+                                                      state.divergence)
     log_surface_pressure_implicit = -_vertical_matvec(
         g.layer_thickness[np.newaxis], state.divergence)
     tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, state.tracers)

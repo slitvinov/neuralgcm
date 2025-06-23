@@ -114,20 +114,6 @@ def _slice_shape_along_axis(x):
     return tuple(x_shape)
 
 
-def centered_difference(x):
-    dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
-        x, 0, -1, axis=-3)
-    dx_axes = range(dx.ndim)
-    inv_d𝜎 = 1 / g.center_to_center
-    inv_d𝜎_axes = [dx_axes[-3]]
-    return einsum(dx,
-                  dx_axes,
-                  inv_d𝜎,
-                  inv_d𝜎_axes,
-                  dx_axes,
-                  precision="float32")
-
-
 def cumulative_sigma_integral(x):
     xd𝜎 = einsum(x, [0, 1, 2], g.layer_thickness, [0], [0, 1, 2])
     i = jnp.arange(g.layers)[:, jnp.newaxis]
@@ -154,7 +140,17 @@ def centered_vertical_advection(w, x):
     w_boundary_bot = jnp.zeros(w_slc_shape,
                                dtype=jax.dtypes.canonicalize_dtype(w.dtype))
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
-    x_diff = centered_difference(x)
+    dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
+        x, 0, -1, axis=-3)
+    dx_axes = range(dx.ndim)
+    inv_d𝜎 = 1 / g.center_to_center
+    inv_d𝜎_axes = [dx_axes[-3]]
+    x_diff = einsum(dx,
+                    dx_axes,
+                    inv_d𝜎,
+                    inv_d𝜎_axes,
+                    dx_axes,
+                    precision="float32")
     x_diff_boundary_top = jnp.zeros(x_slc_shape,
                                     dtype=jax.dtypes.canonicalize_dtype(
                                         x.dtype))

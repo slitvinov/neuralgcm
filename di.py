@@ -129,11 +129,8 @@ def centered_difference(x):
 
 
 def cumulative_sigma_integral(x):
-    assert x.ndim == 3
-    x_axes = range(x.ndim)
-    d𝜎 = g.layer_thickness
-    d𝜎_axes = [x_axes[-3]]
-    xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
+    xd𝜎 = einsum(x, [0, 1, 2], g.layer_thickness, [0], [0, 1, 2])
+    assert xd𝜎.ndim == 3
     axis = xd𝜎.ndim - 3
     size = xd𝜎.shape[axis]
     i = jnp.arange(size)[:, jnp.newaxis]

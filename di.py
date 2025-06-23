@@ -235,8 +235,7 @@ def inverse_laplacian(x):
 
 def _derivative_recurrence_weights():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")
-    m0, l0 = np.meshgrid(*modal_axes(), indexing="ij")
-    mask = abs(m0) <= l0
+    mask = abs(m) <= l
     a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
     a[:, 0] = 0
     b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))

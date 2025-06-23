@@ -135,11 +135,8 @@ def sigma_integral(x):
 def centered_vertical_advection(w, x):
     w_slc_shape = _slice_shape_along_axis(w)
     x_slc_shape = _slice_shape_along_axis(x)
-    jax.debug.print(f"{w_slc_shape=} {x_slc_shape=}")
-    w_boundary_top = jnp.zeros(w_slc_shape,
-                               dtype=jax.dtypes.canonicalize_dtype(w.dtype))
-    w_boundary_bot = jnp.zeros(w_slc_shape,
-                               dtype=jax.dtypes.canonicalize_dtype(w.dtype))
+    w_boundary_top = jnp.zeros(w_slc_shape)
+    w_boundary_bot = jnp.zeros(w_slc_shape)
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
     dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)

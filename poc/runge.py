@@ -1,4 +1,5 @@
-import numpy as np
+import math
+import matplotlib.pyplot as plt
 
 a_ex = [[1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]]
 a_im = [[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]]
@@ -7,15 +8,18 @@ b_im = [3 / 8, 0, 3 / 8, 1 / 4]
 num_steps = len(b_ex)
 
 trace = []
-F = lambda x: x
-G = lambda x: x
-G_inv = lambda x, dt: x
+C = 10
+F = lambda y: math.sin(dt * istep)
+G = lambda y: -C * y
+G_inv = lambda Y_star, gamma: Y_star / (1 + C * gamma)
 dt = 0.1
-y0 = 1
-nsteps = 10
+y0 = 1.0
+nsteps = 50
+istep = 0
 
-while len(trace) != nsteps:
+while istep < nsteps:
     trace.append(y0)
+    istep += 1
     f = [None] * num_steps
     g = [None] * num_steps
     f[0] = F(y0)
@@ -34,7 +38,17 @@ while len(trace) != nsteps:
     ex_terms = dt * sum(b_ex[j] * f[j] for j in range(num_steps) if b_ex[j])
     im_terms = dt * sum(b_im[j] * g[j] for j in range(num_steps) if b_im[j])
     y0 += ex_terms + im_terms
-    print(f)
-    print(g)
 
-print(trace, len(trace))
+
+def f(t):
+    ''' 'diff(y, t) = -C*y + sin(t), y = 1
+    '''
+    p = C**2
+    q = math.exp(C*t)
+    return (C * q * math.sin(t) - q * math.cos(t) + p + 2) / (p + 1) / q
+
+
+times = [i * dt for i in range(nsteps)]
+plt.plot(times, trace, 'o')
+plt.plot(times, [f(t) for t in times])
+plt.savefig("runge.png")

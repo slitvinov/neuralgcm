@@ -49,13 +49,6 @@ def nodal_prognostics_and_diagnostics(state):
     vertical_velocity_nodal = 0.5 * (sigma_dot_padded[1:] +
                                      sigma_dot_padded[:-1])
     state_nodal = {
-        "u_component_of_wind": u_nodal,
-        "v_component_of_wind": v_nodal,
-        "temperature": t_nodal,
-        "vorticity": vor_nodal,
-        "divergence": div_nodal,
-        "vertical_velocity": vertical_velocity_nodal,
-        "geopotential": geopotential_nodal,
         "surface_pressure": sp_nodal,
         **tracers_nodal,
     }

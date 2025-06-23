@@ -142,22 +142,10 @@ def centered_vertical_advection(w, x):
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
     dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)
-    dx_axes = range(dx.ndim)
-    assert dx.ndim == 3
     inv_d𝜎 = 1 / g.center_to_center
-    inv_d𝜎_axes = [dx_axes[-3]]
-    x_diff = einsum(dx,
-                    dx_axes,
-                    inv_d𝜎,
-                    inv_d𝜎_axes,
-                    dx_axes,
-                    precision="float32")
-    x_diff_boundary_top = jnp.zeros(x_slc_shape,
-                                    dtype=jax.dtypes.canonicalize_dtype(
-                                        x.dtype))
-    x_diff_boundary_bot = jnp.zeros(x_slc_shape,
-                                    dtype=jax.dtypes.canonicalize_dtype(
-                                        x.dtype))
+    x_diff = einsum(dx, [0, 1, 2], inv_d𝜎, [0], [0, 1, 2], precision="float32")
+    x_diff_boundary_top = jnp.zeros(x_slc_shape)
+    x_diff_boundary_bot = jnp.zeros(x_slc_shape)
     x_diff = jnp.concatenate(
         [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=-3)
     w_times_x_diff = w * x_diff

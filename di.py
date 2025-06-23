@@ -406,12 +406,6 @@ def matvec(a, x):
     return einsum("lgh,...hml->...gml", a, x)
 
 
-def div_sec_lat(m_component, n_component):
-    m_component = to_modal(m_component * sec2_lat())
-    n_component = to_modal(n_component * sec2_lat())
-    return div_cos_lat((m_component, n_component), clip=False)
-
-
 def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
     f = cumulative_sigma_integral(g_term)
     alpha = get_sigma_ratios()
@@ -425,7 +419,9 @@ def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
 def horizontal_scalar_advection(scalar, aux_state):
     u, v = aux_state.cos_lat_u
     nodal_terms = scalar * aux_state.divergence
-    modal_terms = -div_sec_lat(u * scalar, v * scalar)
+    m_component = to_modal(u * scalar * sec2_lat())
+    n_component = to_modal(u * scalar * sec2_lat())
+    modal_terms = -div_cos_lat((m_component, n_component), clip=False)
     return nodal_terms, modal_terms
 
 

@@ -199,7 +199,7 @@ def inverse_laplacian(x):
     return x * inverse_eigenvalues
 
 
-def a_derivative_recurrence_weights():
+def derivative_recurrence_weights():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")
     mask = abs(m) <= l
     a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
@@ -211,7 +211,7 @@ def a_derivative_recurrence_weights():
 
 def cos_lat_d_dlat(x):
     _, l = np.meshgrid(*modal_axes(), indexing="ij")
-    a, b = _derivative_recurrence_weights()
+    a, b = derivative_recurrence_weights()
     x_lm1 = shift(((l + 1) * a) * x, -1, axis=-1)
     x_lp1 = shift((-l * b) * x, +1, axis=-1)
     return x_lm1 + x_lp1
@@ -219,7 +219,7 @@ def cos_lat_d_dlat(x):
 
 def sec_lat_d_dlat_cos2(x):
     _, l = np.meshgrid(*modal_axes(), indexing="ij")
-    a, b = _derivative_recurrence_weights()
+    a, b = derivative_recurrence_weights()
     x_lm1 = shift(((l - 1) * a) * x, -1, axis=-1)
     x_lp1 = shift((-(l + 2) * b) * x, +1, axis=-1)
     return x_lm1 + x_lp1

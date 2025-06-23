@@ -148,19 +148,19 @@ def sigma_integral(x):
 
 def centered_vertical_advection(w, x):
     w_slc_shape = _slice_shape_along_axis(w)
-    w_boundary_values = (
-        jnp.zeros(w_slc_shape, dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
-        jnp.zeros(w_slc_shape, dtype=jax.dtypes.canonicalize_dtype(w.dtype)),
-    )
     x_slc_shape = _slice_shape_along_axis(x)
-    dx_dsigma_boundary_values = (
-        jnp.zeros(x_slc_shape, dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
-        jnp.zeros(x_slc_shape, dtype=jax.dtypes.canonicalize_dtype(x.dtype)),
-    )
-    w_boundary_top, w_boundary_bot = w_boundary_values
+    w_boundary_top = jnp.zeros(w_slc_shape,
+                               dtype=jax.dtypes.canonicalize_dtype(w.dtype))
+    w_boundary_bot = jnp.zeros(w_slc_shape,
+                               dtype=jax.dtypes.canonicalize_dtype(w.dtype))
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
     x_diff = centered_difference(x)
-    x_diff_boundary_top, x_diff_boundary_bot = dx_dsigma_boundary_values
+    x_diff_boundary_top = jnp.zeros(x_slc_shape,
+                                    dtype=jax.dtypes.canonicalize_dtype(
+                                        x.dtype))
+    x_diff_boundary_bot = jnp.zeros(x_slc_shape,
+                                    dtype=jax.dtypes.canonicalize_dtype(
+                                        x.dtype))
     x_diff = jnp.concatenate(
         [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=-3)
     w_times_x_diff = w * x_diff

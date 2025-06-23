@@ -130,10 +130,8 @@ def centered_difference(x):
 
 def cumulative_sigma_integral(x):
     xd𝜎 = einsum(x, [0, 1, 2], g.layer_thickness, [0], [0, 1, 2])
-    size = xd𝜎.shape[0]
-    jax.debug.print(f"{size=}")
-    i = jnp.arange(size)[:, jnp.newaxis]
-    j = jnp.arange(size)[jnp.newaxis, :]
+    i = jnp.arange(di.g.layers)[:, jnp.newaxis]
+    j = jnp.arange(di.g.layers)[jnp.newaxis, :]
     w = jnp.less_equal(i, j).astype(np.float32)
     return jnp.einsum(
         w,

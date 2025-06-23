@@ -11,7 +11,7 @@ trace = []
 C = 10
 F = lambda y: math.sin(dt * istep)
 G = lambda y: -C * y
-# G_inv solves (I - gamma * G') Y = Y_star, where G = diff(G, y)
+# G_inv solves (I - gamma * G') Y = Y_star, where G' = diff(G, y)
 G_inv = lambda Y_star, gamma: Y_star / (1 + C * gamma)
 dt = 0.1
 y0 = 1.0

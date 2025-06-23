@@ -143,6 +143,7 @@ def centered_vertical_advection(w, x):
     dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)
     dx_axes = range(dx.ndim)
+    assert dx.ndim == 3
     inv_d𝜎 = 1 / g.center_to_center
     inv_d𝜎_axes = [dx_axes[-3]]
     x_diff = einsum(dx,

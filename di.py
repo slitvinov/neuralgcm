@@ -420,7 +420,7 @@ def horizontal_scalar_advection(scalar, aux_state):
     u, v = aux_state.cos_lat_u
     nodal_terms = scalar * aux_state.divergence
     m_component = to_modal(u * scalar * sec2_lat())
-    n_component = to_modal(u * scalar * sec2_lat())
+    n_component = to_modal(v * scalar * sec2_lat())
     modal_terms = -div_cos_lat((m_component, n_component), clip=False)
     return nodal_terms, modal_terms
 

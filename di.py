@@ -183,7 +183,7 @@ def sec2_lat():
 
 def laplacian_eigenvalues():
     l = np.arange(g.total_wavenumbers)
-    return -l * (l + 1) / (1.0**2)
+    return -l * (l + 1)
 
 
 def laplacian(x):
@@ -199,7 +199,7 @@ def inverse_laplacian(x):
     return x * inverse_eigenvalues
 
 
-def _derivative_recurrence_weights():
+def a_derivative_recurrence_weights():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")
     mask = abs(m) <= l
     a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))

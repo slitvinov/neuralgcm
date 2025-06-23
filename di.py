@@ -129,7 +129,7 @@ def centered_difference(x):
 
 
 def cumulative_sigma_integral(x):
-    jax.debug.print(f"{x.ndim=}")
+    assert x.ndim == 3
     x_axes = range(x.ndim)
     d𝜎 = g.layer_thickness
     d𝜎_axes = [x_axes[-3]]

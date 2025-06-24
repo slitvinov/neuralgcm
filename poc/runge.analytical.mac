@@ -13,14 +13,13 @@ define(dG('y), diff(G('y), 'y));
 so: linsolve((1 - 'gamma * dG('y)) * 'y = 'Y_star, 'y);
 define(G_inv('Y_star, 'gamma), rhs(so[1]));
 
-y: 0;
 f : makelist(0, i, 1, num_steps);
 g : makelist(0, i, 1, num_steps);
 
 /* Python f[0] = F(y) --> Maxima f[1] */
+y: 0;
 f[1] : F(y);
 g[1] : G(y);
-
 /* Loop from i = 2 to num_steps (1-based indexing) */
 for i : 2 thru num_steps do (
     ex_terms : dt * sum(a_ex[i - 1][j] * f[j], j, 1, i - 1),
@@ -32,15 +31,15 @@ for i : 2 thru num_steps do (
 );
 ex_terms : dt * sum(b_ex[j] * f[j], j, 1, num_steps);
 im_terms : dt * sum(b_im[j] * g[j], j, 1, num_steps);
-y : y + ex_terms + im_terms;
+y : ex_terms + im_terms;
 
-y: expand(taylor(y, dt, 0, 4), 0, 0);
+y: ratexpand(taylor(y, dt, 0, 8));
 e1: factor(coeff(y, dt, 1));
 e2: factor(coeff(y, dt, 2));
 
 x: x1 * dt + x2 * dt^2 + x3 * dt^3;
 res: diff(x, dt) - (F(x) + G(x));
-res: expand(taylor(res, dt, 0, 4), 0, 0);
+res: ratexpand(taylor(res, dt, 0, 4));
 
 eq: [coeff(res, dt, 0), coeff(res, dt, 1)];
 so: linsolve(eq, [x1, x2]);

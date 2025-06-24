@@ -5,9 +5,9 @@ b_ex : [1/2, -1/2, 1, 0];
 b_im : [3/8, 0, 3/8, 1/4];
 
 num_steps : length(b_ex);
-C : 10;
-dt : 0.1;
-nsteps : 50;
+C : 1;
+nsteps : 16;
+dt: 5.0 / nsteps;
 y : 1.0;
 Trace : [];
 istep : 0;
@@ -22,51 +22,28 @@ define(G_inv('Y_star, 'gamma), rhs(so[1]));
 
 /* Main loop */
 while istep < nsteps do (
-    push(y, Trace),
-    tnow : dt * istep,
-    istep : istep + 1,
+  push(y, Trace),
+  t : dt * istep,
+  istep : istep + 1,
 
-    f : makelist(0, i, 1, num_steps),
-    g : makelist(0, i, 1, num_steps),
+  f : makelist(0, i, 1, num_steps),
+  g : makelist(0, i, 1, num_steps),
 
-    f[1] : F(tnow, y),
-    g[1] : G(tnow, y),
+  f[1] : F(t, y),
+  g[1] : G(t, y),
 
-    for i:2 thru num_steps do (
-        ex_terms : 0,
-        for j:1 thru i-1 do (
-            if j <= length(a_ex[i-1]) then
-                ex_terms : ex_terms + dt * a_ex[i-1][j]
-                    * f[j]
-        ),
+  for i : 2 thru num_steps do (
+    ex_terms : dt * sum(a_ex[i - 1][j] * f[j], j, 1, i - 1),
+    im_terms : dt * sum(a_im[i - 1][j] * g[j], j, 1, i - 1),
+    Y_star : y + ex_terms + im_terms,
+    Y : G_inv(Y_star, dt * a_im[i - 1][i]),
+    f[i] : F(t, Y),
+    g[i] : G(t, Y)),
+  ex_terms : dt * sum(b_ex[j] * f[j], j, 1, num_steps),
+  im_terms : dt * sum(b_im[j] * g[j], j, 1, num_steps),
+  y : y + ex_terms + im_terms);
 
-        im_terms : 0,
-        for j:1 thru i-1 do (
-            if j <= length(a_im[i-1]) then
-                im_terms : im_terms + dt * a_im[i-1][j]
-                    * g[j]
-        ),
-
-        gamma : if i <= length(a_im[i-1]) then dt * a_im[i-1][i] else 0,
-        Y_star : y + ex_terms + im_terms,
-        Y : G_inv(Y_star, gamma),
-
-        if (b_ex[i] # 0 or lmax(makelist(
-            if i <= length(a_ex[j]) then a_ex[j][i] else 0, j, i, num_steps - 1)) # 0) then
-            f[i] : F(tnow, Y),
-
-        if (b_im[i] # 0 or lmax(makelist(
-            if i <= length(a_im[j]) then a_im[j][i] else 0, j, i, num_steps - 1)) # 0) then
-            g[i] : G(tnow, Y)
-    ),
-
-    ex_sum : sum(b_ex[j] * f[j], j, 1, num_steps),
-    im_sum : sum(b_im[j] * g[j], j, 1, num_steps),
-    y : y + dt * (ex_sum + im_sum)
-    );
 Trace: reverse(Trace);
-
-
 f_analytical(t) := block(
     [p : C^2, q : exp(C * t)],
     return ((C * q * sin(t) - q * cos(t) + p + 2) / ((p + 1) * q))
@@ -78,5 +55,5 @@ draw2d(
     points(makelist([dt * (i - 1), Trace[i]], i, 1, length(Trace))),
     points_joined = true,
     color = red,
-    explicit(f_analytical(t), t, 0, dt * nsteps)
+    explicit(f_analytical('t), 't, 0, dt * nsteps)
 );

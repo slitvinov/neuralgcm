@@ -1,27 +1,29 @@
 import math
 import matplotlib.pyplot as plt
 
-a_ex = [[1 / 3], #
-        [1 / 6, 1 / 2],
-        [1 / 2, -1 / 2, 1]]
+a_ex = [
+    [1 / 3],  #
+    [1 / 6, 1 / 2],
+    [1 / 2, -1 / 2, 1]
+]
 b_ex = [1 / 2, -1 / 2, 1, 0]
 
-a_im = [[1 / 6, 1 / 6],
-        [1 / 3, 0, 1 / 3],
-        [3 / 8, 0, 3 / 8, 1 / 4]]
-b_im = [3 / 8, 0, 3 / 8, 1 / 4]
+# a, b, c = -1/4, 3/4, 1/2
+a, b, c = 3 / 8, 3 / 8, 1 / 4
+a_im = [[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [a, 0, b, c]]
+b_im = [a, 0, b, c]
 
 num_steps = len(b_ex)
 
 trace = []
-C = 1
+C = 10
 F = lambda t, y: math.sin(t)
 G = lambda t, y: -C * y
 # G_inv solves (I - gamma * G') Y = Y_star, where G' = diff(G, y)
 G_inv = lambda Y_star, gamma: Y_star / (1 + C * gamma)
-dt = 0.1
 y0 = 1.0
-nsteps = 50
+nsteps = 100
+dt = 5.0 / nsteps
 istep = 0
 
 while istep < nsteps:

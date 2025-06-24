@@ -4,39 +4,72 @@ b_ex : [1/2, -1/2, 1, 0];
 b_im : [3/8, 0, 3/8, 1/4];
 num_steps : length(b_ex);
 
+F(y) := 'F0;
+G(y) := 'G0;
+
+define(dG('y), diff(G('y), 'y));
+so: linsolve((1 - 'gamma * dG('y)) * 'y = 'Y_star, 'y);
+define(G_inv('Y_star, 'gamma), rhs(so[1]));
+
+y: 0;
 f : makelist(0, i, 1, num_steps);
 g : makelist(0, i, 1, num_steps);
 
-f[1] : F(0);
+/* Python f[0] = F(y) --> Maxima f[1] */
+f[1] : F(y);
 g[1] : G(y);
 
-for i:2 thru num_steps do (
-ex_terms : 0,
-for j:1 thru i-1 do (
-  if j <= length(a_ex[i-1]) then
-  ex_terms : ex_terms + dt * a_ex[i-1][j]
-  * f[j]
-  ),
+/* Loop from i = 2 to num_steps (1-based indexing) */
+for i : 2 thru num_steps do (
+    /* Explicit (EX) terms */
+    ex_terms : dt * sum(
+        if j <= length(a_ex[i - 1]) and a_ex[i - 1][j] # 0 then
+            a_ex[i - 1][j] * f[j]
+        else 0,
+        j, 1, i - 1
+    ),
 
-im_terms : 0,
-for j:1 thru i-1 do (
-  if j <= length(a_im[i-1]) then
-  im_terms : im_terms + dt * a_im[i-1][j]
-  * g[j]
-  ),
+    /* Implicit (IM) terms */
+    im_terms : dt * sum(
+        if j <= length(a_im[i - 1]) and a_im[i - 1][j] # 0 then
+            a_im[i - 1][j] * g[j]
+        else 0,
+        j, 1, i - 1
+    ),
 
-gamma : if i <= length(a_im[i-1]) then dt * a_im[i-1][i] else 0,
-Y_star : y + ex_terms + im_terms,
-Y : G_inv(Y_star, gamma),
+    /* Intermediate value and solve for Y */
+    Y_star : y + ex_terms + im_terms,
+    gamma : if i <= length(a_im[i - 1]) then dt * a_im[i - 1][i] else 0,
+    Y : G_inv(Y_star, gamma),
 
-if (b_ex[i] # 0 or lmax(makelist(
-      if i <= length(a_ex[j]) then a_ex[j][i] else 0, j, i, num_steps - 1)) # 0) then
-f[i] : F(tnow),
+    /* Re-evaluate f[i] if needed */
+    if is(
+        some(lambda([j],
+            if i <= length(a_ex[j]) then a_ex[j][i] # 0 else false
+        ), makelist(j, i, num_steps - 1))
+        or b_ex[i] # 0
+    )
+    then f[i] : F(Y),
 
-if (b_im[i] # 0 or lmax(makelist(
-      if i <= length(a_im[j]) then a_im[j][i] else 0, j, i, num_steps - 1)) # 0) then
-g[i] : G(Y),
+    /* Re-evaluate g[i] if needed */
+    if is(
+        some(lambda([j],
+            if i <= length(a_im[j]) then a_im[j][i] # 0 else false
+        ), makelist(j, i, num_steps - 1))
+        or b_im[i] # 0
+    )
+    then g[i] : G(Y)
+);
 
-ex_sum : sum(b_ex[j] * f[j], j, 1, num_steps),
-im_sum : sum(b_im[j] * g[j], j, 1, num_steps),
-y : y + dt * (ex_sum + im_sum));
+/* Final update to y */
+ex_terms : dt * sum(
+    if b_ex[j] # 0 then b_ex[j] * f[j] else 0,
+    j, 1, num_steps
+);
+im_terms : dt * sum(
+    if b_im[j] # 0 then b_im[j] * g[j] else 0,
+    j, 1, num_steps
+);
+y : y + ex_terms + im_terms;
+
+expand(taylor(y, dt, 0, 1), 0, 0);

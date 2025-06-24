@@ -27,7 +27,6 @@ res: ratexpand(taylor(res, dt, 0, 4));
 eq: [coeff(res, dt, 0), coeff(res, dt, 1)];
 so: linsolve(eq, [x1, x2]);
 
-so: solve([e1 = assoc(x1, so), e2 = assoc(x2, so)], [a, b]);
+eq: [e1 = assoc(x1, so), e2 = assoc(x2, so)];
+so: solve(eq, [a, b]);
 so, c = 1/4;
-
-

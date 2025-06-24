@@ -4,7 +4,7 @@ import statistics
 def fun(t):
     return (A * math.exp(B*t) - A) / B
 
-# a, b, c = 3/8, 3/8, 1/4
+#a, b, c = 3/8, 3/8, 1/4
 a, b, c = -3/16, 15/16, 1/4
 
 A = 1
@@ -32,4 +32,4 @@ for nsteps in (2 << x for x in range(3, 12)):
         y0 += dt * sum(b_im[j] * g[j] for j in range(num_steps))
     times = [i * dt for i in range(nsteps)]
     diff = statistics.fmean((a - b)**2 for a, b in zip(trace, (fun(t) for t in times)))
-    print(f"{nsteps:08d} {diff:+.16e}")
+    print(f"{nsteps:08d} {diff:.16e}")

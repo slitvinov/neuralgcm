@@ -48,4 +48,11 @@ https://github.com/google-research/arco-era5
 > temperature). We use semi-implicit time-integration scheme, where
 > all right hand side terms are separated into groups that are treated
 > either explicitly or implicitly. This avoids severe time step
-> limitations due to fast moving gravity waves
+> limitations due to fast moving gravity waves. Rather than the
+> traditional semi-implicit leapfrog method, we use implicit-explicit
+> Runge-Kutta methods to avoid the complexity of keeping track of
+> multiple time-steps and time-filtering required by the traditional
+> semi-implicit leapfrog method.  Specifically, we use the
+> semi-implicit Lorenz three cycle scheme (SIL3), which was developed
+> specifically for global spectral weather
+> models~\cite{whitaker2013implicit}.

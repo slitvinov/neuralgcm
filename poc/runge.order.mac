@@ -33,12 +33,13 @@ while istep < nsteps do (
   g[1] : G(t, y),
 
   for i : 2 thru num_steps do (
+    tau: apply("+", a_ex[i - 1]),
     ex_terms : dt * sum(a_ex[i - 1][j] * f[j], j, 1, i - 1),
     im_terms : dt * sum(a_im[i - 1][j] * g[j], j, 1, i - 1),
     Y_star : y + ex_terms + im_terms,
     Y : G_inv(Y_star, dt * a_im[i - 1][i]),
-    f[i] : F(t, Y),
-    g[i] : G(t, Y)),
+    f[i] : F(t + dt * tau, Y),
+    g[i] : G(t + dt * tau, Y)),
   ex_terms : dt * sum(b_ex[j] * f[j], j, 1, num_steps),
   im_terms : dt * sum(b_im[j] * g[j], j, 1, num_steps),
   y : y + ex_terms + im_terms);

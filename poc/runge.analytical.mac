@@ -1,11 +1,13 @@
 a_ex : [[1/3], [1/6, 1/2], [1/2, -1/2, 1]];
-a_im : [[1/6, 1/6], [1/3, 0, 1/3], [3/8, 0, 3/8, 1/4]];
 b_ex : [1/2, -1/2, 1, 0];
-b_im : [3/8, 0, 3/8, 1/4];
+
+a_im : [[1/6, 1/6], [1/3, 0, 1/3], [a, 0, b, c]];
+b_im : [a, 0, b, c];
+
 num_steps : length(b_ex);
 
-F(y) := 'F0;
-G(y) := 'G0;
+F(y) := 0;
+G(y) := 1 + y;
 
 define(dG('y), diff(G('y), 'y));
 so: linsolve((1 - 'gamma * dG('y)) * 'y = 'Y_star, 'y);
@@ -21,55 +23,27 @@ g[1] : G(y);
 
 /* Loop from i = 2 to num_steps (1-based indexing) */
 for i : 2 thru num_steps do (
-    /* Explicit (EX) terms */
-    ex_terms : dt * sum(
-        if j <= length(a_ex[i - 1]) and a_ex[i - 1][j] # 0 then
-            a_ex[i - 1][j] * f[j]
-        else 0,
-        j, 1, i - 1
-    ),
-
-    /* Implicit (IM) terms */
-    im_terms : dt * sum(
-        if j <= length(a_im[i - 1]) and a_im[i - 1][j] # 0 then
-            a_im[i - 1][j] * g[j]
-        else 0,
-        j, 1, i - 1
-    ),
-
-    /* Intermediate value and solve for Y */
+    ex_terms : dt * sum(a_ex[i - 1][j] * f[j], j, 1, i - 1),
+    im_terms : dt * sum(a_im[i - 1][j] * g[j], j, 1, i - 1),
     Y_star : y + ex_terms + im_terms,
-    gamma : if i <= length(a_im[i - 1]) then dt * a_im[i - 1][i] else 0,
-    Y : G_inv(Y_star, gamma),
-
-    /* Re-evaluate f[i] if needed */
-    if is(
-        some(lambda([j],
-            if i <= length(a_ex[j]) then a_ex[j][i] # 0 else false
-        ), makelist(j, i, num_steps - 1))
-        or b_ex[i] # 0
-    )
-    then f[i] : F(Y),
-
-    /* Re-evaluate g[i] if needed */
-    if is(
-        some(lambda([j],
-            if i <= length(a_im[j]) then a_im[j][i] # 0 else false
-        ), makelist(j, i, num_steps - 1))
-        or b_im[i] # 0
-    )
-    then g[i] : G(Y)
+    Y : G_inv(Y_star, dt * a_im[i - 1][i]),
+    f[i] : F(Y),
+    g[i] : G(Y)
 );
-
-/* Final update to y */
-ex_terms : dt * sum(
-    if b_ex[j] # 0 then b_ex[j] * f[j] else 0,
-    j, 1, num_steps
-);
-im_terms : dt * sum(
-    if b_im[j] # 0 then b_im[j] * g[j] else 0,
-    j, 1, num_steps
-);
+ex_terms : dt * sum(b_ex[j] * f[j], j, 1, num_steps);
+im_terms : dt * sum(b_im[j] * g[j], j, 1, num_steps);
 y : y + ex_terms + im_terms;
 
-expand(taylor(y, dt, 0, 1), 0, 0);
+y: expand(taylor(y, dt, 0, 4), 0, 0);
+e1: factor(coeff(y, dt, 1));
+e2: factor(coeff(y, dt, 2));
+
+x: x1 * dt + x2 * dt^2 + x3 * dt^3;
+res: diff(x, dt) - (F(x) + G(x));
+res: expand(taylor(res, dt, 0, 4), 0, 0);
+
+eq: [coeff(res, dt, 0), coeff(res, dt, 1)];
+so: linsolve(eq, [x1, x2]);
+
+solve([e1 = assoc(x1, so), e2 = assoc(x2, so), c = 1/2], [a, b, c]);
+

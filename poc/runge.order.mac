@@ -13,9 +13,12 @@ Trace : [];
 istep : 0;
 
 /* Define forcing terms */
-F(t) := sin(t);
-G(y) := -C * y;
-G_inv(Y_star, gamma) := Y_star / (1 + C * gamma);
+F(t, y) := sin(t);
+G(t, y) := -C * y;
+
+define(dG(t, 'y), diff(G(t, 'y), 'y));
+so: linsolve((1 - 'gamma * dG(t, 'y)) * 'y = 'Y_star, 'y);
+define(G_inv('Y_star, 'gamma), rhs(so[1]));
 
 /* Main loop */
 while istep < nsteps do (
@@ -26,8 +29,8 @@ while istep < nsteps do (
     f : makelist(0, i, 1, num_steps),
     g : makelist(0, i, 1, num_steps),
 
-    f[1] : F(tnow),
-    g[1] : G(y),
+    f[1] : F(tnow, y),
+    g[1] : G(tnow, y),
 
     for i:2 thru num_steps do (
         ex_terms : 0,
@@ -50,11 +53,11 @@ while istep < nsteps do (
 
         if (b_ex[i] # 0 or lmax(makelist(
             if i <= length(a_ex[j]) then a_ex[j][i] else 0, j, i, num_steps - 1)) # 0) then
-            f[i] : F(tnow),
+            f[i] : F(tnow, Y),
 
         if (b_im[i] # 0 or lmax(makelist(
             if i <= length(a_im[j]) then a_im[j][i] else 0, j, i, num_steps - 1)) # 0) then
-            g[i] : G(Y)
+            g[i] : G(tnow, Y)
     ),
 
     ex_sum : sum(b_ex[j] * f[j], j, 1, num_steps),

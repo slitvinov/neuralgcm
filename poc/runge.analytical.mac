@@ -1,0 +1,42 @@
+a_ex : [[1/3], [1/6, 1/2], [1/2, -1/2, 1]];
+a_im : [[1/6, 1/6], [1/3, 0, 1/3], [3/8, 0, 3/8, 1/4]];
+b_ex : [1/2, -1/2, 1, 0];
+b_im : [3/8, 0, 3/8, 1/4];
+num_steps : length(b_ex);
+
+f : makelist(0, i, 1, num_steps);
+g : makelist(0, i, 1, num_steps);
+
+f[1] : F(0);
+g[1] : G(y);
+
+for i:2 thru num_steps do (
+ex_terms : 0,
+for j:1 thru i-1 do (
+  if j <= length(a_ex[i-1]) then
+  ex_terms : ex_terms + dt * a_ex[i-1][j]
+  * f[j]
+  ),
+
+im_terms : 0,
+for j:1 thru i-1 do (
+  if j <= length(a_im[i-1]) then
+  im_terms : im_terms + dt * a_im[i-1][j]
+  * g[j]
+  ),
+
+gamma : if i <= length(a_im[i-1]) then dt * a_im[i-1][i] else 0,
+Y_star : y + ex_terms + im_terms,
+Y : G_inv(Y_star, gamma),
+
+if (b_ex[i] # 0 or lmax(makelist(
+      if i <= length(a_ex[j]) then a_ex[j][i] else 0, j, i, num_steps - 1)) # 0) then
+f[i] : F(tnow),
+
+if (b_im[i] # 0 or lmax(makelist(
+      if i <= length(a_im[j]) then a_im[j][i] else 0, j, i, num_steps - 1)) # 0) then
+g[i] : G(Y),
+
+ex_sum : sum(b_ex[j] * f[j], j, 1, num_steps),
+im_sum : sum(b_im[j] * g[j], j, 1, num_steps),
+y : y + dt * (ex_sum + im_sum));

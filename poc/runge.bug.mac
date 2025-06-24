@@ -14,8 +14,7 @@ for i : 2 thru num_steps do (
     Y : G_inv(Y_star, dt * a_im[i - 1][i]),
     g[i] : G(Y)
 );
-y : ex_terms + dt * sum(b_im[j] * g[j], j, 1, num_steps);
-
+y: dt * sum(b_im[j] * g[j], j, 1, num_steps);
 y: ratexpand(taylor(y, dt, 0, 8));
 e1: factor(coeff(y, dt, 1));
 e2: factor(coeff(y, dt, 2));

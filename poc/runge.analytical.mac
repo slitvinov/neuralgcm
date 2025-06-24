@@ -7,7 +7,7 @@ b_im : [a, 0, b, c];
 num_steps : length(b_ex);
 
 F(y) := 0;
-G(y) := 1 + y;
+G(y) := G0 + G1 * y;
 
 define(dG('y), diff(G('y), 'y));
 so: linsolve((1 - 'gamma * dG('y)) * 'y = 'Y_star, 'y);
@@ -46,4 +46,3 @@ eq: [coeff(res, dt, 0), coeff(res, dt, 1)];
 so: linsolve(eq, [x1, x2]);
 
 solve([e1 = assoc(x1, so), e2 = assoc(x2, so), c = 1/2], [a, b, c]);
-

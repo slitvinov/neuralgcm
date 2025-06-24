@@ -1,4 +1,4 @@
-eq: 'diff(y, t) = -C*y + sin(t);
+eq: 'diff(y, t) = 1 + y;
 sol: ode2(eq, y, t);
 sol0: ic1(sol, t=0, y=1);
 grind(sol0);

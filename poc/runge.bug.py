@@ -15,7 +15,7 @@ a_im = [[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [a, 0, b, c]]
 b_im = [a, 0, b, c]
 num_steps = 4
 G = lambda y: A + B * y
-G_inv = lambda Y_star, gamma: -Y_star / (- B * gamma - 1)
+G_inv = lambda Y_star, gamma: -Y_star / (-B * gamma - 1)
 
 for nsteps in (2 << x for x in range(3, 12)):
     trace = []

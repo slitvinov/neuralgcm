@@ -19,6 +19,7 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
+
 def nodal_prognostics_and_diagnostics(state):
     sp_nodal = jnp.exp(di.to_nodal(state.log_surface_pressure))
     tracers_nodal = {k: di.to_nodal(v) for k, v in state.tracers.items()}

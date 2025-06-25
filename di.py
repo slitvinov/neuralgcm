@@ -372,8 +372,8 @@ def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
     return temperature_field * (v_dot_grad_log_sp - g_part)
 
 
-def horizontal_scalar_advection(scalar, aux_state):
-    u, v = aux_state.cos_lat_u
+def horizontal_scalar_advection(scalar, cos_lat_u, divergence):
+    u, v = cos_lat_u
     nodal_terms = scalar * aux_state.divergence
     m_component = to_modal(u * scalar * sec2_lat())
     n_component = to_modal(v * scalar * sec2_lat())
@@ -442,7 +442,8 @@ def explicit_terms(state):
     kinetic_energy_tendency = -laplacian(to_modal(kinetic))
     orography_tendency = -gravity_acceleration * laplacian(g.orography)
     horizontal_tendency_fn = functools.partial(horizontal_scalar_advection,
-                                               aux_state=aux_state)
+                                               cos_lat_u=cos_lat_u,
+                                               divergence=divergence)
     dT_dt_horizontal_nodal, dT_dt_horizontal_modal = horizontal_tendency_fn(
         temperature_variation)
     tracers_horizontal_nodal_and_modal = jax.tree_util.tree_map(

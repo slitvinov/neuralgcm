@@ -8,40 +8,35 @@ num_steps : length(b_ex);
 
 F(y) := 0;
 G(y) := G0 + G1 * y;
-
-define(dG('y), diff(G('y), 'y));
-so: linsolve((1 - 'gamma * dG('y)) * 'y = 'Y_star, 'y);
-define(G_inv('Y_star, 'gamma), rhs(so[1]));
+define(G_inv('Y_star, 'gamma), rhs(solve('Y_star = 'y + gamma * G('y), 'y)[1]))$
 
 f : makelist(0, i, 1, num_steps);
 g : makelist(0, i, 1, num_steps);
 
-/* Python f[0] = F(y) --> Maxima f[1] */
-y: 0;
+y: y0;
 f[1] : F(y);
 g[1] : G(y);
-/* Loop from i = 2 to num_steps (1-based indexing) */
 for i : 2 thru num_steps do (
-    ex_terms : dt * sum(a_ex[i - 1][j] * f[j], j, 1, i - 1),
-    im_terms : dt * sum(a_im[i - 1][j] * g[j], j, 1, i - 1),
+    ex_terms : t * sum(a_ex[i - 1][j] * f[j], j, 1, i - 1),
+    im_terms : t * sum(a_im[i - 1][j] * g[j], j, 1, i - 1),
     Y_star : y + ex_terms + im_terms,
-    Y : G_inv(Y_star, dt * a_im[i - 1][i]),
+    Y : G_inv(Y_star, t * a_im[i - 1][i]),
     f[i] : F(Y),
     g[i] : G(Y)
 );
-ex_terms : dt * sum(b_ex[j] * f[j], j, 1, num_steps);
-im_terms : dt * sum(b_im[j] * g[j], j, 1, num_steps);
+ex_terms : t * sum(b_ex[j] * f[j], j, 1, num_steps);
+im_terms : t * sum(b_im[j] * g[j], j, 1, num_steps);
 y : ex_terms + im_terms;
 
-y: ratexpand(taylor(y, dt, 0, 8));
-e1: factor(coeff(y, dt, 1));
-e2: factor(coeff(y, dt, 2));
+y: ratexpand(taylor(y, t, 0, 8));
+e1: factor(coeff(y, t, 1));
+e2: factor(coeff(y, t, 2));
 
-x: x1 * dt + x2 * dt^2 + x3 * dt^3;
-res: diff(x, dt) - (F(x) + G(x));
-res: ratexpand(taylor(res, dt, 0, 4));
+eq: 'diff('y, t) = G('y) + F('y);
+sol: ic1(ode2(eq, 'y, 't), 't = 0, 'y = y0);
 
-eq: [coeff(res, dt, 0), coeff(res, dt, 1)];
-so: linsolve(eq, [x1, x2]);
+res: y - rhs(sol);
+res0: ratexpand(taylor(res, t, 0, 4));
 
-solve([e1 = assoc(x1, so), e2 = assoc(x2, so), c = 1/2], [a, b, c]);
+e: makelist(coeff(res0, t, i), i, 1, 2);
+solve(factor(e), [a, b]), c= 1/4, G0 = 1, G1 = 1, y0 = 1;

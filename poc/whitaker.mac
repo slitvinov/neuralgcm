@@ -13,7 +13,7 @@ eq: 'diff('y, t) = G('y)$
 sol: ic1(ode2(eq, 'y, 't), 't = 0, 'y = y0)$
 
 res: y00 - rhs(sol);
-res0: expand(taylor(res, 't, 0, 3));
+res0: expand(taylor(res, 't, 0, 2));
 
 coeff(res0, t, 0);
 e: makelist(coeff(res0, t, i), i, 1, 2);

@@ -250,13 +250,13 @@ def curl_cos_lat(v, clip=True):
     return raw
 
 
-def get_cos_lat_vector(vorticity, divergence, clip=True):
+def get_cos_lat_vector(vorticity, divergence):
     stream_function = inverse_laplacian(vorticity)
     velocity_potential = inverse_laplacian(divergence)
     return jax.tree_util.tree_map(
         lambda x, y: x + y,
-        cos_lat_grad(velocity_potential, clip=clip),
-        k_cross(cos_lat_grad(stream_function, clip=clip)),
+        cos_lat_grad(velocity_potential, clip=False),
+        k_cross(cos_lat_grad(stream_function, clip=False)),
     )
 
 
@@ -380,8 +380,7 @@ def explicit_terms(state):
     temp = to_nodal(state.temperature_variation)
     tracers = to_nodal(state.tracers)
     u_coslat = jax.tree_util.tree_map(
-        to_nodal,
-        get_cos_lat_vector(state.vorticity, state.divergence, clip=False))
+        to_nodal, get_cos_lat_vector(state.vorticity, state.divergence))
     grad_logsp = to_nodal(cos_lat_grad(state.log_surface_pressure, clip=False))
 
     u_dot_grad = sum(

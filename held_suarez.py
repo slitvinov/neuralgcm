@@ -8,7 +8,7 @@ import numpy as np
 def explicit_terms(state):
     cos_lat_u = jax.tree_util.tree_map(
         di.to_nodal,
-        di.get_cos_lat_vector(state.vorticity, state.divergence, clip=False),
+        di.get_cos_lat_vector(state.vorticity, state.divergence),
     )
     temperature_variation = di.to_nodal(state.temperature_variation)
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))

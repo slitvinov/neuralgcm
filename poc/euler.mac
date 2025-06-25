@@ -1,0 +1,16 @@
+G(y):= G0 * y + G1 $
+
+y[1]: y0;
+eq: y[2] = y[1] + t * G(y[2]);
+y[2]: assoc(y[2], linsolve(eq, y[2]))$
+
+y00: y0 + t * y[2]$
+
+eq: 'diff('y, t) = G('y)$
+sol: ic1(ode2(eq, 'y, 't), 't = 0, 'y = y0)$
+
+res: y00 - rhs(sol);
+res0: expand(taylor(res, 't, 0, 3));
+
+e: makelist(coeff(res0, t, i), i, 0, 2);
+solve(e, [a, b]), c = 1/2;

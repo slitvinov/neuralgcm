@@ -1,0 +1,20 @@
+a_im : [[1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [a, 0, b, c]]$
+b_im : [a, 0, b, c]$
+
+y0: 0;
+G(x):= G0 + G1 * x$
+n: 4$
+y[1]: y0$
+i: 2$
+for i: 2 thru n do (
+  eq: y[i] = y0 + dt * sum(a_im[i - 1][j] * G(y[j]), j, 1, i),
+  y[i]: assoc(y[i], linsolve(eq, y[i])))$
+y0: y0 + dt * sum(b_im[i] * y[i], i, 1, n)$
+
+res: diff(y0, dt) - G(y0);
+res0:: expand(taylor(res, dt, 0, 3), 0, 0);
+
+coeff(res0, dt, 0);
+coeff(res0, dt, 1);
+factor(coeff(res0, dt, 2));
+

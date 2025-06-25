@@ -388,7 +388,6 @@ def _make_filter_fn(scaling):
 
 
 def explicit_terms(state):
-    aux_state = compute_diagnostic_state(state)
     nodal_vorticity = to_nodal(state.vorticity)
     nodal_divergence = to_nodal(state.divergence)
     nodal_temperature_variation = to_nodal(state.temperature_variation)

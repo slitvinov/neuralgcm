@@ -388,107 +388,78 @@ def _make_filter_fn(scaling):
 
 
 def explicit_terms(state):
-    nodal_vorticity = to_nodal(state.vorticity)
-    nodal_divergence = to_nodal(state.divergence)
-    nodal_temperature_variation = to_nodal(state.temperature_variation)
+    vort = to_nodal(state.vorticity)
+    div = to_nodal(state.divergence)
+    temp = to_nodal(state.temperature_variation)
     tracers = to_nodal(state.tracers)
-    nodal_cos_lat_u = jax.tree_util.tree_map(
+    u_coslat = jax.tree_util.tree_map(
         to_nodal,
-        get_cos_lat_vector(state.vorticity, state.divergence, clip=False),
-    )
-    cos_lat_grad_log_sp = cos_lat_grad(state.log_surface_pressure, clip=False)
-    nodal_cos_lat_grad_log_sp = to_nodal(cos_lat_grad_log_sp)
-    nodal_u_dot_grad_log_sp = sum(
-        jax.tree_util.tree_map(
-            lambda x, y: x * y * sec2_lat(),
-            nodal_cos_lat_u,
-            nodal_cos_lat_grad_log_sp,
-        ))
-    f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp)
-    f_full = cumulative_sigma_integral(nodal_divergence +
-                                       nodal_u_dot_grad_log_sp)
-    sum_𝜎 = np.cumsum(g.layer_thickness)[:, np.newaxis, np.newaxis]
-    sigma_dot_explicit = jax.lax.slice_in_dim(
-        sum_𝜎 * jax.lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
-    sigma_dot_full = jax.lax.slice_in_dim(
-        sum_𝜎 * jax.lax.slice_in_dim(f_full, -1, None) - f_full, 0, -1)
+        get_cos_lat_vector(state.vorticity, state.divergence, clip=False))
+    grad_logsp = to_nodal(cos_lat_grad(state.log_surface_pressure, clip=False))
 
-    vorticity = nodal_vorticity
-    divergence = nodal_divergence
-    temperature_variation = nodal_temperature_variation
-    cos_lat_u = nodal_cos_lat_u
-    cos_lat_grad_log_sp = nodal_cos_lat_grad_log_sp
-    u_dot_grad_log_sp = nodal_u_dot_grad_log_sp
+    u_dot_grad = sum(
+        jax.tree_util.tree_map(lambda u, g: u * g * sec2_lat(), u_coslat,
+                               grad_logsp))
+    f_exp = cumulative_sigma_integral(u_dot_grad)
+    f_full = cumulative_sigma_integral(div + u_dot_grad)
+    sum_sigma = np.cumsum(g.layer_thickness)[:, None, None]
+    sigma_dot = lambda f: jax.lax.slice_in_dim(
+        sum_sigma * jax.lax.slice_in_dim(f, -1, None) - f, 0, -1)
+    sigma_exp = sigma_dot(f_exp)
+    sigma_full = sigma_dot(f_full)
 
-    sec2_lat0 = sec2_lat()
-    u, v = cos_lat_u
-    _, coriolis_parameter = np.meshgrid(*nodal_axes(), indexing="ij")
-    total_vorticity = vorticity + coriolis_parameter
-    nodal_vorticity_u = -v * total_vorticity * sec2_lat0
-    nodal_vorticity_v = u * total_vorticity * sec2_lat0
-    d𝜎_dt = sigma_dot_full
-    sigma_dot_u = -centered_vertical_advection(d𝜎_dt, u)
-    sigma_dot_v = -centered_vertical_advection(d𝜎_dt, v)
-    rt = ideal_gas_constant * temperature_variation
-    grad_log_ps_u, grad_log_ps_v = cos_lat_grad_log_sp
-    vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat0
-    vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat0
-    combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
-    combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
-    vorticity_tendency = -curl_cos_lat((combined_u, combined_v), clip=False)
-    divergence_dot = -div_cos_lat((combined_u, combined_v), clip=False)
-    nodal_cos_lat_u2 = jnp.stack(cos_lat_u)**2
-    kinetic = nodal_cos_lat_u2.sum(0) * sec2_lat() / 2
-    kinetic_energy_tendency = -laplacian(to_modal(kinetic))
-    orography_tendency = -gravity_acceleration * laplacian(g.orography)
-    horizontal_tendency_fn = functools.partial(horizontal_scalar_advection,
-                                               cos_lat_u=cos_lat_u,
-                                               divergence=divergence)
-    dT_dt_horizontal_nodal, dT_dt_horizontal_modal = horizontal_tendency_fn(
-        temperature_variation)
-    tracers_horizontal_nodal_and_modal = jax.tree_util.tree_map(
-        horizontal_tendency_fn, tracers)
-    tendency = centered_vertical_advection(sigma_dot_full,
-                                           temperature_variation)
-    if np.unique(g.reference_temperature[..., np.newaxis,
-                                         np.newaxis].ravel()).size > 1:
-        tendency += centered_vertical_advection(
-            sigma_dot_explicit, g.reference_temperature[..., np.newaxis,
-                                                        np.newaxis])
-    dT_dt_vertical = tendency
-    g_explicit = u_dot_grad_log_sp
-    g_full = g_explicit + divergence
-    mean_t_part = _t_omega_over_sigma_sp(
-        g.reference_temperature[..., np.newaxis, np.newaxis], g_explicit,
-        u_dot_grad_log_sp)
-    variation_t_part = _t_omega_over_sigma_sp(temperature_variation, g_full,
-                                              u_dot_grad_log_sp)
-    dT_dt_adiabatic = kappa * (mean_t_part + variation_t_part)
-    log_sp_tendency = -sigma_integral(u_dot_grad_log_sp)
-    vertical_tendency_fn = functools.partial(centered_vertical_advection,
-                                             sigma_dot_full)
-    tracers_vertical_nodal = jax.tree_util.tree_map(vertical_tendency_fn,
-                                                    tracers)
-    to_modal_fn = to_modal
-    divergence_tendency = (divergence_dot + kinetic_energy_tendency +
-                           orography_tendency)
-    temperature_tendency = (to_modal_fn(dT_dt_horizontal_nodal +
-                                        dT_dt_vertical + dT_dt_adiabatic) +
-                            dT_dt_horizontal_modal)
-    log_surface_pressure_tendency = to_modal_fn(log_sp_tendency)
-    tracers_tendency = jax.tree_util.tree_map(
-        lambda x, y_z: to_modal_fn(x + y_z[0]) + y_z[1],
-        tracers_vertical_nodal,
-        tracers_horizontal_nodal_and_modal,
-    )
-    tendency = State(
-        vorticity=vorticity_tendency,
-        divergence=divergence_tendency,
-        temperature_variation=temperature_tendency,
-        log_surface_pressure=log_surface_pressure_tendency,
-        tracers=tracers_tendency,
-    )
-    return clip_wavenumbers(tendency)
+    u, v = u_coslat
+    sec2 = sec2_lat()
+    _, coriolis = np.meshgrid(*nodal_axes(), indexing="ij")
+    total_vort = vort + coriolis
+    vort_u = -v * total_vort * sec2
+    vort_v = u * total_vort * sec2
+    sigma_u = -centered_vertical_advection(sigma_full, u)
+    sigma_v = -centered_vertical_advection(sigma_full, v)
+    rt = ideal_gas_constant * temp
+    grad_u, grad_v = grad_logsp
+    vert_u = (sigma_u + rt * grad_u) * sec2
+    vert_v = (sigma_v + rt * grad_v) * sec2
+    u_mod = to_modal(vort_u + vert_u)
+    v_mod = to_modal(vort_v + vert_v)
+
+    vort_tendency = -curl_cos_lat((u_mod, v_mod), clip=False)
+    div_tendency = -div_cos_lat((u_mod, v_mod), clip=False)
+
+    ke = jnp.stack(u_coslat)**2
+    ke = ke.sum(0) * sec2 / 2
+    ke_tendency = -laplacian(to_modal(ke))
+    oro_tendency = -gravity_acceleration * laplacian(g.orography)
+
+    h_adv = functools.partial(horizontal_scalar_advection,
+                              cos_lat_u=u_coslat,
+                              divergence=div)
+    temp_h_nodal, temp_h_modal = h_adv(temp)
+    tracers_h = jax.tree_util.tree_map(h_adv, tracers)
+
+    temp_vert = centered_vertical_advection(sigma_full, temp)
+    if np.unique(g.reference_temperature[..., None, None].ravel()).size > 1:
+        temp_vert += centered_vertical_advection(
+            sigma_exp, g.reference_temperature[..., None, None])
+
+    t_mean = _t_omega_over_sigma_sp(g.reference_temperature[..., None, None],
+                                    u_dot_grad, u_dot_grad)
+    t_var = _t_omega_over_sigma_sp(temp, div + u_dot_grad, u_dot_grad)
+    temp_adiab = kappa * (t_mean + t_var)
+
+    logsp_tendency = -sigma_integral(u_dot_grad)
+    tracers_v = jax.tree_util.tree_map(
+        lambda x: centered_vertical_advection(sigma_full, x), tracers)
+
+    return clip_wavenumbers(
+        State(vorticity=vort_tendency,
+              divergence=div_tendency + ke_tendency + oro_tendency,
+              temperature_variation=to_modal(temp_h_nodal + temp_vert +
+                                             temp_adiab) + temp_h_modal,
+              log_surface_pressure=to_modal(logsp_tendency),
+              tracers=jax.tree_util.tree_map(
+                  lambda vert, pair: to_modal(vert + pair[0]) + pair[1],
+                  tracers_v, tracers_h)))
 
 
 def implicit_terms(state):

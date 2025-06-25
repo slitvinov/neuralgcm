@@ -374,7 +374,7 @@ def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
 
 def horizontal_scalar_advection(scalar, cos_lat_u, divergence):
     u, v = cos_lat_u
-    nodal_terms = scalar * aux_state.divergence
+    nodal_terms = scalar * divergence
     m_component = to_modal(u * scalar * sec2_lat())
     n_component = to_modal(v * scalar * sec2_lat())
     modal_terms = -div_cos_lat((m_component, n_component), clip=False)

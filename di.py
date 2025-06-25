@@ -313,45 +313,6 @@ class DiagnosticState:
     tracers: Any
 
 
-def compute_diagnostic_state(state):
-
-    nodal_vorticity = to_nodal(state.vorticity)
-    nodal_divergence = to_nodal(state.divergence)
-    nodal_temperature_variation = to_nodal(state.temperature_variation)
-    tracers = to_nodal(state.tracers)
-    nodal_cos_lat_u = jax.tree_util.tree_map(
-        to_nodal,
-        get_cos_lat_vector(state.vorticity, state.divergence, clip=False),
-    )
-    cos_lat_grad_log_sp = cos_lat_grad(state.log_surface_pressure, clip=False)
-    nodal_cos_lat_grad_log_sp = to_nodal(cos_lat_grad_log_sp)
-    nodal_u_dot_grad_log_sp = sum(
-        jax.tree_util.tree_map(
-            lambda x, y: x * y * sec2_lat(),
-            nodal_cos_lat_u,
-            nodal_cos_lat_grad_log_sp,
-        ))
-    f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp)
-    f_full = cumulative_sigma_integral(nodal_divergence +
-                                       nodal_u_dot_grad_log_sp)
-    sum_𝜎 = np.cumsum(g.layer_thickness)[:, np.newaxis, np.newaxis]
-    sigma_dot_explicit = jax.lax.slice_in_dim(
-        sum_𝜎 * jax.lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
-    sigma_dot_full = jax.lax.slice_in_dim(
-        sum_𝜎 * jax.lax.slice_in_dim(f_full, -1, None) - f_full, 0, -1)
-    return DiagnosticState(
-        vorticity=nodal_vorticity,
-        divergence=nodal_divergence,
-        temperature_variation=nodal_temperature_variation,
-        cos_lat_u=nodal_cos_lat_u,
-        sigma_dot_explicit=sigma_dot_explicit,
-        sigma_dot_full=sigma_dot_full,
-        cos_lat_grad_log_sp=nodal_cos_lat_grad_log_sp,
-        u_dot_grad_log_sp=nodal_u_dot_grad_log_sp,
-        tracers=tracers,
-    )
-
-
 def get_sigma_ratios():
     alpha = np.diff(np.log(g.centers), append=0) / 2
     alpha[-1] = -np.log(g.centers[-1])
@@ -428,36 +389,65 @@ def _make_filter_fn(scaling):
 
 def explicit_terms(state):
     aux_state = compute_diagnostic_state(state)
+    nodal_vorticity = to_nodal(state.vorticity)
+    nodal_divergence = to_nodal(state.divergence)
+    nodal_temperature_variation = to_nodal(state.temperature_variation)
+    tracers = to_nodal(state.tracers)
+    nodal_cos_lat_u = jax.tree_util.tree_map(
+        to_nodal,
+        get_cos_lat_vector(state.vorticity, state.divergence, clip=False),
+    )
+    cos_lat_grad_log_sp = cos_lat_grad(state.log_surface_pressure, clip=False)
+    nodal_cos_lat_grad_log_sp = to_nodal(cos_lat_grad_log_sp)
+    nodal_u_dot_grad_log_sp = sum(
+        jax.tree_util.tree_map(
+            lambda x, y: x * y * sec2_lat(),
+            nodal_cos_lat_u,
+            nodal_cos_lat_grad_log_sp,
+        ))
+    f_explicit = cumulative_sigma_integral(nodal_u_dot_grad_log_sp)
+    f_full = cumulative_sigma_integral(nodal_divergence +
+                                       nodal_u_dot_grad_log_sp)
+    sum_𝜎 = np.cumsum(g.layer_thickness)[:, np.newaxis, np.newaxis]
+    sigma_dot_explicit = jax.lax.slice_in_dim(
+        sum_𝜎 * jax.lax.slice_in_dim(f_explicit, -1, None) - f_explicit, 0, -1)
+    sigma_dot_full = jax.lax.slice_in_dim(
+        sum_𝜎 * jax.lax.slice_in_dim(f_full, -1, None) - f_full, 0, -1)
+
+    vorticity = nodal_vorticity
+    divergence = nodal_divergence
+    temperature_variation = nodal_temperature_variation
+    cos_lat_u = nodal_cos_lat_u
+    cos_lat_grad_log_sp = nodal_cos_lat_grad_log_sp
+    u_dot_grad_log_sp = nodal_u_dot_grad_log_sp
+
     sec2_lat0 = sec2_lat()
-    u, v = aux_state.cos_lat_u
+    u, v = cos_lat_u
     _, coriolis_parameter = np.meshgrid(*nodal_axes(), indexing="ij")
-    total_vorticity = aux_state.vorticity + coriolis_parameter
+    total_vorticity = vorticity + coriolis_parameter
     nodal_vorticity_u = -v * total_vorticity * sec2_lat0
     nodal_vorticity_v = u * total_vorticity * sec2_lat0
-    d𝜎_dt = aux_state.sigma_dot_full
+    d𝜎_dt = sigma_dot_full
     sigma_dot_u = -centered_vertical_advection(d𝜎_dt, u)
     sigma_dot_v = -centered_vertical_advection(d𝜎_dt, v)
-    rt = ideal_gas_constant * aux_state.temperature_variation
-    grad_log_ps_u, grad_log_ps_v = aux_state.cos_lat_grad_log_sp
+    rt = ideal_gas_constant * temperature_variation
+    grad_log_ps_u, grad_log_ps_v = cos_lat_grad_log_sp
     vertical_term_u = (sigma_dot_u + rt * grad_log_ps_u) * sec2_lat0
     vertical_term_v = (sigma_dot_v + rt * grad_log_ps_v) * sec2_lat0
     combined_u = to_modal(nodal_vorticity_u + vertical_term_u)
     combined_v = to_modal(nodal_vorticity_v + vertical_term_v)
     vorticity_tendency = -curl_cos_lat((combined_u, combined_v), clip=False)
     divergence_dot = -div_cos_lat((combined_u, combined_v), clip=False)
-    nodal_cos_lat_u2 = jnp.stack(aux_state.cos_lat_u)**2
+    nodal_cos_lat_u2 = jnp.stack(cos_lat_u)**2
     kinetic = nodal_cos_lat_u2.sum(0) * sec2_lat() / 2
     kinetic_energy_tendency = -laplacian(to_modal(kinetic))
     orography_tendency = -gravity_acceleration * laplacian(g.orography)
     horizontal_tendency_fn = functools.partial(horizontal_scalar_advection,
                                                aux_state=aux_state)
     dT_dt_horizontal_nodal, dT_dt_horizontal_modal = horizontal_tendency_fn(
-        aux_state.temperature_variation)
+        temperature_variation)
     tracers_horizontal_nodal_and_modal = jax.tree_util.tree_map(
-        horizontal_tendency_fn, aux_state.tracers)
-    sigma_dot_explicit = aux_state.sigma_dot_explicit
-    sigma_dot_full = aux_state.sigma_dot_full
-    temperature_variation = aux_state.temperature_variation
+        horizontal_tendency_fn, tracers)
     tendency = centered_vertical_advection(sigma_dot_full,
                                            temperature_variation)
     if np.unique(g.reference_temperature[..., np.newaxis,
@@ -466,21 +456,19 @@ def explicit_terms(state):
             sigma_dot_explicit, g.reference_temperature[..., np.newaxis,
                                                         np.newaxis])
     dT_dt_vertical = tendency
-    g_explicit = aux_state.u_dot_grad_log_sp
-    g_full = g_explicit + aux_state.divergence
+    g_explicit = u_dot_grad_log_sp
+    g_full = g_explicit + divergence
     mean_t_part = _t_omega_over_sigma_sp(
         g.reference_temperature[..., np.newaxis, np.newaxis], g_explicit,
-        aux_state.u_dot_grad_log_sp)
-    variation_t_part = _t_omega_over_sigma_sp(aux_state.temperature_variation,
-                                              g_full,
-                                              aux_state.u_dot_grad_log_sp)
+        u_dot_grad_log_sp)
+    variation_t_part = _t_omega_over_sigma_sp(temperature_variation, g_full,
+                                              u_dot_grad_log_sp)
     dT_dt_adiabatic = kappa * (mean_t_part + variation_t_part)
-    log_sp_tendency = -sigma_integral(aux_state.u_dot_grad_log_sp)
-    sigma_dot_full = aux_state.sigma_dot_full
+    log_sp_tendency = -sigma_integral(u_dot_grad_log_sp)
     vertical_tendency_fn = functools.partial(centered_vertical_advection,
                                              sigma_dot_full)
     tracers_vertical_nodal = jax.tree_util.tree_map(vertical_tendency_fn,
-                                                    aux_state.tracers)
+                                                    tracers)
     to_modal_fn = to_modal
     divergence_tendency = (divergence_dot + kinetic_energy_tendency +
                            orography_tendency)

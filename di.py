@@ -181,21 +181,16 @@ def sec2_lat():
     return 1 / (1 - sin_lat**2)
 
 
-def laplacian_eigenvalues():
-    l = np.arange(g.total_wavenumbers)
-    return -l * (l + 1)
-
-
 def laplacian(x):
-    return x * laplacian_eigenvalues()
+    l = np.arange(g.total_wavenumbers)
+    return x * (-l) * (l + 1)
 
 
 def inverse_laplacian(x):
     with np.errstate(divide="ignore", invalid="ignore"):
-        inverse_eigenvalues = 1 / laplacian_eigenvalues()
+        l = np.arange(g.total_wavenumbers)
+        inverse_eigenvalues = 1 / ((-l) * (l + 1))
     inverse_eigenvalues[0] = 0
-    inverse_eigenvalues[g.total_wavenumbers:] = 0
-    assert not np.isnan(inverse_eigenvalues).any()
     return x * inverse_eigenvalues
 
 
@@ -527,7 +522,8 @@ def implicit_terms(state):
 
 def implicit_inverse(state, dt):
     eye = np.eye(g.layers)[np.newaxis]
-    lam = laplacian_eigenvalues()
+    l = np.arange(g.total_wavenumbers)
+    lam = -l * (l + 1)
     geo = get_geopotential_weights()
     r = ideal_gas_constant
     h = get_temperature_implicit_weights()

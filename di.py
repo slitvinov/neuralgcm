@@ -393,7 +393,7 @@ def explicit_terms(state):
     vort_tendency = -curl_cos_lat((u_mod, v_mod), clip=False)
     div_tendency = -div_cos_lat((u_mod, v_mod), clip=False)
 
-    ke = jnp.stack(u_coslat)**2
+    ke = jnp.stack((u, v))**2
     ke = ke.sum(0) * sec2 / 2
     ke_tendency = -laplacian(to_modal(ke))
     oro_tendency = -gravity_acceleration * laplacian(g.orography)

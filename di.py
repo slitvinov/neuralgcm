@@ -190,12 +190,6 @@ def laplacian(x):
     return x * laplacian_eigenvalues()
 
 
-def inverse_laplacian(x):
-    l = np.arange(1, g.total_wavenumbers)
-    inverse_eigenvalues = np.zeros(g.total_wavenumbers)
-    inverse_eigenvalues[1:] = - 1 / (l * (l + 1))
-    return x * inverse_eigenvalues
-
 def derivative_recurrence_weights():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")
     mask = abs(m) <= l
@@ -363,8 +357,11 @@ def explicit_terms(state):
     div = to_nodal(state.divergence)
     temp = to_nodal(state.temperature_variation)
     tracers = to_nodal(state.tracers)
-    stream_function = inverse_laplacian(state.vorticity)
-    velocity_potential = inverse_laplacian(state.divergence)
+    l = np.arange(1, g.total_wavenumbers)
+    inverse_eigenvalues = np.zeros(g.total_wavenumbers)
+    inverse_eigenvalues[1:] = -1 / (l * (l + 1))
+    stream_function = state.vorticity * inverse_eigenvalues
+    velocity_potential = state.divergence * inverse_eigenvalues
     cos_lat_vector = jax.tree_util.tree_map(
         lambda x, y: x + y, cos_lat_grad(velocity_potential),
         k_cross(cos_lat_grad(stream_function)))

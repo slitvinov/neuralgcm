@@ -6,10 +6,9 @@ import numpy as np
 
 
 def explicit_terms(state):
-    with np.errstate(divide="ignore", invalid="ignore"):
-        inverse_eigenvalues = 1 / di.laplacian_eigenvalues()
-    inverse_eigenvalues[0] = 0
-    inverse_eigenvalues[di.g.total_wavenumbers:] = 0
+    l = np.arange(1, g.total_wavenumbers)
+    inverse_eigenvalues = np.zeros(g.total_wavenumbers)
+    inverse_eigenvalues[1:] = -1 / (l * (l + 1))
     stream_function = state.vorticity * inverse_eigenvalues
     velocity_potential = state.divergence * inverse_eigenvalues
     cos_lat_vector = jax.tree_util.tree_map(

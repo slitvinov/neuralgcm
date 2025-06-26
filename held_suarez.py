@@ -24,10 +24,7 @@ def explicit_terms(state):
     kv = kv_coeff[:, np.newaxis, np.newaxis]
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
     cos = np.sqrt(1 - sin_lat**2)
-    nodal_velocity_tendency = jax.tree.map(
-        lambda x: -kv * x / cos**2,
-        (u0, u1),
-    )
+    nodal_velocity_tendency = -kv * u0 / cos**2, -kv * u1 / cos**2
     nodal_temperature = (
         di.g.reference_temperature[:, np.newaxis, np.newaxis] +
         temperature_variation)

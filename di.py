@@ -367,8 +367,8 @@ def explicit_terms(state):
     temp = to_nodal(state.temperature_variation)
     tracers = to_nodal(state.tracers)
 
-    stream_function = inverse_laplacian(vorticity)
-    velocity_potential = inverse_laplacian(divergence)
+    stream_function = inverse_laplacian(state.vorticity)
+    velocity_potential = inverse_laplacian(state.divergence)
     cos_lat_vector = jax.tree_util.tree_map(
         lambda x, y: x + y, cos_lat_grad(velocity_potential),
         k_cross(cos_lat_grad(stream_function)))

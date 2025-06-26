@@ -115,7 +115,7 @@ def _slice_shape_along_axis(x):
 
 
 def cumulative_sigma_integral(x):
-    return jnp.lax.cumsum(x * g.layer_thickness[:, None, None],
+    return jax.lax.cumsum(x * g.layer_thickness[:, None, None],
                           axis=0,
                           precision=jax.lax.Precision.HIGHEST)
 

@@ -361,12 +361,13 @@ def explicit_terms(state):
     c11 = cos_lat_d_dlat(stream_function)
     v0 = c00 - c11
     v1 = c01 + c10
-    u_coslat = jax.tree_util.tree_map(to_nodal, (v0, v1))
+    u = inverse_transform(v0)
+    v = inverse_transform(v1)
     grad_u = inverse_transform(
         real_basis_derivative(state.log_surface_pressure))
     grad_v = inverse_transform(cos_lat_d_dlat(state.log_surface_pressure))
     u_dot_grad = sum(
-        jax.tree_util.tree_map(lambda u, g: u * g * sec2_lat(), u_coslat,
+        jax.tree_util.tree_map(lambda u, g: u * g * sec2_lat(), (u, v),
                                (grad_u, grad_v)))
     f_exp = cumulative_sigma_integral(u_dot_grad)
     f_full = cumulative_sigma_integral(div + u_dot_grad)
@@ -376,7 +377,6 @@ def explicit_terms(state):
     sigma_exp = sigma_dot(f_exp)
     sigma_full = sigma_dot(f_full)
 
-    u, v = u_coslat
     sec2 = sec2_lat()
     _, coriolis = np.meshgrid(*nodal_axes(), indexing="ij")
     total_vort = vort + coriolis

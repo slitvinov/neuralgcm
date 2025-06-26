@@ -17,8 +17,9 @@ def explicit_terms(state):
         lambda x: -kv * x / di.cos_lat()**2,
         cos_lat_u,
     )
-    nodal_temperature = (ref_temps[:, np.newaxis, np.newaxis] +
-                         temperature_variation)
+    nodal_temperature = (
+        di.g.reference_temperature[:, np.newaxis, np.newaxis] +
+        temperature_variation)
     nodal_log_surface_pressure = di.inverse_transform(
         state.log_surface_pressure)
     nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
@@ -59,7 +60,6 @@ di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 
-tref = 288.0
 lon, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
 lat = np.arcsin(sin_lat)
 p0 = 2.9954997684550640e+19
@@ -89,8 +89,7 @@ state = di.State(
     temperature_variation=jnp.zeros_like(modal_vorticity),
     log_surface_pressure=(di.transform(jnp.log(nodal_surface_pressure))),
 )
-ref_temps = np.full((di.g.layers, ), tref)
-di.g.reference_temperature = ref_temps
+di.g.reference_temperature = np.full((di.g.layers, ), 288)
 di.g.orography = di.transform(np.zeros_like(lat))
 dt = 8.7504000000000012e-02
 sigma_b = 0.7

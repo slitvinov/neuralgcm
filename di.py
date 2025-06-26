@@ -399,7 +399,7 @@ def explicit_terms(state):
     oro_tendency = -gravity_acceleration * laplacian(g.orography)
 
     h_adv = functools.partial(horizontal_scalar_advection,
-                              cos_lat_u=u_coslat,
+                              cos_lat_u=(u, v),
                               divergence=div)
     temp_h_nodal, temp_h_modal = h_adv(temp)
     tracers_h = jax.tree_util.tree_map(h_adv, tracers)

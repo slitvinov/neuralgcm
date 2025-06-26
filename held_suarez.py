@@ -57,7 +57,9 @@ di.g.layer_thickness = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 
-lon, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
+longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
+sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
+lon, sin_lat = np.meshgrid((longitude, sin_latitude), indexing="ij")
 lat = np.arcsin(sin_lat)
 p0 = 2.9954997684550640e+19
 p1 = 1.4977498842275320e+18
@@ -98,8 +100,6 @@ ks = 1.9840362853253687e-02
 tau = 0.0087504
 order = 1.5
 cutoff = 0.8
-
-lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(
     lambda x: di.explicit_terms(x) + explicit_terms(x), di.implicit_terms,
     di.implicit_inverse, dt)

@@ -43,6 +43,7 @@ def explicit_terms(state):
         log_surface_pressure=log_surface_pressure_tendency,
     )
 
+
 di.g.longitude_wavenumbers = 22
 di.g.total_wavenumbers = 23
 di.g.longitude_nodes = 64
@@ -100,9 +101,9 @@ order = 1.5
 cutoff = 0.8
 
 lat = np.arcsin(sin_lat)
-step_fn = di.imex_runge_kutta(lambda x : di.explicit_terms(x) + explicit_terms(x),
-                              di.implicit_terms,
-                              di.implicit_inverse, dt)
+step_fn = di.imex_runge_kutta(
+    lambda x: di.explicit_terms(x) + explicit_terms(x), di.implicit_terms,
+    di.implicit_inverse, dt)
 
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()

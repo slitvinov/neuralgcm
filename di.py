@@ -300,19 +300,6 @@ class State:
     tracers: Any = dataclasses.field(default_factory=dict)
 
 
-@tree_math.struct
-class DiagnosticState:
-    vorticity: Any
-    divergence: Any
-    temperature_variation: Any
-    cos_lat_u: Any
-    sigma_dot_explicit: Any
-    sigma_dot_full: Any
-    cos_lat_grad_log_sp: Any
-    u_dot_grad_log_sp: Any
-    tracers: Any
-
-
 def get_sigma_ratios():
     alpha = np.diff(np.log(g.centers), append=0) / 2
     alpha[-1] = -np.log(g.centers[-1])

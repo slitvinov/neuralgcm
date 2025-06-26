@@ -348,7 +348,7 @@ def explicit_terms(state):
     vort = inverse_transform(state.vorticity)
     div = inverse_transform(state.divergence)
     temp = inverse_transform(state.temperature_variation)
-    tracers = inverse_transform(state.tracers)
+    tracers = to_nodal(state.tracers)
     l = np.arange(1, g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))

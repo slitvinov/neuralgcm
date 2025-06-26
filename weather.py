@@ -177,13 +177,8 @@ tracers = di.to_modal({
     "specific_cloud_ice_water_content":
     M["specific_cloud_ice_water_content"],
 })
-raw_init_state = di.State(
-    vorticity=vorticity,
-    divergence=divergence,
-    temperature_variation=temperature_variation,
-    log_surface_pressure=log_sp,
-    tracers=tracers,
-)
+raw_init_state = di.State(vorticity, divergence, temperature_variation, log_sp,
+                          tracers)
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
 orography = di.to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)

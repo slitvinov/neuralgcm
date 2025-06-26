@@ -433,14 +433,13 @@ def explicit_terms(state):
         lambda x: centered_vertical_advection(sigma_full, x), tracers)
 
     return clip_wavenumbers(
-        State(vorticity=vort_tendency,
-              divergence=div_tendency + ke_tendency + oro_tendency,
-              temperature_variation=to_modal(temp_h_nodal + temp_vert +
-                                             temp_adiab) + temp_h_modal,
-              log_surface_pressure=to_modal(logsp_tendency),
-              tracers=jax.tree_util.tree_map(
-                  lambda vert, pair: to_modal(vert + pair[0]) + pair[1],
-                  tracers_v, tracers_h)))
+        State(
+            vort_tendency, div_tendency + ke_tendency + oro_tendency,
+            to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal,
+            to_modal(logsp_tendency),
+            jax.tree_util.tree_map(
+                lambda vert, pair: to_modal(vert + pair[0]) + pair[1],
+                tracers_v, tracers_h)))
 
 
 def implicit_terms(state):
@@ -456,13 +455,9 @@ def implicit_terms(state):
     log_surface_pressure_implicit = -_vertical_matvec(
         g.layer_thickness[np.newaxis], state.divergence)
     tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, state.tracers)
-    return State(
-        vorticity=vorticity_implicit,
-        divergence=divergence_implicit,
-        temperature_variation=temperature_variation_implicit,
-        log_surface_pressure=log_surface_pressure_implicit,
-        tracers=tracers_implicit,
-    )
+    return State(vorticity_implicit, divergence_implicit,
+                 temperature_variation_implicit, log_surface_pressure_implicit,
+                 tracers_implicit)
 
 
 def implicit_inverse(state, dt):
@@ -516,10 +511,6 @@ def implicit_inverse(state, dt):
         matvec(inverse[:, logp, div], state.divergence) +
         matvec(inverse[:, logp, temp], state.temperature_variation) +
         matvec(inverse[:, logp, logp], state.log_surface_pressure))
-    return State(
-        state.vorticity,
-        inverted_divergence,
-        inverted_temperature_variation,
-        inverted_log_surface_pressure,
-        state.tracers,
-    )
+    return State(state.vorticity, inverted_divergence,
+                 inverted_temperature_variation, inverted_log_surface_pressure,
+                 state.tracers)

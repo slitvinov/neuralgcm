@@ -72,12 +72,9 @@ perturbation = (jnp.exp(-((lon - lon0)**2) / (2 * stddev**2)) *
                 jnp.exp(-((lat - lat0)**2) /
                         (2 * stddev**2)) * jnp.sin(k * (lon - lon0)))
 nodal_surface_pressure = surface_pressure + p1 * perturbation
-state = di.State(
-    vorticity=modal_vorticity,
-    divergence=jnp.zeros_like(modal_vorticity),
-    temperature_variation=jnp.zeros_like(modal_vorticity),
-    log_surface_pressure=(di.transform(jnp.log(nodal_surface_pressure))),
-)
+state = di.State(modal_vorticity, jnp.zeros_like(modal_vorticity),
+                 jnp.zeros_like(modal_vorticity),
+                 di.transform(jnp.log(nodal_surface_pressure)))
 di.g.reference_temperature = np.full((di.g.layers, ), 288)
 di.g.orography = di.transform(np.zeros_like(lat))
 dt = 8.7504000000000012e-02

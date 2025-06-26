@@ -132,11 +132,11 @@ temperature_variation = np.stack(
     [get_temperature_variation(lat, sigma) for sigma in di.g.centers])
 log_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
 state = di.State(
-    vorticity=di.transform(jnp.asarray(vorticity)) +
+    di.transform(jnp.asarray(vorticity)) +
     di.transform(jnp.asarray(vorticity_perturbation)),
-    divergence=di.transform(jnp.asarray(divergence_perturbation)),
-    temperature_variation=di.transform(jnp.asarray(temperature_variation)),
-    log_surface_pressure=di.transform(jnp.asarray(log_surface_pressure)))
+    di.transform(jnp.asarray(divergence_perturbation)),
+    di.transform(jnp.asarray(temperature_variation)),
+    di.transform(jnp.asarray(log_surface_pressure)))
 final, _ = jax.lax.scan(lambda x, _: (filter_fn(step_fn(x)), None),
                         state,
                         xs=None,

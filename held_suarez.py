@@ -106,7 +106,6 @@ tau = 0.0087504
 order = 1.5
 cutoff = 0.8
 
-_, sin_lat = np.meshgrid(*di.nodal_axes(), indexing="ij")
 lat = np.arcsin(sin_lat)
 step_fn = di.imex_runge_kutta(explicit_fn, di.implicit_terms,
                               di.implicit_inverse, dt)

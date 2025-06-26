@@ -11,10 +11,10 @@ def explicit_terms(state):
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
     stream_function = state.vorticity * inverse_eigenvalues
     velocity_potential = state.divergence * inverse_eigenvalues
-    c00 = real_basis_derivative(velocity_potential)
-    c01 = cos_lat_d_dlat(velocity_potential)
-    c10 = real_basis_derivative(stream_function)
-    c11 = cos_lat_d_dlat(stream_function)
+    c00 = di.real_basis_derivative(velocity_potential)
+    c01 = di.cos_lat_d_dlat(velocity_potential)
+    c10 = di.real_basis_derivative(stream_function)
+    c11 = di.cos_lat_d_dlat(stream_function)
     v0 = c00 - c11
     v1 = c01 + c10
     cos_lat_u = jax.tree_util.tree_map(di.to_nodal, (v0, v1))

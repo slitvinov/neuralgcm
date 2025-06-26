@@ -6,8 +6,12 @@ import numpy as np
 
 
 def explicit_terms(state):
-    stream_function = di.inverse_laplacian(state.vorticity)
-    velocity_potential = di.inverse_laplacian(state.divergence)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        inverse_eigenvalues = 1 / di.laplacian_eigenvalues()
+    inverse_eigenvalues[0] = 0
+    inverse_eigenvalues[di.g.total_wavenumbers:] = 0
+    stream_function = state.vorticity * inverse_eigenvalues
+    velocity_potential = state.divergence * inverse_eigenvalues
     cos_lat_vector = jax.tree_util.tree_map(
         lambda x, y: x + y, di.cos_lat_grad(velocity_potential),
         di.k_cross(di.cos_lat_grad(stream_function)))

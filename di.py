@@ -176,11 +176,6 @@ def cos_lat():
     return np.sqrt(1 - sin_lat**2)
 
 
-def sec2_lat():
-    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
-    return 1 / (1 - sin_lat**2)
-
-
 def laplacian_eigenvalues():
     l = np.arange(g.total_wavenumbers)
     return -l * (l + 1)
@@ -332,8 +327,10 @@ def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
 def horizontal_scalar_advection(scalar, cos_lat_u, divergence):
     u, v = cos_lat_u
     nodal_terms = scalar * divergence
-    m_component = to_modal(u * scalar * sec2_lat())
-    n_component = to_modal(v * scalar * sec2_lat())
+    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
+    sec2 = 1 / (1 - sin_lat**2)
+    m_component = to_modal(u * scalar * sec2)
+    n_component = to_modal(v * scalar * sec2)
     modal_terms = -div_cos_lat((m_component, n_component), clip=False)
     return nodal_terms, modal_terms
 
@@ -366,8 +363,10 @@ def explicit_terms(state):
     grad_u = inverse_transform(
         real_basis_derivative(state.log_surface_pressure))
     grad_v = inverse_transform(cos_lat_d_dlat(state.log_surface_pressure))
+    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
+    sec2 = 1 / (1 - sin_lat**2)
     u_dot_grad = sum(
-        jax.tree_util.tree_map(lambda u, g: u * g * sec2_lat(), (u, v),
+        jax.tree_util.tree_map(lambda u, g: u * g * sec2, (u, v),
                                (grad_u, grad_v)))
     f_exp = cumulative_sigma_integral(u_dot_grad)
     f_full = cumulative_sigma_integral(div + u_dot_grad)
@@ -377,7 +376,6 @@ def explicit_terms(state):
     sigma_exp = sigma_dot(f_exp)
     sigma_full = sigma_dot(f_full)
 
-    sec2 = sec2_lat()
     _, coriolis = np.meshgrid(*nodal_axes(), indexing="ij")
     total_vort = vort + coriolis
     vort_u = -v * total_vort * sec2

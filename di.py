@@ -365,9 +365,7 @@ def explicit_terms(state):
     grad_v = inverse_transform(cos_lat_d_dlat(state.log_surface_pressure))
     sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
     sec2 = 1 / (1 - sin_lat**2)
-    u_dot_grad = sum(
-        jax.tree_util.tree_map(lambda u, g: u * g * sec2, (u, v),
-                               (grad_u, grad_v)))
+    u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
     f_exp = cumulative_sigma_integral(u_dot_grad)
     f_full = cumulative_sigma_integral(div + u_dot_grad)
     sum_sigma = np.cumsum(g.layer_thickness)[:, None, None]

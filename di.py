@@ -116,10 +116,9 @@ def _slice_shape_along_axis(x):
 
 def sigma_integral(x):
     x_axes = range(x.ndim)
-    d𝜎 = g.layer_thickness
-    d𝜎_axes = [x_axes[-3]]
-    xd𝜎 = einsum(x, x_axes, d𝜎, d𝜎_axes, x_axes)
-    return xd𝜎.sum(axis=-3, keepdims=True)
+    axes = [x_axes[-3]]
+    xds = einsum(x, x_axes, g.layer_thickness, axes, x_axes)
+    return xds.sum(axis=-3, keepdims=True)
 
 
 def centered_vertical_advection(w, x):

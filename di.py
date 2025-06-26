@@ -247,14 +247,6 @@ def curl_cos_lat(v, clip=True):
     return raw
 
 
-def get_cos_lat_vector(vorticity, divergence):
-    stream_function = inverse_laplacian(vorticity)
-    velocity_potential = inverse_laplacian(divergence)
-    return jax.tree_util.tree_map(lambda x, y: x + y,
-                                  cos_lat_grad(velocity_potential),
-                                  k_cross(cos_lat_grad(stream_function)))
-
-
 def imex_runge_kutta(exp, imp, inv, dt):
     F = tree_math.unwrap(exp)
     G = tree_math.unwrap(imp)
@@ -374,8 +366,13 @@ def explicit_terms(state):
     div = to_nodal(state.divergence)
     temp = to_nodal(state.temperature_variation)
     tracers = to_nodal(state.tracers)
-    u_coslat = jax.tree_util.tree_map(
-        to_nodal, get_cos_lat_vector(state.vorticity, state.divergence))
+
+    stream_function = inverse_laplacian(vorticity)
+    velocity_potential = inverse_laplacian(divergence)
+    cos_lat_vector = jax.tree_util.tree_map(
+        lambda x, y: x + y, cos_lat_grad(velocity_potential),
+        k_cross(cos_lat_grad(stream_function)))
+    u_coslat = jax.tree_util.tree_map(to_nodal, cos_lat_vector)
     grad_logsp = to_nodal(cos_lat_grad(state.log_surface_pressure))
 
     u_dot_grad = sum(

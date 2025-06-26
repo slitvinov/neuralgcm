@@ -115,7 +115,10 @@ def _slice_shape_along_axis(x):
 
 
 def cumulative_sigma_integral(x):
-    return jnp.cumsum(x * g.layer_thickness[:, None, None], axis=0)
+    return jnp.cumsum(x * g.layer_thickness[:, None, None],
+                      axis=0,
+                      precision=lax.Precision.HIGHEST)
+
 
 def sigma_integral(x):
     x_axes = range(x.ndim)

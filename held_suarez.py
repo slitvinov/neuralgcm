@@ -19,7 +19,7 @@ def explicit_terms(state):
     v1 = c01 + c10
     u0 = di.inverse_transform(v0)
     u1 = di.inverse_transform(v1)
-    temperature_variation = di.to_nodal(state.temperature_variation)
+    temperature_variation = di.inverse_transform(state.temperature_variation)
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))
     kv = kv_coeff[:, np.newaxis, np.newaxis]
     nodal_velocity_tendency = jax.tree.map(

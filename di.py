@@ -345,10 +345,10 @@ def _make_filter_fn(scaling):
 
 
 def explicit_terms(state):
-    vort = to_nodal(state.vorticity)
-    div = to_nodal(state.divergence)
-    temp = to_nodal(state.temperature_variation)
-    tracers = to_nodal(state.tracers)
+    vort = inverse_transform(state.vorticity)
+    div = inverse_transform(state.divergence)
+    temp = inverse_transform(state.temperature_variation)
+    tracers = inverse_transform(state.tracers)
     l = np.arange(1, g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
@@ -362,8 +362,9 @@ def explicit_terms(state):
     v0 = c00 - c11
     v1 = c01 + c10
     u_coslat = jax.tree_util.tree_map(to_nodal, (v0, v1))
-    grad_u = to_nodal(real_basis_derivative(state.log_surface_pressure))
-    grad_v = to_nodal(cos_lat_d_dlat(state.log_surface_pressure))
+    grad_u = inverse_transform(
+        real_basis_derivative(state.log_surface_pressure))
+    grad_v = inverse_transform(cos_lat_d_dlat(state.log_surface_pressure))
     u_dot_grad = sum(
         jax.tree_util.tree_map(lambda u, g: u * g * sec2_lat(), u_coslat,
                                (grad_u, grad_v)))

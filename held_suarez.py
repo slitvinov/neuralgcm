@@ -22,8 +22,10 @@ def explicit_terms(state):
     temperature_variation = di.inverse_transform(state.temperature_variation)
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))
     kv = kv_coeff[:, np.newaxis, np.newaxis]
+    sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
+    cos = np.sqrt(1 - sin_lat**2)
     nodal_velocity_tendency = jax.tree.map(
-        lambda x: -kv * x / di.cos_lat()**2,
+        lambda x: -kv * x / cos**2,
         (u0, u1),
     )
     nodal_temperature = (

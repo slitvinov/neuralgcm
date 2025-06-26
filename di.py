@@ -216,10 +216,6 @@ def sec_lat_d_dlat_cos2(x):
     return x_lm1 + x_lp1
 
 
-def cos_lat_grad(x):
-    return real_basis_derivative(x), cos_lat_d_dlat(x)
-
-
 def div_cos_lat(v, clip=True):
     raw = real_basis_derivative(v[0]) + sec_lat_d_dlat_cos2(v[1])
     if clip:
@@ -366,11 +362,11 @@ def explicit_terms(state):
     v0 = c00 - c11
     v1 = c01 + c10
     u_coslat = jax.tree_util.tree_map(to_nodal, (v0, v1))
-    grad_logsp = to_nodal(cos_lat_grad(state.log_surface_pressure))
-
+    grad_u = to_nodal(real_basis_derivative(state.log_surface_pressure))
+    grad_v = to_nodal(cos_lat_d_dlat(state.log_surface_pressure))
     u_dot_grad = sum(
         jax.tree_util.tree_map(lambda u, g: u * g * sec2_lat(), u_coslat,
-                               grad_logsp))
+                               (grad_u, grad_v)))
     f_exp = cumulative_sigma_integral(u_dot_grad)
     f_full = cumulative_sigma_integral(div + u_dot_grad)
     sum_sigma = np.cumsum(g.layer_thickness)[:, None, None]
@@ -388,7 +384,6 @@ def explicit_terms(state):
     sigma_u = -centered_vertical_advection(sigma_full, u)
     sigma_v = -centered_vertical_advection(sigma_full, v)
     rt = ideal_gas_constant * temp
-    grad_u, grad_v = grad_logsp
     vert_u = (sigma_u + rt * grad_u) * sec2
     vert_v = (sigma_v + rt * grad_v) * sec2
     u_mod = to_modal(vort_u + vert_u)

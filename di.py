@@ -360,7 +360,7 @@ def explicit_terms(state):
     sigma_full = sigma_dot(f_full)
     longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
     sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
-    _, coriolis = np.meshgrid((longitude, sin_latitude), indexing="ij")
+    _, coriolis = np.meshgrid(longitude, sin_latitude, indexing="ij")
     total_vort = vort + coriolis
     vort_u = -v * total_vort * sec2
     vort_v = u * total_vort * sec2

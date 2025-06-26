@@ -30,12 +30,11 @@ def explicit_terms(state):
     Teq = jnp.maximum(minT, temperature)
     cutoff = np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b))
     kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
-    nodal_temperature_tendency = -kt * (nodal_temperature - Teq)
     velocity_tendency = di.transform(jnp.asarray(nodal_velocity_tendency))
     return di.State(
         vorticity=di.curl_cos_lat(velocity_tendency),
         divergence=di.div_cos_lat(velocity_tendency),
-        temperature_variation=di.transform(nodal_temperature_tendency),
+        temperature_variation=di.transform(-kt * (nodal_temperature - Teq)),
         log_surface_pressure=jnp.zeros_like(state.log_surface_pressure))
 
 

@@ -6,7 +6,7 @@ import numpy as np
 
 
 def explicit_terms(state):
-    l = np.arange(1, g.total_wavenumbers)
+    l = np.arange(1, di.g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(di.g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
     stream_function = state.vorticity * inverse_eigenvalues

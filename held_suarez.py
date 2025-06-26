@@ -4,12 +4,13 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def explicit_terms(state):
     stream_function = di.inverse_laplacian(state.vorticity)
     velocity_potential = di.inverse_laplacian(state.divergence)
-    cos_lat_vector = jax.tree_util.tree_map(lambda x, y: x + y,
-                                            di.cos_lat_grad(velocity_potential),
-                                            di.k_cross(di.cos_lat_grad(stream_function)))
+    cos_lat_vector = jax.tree_util.tree_map(
+        lambda x, y: x + y, di.cos_lat_grad(velocity_potential),
+        di.k_cross(di.cos_lat_grad(stream_function)))
     cos_lat_u = jax.tree_util.tree_map(di.to_nodal, cos_lat_vector)
     temperature_variation = di.to_nodal(state.temperature_variation)
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))

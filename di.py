@@ -362,9 +362,10 @@ def explicit_terms(state):
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
     stream_function = state.vorticity * inverse_eigenvalues
     velocity_potential = state.divergence * inverse_eigenvalues
-    cos_lat_vector = jax.tree_util.tree_map(
-        lambda x, y: x + y, cos_lat_grad(velocity_potential),
-        k_cross(cos_lat_grad(stream_function)))
+    cos_lat_grad0 = cos_lat_grad(velocity_potential)
+    cos_lat_grad1 = cos_lat_grad(stream_function)
+    cos_lat_vector = jax.tree_util.tree_map(lambda x, y: x + y, cos_lat_grad0,
+                                            k_cross(cos_lat_grad1))
     u_coslat = jax.tree_util.tree_map(to_nodal, cos_lat_vector)
     grad_logsp = to_nodal(cos_lat_grad(state.log_surface_pressure))
 

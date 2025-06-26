@@ -191,13 +191,10 @@ def laplacian(x):
 
 
 def inverse_laplacian(x):
-    with np.errstate(divide="ignore", invalid="ignore"):
-        inverse_eigenvalues = 1 / laplacian_eigenvalues()
-    inverse_eigenvalues[0] = 0
-    inverse_eigenvalues[g.total_wavenumbers:] = 0
-    assert not np.isnan(inverse_eigenvalues).any()
+    l = np.arange(1, g.total_wavenumbers)
+    inverse_eigenvalues = np.zeros(g.total_wavenumbers)
+    inverse_eigenvalues[1:] = - 1 / (l * (l + 1))
     return x * inverse_eigenvalues
-
 
 def derivative_recurrence_weights():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")

@@ -114,10 +114,6 @@ def _slice_shape_along_axis(x):
     return tuple(x_shape)
 
 
-def cumulative_sigma_integral(x):
-    return jax.lax.cumsum(x * g.layer_thickness[:, None, None])
-
-
 def sigma_integral(x):
     x_axes = range(x.ndim)
     d𝜎 = g.layer_thickness
@@ -309,7 +305,7 @@ def matvec(a, x):
 
 
 def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
-    f = cumulative_sigma_integral(g_term)
+    f = jax.lax.cumsum(g_term * g.layer_thickness[:, None, None])
     alpha = get_sigma_ratios()
     alpha = alpha[:, np.newaxis, np.newaxis]
     del_𝜎 = g.layer_thickness[:, np.newaxis, np.newaxis]
@@ -360,8 +356,9 @@ def explicit_terms(state):
     sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
     sec2 = 1 / (1 - sin_lat**2)
     u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
-    f_exp = cumulative_sigma_integral(u_dot_grad)
-    f_full = cumulative_sigma_integral(div + u_dot_grad)
+    f_exp = jax.lax.cumsum(u_dot_grad * g.layer_thickness[:, None, None])
+    f_full = jax.lax.cumsum(
+        (div + u_dot_grad) * g.layer_thickness[:, None, None])
     sum_sigma = np.cumsum(g.layer_thickness)[:, None, None]
     sigma_dot = lambda f: jax.lax.slice_in_dim(
         sum_sigma * jax.lax.slice_in_dim(f, -1, None) - f, 0, -1)

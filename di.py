@@ -115,12 +115,12 @@ def _slice_shape_along_axis(x):
 
 
 def cumulative_sigma_integral(x):
-    xd𝜎 = einsum(x, [0, 1, 2], g.layer_thickness, [0], [0, 1, 2])
+    xds = einsum(x, [0, 1, 2], g.layer_thickness, [0], [0, 1, 2])
     i = jnp.arange(g.layers)[:, jnp.newaxis]
     j = jnp.arange(g.layers)[jnp.newaxis, :]
     w = jnp.less_equal(i, j).astype(np.float32)
     return jnp.einsum(w, [0, 3],
-                      xd𝜎, [0, 1, 2], [3, 1, 2],
+                      xds, [0, 1, 2], [3, 1, 2],
                       precision=("bfloat16", "highest"))
 
 

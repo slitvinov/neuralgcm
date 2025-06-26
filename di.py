@@ -149,12 +149,6 @@ def real_basis_derivative(u):
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
-def nodal_axes():
-    longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
-    sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
-    return longitude, sin_latitude
-
-
 def modal_axes():
     m_pos = np.arange(1, g.longitude_wavenumbers)
     m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
@@ -364,8 +358,9 @@ def explicit_terms(state):
         sum_sigma * jax.lax.slice_in_dim(f, -1, None) - f, 0, -1)
     sigma_exp = sigma_dot(f_exp)
     sigma_full = sigma_dot(f_full)
-
-    _, coriolis = np.meshgrid(*nodal_axes(), indexing="ij")
+    longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
+    sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
+    _, coriolis = np.meshgrid((longitude, sin_latitude), indexing="ij")
     total_vort = vort + coriolis
     vort_u = -v * total_vort * sec2
     vort_v = u * total_vort * sec2

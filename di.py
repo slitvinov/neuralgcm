@@ -220,10 +220,6 @@ def cos_lat_grad(x):
     return real_basis_derivative(x), cos_lat_d_dlat(x)
 
 
-def k_cross(v):
-    return -v[1], v[0]
-
-
 def div_cos_lat(v, clip=True):
     raw = real_basis_derivative(v[0]) + sec_lat_d_dlat_cos2(v[1])
     if clip:
@@ -367,9 +363,9 @@ def explicit_terms(state):
     c01 = cos_lat_d_dlat(velocity_potential)
     c10 = real_basis_derivative(stream_function)
     c11 = cos_lat_d_dlat(stream_function)
-    cos_lat_vector = jax.tree_util.tree_map(lambda x, y: x + y, (c00, c01),
-                                            (-c11, c10))
-    u_coslat = jax.tree_util.tree_map(to_nodal, cos_lat_vector)
+    v0 = c00 - c11
+    v1 = c01 + c10
+    u_coslat = jax.tree_util.tree_map(to_nodal, (v0, v1))
     grad_logsp = to_nodal(cos_lat_grad(state.log_surface_pressure))
 
     u_dot_grad = sum(

@@ -11,11 +11,13 @@ def explicit_terms(state):
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
     stream_function = state.vorticity * inverse_eigenvalues
     velocity_potential = state.divergence * inverse_eigenvalues
-    cos_lat_grad0 = di.cos_lat_grad(velocity_potential)
-    cos_lat_grad1 = di.cos_lat_grad(stream_function)
-    cos_lat_vector = jax.tree_util.tree_map(lambda x, y: x + y, cos_lat_grad0,
-                                            di.k_cross(cos_lat_grad1))
-    cos_lat_u = jax.tree_util.tree_map(di.to_nodal, cos_lat_vector)
+    c00 = real_basis_derivative(velocity_potential)
+    c01 = cos_lat_d_dlat(velocity_potential)
+    c10 = real_basis_derivative(stream_function)
+    c11 = cos_lat_d_dlat(stream_function)
+    v0 = c00 - c11
+    v1 = c01 + c10
+    cos_lat_u = jax.tree_util.tree_map(di.to_nodal, (v0, v1))
     temperature_variation = di.to_nodal(state.temperature_variation)
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))
     kv = kv_coeff[:, np.newaxis, np.newaxis]

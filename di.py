@@ -71,11 +71,6 @@ def basis():
     p = np.repeat(p, 2, axis=0)
     return f, p[1:], w
 
-
-def clip(x):
-    mask = jnp.ones(g.total_wavenumbers, x.dtype).at[-1:].set(0)
-    return x * mask
-
 def pad_in_dim(x, pad_width, axis):
     padding_value = jnp.array(0, dtype=x.dtype)
     padding_config = [(0, 0, 0)] * x.ndim
@@ -351,14 +346,14 @@ def explicit_terms(s):
     logsp_tendency = -sigma_integral(u_dot_grad)
     tracers_v = jax.tree_util.tree_map(
         lambda x: centered_vertical_advection(sigma_full, x), tracers)
-
+    mask = jnp.ones(g.total_wavenumbers).at[-1:].set(0)
     return State(
-        clip(vort_tendency),
-        clip(div_tendency + ke_tendency + oro_tendency),
-        clip(to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal),
-        clip(to_modal(logsp_tendency)),
+        vort_tendency * mask,
+        (div_tendency + ke_tendency + oro_tendency) * mask,
+        (to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) * mask,
+        to_modal(logsp_tendency) * mask,
         jax.tree_util.tree_map(
-            lambda vert, pair: clip(to_modal(vert + pair[0]) + pair[1]),
+            lambda vert, pair: (to_modal(vert + pair[0]) + pair[1]) * mask,
             tracers_v, tracers_h))
 
 

@@ -154,11 +154,6 @@ def modal_axes():
     return np.concatenate([[0], m_pos_neg]), np.arange(g.total_wavenumbers)
 
 
-def cos_lat():
-    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
-    return np.sqrt(1 - sin_lat**2)
-
-
 def laplacian_eigenvalues():
     l = np.arange(g.total_wavenumbers)
     return -l * (l + 1)
@@ -167,6 +162,7 @@ def laplacian_eigenvalues():
 def laplacian(x):
     l = np.arange(g.total_wavenumbers)
     return -l * (l + 1) * x
+
 
 def derivative_recurrence_weights():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")

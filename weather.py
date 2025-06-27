@@ -65,10 +65,15 @@ def accumulate_repeated(step_fn, weights, state):
     return averaged
 
 
+def cos_lat():
+    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
+    return np.sqrt(1 - sin_lat**2)
+
+
 @jax.jit
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
-    u_over_cos_lat = di.to_modal(u_nodal / di.cos_lat())
-    v_over_cos_lat = di.to_modal(v_nodal / di.cos_lat())
+    u_over_cos_lat = di.to_modal(u_nodal / cos_lat())
+    v_over_cos_lat = di.to_modal(v_nodal / cos_lat())
     vorticity = di.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
     divergence = di.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
     return vorticity, divergence

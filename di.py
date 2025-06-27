@@ -342,7 +342,7 @@ def explicit_terms(state):
     u_mod = to_modal(vort_u + vert_u)
     v_mod = to_modal(vort_v + vert_v)
 
-    vort_tendency = -curl_cos_lat((u_mod, v_mod), clip=False)
+    vort_tendency = - real_basis_derivative(v_mod) + sec_lat_d_dlat_cos2(u_mod)
     div_tendency = -div_cos_lat((u_mod, v_mod), clip=False)
 
     ke = jnp.stack((u, v))**2

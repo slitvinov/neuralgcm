@@ -71,13 +71,6 @@ def shift_p1(x):
     return jax.lax.pad(y, value, config)
 
 
-def shift_p2(u):
-    y = jax.lax.slice_in_dim(u, 0, 2 * g.longitude_wavenumbers - 2, axis=-2)
-    value = jnp.array(0, dtype=y.dtype)
-    config = (0, 0, 0), (1, 0, 0), (0, 0, 0)
-    return jax.lax.pad(y, value, config)
-
-
 def shift_m1(x):
     y = jax.lax.slice_in_dim(x, 1, g.total_wavenumbers, axis=-1)
     value = jnp.array(0, dtype=y.dtype)
@@ -125,7 +118,8 @@ def real_basis_derivative(u):
     y = jax.lax.slice_in_dim(u, 1, 2 * g.longitude_wavenumbers - 1, axis=-2)
     u_down = jax.lax.pad(y, value, (0, 0, 0), (0, 1, 0), (0, 0, 0))
 
-    u_up = shift_p2(u)
+    z = jax.lax.slice_in_dim(u, 0, 2 * g.longitude_wavenumbers - 2, axis=-2)
+    u_up = jax.lax.pad(z, value, (0, 0, 0), (1, 0, 0), (0, 0, 0))
 
     return j * jnp.where(i % 2, u_down, -u_up)
 

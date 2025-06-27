@@ -85,13 +85,6 @@ def shift_m1(x):
     return jax.lax.pad(y, value, config)
 
 
-def shift_m2(u):
-    y = jax.lax.slice_in_dim(u, 1, 2 * g.longitude_wavenumbers - 1, axis=-2)
-    value = jnp.array(0, dtype=y.dtype)
-    config = (0, 0, 0), (0, 1, 0), (0, 0, 0)
-    return jax.lax.pad(y, value, config)
-
-
 def _slice_shape_along_axis(x):
     x_shape = list(x.shape)
     x_shape[-3] = 1
@@ -127,8 +120,13 @@ def centered_vertical_advection(w, x):
 def real_basis_derivative(u):
     i = jnp.arange(2 * g.longitude_wavenumbers - 1).reshape(-1, 1)
     j = (i + 1) // 2
-    u_down = shift_m2(u)
+    value = jnp.array(0, dtype=y.dtype)
+
+    y = jax.lax.slice_in_dim(u, 1, 2 * g.longitude_wavenumbers - 1, axis=-2)
+    u_down = jax.lax.pad(y, value, (0, 0, 0), (0, 1, 0), (0, 0, 0))
+
     u_up = shift_p2(u)
+
     return j * jnp.where(i % 2, u_down, -u_up)
 
 

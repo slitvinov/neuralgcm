@@ -147,9 +147,9 @@ def real_basis_derivative(u):
 
 
 def modal_axes():
-    m_pos = np.arange(1, g.longitude_wavenumbers)
-    m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
-    return np.concatenate([[0], m_pos_neg]), np.arange(g.total_wavenumbers)
+    p = np.arange(1, g.longitude_wavenumbers)
+    q = np.stack([p, -p], axis=1).ravel()
+    return np.concatenate([[0], q]), np.arange(g.total_wavenumbers)
 
 
 def derivative_recurrence_weights():

@@ -165,8 +165,8 @@ def laplacian_eigenvalues():
 
 
 def laplacian(x):
-    return x * laplacian_eigenvalues()
-
+    l = np.arange(g.total_wavenumbers)
+    return -l * (l + 1) * x
 
 def derivative_recurrence_weights():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")

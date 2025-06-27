@@ -41,7 +41,7 @@ def explicit_terms(s):
     u, v = di.transform(jnp.asarray(nodal_velocity_tendency))
     vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(v)
     div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
-    return di.State(clip_wavenumbers(vor), clip_wavenumbers(div),
+    return di.State(di.clip_wavenumbers(vor), di.clip_wavenumbers(div),
                     di.transform(-kt * (nodal_temperature - Teq)),
                     jnp.zeros_like(s.sp))
 

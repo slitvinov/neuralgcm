@@ -196,8 +196,8 @@ scaling = jnp.exp(-scale * (-eigenvalues)**2)
 hyperdiffusion_filter = di._make_filter_fn(scaling)
 time_span = cutoff_period = 3.1501440000000001e+00
 forward_step = step_with_filters(
-    di.runge_kutta(di.explicit_terms, di.implicit_terms,
-                        di.implicit_inverse, dt))
+    di.runge_kutta(di.explicit_terms, di.implicit_terms, di.implicit_inverse,
+                   dt))
 backward_step = step_with_filters(
     di.runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
 N = round(time_span / (2 * dt))
@@ -217,8 +217,8 @@ inner_steps = 3
 outer_steps = 193
 times = 0.25 * np.arange(outer_steps)
 step_fn = step_with_filters(
-    di.runge_kutta(di.explicit_terms, di.implicit_terms,
-                        di.implicit_inverse, dt))
+    di.runge_kutta(di.explicit_terms, di.implicit_terms, di.implicit_inverse,
+                   dt))
 
 
 def step(frame, _):

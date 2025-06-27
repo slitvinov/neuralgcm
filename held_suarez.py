@@ -100,9 +100,8 @@ ks = 1.9840362853253687e-02
 tau = 0.0087504
 order = 1.5
 cutoff = 0.8
-step_fn = di.runge_kutta(
-    lambda x: di.explicit_terms(x) + explicit_terms(x), di.implicit_terms,
-    di.implicit_inverse, dt)
+step_fn = di.runge_kutta(lambda x: di.explicit_terms(x) + explicit_terms(x),
+                         di.implicit_terms, di.implicit_inverse, dt)
 
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()

@@ -38,11 +38,11 @@ def get_geopotential(lat, sigma):
 
 def get_temperature_variation(lat, sigma):
     sigma_nu = (sigma - sigma0) * np.pi / 2
-    cos_𝜎ν = np.cos(sigma_nu)
-    sin_𝜎ν = np.sin(sigma_nu)
-    return (0.75 * (sigma * np.pi * u0 / r_gas) * sin_𝜎ν * np.sqrt(cos_𝜎ν) *
+    cos_sv = np.cos(sigma_nu)
+    sin_sv = np.sin(sigma_nu)
+    return (0.75 * (sigma * np.pi * u0 / r_gas) * sin_sv * np.sqrt(cos_sv) *
             (((-2 * (np.cos(lat)**2 + 1 / 3) * np.sin(lat)**6 + 10 / 63) * 2 *
-              u0 * cos_𝜎ν**(3 / 2)) +
+              u0 * cos_sv**(3 / 2)) +
              ((1.6 * (np.cos(lat)**3) *
                (np.sin(lat)**2 + 2 / 3) - np.pi / 4) * 0.5)))
 

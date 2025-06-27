@@ -21,7 +21,12 @@ class g:
 
 
 def to_modal(z):
-    return tree_map_over_nonscalars(transform, z)
+
+    def g(x):
+        x = jnp.asarray(x)
+        return transform(x) if x.ndim else x
+
+    return tree_map(g, x)
 
 
 def transform(x):
@@ -82,15 +87,6 @@ def shift(x, offset, axis):
     else:
         sliced = jax.lax.slice_in_dim(x, -offset, x.shape[axis], axis=axis)
         return pad_in_dim(sliced, (0, -offset), axis=axis)
-
-
-def tree_map_over_nonscalars(f, x):
-
-    def g(x):
-        x = jnp.asarray(x)
-        return f(x) if x.ndim else x
-
-    return tree_map(g, x)
 
 
 def _slice_shape_along_axis(x):

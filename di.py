@@ -223,10 +223,10 @@ def runge_kutta(exp, imp, inv, dt):
 
 @tree_math.struct
 class State:
-    vorticity: Any
-    divergence: Any
-    temperature_variation: Any
-    log_surface_pressure: Any
+    vo: Any
+    di: Any
+    te: Any
+    sp: Any
     tracers: Any = dataclasses.field(default_factory=dict)
 
 
@@ -294,15 +294,15 @@ def _make_filter_fn(scaling):
 
 
 def explicit_terms(s):
-    vort = inverse_transform(s.vorticity)
-    div = inverse_transform(s.divergence)
-    temp = inverse_transform(s.temperature_variation)
+    vort = inverse_transform(s.vo)
+    div = inverse_transform(s.di)
+    temp = inverse_transform(s.te)
     tracers = to_nodal(s.tracers)
     l = np.arange(1, g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
-    stream_function = s.vorticity * inverse_eigenvalues
-    velocity_potential = s.divergence * inverse_eigenvalues
+    stream_function = s.vo * inverse_eigenvalues
+    velocity_potential = s.di * inverse_eigenvalues
 
     c00 = real_basis_derivative(velocity_potential)
     c01 = cos_lat_d_dlat(velocity_potential)
@@ -312,8 +312,8 @@ def explicit_terms(s):
     v1 = c01 + c10
     u = inverse_transform(v0)
     v = inverse_transform(v1)
-    grad_u = inverse_transform(real_basis_derivative(s.log_surface_pressure))
-    grad_v = inverse_transform(cos_lat_d_dlat(s.log_surface_pressure))
+    grad_u = inverse_transform(real_basis_derivative(s.sp))
+    grad_v = inverse_transform(cos_lat_d_dlat(s.sp))
     sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
     sec2 = 1 / (1 - sin_lat**2)
     u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
@@ -380,19 +380,16 @@ def explicit_terms(s):
 
 def implicit_terms(s):
     weights = get_geopotential_weights()
-    geopotential_diff = einsum("gh,...hml->...gml", weights,
-                               s.temperature_variation)
+    geopotential_diff = einsum("gh,...hml->...gml", weights, s.te)
     rt_log_p = (ideal_gas_constant *
-                g.reference_temperature[..., np.newaxis, np.newaxis] *
-                s.log_surface_pressure)
-    vorticity_implicit = jnp.zeros_like(s.vorticity)
+                g.reference_temperature[..., np.newaxis, np.newaxis] * s.sp)
+    vorticity_implicit = jnp.zeros_like(s.vo)
     l0 = np.arange(g.total_wavenumbers)
     divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
     weights = -get_temperature_implicit_weights()
-    temperature_variation_implicit = einsum("gh,...hml->...gml", weights,
-                                            s.divergence)
+    temperature_variation_implicit = einsum("gh,...hml->...gml", weights, s.di)
     log_surface_pressure_implicit = -einsum(
-        "gh,...hml->...gml", g.layer_thickness[np.newaxis], s.divergence)
+        "gh,...hml->...gml", g.layer_thickness[np.newaxis], s.di)
     tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
     return State(vorticity_implicit, divergence_implicit,
                  temperature_variation_implicit, log_surface_pressure_implicit,
@@ -440,22 +437,16 @@ def implicit_inverse(s, dt):
     temp = slice(g.layers, 2 * g.layers)
     logp = slice(2 * g.layers, 2 * g.layers + 1)
     inverted_divergence = (
-        einsum("lgh,...hml->...gml", inv[:, div, div], s.divergence) + einsum(
-            "lgh,...hml->...gml", inv[:, div, temp], s.temperature_variation) +
-        einsum("lgh,...hml->...gml", inv[:, div, logp],
-               s.log_surface_pressure))
+        einsum("lgh,...hml->...gml", inv[:, div, div], s.di) +
+        einsum("lgh,...hml->...gml", inv[:, div, temp], s.te) +
+        einsum("lgh,...hml->...gml", inv[:, div, logp], s.sp))
     inverted_temperature_variation = (
-        einsum("lgh,...hml->...gml", inv[:, temp, div], s.divergence) +
-        einsum("lgh,...hml->...gml", inv[:, temp, temp],
-               s.temperature_variation) +
-        einsum("lgh,...hml->...gml", inv[:, temp, logp],
-               s.log_surface_pressure))
+        einsum("lgh,...hml->...gml", inv[:, temp, div], s.di) +
+        einsum("lgh,...hml->...gml", inv[:, temp, temp], s.te) +
+        einsum("lgh,...hml->...gml", inv[:, temp, logp], s.sp))
     inverted_log_surface_pressure = (
-        einsum("lgh,...hml->...gml", inv[:, logp, div], s.divergence) +
-        einsum("lgh,...hml->...gml", inv[:, logp, temp],
-               s.temperature_variation) +
-        einsum("lgh,...hml->...gml", inv[:, logp, logp],
-               s.log_surface_pressure))
-    return State(s.vorticity, inverted_divergence,
-                 inverted_temperature_variation, inverted_log_surface_pressure,
-                 s.tracers)
+        einsum("lgh,...hml->...gml", inv[:, logp, div], s.di) +
+        einsum("lgh,...hml->...gml", inv[:, logp, temp], s.te) +
+        einsum("lgh,...hml->...gml", inv[:, logp, logp], s.sp))
+    return State(s.vo, inverted_divergence, inverted_temperature_variation,
+                 inverted_log_surface_pressure, s.tracers)

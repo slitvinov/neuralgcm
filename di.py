@@ -72,13 +72,9 @@ def basis():
     return f, p[1:], w
 
 
-def clip_wavenumbers(x):
-
-    def clip(x):
-        mask = jnp.ones(g.total_wavenumbers, x.dtype).at[-1:].set(0)
-        return x * mask
-
-    return tree_map_over_nonscalars(clip, x)
+def clip(x):
+    mask = jnp.ones(g.total_wavenumbers, x.dtype).at[-1:].set(0)
+    return x * mask
 
 
 def pad_in_dim(x, pad_width, axis):
@@ -357,7 +353,8 @@ def explicit_terms(s):
     tracers_v = jax.tree_util.tree_map(
         lambda x: centered_vertical_advection(sigma_full, x), tracers)
 
-    return clip_wavenumbers(
+    tree_map(
+        clip,
         State(
             vort_tendency, div_tendency + ke_tendency + oro_tendency,
             to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal,

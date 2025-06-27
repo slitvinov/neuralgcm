@@ -38,6 +38,7 @@ def transform(x):
 def inverse_transform(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
+
 def basis():
     dft = scipy.linalg.dft(
         g.longitude_nodes)[:, :g.longitude_wavenumbers] / np.sqrt(np.pi)
@@ -126,8 +127,8 @@ def centered_vertical_advection(w, x):
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
     dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)
-    inv_d𝜎 = 1 / g.center_to_center
-    x_diff = einsum(dx, [0, 1, 2], inv_d𝜎, [0], [0, 1, 2], precision="float32")
+    inv_ds = 1 / g.center_to_center
+    x_diff = einsum(dx, [0, 1, 2], inv_ds, [0], [0, 1, 2], precision="float32")
     x_diff_boundary_top = jnp.zeros(x_slc_shape)
     x_diff_boundary_bot = jnp.zeros(x_slc_shape)
     x_diff = jnp.concatenate(
@@ -149,6 +150,7 @@ def modal_axes():
     m_pos = np.arange(1, g.longitude_wavenumbers)
     m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
     return np.concatenate([[0], m_pos_neg]), np.arange(g.total_wavenumbers)
+
 
 def laplacian(x):
     l = np.arange(g.total_wavenumbers)
@@ -249,6 +251,7 @@ def get_geopotential_weights():
         for k in range(j + 1, g.layers):
             weights[j, k] = alpha[k] + alpha[k - 1]
     return ideal_gas_constant * weights
+
 
 def get_temperature_implicit_weights():
     p = np.tril(np.ones([g.layers, g.layers]))

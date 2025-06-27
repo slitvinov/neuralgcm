@@ -38,10 +38,10 @@ def explicit_terms(s):
     Teq = jnp.maximum(minT, temperature)
     cutoff = np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b))
     kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
-    velocity_tendency = di.transform(jnp.asarray(nodal_velocity_tendency))
-    return di.State(di.curl_cos_lat(velocity_tendency),
-                    di.div_cos_lat(velocity_tendency),
-                    di.transform(-kt * (nodal_temperature - Teq)),
+    vel = di.transform(jnp.asarray(nodal_velocity_tendency))
+    vo = di.curl_cos_lat(vel)
+    di = di.div_cos_lat(vel)
+    return di.State(vo, di, di.transform(-kt * (nodal_temperature - Teq)),
                     jnp.zeros_like(s.sp))
 
 

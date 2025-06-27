@@ -182,6 +182,7 @@ def div_cos_lat(v):
     raw = real_basis_derivative(v[0]) + sec_lat_d_dlat_cos2(v[1])
     return clip_wavenumbers(raw)
 
+
 def curl_cos_lat(v):
     raw = real_basis_derivative(v[1]) - sec_lat_d_dlat_cos2(v[0])
     return clip_wavenumbers(raw)

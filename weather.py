@@ -69,10 +69,10 @@ def accumulate_repeated(step_fn, weights, state):
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
     cos = np.sqrt(1 - sin_lat**2)
-    u_over_cos_lat = di.to_modal(u_nodal / cos)
-    v_over_cos_lat = di.to_modal(v_nodal / cos)
-    vorticity = di.curl_cos_lat((u_over_cos_lat, v_over_cos_lat))
-    divergence = di.div_cos_lat((u_over_cos_lat, v_over_cos_lat))
+    u = di.to_modal(u_nodal / cos)
+    v = di.to_modal(v_nodal / cos)
+    vorticity = di.curl_cos_lat((u, v))
+    divergence = di.div_cos_lat((u, v))
     return vorticity, divergence
 
 

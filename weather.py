@@ -21,8 +21,8 @@ def open(path):
 
 
 def nodal_prognostics_and_diagnostics(s):
-    sp_nodal = jnp.exp(di.to_nodal(s.sp))
-    tracers_nodal = {k: di.to_nodal(v) for k, v in s.tracers.items()}
+    sp_nodal = jnp.exp(di.inverse_transform(s.sp))
+    tracers_nodal = {k: di.inverse_transform(v) for k, v in s.tracers.items()}
     s_nodal = {
         "surface_pressure": sp_nodal,
         **tracers_nodal,

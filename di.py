@@ -379,6 +379,8 @@ def explicit_terms(state):
     if np.unique(g.reference_temperature[..., None, None].ravel()).size > 1:
         temp_vert += centered_vertical_advection(
             sigma_exp, g.reference_temperature[..., None, None])
+    else:
+        assert False
 
     t_mean = _t_omega_over_sigma_sp(g.reference_temperature[..., None, None],
                                     u_dot_grad, u_dot_grad)

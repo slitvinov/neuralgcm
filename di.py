@@ -152,11 +152,6 @@ def modal_axes():
     return np.concatenate([[0], m_pos_neg]), np.arange(g.total_wavenumbers)
 
 
-def laplacian(x):
-    l = np.arange(g.total_wavenumbers)
-    return -l * (l + 1) * x
-
-
 def derivative_recurrence_weights():
     m, l = np.meshgrid(*modal_axes(), indexing="ij")
     mask = abs(m) <= l
@@ -401,7 +396,8 @@ def implicit_terms(state):
                 g.reference_temperature[..., np.newaxis, np.newaxis] *
                 state.log_surface_pressure)
     vorticity_implicit = jnp.zeros_like(state.vorticity)
-    divergence_implicit = -laplacian(geopotential_diff + rt_log_p)
+    l0 = np.arange(g.total_wavenumbers)
+    divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
     weights = -get_temperature_implicit_weights()
     temperature_variation_implicit = _vertical_matvec(weights,
                                                       state.divergence)

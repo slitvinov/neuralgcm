@@ -153,12 +153,6 @@ def modal_axes():
     m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
     return np.concatenate([[0], m_pos_neg]), np.arange(g.total_wavenumbers)
 
-
-def laplacian_eigenvalues():
-    l = np.arange(g.total_wavenumbers)
-    return -l * (l + 1)
-
-
 def laplacian(x):
     l = np.arange(g.total_wavenumbers)
     return -l * (l + 1) * x
@@ -425,7 +419,8 @@ def implicit_terms(state):
 
 def implicit_inverse(state, dt):
     eye = np.eye(g.layers)[np.newaxis]
-    lam = laplacian_eigenvalues()
+    l0 = np.arange(g.total_wavenumbers)
+    lam = -l0 * (l0 + 1)
     geo = get_geopotential_weights()
     r = ideal_gas_constant
     h = get_temperature_implicit_weights()

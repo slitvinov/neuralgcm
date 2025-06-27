@@ -71,8 +71,8 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     cos = np.sqrt(1 - sin_lat**2)
     u = di.to_modal(u_nodal / cos)
     v = di.to_modal(v_nodal / cos)
-    vorticity = real_basis_derivative(v) - sec_lat_d_dlat_cos2(v)
-    divergence = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
+    vorticity = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(v)
+    divergence = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
     return clip_wavenumbers(vorticity), clip_wavenumbers(divergence)
 
 

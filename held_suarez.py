@@ -39,9 +39,10 @@ def explicit_terms(s):
     cutoff = np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b))
     kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
     u, v = di.transform(jnp.asarray(nodal_velocity_tendency))
-    vor = di.curl_cos_lat((u, v))
-    div = di.div_cos_lat((u, v))
-    return di.State(vor, div, di.transform(-kt * (nodal_temperature - Teq)),
+    vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(v)
+    div = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
+    return di.State(clip_wavenumbers(vor), clip_wavenumbers(div),
+                    di.transform(-kt * (nodal_temperature - Teq)),
                     jnp.zeros_like(s.sp))
 
 

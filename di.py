@@ -76,7 +76,6 @@ def clip(x):
     mask = jnp.ones(g.total_wavenumbers, x.dtype).at[-1:].set(0)
     return x * mask
 
-
 def pad_in_dim(x, pad_width, axis):
     padding_value = jnp.array(0, dtype=x.dtype)
     padding_config = [(0, 0, 0)] * x.ndim
@@ -353,15 +352,14 @@ def explicit_terms(s):
     tracers_v = jax.tree_util.tree_map(
         lambda x: centered_vertical_advection(sigma_full, x), tracers)
 
-    tree_map(
-        clip,
-        State(
-            vort_tendency, div_tendency + ke_tendency + oro_tendency,
-            to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal,
-            to_modal(logsp_tendency),
-            jax.tree_util.tree_map(
-                lambda vert, pair: to_modal(vert + pair[0]) + pair[1],
-                tracers_v, tracers_h)))
+    State(
+        clip(vort_tendency),
+        clip(div_tendency + ke_tendency + oro_tendency),
+        clip(to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal),
+        clip(to_modal(logsp_tendency)),
+        jax.tree_util.tree_map(
+            lambda vert, pair: clip(to_modal(vert + pair[0]) + pair[1]),
+            tracers_v, tracers_h)))
 
 
 def implicit_terms(s):

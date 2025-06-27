@@ -20,15 +20,6 @@ class g:
     pass
 
 
-def to_modal(z):
-
-    def g(x):
-        x = jnp.asarray(x)
-        return transform(x) if x.ndim else x
-
-    return tree_map(g, z)
-
-
 def transform(x):
     wx = g.w * x
     fwx = einsum("im,...ij->...mj", g.f, wx)

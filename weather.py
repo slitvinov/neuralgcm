@@ -14,6 +14,14 @@ _CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
 
+def to_modal(z):
+
+    def g(x):
+        x = jnp.asarray(x)
+        return di.transform(x) if x.ndim else x
+
+    return jax.tree_util.tree_map(g, z)
+
 
 def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
@@ -171,8 +179,8 @@ vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
 di.g.reference_temperature = np.full((di.g.layers, ), 250)
 temperature_variation = di.transform(
     t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
-log_sp = di.to_modal(np.log(sp_nodal))
-tracers = di.to_modal({
+log_sp = to_modal(np.log(sp_nodal))
+tracers = to_modal({
     "specific_humidity":
     M["specific_humidity"],
     "specific_cloud_liquid_water_content":
@@ -184,7 +192,7 @@ raw_init_state = di.State(vorticity, divergence, temperature_variation, log_sp,
                           tracers)
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
-orography = di.to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
+orography = to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
 di.g.orography = orography
 res_factor = di.g.latitude_nodes / 128
 dt = 4.3752000000000006e-02

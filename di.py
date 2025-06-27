@@ -32,10 +32,7 @@ def transform(x):
     return einsum("im,mjl,...ij->...ml", g.f, g.p, g.w * x)
 
 def inverse_transform(x):
-    px = einsum("mjl,...ml->...mj", g.p, x)
-    fpx = einsum("im,...mj->...ij", g.f, px)
-    return fpx
-
+    return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
 def basis():
     dft = scipy.linalg.dft(

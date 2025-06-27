@@ -69,8 +69,8 @@ def accumulate_repeated(step_fn, weights, state):
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
     cos = np.sqrt(1 - sin_lat**2)
-    u = di.to_modal(u_nodal / cos)
-    v = di.to_modal(v_nodal / cos)
+    u = di.transform(u_nodal / cos)
+    v = di.transform(v_nodal / cos)
     raw_vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(u)
     raw_div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
     mask = jnp.ones(di.g.total_wavenumbers).at[-1:].set(0)
@@ -171,7 +171,7 @@ vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
 di.g.reference_temperature = np.full((di.g.layers, ), 250)
 temperature_variation = di.transform(
     t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
-log_sp = di.to_modal(np.log(sp_nodal))
+log_sp = di.transform(np.log(sp_nodal))
 tracers = di.to_modal({
     "specific_humidity":
     M["specific_humidity"],
@@ -184,7 +184,7 @@ raw_init_state = di.State(vorticity, divergence, temperature_variation, log_sp,
                           tracers)
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
-orography = di.to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
+orography = di.transform(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
 di.g.orography = orography
 res_factor = di.g.latitude_nodes / 128
 dt = 4.3752000000000006e-02

@@ -146,12 +146,6 @@ def real_basis_derivative(u):
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
-def modal_axes():
-    p = np.arange(1, g.longitude_wavenumbers)
-    q = np.stack([p, -p], axis=1).ravel()
-    return np.concatenate([[0], q]), np.arange(g.total_wavenumbers)
-
-
 def derivative_recurrence_weights():
     p = np.arange(1, g.longitude_wavenumbers)
     q = np.stack([p, -p], axis=1).ravel()
@@ -167,7 +161,8 @@ def derivative_recurrence_weights():
 
 
 def cos_lat_d_dlat(x):
-    _, l = np.meshgrid(*modal_axes(), indexing="ij")
+    l0 = np.arange(g.total_wavenumbers)
+    l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
     x_lm1 = shift(((l + 1) * a) * x, -1, axis=-1)
     x_lp1 = shift((-l * b) * x, +1, axis=-1)
@@ -175,7 +170,8 @@ def cos_lat_d_dlat(x):
 
 
 def sec_lat_d_dlat_cos2(x):
-    _, l = np.meshgrid(*modal_axes(), indexing="ij")
+    l0 = np.arange(g.total_wavenumbers)
+    l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
     x_lm1 = shift(((l - 1) * a) * x, -1, axis=-1)
     x_lp1 = shift((-(l + 2) * b) * x, +1, axis=-1)

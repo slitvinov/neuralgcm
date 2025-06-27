@@ -111,9 +111,10 @@ def centered_vertical_advection(w, x):
 
 
 def real_basis_derivative(u):
-    i = jnp.arange(2 * g.longitude_wavenumbers - 1).reshape(-1, 1)
-    y = jax.lax.slice_in_dim(u, 1, 2 * g.longitude_wavenumbers - 1, axis=-2)
-    z = jax.lax.slice_in_dim(u, 0, 2 * g.longitude_wavenumbers - 2, axis=-2)
+    n = 2 * g.longitude_wavenumbers - 1
+    i = jnp.arange(n).reshape(-1, 1)
+    y = jax.lax.slice_in_dim(u, 1, n, axis=-2)
+    z = jax.lax.slice_in_dim(u, 0, n - 1, axis=-2)
     u_do = jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 1, 0), (0, 0, 0)))
     u_up = jax.lax.pad(z, 0.0, ((0, 0, 0), (1, 0, 0), (0, 0, 0)))
     return (i + 1) // 2 * jnp.where(i % 2, u_do, -u_up)

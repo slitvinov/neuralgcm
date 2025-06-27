@@ -308,8 +308,8 @@ def explicit_terms(s):
     rt = ideal_gas_constant * temp
     vert_u = (sigma_u + rt * grad_u) * sec2
     vert_v = (sigma_v + rt * grad_v) * sec2
-    u_mod = to_modal(vort_u + vert_u)
-    v_mod = to_modal(vort_v + vert_v)
+    u_mod = transform(vort_u + vert_u)
+    v_mod = transform(vort_v + vert_v)
 
     vort_tendency = -real_basis_derivative(v_mod) + sec_lat_d_dlat_cos2(u_mod)
     div_tendency = -real_basis_derivative(u_mod) - sec_lat_d_dlat_cos2(v_mod)

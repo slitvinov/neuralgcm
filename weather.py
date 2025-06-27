@@ -69,8 +69,8 @@ def accumulate_repeated(step_fn, weights, state):
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
     cos = np.sqrt(1 - sin_lat**2)
-    u = di.to_modal(u_nodal / cos)
-    v = di.to_modal(v_nodal / cos)
+    u = di.transform(u_nodal / cos)
+    v = di.transform(v_nodal / cos)
     raw_vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(u)
     raw_div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
     mask = jnp.ones(di.g.total_wavenumbers).at[-1:].set(0)

@@ -73,7 +73,7 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     v = di.to_modal(v_nodal / cos)
     raw_vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(u)
     raw_div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
-    mask = jnp.ones(di.g.total_wavenumbers, x.dtype).at[-1:].set(0)
+    mask = jnp.ones(di.g.total_wavenumbers).at[-1:].set(0)
     return raw_vor * mask, raw_div * mask
 
 

@@ -24,10 +24,6 @@ def to_modal(z):
     return tree_map_over_nonscalars(transform, z)
 
 
-def to_nodal(x):
-    return tree_map_over_nonscalars(inverse_transform, x)
-
-
 def transform(x):
     wx = g.w * x
     fwx = einsum("im,...ij->...mj", g.f, wx)
@@ -70,6 +66,7 @@ def basis():
         p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
     p = np.repeat(p, 2, axis=0)
     return f, p[1:], w
+
 
 def pad_in_dim(x, pad_width, axis):
     padding_value = jnp.array(0, dtype=x.dtype)
@@ -276,7 +273,7 @@ def explicit_terms(s):
     vort = inverse_transform(s.vo)
     div = inverse_transform(s.di)
     temp = inverse_transform(s.te)
-    tracers = to_nodal(s.tracers)
+    tracers = tree_map_over_nonscalars(inverse_transform, s.tracers)
     l = np.arange(1, g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
@@ -350,7 +347,8 @@ def explicit_terms(s):
     return State(
         vort_tendency * mask,
         (div_tendency + ke_tendency + oro_tendency) * mask,
-        (to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) * mask,
+        (to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) *
+        mask,
         to_modal(logsp_tendency) * mask,
         jax.tree_util.tree_map(
             lambda vert, pair: (to_modal(vert + pair[0]) + pair[1]) * mask,

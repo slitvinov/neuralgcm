@@ -287,9 +287,8 @@ def explicit_terms(s):
         sum_sigma * jax.lax.slice_in_dim(f, -1, None) - f, 0, -1)
     sigma_exp = sigma_dot(f_exp)
     sigma_full = sigma_dot(f_full)
-    longitude = np.linspace(0, 2 * np.pi, g.longitude_nodes, endpoint=False)
     sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
-    _, coriolis = np.meshgrid(longitude, sin_latitude, indexing="ij")
+    coriolis = np.tile(sin_latitude, (g.longitude_nodes, 1))
     total_vort = vort + coriolis
     vort_u = -v * total_vort * sec2
     vort_v = u * total_vort * sec2

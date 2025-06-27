@@ -73,7 +73,7 @@ def shift_p1(x):
 
 
 def shift_p2(x):
-    y = jax.lax.slice_in_dim(x, 0, x.shape[-2] - 1, axis=-2)
+    y = jax.lax.slice_in_dim(x, 0, g.total_wavenumbers - 1, axis=-2)
     value = jnp.array(0, dtype=y.dtype)
     config = [(0, 0, 0)] * y.ndim
     config[-2] = 1, 0, 0

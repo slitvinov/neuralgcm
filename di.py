@@ -357,8 +357,9 @@ def explicit_terms(state):
 
     ke = jnp.stack((u, v))**2
     ke = ke.sum(0) * sec2 / 2
-    ke_tendency = -laplacian(to_modal(ke))
-    oro_tendency = -gravity_acceleration * laplacian(g.orography)
+    l0 = np.arange(g.total_wavenumbers)
+    ke_tendency = l0 * (l0 + 1) * to_modal(ke)
+    oro_tendency = gravity_acceleration * l0 * (l0 + 1) * g.orography
 
     h_adv = functools.partial(horizontal_scalar_advection,
                               cos_lat_u=(u, v),

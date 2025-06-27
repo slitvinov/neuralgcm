@@ -6,12 +6,12 @@ import numpy as np
 import scipy
 
 
-def explicit_terms(state):
+def explicit_terms(s):
     l = np.arange(1, di.g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(di.g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
-    stream_function = state.vorticity * inverse_eigenvalues
-    velocity_potential = state.divergence * inverse_eigenvalues
+    stream_function = s.vo * inverse_eigenvalues
+    velocity_potential = s.di * inverse_eigenvalues
     c00 = di.real_basis_derivative(velocity_potential)
     c01 = di.cos_lat_d_dlat(velocity_potential)
     c10 = di.real_basis_derivative(stream_function)
@@ -20,7 +20,7 @@ def explicit_terms(state):
     v1 = c01 + c10
     u0 = di.inverse_transform(v0)
     u1 = di.inverse_transform(v1)
-    temperature_variation = di.inverse_transform(state.temperature_variation)
+    temperature_variation = di.inverse_transform(s.te)
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))
     kv = kv_coeff[:, np.newaxis, np.newaxis]
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
@@ -29,8 +29,7 @@ def explicit_terms(state):
     nodal_temperature = (
         di.g.reference_temperature[:, np.newaxis, np.newaxis] +
         temperature_variation)
-    nodal_log_surface_pressure = di.inverse_transform(
-        state.log_surface_pressure)
+    nodal_log_surface_pressure = di.inverse_transform(s.sp)
     nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
     p_over_p0 = (di.g.centers[:, np.newaxis, np.newaxis] *
                  nodal_surface_pressure / p0)
@@ -43,7 +42,7 @@ def explicit_terms(state):
     return di.State(di.curl_cos_lat(velocity_tendency),
                     di.div_cos_lat(velocity_tendency),
                     di.transform(-kt * (nodal_temperature - Teq)),
-                    jnp.zeros_like(state.log_surface_pressure))
+                    jnp.zeros_like(s.sp))
 
 
 di.g.longitude_wavenumbers = 22

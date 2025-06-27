@@ -29,8 +29,10 @@ def to_nodal(x):
 
 
 def transform(x):
-    T = einsum("im,mjl->ijl", g.f, g.p)
-    return einsum("ijl,...ml->...ij", T, x)
+    wx = g.w * x
+    fwx = einsum("im,...ij->...mj", g.f, wx)
+    pfwx = einsum("mjl,...mj->...ml", g.p, fwx)
+    return pfwx
 
 
 def inverse_transform(x):

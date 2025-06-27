@@ -7,4 +7,4 @@ CUDA_VISIBLE_DEVICES=3 COVERAGE_FILE=.coverage.2 python -m coverage run weather.
 wait
 
 python -m coverage combine &&
-python -m coverage coverage html
+python -m coverage html

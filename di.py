@@ -64,21 +64,21 @@ def basis():
     return f, p[1:], w
 
 
-def pad_in_dim(x, pad_width, axis):
-    value = jnp.array(0, dtype=x.dtype)
-    config = [(0, 0, 0)] * x.ndim
+def pad_in_dim(y, pad_width, axis):
+    value = jnp.array(0, dtype=y.dtype)
+    config = [(0, 0, 0)] * y.ndim
     config[axis] = pad_width + (0, )
-    return jax.lax.pad(x, value, config)
+    return jax.lax.pad(y, value, config)
 
 
 def shift_p(x, axis):
-    sliced = jax.lax.slice_in_dim(x, 0, x.shape[axis] - 1, axis=axis)
-    return pad_in_dim(sliced, (1, 0), axis=axis)
+    y = jax.lax.slice_in_dim(x, 0, x.shape[axis] - 1, axis=axis)
+    return pad_in_dim(y, (1, 0), axis=axis)
 
 
 def shift_m(x, axis):
-    sliced = jax.lax.slice_in_dim(x, 1, x.shape[axis], axis=axis)
-    return pad_in_dim(sliced, (0, 1), axis=axis)
+    y = jax.lax.slice_in_dim(x, 1, x.shape[axis], axis=axis)
+    return pad_in_dim(y, (0, 1), axis=axis)
 
 
 def _slice_shape_along_axis(x):

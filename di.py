@@ -250,12 +250,6 @@ def get_geopotential_weights():
             weights[j, k] = alpha[k] + alpha[k - 1]
     return ideal_gas_constant * weights
 
-
-def get_geopotential_diff(temperature):
-    weights = get_geopotential_weights()
-    return _vertical_matvec(weights, temperature)
-
-
 def get_temperature_implicit_weights():
     p = np.tril(np.ones([g.layers, g.layers]))
     alpha = get_sigma_ratios()[..., np.newaxis]
@@ -397,7 +391,8 @@ def explicit_terms(state):
 
 
 def implicit_terms(state):
-    geopotential_diff = get_geopotential_diff(state.temperature_variation)
+    weights = get_geopotential_weights()
+    geopotential_diff = _vertical_matvec(weights, state.temperature_variation)
     rt_log_p = (ideal_gas_constant *
                 g.reference_temperature[..., np.newaxis, np.newaxis] *
                 state.log_surface_pressure)

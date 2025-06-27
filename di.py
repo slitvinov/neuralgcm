@@ -252,8 +252,8 @@ def horizontal_scalar_advection(scalar, cos_lat_u, divergence):
     nodal_terms = scalar * divergence
     sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
     sec2 = 1 / (1 - sin_lat**2)
-    m_component = to_modal(u * scalar * sec2)
-    n_component = to_modal(v * scalar * sec2)
+    m_component = transform(u * scalar * sec2)
+    n_component = transform(v * scalar * sec2)
     modal_terms = -real_basis_derivative(m_component) - sec_lat_d_dlat_cos2(
         n_component)
     return nodal_terms, modal_terms

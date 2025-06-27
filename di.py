@@ -71,15 +71,6 @@ def pad_in_dim(x, pad_width, axis):
     return jax.lax.pad(x, padding_value, padding_config)
 
 
-def shift(x, offset, axis):
-    if offset > 0:
-        sliced = jax.lax.slice_in_dim(x, 0, x.shape[axis] - offset, axis=axis)
-        return pad_in_dim(sliced, (offset, 0), axis=axis)
-    else:
-        sliced = jax.lax.slice_in_dim(x, -offset, x.shape[axis], axis=axis)
-        return pad_in_dim(sliced, (0, -offset), axis=axis)
-
-
 def shift_p(x, axis):
     sliced = jax.lax.slice_in_dim(x, 0, x.shape[axis] - 1, axis=axis)
     return pad_in_dim(sliced, (1, 0), axis=axis)
@@ -125,8 +116,8 @@ def centered_vertical_advection(w, x):
 def real_basis_derivative(u):
     i = jnp.arange(2 * g.longitude_wavenumbers - 1).reshape(-1, 1)
     j = (i + 1) // 2
-    u_down = shift(u, -1, -2)
-    u_up = shift(u, 1, -2)
+    u_down = shift_m(u, -2)
+    u_up = shift_p(u, -2)
     return j * jnp.where(i % 2, u_down, -u_up)
 
 
@@ -148,8 +139,8 @@ def cos_lat_d_dlat(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
-    x_lm1 = shift(((l + 1) * a) * x, -1, axis=-1)
-    x_lp1 = shift((-l * b) * x, +1, axis=-1)
+    x_lm1 = shift_m(((l + 1) * a) * x, axis=-1)
+    x_lp1 = shift_p((-l * b) * x, axis=-1)
     return x_lm1 + x_lp1
 
 
@@ -157,8 +148,8 @@ def sec_lat_d_dlat_cos2(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
-    x_lm1 = shift(((l - 1) * a) * x, -1, axis=-1)
-    x_lp1 = shift((-(l + 2) * b) * x, +1, axis=-1)
+    x_lm1 = shift_m(((l - 1) * a) * x, axis=-1)
+    x_lp1 = shift_p((-(l + 2) * b) * x, axis=-1)
     return x_lm1 + x_lp1
 
 

@@ -153,7 +153,11 @@ def modal_axes():
 
 
 def derivative_recurrence_weights():
-    m, l = np.meshgrid(*modal_axes(), indexing="ij")
+    p = np.arange(1, g.longitude_wavenumbers)
+    q = np.stack([p, -p], axis=1).ravel()
+    m, l = np.meshgrid(np.concatenate([[0], q]),
+                       np.arange(g.total_wavenumbers),
+                       indexing="ij")
     mask = abs(m) <= l
     a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
     a[:, 0] = 0

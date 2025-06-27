@@ -80,6 +80,16 @@ def shift(x, offset, axis):
         return pad_in_dim(sliced, (0, -offset), axis=axis)
 
 
+def shift_p(x, axis):
+    sliced = jax.lax.slice_in_dim(x, 0, x.shape[axis] - 1, axis=axis)
+    return pad_in_dim(sliced, (1, 0), axis=axis)
+
+
+def shift_m(x, axis):
+    sliced = jax.lax.slice_in_dim(x, 1, x.shape[axis], axis=axis)
+    return pad_in_dim(sliced, (0, 1), axis=axis)
+
+
 def _slice_shape_along_axis(x):
     x_shape = list(x.shape)
     x_shape[-3] = 1

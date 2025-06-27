@@ -184,13 +184,9 @@ def div_cos_lat(v, clip=True):
         return clip_wavenumbers(raw)
     return raw
 
-
-def curl_cos_lat(v, clip=True):
+def curl_cos_lat(v):
     raw = real_basis_derivative(v[1]) - sec_lat_d_dlat_cos2(v[0])
-    if clip:
-        return clip_wavenumbers(raw)
-    return raw
-
+    return clip_wavenumbers(raw)
 
 def imex_runge_kutta(exp, imp, inv, dt):
     F = tree_math.unwrap(exp)
@@ -342,8 +338,8 @@ def explicit_terms(state):
     u_mod = to_modal(vort_u + vert_u)
     v_mod = to_modal(vort_v + vert_v)
 
-    vort_tendency = - real_basis_derivative(v_mod) + sec_lat_d_dlat_cos2(u_mod)
-    div_tendency = - real_basis_derivative(u_mod) - sec_lat_d_dlat_cos2(v_mod)
+    vort_tendency = -real_basis_derivative(v_mod) + sec_lat_d_dlat_cos2(u_mod)
+    div_tendency = -real_basis_derivative(u_mod) - sec_lat_d_dlat_cos2(v_mod)
 
     ke = jnp.stack((u, v))**2
     ke = ke.sum(0) * sec2 / 2

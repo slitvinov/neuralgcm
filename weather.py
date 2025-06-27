@@ -71,8 +71,8 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     cos = np.sqrt(1 - sin_lat**2)
     u_over_cos_lat = di.to_modal(u_nodal / cos)
     v_over_cos_lat = di.to_modal(v_nodal / cos)
-    vorticity = di.curl_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
-    divergence = di.div_cos_lat((u_over_cos_lat, v_over_cos_lat), clip=True)
+    vorticity = di.curl_cos_lat((u_over_cos_lat, v_over_cos_lat))
+    divergence = di.div_cos_lat((u_over_cos_lat, v_over_cos_lat))
     return vorticity, divergence
 
 

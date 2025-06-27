@@ -65,7 +65,7 @@ def basis():
 
 
 def shift_p1(x):
-    y = jax.lax.slice_in_dim(x, 0, x.shape[-1] - 1, axis=-1)
+    y = jax.lax.slice_in_dim(x, 0, g.total_wavenumbers - 1, axis=-1)
     value = jnp.array(0, dtype=y.dtype)
     config = [(0, 0, 0)] * y.ndim
     config[-1] = 1, 0, 0

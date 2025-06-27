@@ -73,7 +73,7 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     v = di.to_modal(v_nodal / cos)
     vorticity = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(v)
     divergence = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
-    return clip_wavenumbers(vorticity), clip_wavenumbers(divergence)
+    return di.clip_wavenumbers(vorticity), di.clip_wavenumbers(divergence)
 
 
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)

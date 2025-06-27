@@ -71,8 +71,8 @@ def shift_p1(x):
     return jax.lax.pad(y, value, config)
 
 
-def shift_p2(x):
-    y = jax.lax.slice_in_dim(x, 0, 2 * g.longitude_wavenumbers - 2, axis=-2)
+def shift_p2(u):
+    y = jax.lax.slice_in_dim(u, 0, 2 * g.longitude_wavenumbers - 2, axis=-2)
     value = jnp.array(0, dtype=y.dtype)
     config = (0, 0, 0), (1, 0, 0), (0, 0, 0)
     return jax.lax.pad(y, value, config)
@@ -85,8 +85,8 @@ def shift_m1(x):
     return jax.lax.pad(y, value, config)
 
 
-def shift_m2(x):
-    y = jax.lax.slice_in_dim(x, 1, 2 * g.longitude_wavenumbers - 1, axis=-2)
+def shift_m2(u):
+    y = jax.lax.slice_in_dim(u, 1, 2 * g.longitude_wavenumbers - 1, axis=-2)
     value = jnp.array(0, dtype=y.dtype)
     config = (0, 0, 0), (0, 1, 0), (0, 0, 0)
     return jax.lax.pad(y, value, config)

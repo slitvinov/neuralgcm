@@ -268,10 +268,6 @@ def get_temperature_implicit_weights():
     return (h0 - k - k_shifted) * g.layer_thickness
 
 
-def matvec(a, x):
-    return einsum("lgh,...hml->...gml", a, x)
-
-
 def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
     f = jax.lax.cumsum(g_term * g.layer_thickness[:, None, None])
     alpha = get_sigma_ratios()
@@ -447,17 +443,23 @@ def implicit_inverse(state, dt):
     temp = slice(g.layers, 2 * g.layers)
     logp = slice(2 * g.layers, 2 * g.layers + 1)
     inverted_divergence = (
-        matvec(inverse[:, div, div], state.divergence) +
-        matvec(inverse[:, div, temp], state.temperature_variation) +
-        matvec(inverse[:, div, logp], state.log_surface_pressure))
+        einsum("lgh,...hml->...gml", inverse[:, div, div], state.divergence) +
+        einsum("lgh,...hml->...gml", inverse[:, div, temp],
+               state.temperature_variation) +
+        einsum("lgh,...hml->...gml", inverse[:, div, logp],
+               state.log_surface_pressure))
     inverted_temperature_variation = (
-        matvec(inverse[:, temp, div], state.divergence) +
-        matvec(inverse[:, temp, temp], state.temperature_variation) +
-        matvec(inverse[:, temp, logp], state.log_surface_pressure))
+        einsum("lgh,...hml->...gml", inverse[:, temp, div], state.divergence) +
+        einsum("lgh,...hml->...gml", inverse[:, temp, temp],
+               state.temperature_variation) +
+        einsum("lgh,...hml->...gml", inverse[:, temp, logp],
+               state.log_surface_pressure))
     inverted_log_surface_pressure = (
-        matvec(inverse[:, logp, div], state.divergence) +
-        matvec(inverse[:, logp, temp], state.temperature_variation) +
-        matvec(inverse[:, logp, logp], state.log_surface_pressure))
+        einsum("lgh,...hml->...gml", inverse[:, logp, div], state.divergence) +
+        einsum("lgh,...hml->...gml", inverse[:, logp, temp],
+               state.temperature_variation) +
+        einsum("lgh,...hml->...gml", inverse[:, logp, logp],
+               state.log_surface_pressure))
     return State(state.vorticity, inverted_divergence,
                  inverted_temperature_variation, inverted_log_surface_pressure,
                  state.tracers)

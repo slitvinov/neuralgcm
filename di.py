@@ -26,7 +26,7 @@ def to_modal(z):
         x = jnp.asarray(x)
         return transform(x) if x.ndim else x
 
-    return tree_map(g, x)
+    return tree_map(g, z)
 
 
 def transform(x):

@@ -177,6 +177,7 @@ def sec_lat_d_dlat_cos2(x):
     x_lp1 = shift((-(l + 2) * b) * x, +1, axis=-1)
     return x_lm1 + x_lp1
 
+
 def runge_kutta(exp, imp, inv, dt):
     F = tree_math.unwrap(exp)
     G = tree_math.unwrap(imp)

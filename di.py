@@ -78,12 +78,6 @@ def shift_m1(x):
     return jax.lax.pad(y, value, config)
 
 
-def _slice_shape_along_axis(x):
-    x_shape = list(x.shape)
-    x_shape[-3] = 1
-    return tuple(x_shape)
-
-
 def sigma_integral(x):
     x_axes = range(x.ndim)
     axes = [x_axes[-3]]
@@ -92,8 +86,9 @@ def sigma_integral(x):
 
 
 def centered_vertical_advection(w, x):
-    w_slc_shape = _slice_shape_along_axis(w)
-    x_slc_shape = _slice_shape_along_axis(x)
+    w_slc_shape = 1, g.longitude_nodes, g.latitude_nodes
+    x_slc_shape = list(x.shape)
+    x_slc_shape[-3] = 1
     w_boundary_top = jnp.zeros(w_slc_shape)
     w_boundary_bot = jnp.zeros(w_slc_shape)
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)

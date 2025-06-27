@@ -116,7 +116,7 @@ vorticity = np.stack([get_vorticity(lat, sigma) for sigma in di.g.centers])
 orography = get_geopotential(lat, 1.0) / gravity_acceleration
 mask = jnp.ones(di.g.total_wavenumbers, dtype).at[-1:].set(0)
 di.g.orography = di.transform(jnp.asarray(orography)) * mask
-step_fn = di.imex_runge_kutta(di.explicit_terms, di.implicit_terms,
+step_fn = di.runge_kutta(di.explicit_terms, di.implicit_terms,
                               di.implicit_inverse, dt)
 total_wavenumber = np.arange(di.g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()

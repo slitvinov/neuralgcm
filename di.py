@@ -188,7 +188,7 @@ def curl_cos_lat(v):
     raw = real_basis_derivative(v[1]) - sec_lat_d_dlat_cos2(v[0])
     return clip_wavenumbers(raw)
 
-def imex_runge_kutta(exp, imp, inv, dt):
+def runge_kutta(exp, imp, inv, dt):
     F = tree_math.unwrap(exp)
     G = tree_math.unwrap(imp)
     G_inv = tree_math.unwrap(inv, vector_argnums=0)

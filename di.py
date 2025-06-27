@@ -65,10 +65,10 @@ def basis():
 
 
 def pad_in_dim(x, pad_width, axis):
-    padding_value = jnp.array(0, dtype=x.dtype)
-    padding_config = [(0, 0, 0)] * x.ndim
-    padding_config[axis] = pad_width + (0, )
-    return jax.lax.pad(x, padding_value, padding_config)
+    value = jnp.array(0, dtype=x.dtype)
+    config = [(0, 0, 0)] * x.ndim
+    config[axis] = pad_width + (0, )
+    return jax.lax.pad(x, value, config)
 
 
 def shift_p(x, axis):

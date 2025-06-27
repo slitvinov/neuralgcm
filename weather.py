@@ -188,7 +188,8 @@ res_factor = di.g.latitude_nodes / 128
 dt = 4.3752000000000006e-02
 tau = 3600 * 8.6 / (2.4**np.log2(res_factor)) / uT
 
-eigenvalues = di.laplacian_eigenvalues()
+l0 = np.arange(di.g.total_wavenumbers)
+eigenvalues = -l0 * (l0 + 1)
 scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 hyperdiffusion_filter = di._make_filter_fn(scaling)

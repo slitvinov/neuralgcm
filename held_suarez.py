@@ -113,7 +113,7 @@ final, _ = jax.lax.scan(lambda x, _: (filter_fn(step_fn(x)), None),
                         state,
                         xs=None,
                         length=173808)
-f0 = di.inverse_transform(final.temperature_variation)
+f0 = di.inverse_transform(final.te)
 plt.contourf(f0[22, :, :])
 plt.savefig("h.12.png")
 np.asarray(f0).tofile("h.12.raw")

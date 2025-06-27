@@ -273,7 +273,7 @@ def explicit_terms(s):
     vort = inverse_transform(s.vo)
     div = inverse_transform(s.di)
     temp = inverse_transform(s.te)
-    tracers = tree_map_over_nonscalars(inverse_transform, s.tracers)
+    tracers = tree_map(inverse_transform, s.tracers)
     l = np.arange(1, g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))

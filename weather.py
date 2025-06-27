@@ -64,7 +64,6 @@ def accumulate_repeated(step_fn, weights, state):
     (_, averaged), _ = jax.lax.scan(f, init, weights)
     return averaged
 
-
 @jax.jit
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)

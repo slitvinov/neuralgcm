@@ -24,7 +24,7 @@ def explicit_terms(state):
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))
     kv = kv_coeff[:, np.newaxis, np.newaxis]
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
-    cos = 1 - sin_lat**2
+    cos2 = 1 - sin_lat**2
     nodal_velocity_tendency = -kv * u0 / cos2, -kv * u1 / cos2
     nodal_temperature = (
         di.g.reference_temperature[:, np.newaxis, np.newaxis] +

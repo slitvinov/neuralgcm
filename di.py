@@ -80,11 +80,19 @@ def shift_p2(x):
     return jax.lax.pad(y, value, config)
 
 
-def shift_m(x, axis):
-    y = jax.lax.slice_in_dim(x, 1, x.shape[axis], axis=axis)
+def shift_m1(x):
+    y = jax.lax.slice_in_dim(x, 1, x.shape[-1], axis=-1)
     value = jnp.array(0, dtype=y.dtype)
     config = [(0, 0, 0)] * y.ndim
-    config[axis] = 0, 1, 0
+    config[-1] = 0, 1, 0
+    return jax.lax.pad(y, value, config)
+
+
+def shift_m2(x):
+    y = jax.lax.slice_in_dim(x, 1, x.shape[-2], axis=-2)
+    value = jnp.array(0, dtype=y.dtype)
+    config = [(0, 0, 0)] * y.ndim
+    config[-2] = 0, 1, 0
     return jax.lax.pad(y, value, config)
 
 
@@ -123,7 +131,7 @@ def centered_vertical_advection(w, x):
 def real_basis_derivative(u):
     i = jnp.arange(2 * g.longitude_wavenumbers - 1).reshape(-1, 1)
     j = (i + 1) // 2
-    u_down = shift_m(u, -2)
+    u_down = shift_m2(u)
     u_up = shift_p2(u)
     return j * jnp.where(i % 2, u_down, -u_up)
 
@@ -146,7 +154,7 @@ def cos_lat_d_dlat(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
-    x_lm1 = shift_m(((l + 1) * a) * x, axis=-1)
+    x_lm1 = shift_m1(((l + 1) * a) * x)
     x_lp1 = shift_p1((-l * b) * x)
     return x_lm1 + x_lp1
 
@@ -155,7 +163,7 @@ def sec_lat_d_dlat_cos2(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
-    x_lm1 = shift_m(((l - 1) * a) * x, axis=-1)
+    x_lm1 = shift_m1(((l - 1) * a) * x)
     x_lp1 = shift_p1((-(l + 2) * b) * x)
     return x_lm1 + x_lp1
 

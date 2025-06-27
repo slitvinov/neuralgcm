@@ -73,7 +73,7 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     v = di.to_modal(v_nodal / cos)
     vorticity = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(v)
     divergence = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
-    mask = jnp.ones(g.total_wavenumbers).at[-1:].set(0)
+    mask = jnp.ones(di.g.total_wavenumbers).at[-1:].set(0)
     return vorticity * mask, divergence * mask
 
 

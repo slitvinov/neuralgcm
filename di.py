@@ -317,7 +317,7 @@ def explicit_terms(s):
     ke = jnp.stack((u, v))**2
     ke = ke.sum(0) * sec2 / 2
     l0 = np.arange(g.total_wavenumbers)
-    ke_tendency = l0 * (l0 + 1) * to_modal(ke)
+    ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
 
     h_adv = functools.partial(horizontal_scalar_advection,
@@ -343,11 +343,11 @@ def explicit_terms(s):
     return State(
         vort_tendency * mask,
         (div_tendency + ke_tendency + oro_tendency) * mask,
-        (to_modal(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) *
+        (transform(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) *
         mask,
-        to_modal(logsp_tendency) * mask,
+        transform(logsp_tendency) * mask,
         jax.tree_util.tree_map(
-            lambda vert, pair: (to_modal(vert + pair[0]) + pair[1]) * mask,
+            lambda vert, pair: (transform(vert + pair[0]) + pair[1]) * mask,
             tracers_v, tracers_h))
 
 

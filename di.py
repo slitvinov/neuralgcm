@@ -139,7 +139,7 @@ def centered_vertical_advection(w, x):
 
 
 def real_basis_derivative(u):
-    i = jnp.arange(u.shape[-2]).reshape(-1, 1)
+    i = jnp.arange(2 * g.longitude_wavenumbers - 1).reshape(-1, 1)
     j = (i + 1) // 2
     u_down = shift(u, -1, -2)
     u_up = shift(u, 1, -2)

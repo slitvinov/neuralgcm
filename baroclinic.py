@@ -130,7 +130,8 @@ divergence_perturbation = np.stack(
     [get_divergence_perturbation(lat, lon) for sigma in di.g.centers])
 temperature_variation = np.stack(
     [get_temperature_variation(lat, sigma) for sigma in di.g.centers])
-log_surface_pressure = np.log(p0 * np.ones(lat.shape)[np.newaxis, ...])
+log_surface_pressure = np.full((1, di.g.longitude_nodes, di.g.latitude_nodes),
+                               np.log(p0))
 state = di.State(
     di.transform(jnp.asarray(vorticity)) +
     di.transform(jnp.asarray(vorticity_perturbation)),

@@ -172,14 +172,14 @@ di.g.reference_temperature = np.full((di.g.layers, ), 250)
 temperature_variation = di.transform(
     t_nodal - di.g.reference_temperature.reshape(-1, 1, 1))
 log_sp = di.transform(np.log(sp_nodal))
-tracers = di.to_modal({
+tracers = {
     "specific_humidity":
-    M["specific_humidity"],
+    di.transform(M["specific_humidity"]),
     "specific_cloud_liquid_water_content":
-    M["specific_cloud_liquid_water_content"],
+    di.transform(M["specific_cloud_liquid_water_content"]),
     "specific_cloud_ice_water_content":
-    M["specific_cloud_ice_water_content"],
-})
+    di.transform(M["specific_cloud_ice_water_content"])
+}
 raw_init_state = di.State(vorticity, divergence, temperature_variation, log_sp,
                           tracers)
 total_wavenumber = np.arange(di.g.total_wavenumbers)

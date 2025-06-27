@@ -31,8 +31,10 @@ def to_nodal(x):
 def transform(x):
     return einsum("im,mjl,...ij->...ml", g.f, g.p, g.w * x)
 
+
 def inverse_transform(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
+
 
 def basis():
     dft = scipy.linalg.dft(
@@ -145,6 +147,7 @@ def modal_axes():
     m_pos = np.arange(1, g.longitude_wavenumbers)
     m_pos_neg = np.stack([m_pos, -m_pos], axis=1).ravel()
     return np.concatenate([[0], m_pos_neg]), np.arange(g.total_wavenumbers)
+
 
 def laplacian(x):
     l = np.arange(g.total_wavenumbers)
@@ -297,7 +300,8 @@ def horizontal_scalar_advection(scalar, cos_lat_u, divergence):
     sec2 = 1 / (1 - sin_lat**2)
     m_component = to_modal(u * scalar * sec2)
     n_component = to_modal(v * scalar * sec2)
-    modal_terms = -div_cos_lat((m_component, n_component), clip=False)
+    modal_terms = real_basis_derivative(m_component) + sec_lat_d_dlat_cos2(
+        n_component)
     return nodal_terms, modal_terms
 
 

@@ -89,7 +89,7 @@ def shift_m1(x):
 
 
 def shift_m2(x):
-    y = jax.lax.slice_in_dim(x, 1, 2 * g.longitude_wavenumbers - 2, axis=-2)
+    y = jax.lax.slice_in_dim(x, 1, 2 * g.longitude_wavenumbers - 1, axis=-2)
     value = jnp.array(0, dtype=y.dtype)
     config = [(0, 0, 0)] * y.ndim
     config[-2] = 0, 1, 0

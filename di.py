@@ -178,12 +178,9 @@ def sec_lat_d_dlat_cos2(x):
     return x_lm1 + x_lp1
 
 
-def div_cos_lat(v, clip=True):
+def div_cos_lat(v):
     raw = real_basis_derivative(v[0]) + sec_lat_d_dlat_cos2(v[1])
-    if clip:
-        return clip_wavenumbers(raw)
-    return raw
-
+    return clip_wavenumbers(raw)
 
 def curl_cos_lat(v):
     raw = real_basis_derivative(v[1]) - sec_lat_d_dlat_cos2(v[0])

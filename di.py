@@ -187,7 +187,7 @@ def get_sigma_ratios():
     return alpha
 
 
-def get_geopotential_weights():
+def geopotential_weights():
     alpha = get_sigma_ratios()
     weights = np.zeros([g.layers, g.layers])
     for j in range(g.layers):
@@ -332,7 +332,7 @@ def explicit_terms(s):
 
 
 def implicit_terms(s):
-    weights = get_geopotential_weights()
+    weights = geopotential_weights()
     geopotential_diff = einsum("gh,...hml->...gml", weights, s.te)
     rt_log_p = (ideal_gas_constant *
                 g.reference_temperature[..., np.newaxis, np.newaxis] * s.sp)
@@ -353,7 +353,7 @@ def implicit_inverse(s, dt):
     eye = np.eye(g.layers)[np.newaxis]
     l0 = np.arange(g.total_wavenumbers)
     lam = -l0 * (l0 + 1)
-    geo = get_geopotential_weights()
+    geo = geopotential_weights()
     r = ideal_gas_constant
     h = get_temperature_implicit_weights()
     t = g.reference_temperature[:, np.newaxis]

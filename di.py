@@ -219,11 +219,10 @@ def get_temperature_implicit_weights():
 
 def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
     f = jax.lax.cumsum(g_term * g.layer_thickness[:, None, None])
-    alpha = get_sigma_ratios()
-    alpha = alpha[:, np.newaxis, np.newaxis]
-    del_s = g.layer_thickness[:, np.newaxis, np.newaxis]
-    padding = [(1, 0), (0, 0), (0, 0)]
-    g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]) / del_s
+    alpha = get_sigma_ratios()[:, np.newaxis, np.newaxis]
+    padding = (1, 0), (0, 0), (0, 0)
+    g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]
+              ) / g.layer_thickness[:, np.newaxis, np.newaxis]
     return temperature_field * (v_dot_grad_log_sp - g_part)
 
 

@@ -78,8 +78,7 @@ def vadvection(w, x):
     xt = np.zeros(shape)
     dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)
-    xd = einsum(dx, [0, 1, 2],
-                1 / g.center_to_center, [0], [0, 1, 2])
+    xd = einsum(dx, [0, 1, 2], 1 / g.center_to_center, [0], [0, 1, 2])
     wx = jnp.concatenate([wt, w, wt], axis=-3) * jnp.concatenate([xt, xd, xt],
                                                                  axis=-3)
     return -0.5 * (jax.lax.slice_in_dim(wx, 1, None, axis=-3) +

@@ -72,20 +72,18 @@ def sigma_integral(x):
 
 
 def vadvection(w, x):
-    w_slc_shape = 1, g.longitude_nodes, g.latitude_nodes
-    x_slc_shape = list(x.shape)
-    x_slc_shape[-3] = 1
-    w_boundary_top = np.zeros(w_slc_shape)
-    w_boundary_bot = np.zeros(w_slc_shape)
-    w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
+    shape = list(x.shape)
+    shape[-3] = 1
+    wtop = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
+    wbot = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
+    w = jnp.concatenate([wtop, w, wbot], axis=-3)
     dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)
     inv_ds = 1 / g.center_to_center
     x_diff = einsum(dx, [0, 1, 2], inv_ds, [0], [0, 1, 2], precision="float32")
-    x_diff_boundary_top = np.zeros(x_slc_shape)
-    x_diff_boundary_bot = np.zeros(x_slc_shape)
-    x_diff = jnp.concatenate(
-        [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=-3)
+    x_difftop = np.zeros(shape)
+    x_diffbot = np.zeros(shape)
+    x_diff = jnp.concatenate([x_difftop, x_diff, x_diffbot], axis=-3)
     w_times_x_diff = w * x_diff
     return -0.5 * (jax.lax.slice_in_dim(w_times_x_diff, 1, None, axis=-3) +
                    jax.lax.slice_in_dim(w_times_x_diff, 0, -1, axis=-3))
@@ -304,8 +302,8 @@ def explicit_terms(s):
 
     temp_vert = vadvection(sigma_full, temp)
     if np.unique(g.reference_temperature[..., None, None].ravel()).size > 1:
-        temp_vert += vadvection(
-            sigma_exp, g.reference_temperature[..., None, None])
+        temp_vert += vadvection(sigma_exp, g.reference_temperature[..., None,
+                                                                   None])
 
     t_mean = _t_omega_over_sigma_sp(g.reference_temperature[..., None, None],
                                     u_dot_grad, u_dot_grad)
@@ -313,8 +311,8 @@ def explicit_terms(s):
     temp_adiab = kappa * (t_mean + t_var)
 
     logsp_tendency = -sigma_integral(u_dot_grad)
-    tracers_v = jax.tree_util.tree_map(
-        lambda x: vadvection(sigma_full, x), tracers)
+    tracers_v = jax.tree_util.tree_map(lambda x: vadvection(sigma_full, x),
+                                       tracers)
     mask = np.ones(g.total_wavenumbers)
     mask[-1] = 0
     return State(

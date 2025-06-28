@@ -48,7 +48,7 @@ def basis():
         y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
     for k in range(1, g.total_wavenumbers):
         m_max = min(g.longitude_wavenumbers, g.total_wavenumbers - k)
-        m = np.arange(m_max).reshape((-1, 1))
+        m = np.mgrid[:m_max][:, None]
         m2 = np.square(m)
         mk2 = np.square(m + k)
         mkp2 = np.square(m + k - 1)

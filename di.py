@@ -68,6 +68,7 @@ def shift_p1(z):
     y = jax.lax.slice_in_dim(z, 0, g.total_wavenumbers - 1, axis=-1)
     return jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
 
+
 def shift_m1(z):
     y = jax.lax.slice_in_dim(z, 1, g.total_wavenumbers, axis=-1)
     return jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
@@ -128,18 +129,18 @@ def cos_lat_d_dlat(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
-    x_lm1 = shift_m1(((l + 1) * a) * x)
-    x_lp1 = shift_p1((-l * b) * x)
-    return x_lm1 + x_lp1
+    lm1 = shift_m1(((l + 1) * a) * x)
+    lp1 = shift_p1((-l * b) * x)
+    return lm1 + lp1
 
 
 def sec_lat_d_dlat_cos2(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
-    x_lm1 = shift_m1(((l - 1) * a) * x)
-    x_lp1 = shift_p1((-(l + 2) * b) * x)
-    return x_lm1 + x_lp1
+    lm1 = shift_m1(((l - 1) * a) * x)
+    lp1 = shift_p1((-(l + 2) * b) * x)
+    return lm1 + lp1
 
 
 def runge_kutta(exp, imp, inv, dt):

@@ -121,9 +121,9 @@ def cos_lat_d_dlat(x):
     a, b = derivative_recurrence_weights()
     zm = (l + 1) * a * x
     zp = -l * b * x
-    ym = jax.lax.slice_in_dim(zm, 1, g.total_wavenumbers, axis=-1)
+    ym = zm[:, :, 1:g.total_wavenumbers]
     lm1 = jax.lax.pad(ym, 0.0, ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
-    yp = jax.lax.slice_in_dim(zp, 0, g.total_wavenumbers - 1, axis=-1)
+    yp = zp[:, :, :g.total_wavenumbers - 1]
     lp1 = jax.lax.pad(yp, 0.0, ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
     return lm1 + lp1
 

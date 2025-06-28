@@ -332,8 +332,7 @@ def explicit_terms(s):
 
 
 def implicit_terms(s):
-    weights = geopotential_weights()
-    geopotential_diff = einsum("gh,...hml->...gml", weights, s.te)
+    geopotential_diff = einsum("gh,...hml->...gml", g.geo, s.te)
     rt_log_p = (ideal_gas_constant *
                 g.reference_temperature[..., np.newaxis, np.newaxis] * s.sp)
     vorticity_implicit = jnp.zeros_like(s.vo)
@@ -353,7 +352,6 @@ def implicit_inverse(s, dt):
     eye = np.eye(g.layers)[np.newaxis]
     l0 = np.arange(g.total_wavenumbers)
     lam = -l0 * (l0 + 1)
-    geo = geopotential_weights()
     r = ideal_gas_constant
     h = get_temperature_implicit_weights()
     t = g.reference_temperature[:, np.newaxis]
@@ -363,7 +361,7 @@ def implicit_inverse(s, dt):
     row0 = np.concatenate(
         [
             np.broadcast_to(eye, [l, j, k]),
-            dt * np.einsum("l,jk->ljk", lam, geo),
+            dt * np.einsum("l,jk->ljk", lam, g.geo),
             dt * r * np.einsum("l,jo->ljo", lam, t),
         ],
         axis=2,

@@ -146,22 +146,22 @@ def runge_kutta(exp, imp, inv, dt):
     n = len(b_ex)
 
     @tree_math.wrap
-    def step_fn(y0):
+    def step_fn(y):
         f = [None] * n
         g = [None] * n
-        f[0] = F(y0)
-        g[0] = G(y0)
+        f[0] = F(y)
+        g[0] = G(y)
         for i in range(1, n):
             ex = dt * sum(a_ex[i - 1][j] * f[j]
                           for j in range(i) if a_ex[i - 1][j])
             im = dt * sum(a_im[i - 1][j] * g[j]
                           for j in range(i) if a_im[i - 1][j])
-            Y = G_inv(y0 + ex + im, dt * a_im[i - 1][i])
+            Y = G_inv(y + ex + im, dt * a_im[i - 1][i])
             if any(a_ex[j][i] for j in range(i, n - 1)) or b_ex[i]: f[i] = F(Y)
             if any(a_im[j][i] for j in range(i, n - 1)) or b_im[i]: g[i] = G(Y)
-        ex = dt * sum(b_ex[j] * f[j] for j in range(n) if b_ex[j])
-        im = dt * sum(b_im[j] * g[j] for j in range(n) if b_im[j])
-        return y0 + ex + im
+        ex = sum(dt * b_ex[j] * f[j] for j in range(n) if b_ex[j])
+        im = sum(dt * b_im[j] * g[j] for j in range(n) if b_im[j])
+        return y + ex + im
 
     return step_fn
 

@@ -129,8 +129,8 @@ def cos_lat_d_dlat(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
-    zm = ((l + 1) * a) * x)
-    zp = (-l * b) * x)
+    zm = ((l + 1) * a) * x
+    zp = (-l * b) * x
     lm1 = shift_m1(zm)
     lp1 = shift_p1(zp)
     return lm1 + lp1
@@ -141,7 +141,7 @@ def sec_lat_d_dlat_cos2(x):
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
     a, b = derivative_recurrence_weights()
     zm = ((l - 1) * a) * x
-    zp = -(l + 2) * b) * x
+    zp = -(l + 2) * b * x
     lm1 = shift_m1(zm)
     lp1 = shift_p1(zp)
     return lm1 + lp1

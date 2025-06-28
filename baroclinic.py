@@ -8,8 +8,8 @@ import jax.numpy as jnp
 
 def get_reference_temperature(sigma):
     top_mean_t = t0 * sigma**(r_gas * gamma / gravity_acceleration)
-    if sigma < sigma_tropo:
-        return top_mean_t + delta_t * (sigma_tropo - sigma)**5
+    if sigma < sigma1:
+        return top_mean_t + delta_t * (sigma1 - sigma)**5
     else:
         return top_mean_t
 
@@ -17,12 +17,12 @@ def get_reference_temperature(sigma):
 def get_reference_geopotential(sigma):
     top_mean_potential = (t0 * gravity_acceleration / gamma) * (
         1 - sigma**(r_gas * gamma / gravity_acceleration))
-    if sigma < sigma_tropo:
+    if sigma < sigma1:
         return top_mean_potential - r_gas * delta_t * (
-            (np.log(sigma / sigma_tropo) + 137 / 60) * sigma_tropo**5 -
-            5 * sigma * sigma_tropo**4 + 5 * (sigma**2) * (sigma_tropo**3) -
-            (10 / 3) * (sigma_tropo**2) * sigma**3 +
-            (5 / 4) * sigma_tropo * sigma**4 - (sigma**5) / 5)
+            (np.log(sigma / sigma1) + 137 / 60) * sigma1**5 -
+            5 * sigma * sigma1**4 + 5 * (sigma**2) * (sigma1**3) - (10 / 3) *
+            (sigma1**2) * sigma**3 + (5 / 4) * sigma1 * sigma**4 -
+            (sigma**5) / 5)
     else:
         return top_mean_potential
 
@@ -78,7 +78,7 @@ def get_divergence_perturbation(lat, lon):
 
 dtype = np.dtype('float32')
 gravity_acceleration = 7.2364082834567185e+01
-sigma_tropo = 0.2
+sigma1 = 0.2
 sigma0 = 0.252
 u0 = 0.03766767260790817
 t0 = 288.0

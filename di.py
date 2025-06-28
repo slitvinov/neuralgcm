@@ -68,7 +68,7 @@ def shift_p1(z):
     y = jax.lax.slice_in_dim(z, 0, g.total_wavenumbers - 1, axis=-1)
     return jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
 
-def shift_m1(x):
+def shift_m1(z):
     y = jax.lax.slice_in_dim(z, 1, g.total_wavenumbers, axis=-1)
     return jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
 

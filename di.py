@@ -75,15 +75,15 @@ def centered_vertical_advection(w, x):
     w_slc_shape = 1, g.longitude_nodes, g.latitude_nodes
     x_slc_shape = list(x.shape)
     x_slc_shape[-3] = 1
-    w_boundary_top = jnp.zeros(w_slc_shape)
-    w_boundary_bot = jnp.zeros(w_slc_shape)
+    w_boundary_top = np.zeros(w_slc_shape)
+    w_boundary_bot = np.zeros(w_slc_shape)
     w = jnp.concatenate([w_boundary_top, w, w_boundary_bot], axis=-3)
     dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)
     inv_ds = 1 / g.center_to_center
     x_diff = einsum(dx, [0, 1, 2], inv_ds, [0], [0, 1, 2], precision="float32")
-    x_diff_boundary_top = jnp.zeros(x_slc_shape)
-    x_diff_boundary_bot = jnp.zeros(x_slc_shape)
+    x_diff_boundary_top = np.zeros(x_slc_shape)
+    x_diff_boundary_bot = np.zeros(x_slc_shape)
     x_diff = jnp.concatenate(
         [x_diff_boundary_top, x_diff, x_diff_boundary_bot], axis=-3)
     w_times_x_diff = w * x_diff

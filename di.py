@@ -197,9 +197,9 @@ def get_temperature_implicit_weights():
     p_alpha = p * alpha
     p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
     p_alpha_shifted[0] = 0
-    h0 = (kappa * g.reference_temperature[..., np.newaxis] *
-          (p_alpha + p_alpha_shifted) / g.layer_thickness[..., np.newaxis])
-    temp_diff = np.diff(g.reference_temperature)
+    h0 = (kappa * g.temp[..., np.newaxis] * (p_alpha + p_alpha_shifted) /
+          g.layer_thickness[..., np.newaxis])
+    temp_diff = np.diff(g.temp)
     thickness_sum = g.layer_thickness[:-1] + g.layer_thickness[1:]
     k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[...,
                                                                   np.newaxis]
@@ -296,12 +296,10 @@ def explicit_terms(s):
     tracers_h = jax.tree_util.tree_map(h_adv, tracers)
 
     temp_vert = vadvection(sigma_full, temp)
-    if np.unique(g.reference_temperature[..., None, None].ravel()).size > 1:
-        temp_vert += vadvection(sigma_exp, g.reference_temperature[..., None,
-                                                                   None])
+    if np.unique(g.temp[..., None, None].ravel()).size > 1:
+        temp_vert += vadvection(sigma_exp, g.temp[..., None, None])
 
-    t_mean = g.reference_temperature[..., None,
-                                     None] * (u_dot_grad - omega(u_dot_grad))
+    t_mean = g.temp[..., None, None] * (u_dot_grad - omega(u_dot_grad))
     t_var = temp * (u_dot_grad - omega(div + u_dot_grad))
     temp_adiab = kappa * (t_mean + t_var)
 
@@ -323,8 +321,8 @@ def explicit_terms(s):
 
 def implicit_terms(s):
     geopotential_diff = einsum("gh,...hml->...gml", g.geo, s.te)
-    rt_log_p = (ideal_gas_constant *
-                g.reference_temperature[..., np.newaxis, np.newaxis] * s.sp)
+    rt_log_p = (ideal_gas_constant * g.temp[..., np.newaxis, np.newaxis] *
+                s.sp)
     vorticity_implicit = jnp.zeros_like(s.vo)
     l0 = np.arange(g.total_wavenumbers)
     divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
@@ -344,7 +342,7 @@ def implicit_inverse(s, dt):
     lam = -l0 * (l0 + 1)
     r = ideal_gas_constant
     h = get_temperature_implicit_weights()
-    t = g.reference_temperature[:, np.newaxis]
+    t = g.temp[:, np.newaxis]
     thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
     l = g.total_wavenumbers
     j = k = g.layers

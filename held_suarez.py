@@ -26,9 +26,8 @@ def explicit_terms(s):
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
     cos2 = 1 - sin_lat**2
     nodal_velocity_tendency = -kv * u0 / cos2, -kv * u1 / cos2
-    nodal_temperature = (
-        di.g.reference_temperature[:, np.newaxis, np.newaxis] +
-        temperature_variation)
+    nodal_temperature = (di.g.temp[:, np.newaxis, np.newaxis] +
+                         temperature_variation)
     nodal_log_surface_pressure = di.inverse_transform(s.sp)
     nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
     p_over_p0 = (di.g.centers[:, np.newaxis, np.newaxis] *
@@ -87,7 +86,7 @@ nodal_surface_pressure = surface_pressure + p1 * perturbation
 state = di.State(modal_vorticity, jnp.zeros_like(modal_vorticity),
                  jnp.zeros_like(modal_vorticity),
                  di.transform(jnp.log(nodal_surface_pressure)))
-di.g.reference_temperature = np.full((di.g.layers, ), 288)
+di.g.temp = np.full((di.g.layers, ), 288)
 di.g.orography = di.transform(np.zeros_like(lat))
 dt = 8.7504000000000012e-02
 sigma_b = 0.7

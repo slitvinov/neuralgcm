@@ -74,19 +74,17 @@ def sigma_integral(x):
 def vadvection(w, x):
     shape = list(x.shape)
     shape[-3] = 1
-    wtop = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
-    wbot = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
-    w = jnp.concatenate([wtop, w, wbot], axis=-3)
+    wt = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
+    xt = np.zeros(shape)
+    w = jnp.concatenate([wt, w, wt], axis=-3)
     dx = jax.lax.slice_in_dim(x, 1, None, axis=-3) - jax.lax.slice_in_dim(
         x, 0, -1, axis=-3)
-    inv_ds = 1 / g.center_to_center
-    x_diff = einsum(dx, [0, 1, 2], inv_ds, [0], [0, 1, 2], precision="float32")
-    x_difftop = np.zeros(shape)
-    x_diffbot = np.zeros(shape)
-    x_diff = jnp.concatenate([x_difftop, x_diff, x_diffbot], axis=-3)
-    w_times_x_diff = w * x_diff
-    return -0.5 * (jax.lax.slice_in_dim(w_times_x_diff, 1, None, axis=-3) +
-                   jax.lax.slice_in_dim(w_times_x_diff, 0, -1, axis=-3))
+    xd = einsum(dx, [0, 1, 2],
+                1 / g.center_to_center, [0], [0, 1, 2],
+                precision="float32")
+    wx = w * jnp.concatenate([xt, xd, xt], axis=-3)
+    return -0.5 * (jax.lax.slice_in_dim(wx, 1, None, axis=-3) +
+                   jax.lax.slice_in_dim(wx, 0, -1, axis=-3))
 
 
 def real_basis_derivative(u):

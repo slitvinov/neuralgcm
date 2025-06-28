@@ -305,7 +305,7 @@ def explicit_terms(s):
     logsp_tendency = -sigma_integral(u_dot_grad)
     tracers_v = jax.tree_util.tree_map(lambda x: vadvection(sigma_full, x),
                                        tracers)
-    mask = np.r_[[1] * (di.g.total_wavenumbers - 1), 0]
+    mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
     return State(
         vort_tendency * mask,
         (div_tendency + ke_tendency + oro_tendency) * mask,

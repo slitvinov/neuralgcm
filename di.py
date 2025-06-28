@@ -78,10 +78,8 @@ def vadvection(w, x):
     xt = np.zeros(shape)
     dx = x[1:] - x[:-1]
     xd = einsum(dx, [0, 1, 2], 1 / g.center_to_center, [0], [0, 1, 2])
-    wx = jnp.concatenate([wt, w, wt], axis=-3) * jnp.concatenate([xt, xd, xt],
-                                                                 axis=-3)
-    return -0.5 * (jax.lax.slice_in_dim(wx, 1, None, axis=-3) +
-                   jax.lax.slice_in_dim(wx, 0, -1, axis=-3))
+    wx = jnp.concatenate([wt, w, wt]) * jnp.concatenate([xt, xd, xt])
+    return -0.5 * (wx[1:] + wx[:-1])
 
 
 def real_basis_derivative(u):

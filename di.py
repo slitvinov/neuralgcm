@@ -260,7 +260,7 @@ def explicit_terms(s):
     u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
     f_exp = jax.lax.cumsum(u_dot_grad * g.thick[:, None, None])
     f_full = jax.lax.cumsum((div + u_dot_grad) * g.thick[:, None, None])
-    sum_sigma = np.cumsum(g.thick)
+    sum_sigma = np.cumsum(g.thick)[:, None, None]
     sigma_dot = lambda f: (sum_sigma * f[-1:] - f)[:-1]
     sigma_exp = sigma_dot(f_exp)
     sigma_full = sigma_dot(f_full)

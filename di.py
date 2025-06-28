@@ -64,13 +64,12 @@ def basis():
     return f, p[1:], w
 
 
-def shift_p1(x):
-    y = jax.lax.slice_in_dim(x, 0, g.total_wavenumbers - 1, axis=-1)
+def shift_p1(z):
+    y = jax.lax.slice_in_dim(z, 0, g.total_wavenumbers - 1, axis=-1)
     return jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
 
-
 def shift_m1(x):
-    y = jax.lax.slice_in_dim(x, 1, g.total_wavenumbers, axis=-1)
+    y = jax.lax.slice_in_dim(z, 1, g.total_wavenumbers, axis=-1)
     return jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
 
 

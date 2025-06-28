@@ -85,7 +85,7 @@ def vadvection(w, x):
 def real_basis_derivative(u):
     n = 2 * g.longitude_wavenumbers - 1
     y = u[:, 1:n, :]
-    z = u[:, 0:n - 1, :]
+    z = u[:, :n - 1, :]
     u_do = jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 1, 0), (0, 0, 0)))
     u_up = jax.lax.pad(z, 0.0, ((0, 0, 0), (1, 0, 0), (0, 0, 0)))
     i = np.c_[:n]
@@ -261,9 +261,8 @@ def explicit_terms(s):
     f_exp = jax.lax.cumsum(u_dot_grad * g.thick[:, None, None])
     f_full = jax.lax.cumsum((div + u_dot_grad) * g.thick[:, None, None])
     sum_sigma = np.cumsum(g.thick)[:, None, None]
-    sigma_dot = lambda f: (sum_sigma * f[-1] - f)[:-1]
-    sigma_exp = sigma_dot(f_exp)
-    sigma_full = sigma_dot(f_full)
+    sigma_exp = (sum_sigma * f_exp[-1] - f_exp)[:-1]
+    sigma_full = (sum_sigma * f_full[-1] - f_full)[:-1]
     sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
     coriolis = np.tile(sin_latitude, (g.longitude_nodes, 1))
     total_vort = vort + coriolis

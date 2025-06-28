@@ -71,7 +71,7 @@ def sigma_integral(x):
     return xds.sum(axis=-3, keepdims=True)
 
 
-def centered_vertical_advection(w, x):
+def vadvection(w, x):
     w_slc_shape = 1, g.longitude_nodes, g.latitude_nodes
     x_slc_shape = list(x.shape)
     x_slc_shape[-3] = 1
@@ -226,7 +226,7 @@ def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
     return temperature_field * (v_dot_grad_log_sp - g_part)
 
 
-def advection(scalar, cos_lat_u, divergence):
+def hadvection(scalar, cos_lat_u, divergence):
     u, v = cos_lat_u
     nodal_terms = scalar * divergence
     sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
@@ -281,8 +281,8 @@ def explicit_terms(s):
     total_vort = vort + coriolis
     vort_u = -v * total_vort * sec2
     vort_v = u * total_vort * sec2
-    sigma_u = -centered_vertical_advection(sigma_full, u)
-    sigma_v = -centered_vertical_advection(sigma_full, v)
+    sigma_u = -vadvection(sigma_full, u)
+    sigma_v = -vadvection(sigma_full, v)
     rt = ideal_gas_constant * temp
     vert_u = (sigma_u + rt * grad_u) * sec2
     vert_v = (sigma_v + rt * grad_v) * sec2
@@ -298,13 +298,13 @@ def explicit_terms(s):
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
 
-    h_adv = functools.partial(advection, cos_lat_u=(u, v), divergence=div)
+    h_adv = functools.partial(hadvection, cos_lat_u=(u, v), divergence=div)
     temp_h_nodal, temp_h_modal = h_adv(temp)
     tracers_h = jax.tree_util.tree_map(h_adv, tracers)
 
-    temp_vert = centered_vertical_advection(sigma_full, temp)
+    temp_vert = vadvection(sigma_full, temp)
     if np.unique(g.reference_temperature[..., None, None].ravel()).size > 1:
-        temp_vert += centered_vertical_advection(
+        temp_vert += vadvection(
             sigma_exp, g.reference_temperature[..., None, None])
 
     t_mean = _t_omega_over_sigma_sp(g.reference_temperature[..., None, None],
@@ -314,7 +314,7 @@ def explicit_terms(s):
 
     logsp_tendency = -sigma_integral(u_dot_grad)
     tracers_v = jax.tree_util.tree_map(
-        lambda x: centered_vertical_advection(sigma_full, x), tracers)
+        lambda x: vadvection(sigma_full, x), tracers)
     mask = np.ones(g.total_wavenumbers)
     mask[-1] = 0
     return State(

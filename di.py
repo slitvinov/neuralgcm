@@ -226,7 +226,7 @@ def _t_omega_over_sigma_sp(temperature_field, g_term, v_dot_grad_log_sp):
     return temperature_field * (v_dot_grad_log_sp - g_part)
 
 
-def horizontal_scalar_advection(scalar, cos_lat_u, divergence):
+def advection(scalar, cos_lat_u, divergence):
     u, v = cos_lat_u
     nodal_terms = scalar * divergence
     sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
@@ -298,9 +298,7 @@ def explicit_terms(s):
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
 
-    h_adv = functools.partial(horizontal_scalar_advection,
-                              cos_lat_u=(u, v),
-                              divergence=div)
+    h_adv = functools.partial(advection, cos_lat_u=(u, v), divergence=div)
     temp_h_nodal, temp_h_modal = h_adv(temp)
     tracers_h = jax.tree_util.tree_map(h_adv, tracers)
 

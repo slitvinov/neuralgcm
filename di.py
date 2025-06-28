@@ -67,7 +67,7 @@ def basis():
 def sigma_integral(x):
     x_axes = range(x.ndim)
     axes = [x_axes[-3]]
-    xds = einsum(x, x_axes, g.layer_thickness, axes, x_axes)
+    xds = einsum(x, x_axes, g.thick, axes, x_axes)
     return xds.sum(axis=-3, keepdims=True)
 
 
@@ -198,25 +198,25 @@ def get_temperature_implicit_weights():
     p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
     p_alpha_shifted[0] = 0
     h0 = (kappa * g.temp[..., np.newaxis] * (p_alpha + p_alpha_shifted) /
-          g.layer_thickness[..., np.newaxis])
+          g.thick[..., np.newaxis])
     temp_diff = np.diff(g.temp)
-    thickness_sum = g.layer_thickness[:-1] + g.layer_thickness[1:]
+    thickness_sum = g.thick[:-1] + g.thick[1:]
     k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[...,
                                                                   np.newaxis]
-    thickness_cumulative = np.cumsum(g.layer_thickness)[..., np.newaxis]
+    thickness_cumulative = np.cumsum(g.thick)[..., np.newaxis]
     k1 = p - thickness_cumulative
     k = k0 * k1
     k_shifted = np.roll(k, 1, axis=0)
     k_shifted[0] = 0
-    return (h0 - k - k_shifted) * g.layer_thickness
+    return (h0 - k - k_shifted) * g.thick
 
 
 def omega(g_term):
-    f = jax.lax.cumsum(g_term * g.layer_thickness[:, None, None])
+    f = jax.lax.cumsum(g_term * g.thick[:, None, None])
     alpha = get_sigma_ratios()[:, np.newaxis, np.newaxis]
     pad = (1, 0), (0, 0), (0, 0)
-    return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]
-            ) / g.layer_thickness[:, np.newaxis, np.newaxis]
+    return (alpha * f + jnp.pad(
+        alpha * f, pad)[:-1, ...]) / g.thick[:, np.newaxis, np.newaxis]
 
 
 def hadvection(scalar, cos_lat_u, divergence):
@@ -261,10 +261,9 @@ def explicit_terms(s):
     sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
     sec2 = 1 / (1 - sin_lat**2)
     u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
-    f_exp = jax.lax.cumsum(u_dot_grad * g.layer_thickness[:, None, None])
-    f_full = jax.lax.cumsum(
-        (div + u_dot_grad) * g.layer_thickness[:, None, None])
-    sum_sigma = np.cumsum(g.layer_thickness)[:, None, None]
+    f_exp = jax.lax.cumsum(u_dot_grad * g.thick[:, None, None])
+    f_full = jax.lax.cumsum((div + u_dot_grad) * g.thick[:, None, None])
+    sum_sigma = np.cumsum(g.thick)[:, None, None]
     sigma_dot = lambda f: jax.lax.slice_in_dim(
         sum_sigma * jax.lax.slice_in_dim(f, -1, None) - f, 0, -1)
     sigma_exp = sigma_dot(f_exp)
@@ -328,8 +327,8 @@ def implicit_terms(s):
     divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
     weights = -get_temperature_implicit_weights()
     temperature_variation_implicit = einsum("gh,...hml->...gml", weights, s.di)
-    log_surface_pressure_implicit = -einsum(
-        "gh,...hml->...gml", g.layer_thickness[np.newaxis], s.di)
+    log_surface_pressure_implicit = -einsum("gh,...hml->...gml",
+                                            g.thick[np.newaxis], s.di)
     tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
     return State(vorticity_implicit, divergence_implicit,
                  temperature_variation_implicit, log_surface_pressure_implicit,
@@ -343,7 +342,7 @@ def implicit_inverse(s, dt):
     r = ideal_gas_constant
     h = get_temperature_implicit_weights()
     t = g.temp[:, np.newaxis]
-    thickness = g.layer_thickness[np.newaxis, np.newaxis, :]
+    thickness = g.thick[np.newaxis, np.newaxis, :]
     l = g.total_wavenumbers
     j = k = g.layers
     row0 = np.concatenate(

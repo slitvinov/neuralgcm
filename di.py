@@ -66,16 +66,12 @@ def basis():
 
 def shift_p1(x):
     y = jax.lax.slice_in_dim(x, 0, g.total_wavenumbers - 1, axis=-1)
-    value = jnp.array(0, dtype=y.dtype)
-    config = (0, 0, 0), (0, 0, 0), (1, 0, 0)
-    return jax.lax.pad(y, value, config)
+    return jax.lax.pad(y, 0, ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
 
 
 def shift_m1(x):
     y = jax.lax.slice_in_dim(x, 1, g.total_wavenumbers, axis=-1)
-    value = jnp.array(0, dtype=y.dtype)
-    config = (0, 0, 0), (0, 0, 0), (0, 1, 0)
-    return jax.lax.pad(y, value, config)
+    return jax.lax.pad(y, 0, ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
 
 
 def sigma_integral(x):

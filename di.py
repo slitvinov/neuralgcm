@@ -211,13 +211,13 @@ def get_temperature_implicit_weights():
     return (h0 - k - k_shifted) * g.layer_thickness
 
 
-def omega(temperature_field, g_term, v_dot_grad_log_sp):
+def omega(g_term, v_dot_grad_log_sp):
     f = jax.lax.cumsum(g_term * g.layer_thickness[:, None, None])
     alpha = get_sigma_ratios()[:, np.newaxis, np.newaxis]
-    padding = (1, 0), (0, 0), (0, 0)
-    g_part = (alpha * f + jnp.pad(alpha * f, padding)[:-1, ...]
+    pad = (1, 0), (0, 0), (0, 0)
+    g_part = (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]
               ) / g.layer_thickness[:, np.newaxis, np.newaxis]
-    return temperature_field * (v_dot_grad_log_sp - g_part)
+    return v_dot_grad_log_sp - g_part
 
 
 def hadvection(scalar, cos_lat_u, divergence):
@@ -301,9 +301,9 @@ def explicit_terms(s):
         temp_vert += vadvection(sigma_exp, g.reference_temperature[..., None,
                                                                    None])
 
-    t_mean = omega(g.reference_temperature[..., None, None],
-                                    u_dot_grad, u_dot_grad)
-    t_var = omega(temp, div + u_dot_grad, u_dot_grad)
+    t_mean = g.reference_temperature[..., None, None] * omega(
+        u_dot_grad, u_dot_grad)
+    t_var = temp * omega(div + u_dot_grad, u_dot_grad)
     temp_adiab = kappa * (t_mean + t_var)
 
     logsp_tendency = -sigma_integral(u_dot_grad)

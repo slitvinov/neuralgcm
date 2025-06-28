@@ -121,10 +121,10 @@ def cos_lat_d_dlat(x):
     a, b = derivative_recurrence_weights()
     zm = (l + 1) * a * x
     zp = -l * b * x
-    ym = zm[:, :, 1:g.total_wavenumbers]
-    lm1 = jax.lax.pad(ym, 0.0, ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
-    yp = zp[:, :, :g.total_wavenumbers - 1]
-    lp1 = jax.lax.pad(yp, 0.0, ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
+    lm1 = jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0,
+                      ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
+    lp1 = jax.lax.pad(zp[:, :, :g.total_wavenumbers - 1], 0.0,
+                      ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
     return lm1 + lp1
 
 
@@ -134,10 +134,10 @@ def sec_lat_d_dlat_cos2(x):
     a, b = derivative_recurrence_weights()
     zm = (l - 1) * a * x
     zp = -(l + 2) * b * x
-    ym = zm[:, :, 1:g.total_wavenumbers]
-    lm1 = jax.lax.pad(ym, 0.0, ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
-    yp = zp[:, :, :g.total_wavenumbers - 1]
-    lp1 = jax.lax.pad(yp, 0.0, ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
+    lm1 = jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0,
+                      ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
+    lp1 = jax.lax.pad(zp[:, :, :g.total_wavenumbers - 1], 0.0,
+                      ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
     return lm1 + lp1
 
 

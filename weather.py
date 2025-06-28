@@ -80,10 +80,11 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     cos = np.sqrt(1 - sin_lat**2)
     u = di.transform(u_nodal / cos)
     v = di.transform(v_nodal / cos)
-    raw_vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(u)
-    raw_div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
-    mask = jnp.ones(di.g.total_wavenumbers).at[-1:].set(0)
-    return raw_vor * mask, raw_div * mask
+    vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(u)
+    div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
+    mask = np.ones(g.total_wavenumbers)
+    mask[-1] = 0
+    return vor * mask, div * mask
 
 
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)

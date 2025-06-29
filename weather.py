@@ -114,6 +114,7 @@ di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.thick = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
+di.g.temp = np.full((di.g.layers, ), 250)
 di.g.geo = di.geopotential_weights()
 di.g.tew = di.temperature_weights()
 
@@ -179,7 +180,6 @@ u_nodal = M["u_component_of_wind"]
 v_nodal = M["v_component_of_wind"]
 t_nodal = M["temperature"]
 vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
-di.g.temp = np.full((di.g.layers, ), 250)
 temperature_variation = di.transform(t_nodal - di.g.temp.reshape(-1, 1, 1))
 log_sp = to_modal(np.log(sp_nodal))
 tracers = to_modal({

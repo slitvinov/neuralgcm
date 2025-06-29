@@ -46,14 +46,14 @@ def basis():
     for m in range(1, g.longitude_wavenumbers):
         y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
     for k in range(1, g.total_wavenumbers):
-        m_max = min(g.longitude_wavenumbers, g.total_wavenumbers - k)
-        m = np.mgrid[:m_max][:, None]
-        m2 = np.square(m)
-        mk2 = np.square(m + k)
-        mkp2 = np.square(m + k - 1)
+        M = min(g.longitude_wavenumbers, g.total_wavenumbers - k)
+        m = np.c_[:M]
+        m2 = m**2
+        mk2 = (m + k)**2
+        mkp2 = (m + k - 1)**2
         a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
         b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
-        y[k, :m_max] = a * (x * y[k - 1, :m_max] - b * y[k - 2, :m_max])
+        y[k, :M] = a * (x * y[k - 1, :M] - b * y[k - 2, :M])
     r = np.transpose(y, (1, 2, 0))
     p = np.zeros(
         (g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))

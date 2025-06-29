@@ -347,17 +347,13 @@ def implicit_inverse(s, dt):
     div = np.s_[:j]
     temp = np.s_[j:2 * j]
     logp = np.s_[2 * j:2 * j + 1]
-    inverted_divergence = (
-        einsum("lgh,...hml->...gml", inv[:, div, div], s.di) +
-        einsum("lgh,...hml->...gml", inv[:, div, temp], s.te) +
-        einsum("lgh,...hml->...gml", inv[:, div, logp], s.sp))
-    inverted_temperature_variation = (
-        einsum("lgh,...hml->...gml", inv[:, temp, div], s.di) +
-        einsum("lgh,...hml->...gml", inv[:, temp, temp], s.te) +
-        einsum("lgh,...hml->...gml", inv[:, temp, logp], s.sp))
-    inverted_log_surface_pressure = (
-        einsum("lgh,...hml->...gml", inv[:, logp, div], s.di) +
-        einsum("lgh,...hml->...gml", inv[:, logp, temp], s.te) +
-        einsum("lgh,...hml->...gml", inv[:, logp, logp], s.sp))
-    return State(s.vo, inverted_divergence, inverted_temperature_variation,
-                 inverted_log_surface_pressure, s.tracers)
+    di = (einsum("lgh,hml->gml", inv[:, div, div], s.di) +
+          einsum("lgh,hml->gml", inv[:, div, temp], s.te) +
+          einsum("lgh,hml->gml", inv[:, div, logp], s.sp))
+    te = (einsum("lgh,hml->gml", inv[:, temp, div], s.di) +
+          einsum("lgh,hml->gml", inv[:, temp, temp], s.te) +
+          einsum("lgh,hml->gml", inv[:, temp, logp], s.sp))
+    sp = (einsum("lgh,hml->gml", inv[:, logp, div], s.di) +
+          einsum("lgh,hml->gml", inv[:, logp, temp], s.te) +
+          einsum("lgh,hml->gml", inv[:, logp, logp], s.sp))
+    return State(s.vo, di, te, sp, s.tracers)

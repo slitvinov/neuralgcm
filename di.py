@@ -313,17 +313,14 @@ def explicit_terms(s):
 def implicit_terms(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
     geopotential_diff = einsum("gh,hml->gml", g.geo, s.te)
-    rt_log_p = r_gas * g.temp[..., None, None] * s.sp
-    vorticity_implicit = jnp.zeros(shape)
     l0 = np.arange(g.total_wavenumbers)
-    divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
-    weights = -get_temperature_implicit_weights()
-    temperature_variation_implicit = einsum("gh,hml->gml", weights, s.di)
-    log_surface_pressure_implicit = -einsum("gh,hml->gml", g.thick[None], s.di)
-    tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
-    return State(vorticity_implicit, divergence_implicit,
-                 temperature_variation_implicit, log_surface_pressure_implicit,
-                 tracers_implicit)
+    di = l0 * (l0 + 1) * (geopotential_diff +
+                          r_gas * g.temp[..., None, None] * s.sp)
+    weights = -get_temperature_weights()
+    te = einsum("gh,hml->gml", weights, s.di)
+    sp = -einsum("gh,hml->gml", g.thick[None], s.di)
+    return State(vo, di, te, sp, jnp.zeros(shape),
+                 jax.tree_util.tree_map(jnp.zeros_like, s.tracers))
 
 
 def implicit_inverse(s, dt):

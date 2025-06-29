@@ -7,7 +7,7 @@ import jax.numpy as jnp
 
 
 def get_reference_temperature(sigma):
-    top_mean_t = t0 * sigma**(r_gas * gamma / gravity_acceleration)
+    top_mean_t = t0 * sigma**(di.r_gas * gamma / gravity_acceleration)
     if sigma < sigma1:
         return top_mean_t + delta_t * (sigma1 - sigma)**5
     else:
@@ -16,9 +16,9 @@ def get_reference_temperature(sigma):
 
 def get_reference_geopotential(sigma):
     top_mean_potential = (t0 * gravity_acceleration / gamma) * (
-        1 - sigma**(r_gas * gamma / gravity_acceleration))
+        1 - sigma**(di.r_gas * gamma / gravity_acceleration))
     if sigma < sigma1:
-        return top_mean_potential - r_gas * delta_t * (
+        return top_mean_potential - di.r_gas * delta_t * (
             (np.log(sigma / sigma1) + 137 / 60) * sigma1**5 -
             5 * sigma * sigma1**4 + 5 * (sigma**2) * (sigma1**3) - (10 / 3) *
             (sigma1**2) * sigma**3 + (5 / 4) * sigma1 * sigma**4 -
@@ -40,7 +40,7 @@ def get_temperature_variation(lat, sigma):
     sigma_nu = (sigma - sigma0) * np.pi / 2
     cos_sv = np.cos(sigma_nu)
     sin_sv = np.sin(sigma_nu)
-    return (0.75 * (sigma * np.pi * u0 / r_gas) * sin_sv * np.sqrt(cos_sv) *
+    return (0.75 * (sigma * np.pi * u0 / di.r_gas) * sin_sv * np.sqrt(cos_sv) *
             (((-2 * (np.cos(lat)**2 + 1 / 3) * np.sin(lat)**6 + 10 / 63) * 2 *
               u0 * cos_sv**(3 / 2)) +
              ((1.6 * (np.cos(lat)**3) *
@@ -85,7 +85,6 @@ t0 = 288.0
 delta_t = 4.8e5
 p0 = 2.995499768455064e+19
 gamma = 31856.1
-r_gas = g.kappa * 0.0011628807950492582
 dt = 0.014584
 perturbation_radius = 0.1
 u_p = 1.0762192173688048e-03

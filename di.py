@@ -326,18 +326,24 @@ def implicit_terms(s):
 
 
 def implicit_inverse(s, dt):
-    eye = np.eye(g.layers)
-    l0 = np.arange(g.total_wavenumbers)
-    lam = -l0 * (l0 + 1)
-    h = get_temperature_implicit_weights()
     l = g.total_wavenumbers
     j = k = g.layers
-    row0 = np.c_[np.r_[[eye] * l], dt * lam[:, None, None] * g.geo[None],
-                 dt * r_gas * lam[:, None, None] * g.temp[None, :, None]]
-    row1 = np.c_[dt * np.r_[[h] * l], np.r_[[eye] * l], np.zeros([l, j, 1])]
-    row2 = np.c_[dt * np.broadcast_to(g.thick, [l, 1, k]),
-                 np.zeros([l, 1, k]),
-                 np.ones([l, 1, 1])]
+    eye = np.eye(j)
+    l0 = np.r_[:l]
+    lam = -l0 * (l0 + 1)
+    h = get_temperature_implicit_weights()
+    row0 = np.c_[
+        np.r_[[eye] * l],  #
+        dt * lam[:, None, None] * g.geo[None],
+        dt * r_gas * lam[:, None, None] * g.temp[None, :, None]]
+    row1 = np.c_[
+        dt * np.r_[[h] * l],  #
+        np.r_[[eye] * l],
+        np.zeros([l, j, 1])]
+    row2 = np.c_[
+        dt * np.c_[[[g.thick]] * l],  #
+        np.zeros([l, 1, k]),
+        np.ones([l, 1, 1])]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
     di = (einsum("lgh,hml->gml", inv[:, :j, :j], s.di) +
           einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s.te) +

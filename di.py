@@ -187,7 +187,7 @@ def geopotential_weights():
     return r_gas * weights
 
 
-def get_temperature_implicit_weights():
+def get_temperature_weights():
     p = np.tril(np.ones([g.layers, g.layers]))
     alpha = get_sigma_ratios()[..., None]
     p_alpha = p * alpha
@@ -329,7 +329,7 @@ def implicit_inverse(s, dt):
     eye = np.eye(j)
     l0 = np.r_[:l]
     lam = -l0 * (l0 + 1)
-    h = get_temperature_implicit_weights()
+    h = get_temperature_weights()
     row0 = np.c_[
         np.r_[[eye] * l],  #
         dt * lam[:, None, None] * g.geo[None],

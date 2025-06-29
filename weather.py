@@ -115,6 +115,7 @@ di.g.thick = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 di.g.geo = di.geopotential_weights()
+di.g.tew = di.temperature_weights()
 
 output_level_indices = [
     di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1

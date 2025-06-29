@@ -187,7 +187,7 @@ def geopotential_weights():
     return r_gas * weights
 
 
-def get_temperature_weights():
+def temperature_weights():
     p = np.tril(np.ones([g.layers, g.layers]))
     alpha = get_sigma_ratios()[..., None]
     p_alpha = p * alpha
@@ -316,8 +316,7 @@ def implicit_terms(s):
     l0 = np.arange(g.total_wavenumbers)
     di = l0 * (l0 + 1) * (geopotential_diff +
                           r_gas * g.temp[..., None, None] * s.sp)
-    weights = -get_temperature_weights()
-    te = einsum("gh,hml->gml", weights, s.di)
+    te = einsum("gh,hml->gml", -g.tew, s.di)
     sp = -einsum("gh,hml->gml", g.thick[None], s.di)
     vo = jnp.zeros(shape)
     tracers = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
@@ -329,11 +328,10 @@ def implicit_inverse(s, dt):
     j = g.layers
     l0 = np.r_[:l]
     lam = -l0 * (l0 + 1)
-    h = get_temperature_weights()
     I = np.r_[[np.eye(j)] * l]
     A = dt * lam[:, None, None] * g.geo[None]
     B = dt * r_gas * lam[:, None, None] * g.temp[None, :, None]
-    C = dt * np.r_[[h] * l]
+    C = dt * np.r_[[g.tew] * l]
     D = dt * np.c_[[[g.thick]] * l]
     Z = np.zeros([l, j, 1])
     Z0 = np.zeros([l, 1, j])

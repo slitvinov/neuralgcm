@@ -55,6 +55,7 @@ di.g.thick = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 di.g.geo = di.geopotential_weights()
+di.g.tew = di.temperature_weights()
 
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)
 sin_latitude, _ = scipy.special.roots_legendre(di.g.latitude_nodes)

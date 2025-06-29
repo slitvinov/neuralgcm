@@ -101,6 +101,8 @@ di.g.thick = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 di.g.geo = di.geopotential_weights()
+di.g.tew = di.temperature_weights()
+
 tau = 0.010938
 order = 18
 longitude = np.linspace(0, 2 * np.pi, di.g.longitude_nodes, endpoint=False)

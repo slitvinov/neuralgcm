@@ -76,7 +76,7 @@ def vadvection(w, x):
     wt = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
     xt = np.zeros(shape)
     dx = x[1:] - x[:-1]
-    xd = einsum(dx, [0, 1, 2], 1 / g.center_to_center, [0], [0, 1, 2])
+    xd = dx / g.center_to_center
     wx = jnp.concatenate([wt, w, wt]) * jnp.concatenate([xt, xd, xt])
     return -0.5 * (wx[1:] + wx[:-1])
 

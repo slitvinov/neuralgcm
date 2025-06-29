@@ -342,16 +342,13 @@ def implicit_inverse(s, dt):
                  np.zeros([l, 1, k]),
                  np.ones([l, 1, 1])]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
-    div = np.s_[:j]
-    temp = np.s_[j:2 * j]
-    logp = np.s_[2 * j:2 * j + 1]
-    di = (einsum("lgh,hml->gml", inv[:, div, div], s.di) +
-          einsum("lgh,hml->gml", inv[:, div, temp], s.te) +
-          einsum("lgh,hml->gml", inv[:, div, logp], s.sp))
-    te = (einsum("lgh,hml->gml", inv[:, temp, div], s.di) +
-          einsum("lgh,hml->gml", inv[:, temp, temp], s.te) +
-          einsum("lgh,hml->gml", inv[:, temp, logp], s.sp))
-    sp = (einsum("lgh,hml->gml", inv[:, logp, div], s.di) +
-          einsum("lgh,hml->gml", inv[:, logp, temp], s.te) +
-          einsum("lgh,hml->gml", inv[:, logp, logp], s.sp))
+    di = (einsum("lgh,hml->gml", inv[:, :j, :j], s.di) +
+          einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s.te) +
+          einsum("lgh,hml->gml", inv[:, :j, 2 * j:], s.sp))
+    te = (einsum("lgh,hml->gml", inv[:, j:2 * j, :j], s.di) +
+          einsum("lgh,hml->gml", inv[:, j:2 * j, j:2 * j], s.te) +
+          einsum("lgh,hml->gml", inv[:, j:2 * j, 2 * j:], s.sp))
+    sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s.di) +
+          einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s.te) +
+          einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s.sp))
     return State(s.vo, di, te, sp, s.tracers)

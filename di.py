@@ -332,13 +332,13 @@ def implicit_inverse(s, dt):
     eye = np.eye(g.layers)[np.newaxis]
     l0 = np.arange(g.total_wavenumbers)
     lam = -l0 * (l0 + 1)
-    h = get_temperature_implicit_weights()
+    h = get_temperature_implicit_weights()[np.newaxis]
     l = g.total_wavenumbers
     j = k = g.layers
     row0 = np.c_[np.broadcast_to(eye, [l, j, k]),
                  dt * np.einsum("l,jk->ljk", lam, g.geo), dt * r_gas *
                  np.einsum("l,jo->ljo", lam, g.temp[:, np.newaxis])]
-    row1 = np.c_[dt * np.broadcast_to(h[np.newaxis], [l, j, k]),
+    row1 = np.c_[dt * np.broadcast_to(h, [l, j, k]),
                  np.broadcast_to(eye, [l, j, k]),
                  np.zeros([l, j, 1])]
     row2 = np.c_[dt * np.broadcast_to(g.thick[np.newaxis,

@@ -330,18 +330,17 @@ def implicit_inverse(s, dt):
     l0 = np.r_[:l]
     lam = -l0 * (l0 + 1)
     h = get_temperature_weights()
-    row0 = np.c_[
-        np.r_[[eye] * l],  #
-        dt * lam[:, None, None] * g.geo[None],
-        dt * r_gas * lam[:, None, None] * g.temp[None, :, None]]
-    row1 = np.c_[
-        dt * np.r_[[h] * l],  #
-        np.r_[[eye] * l],
-        np.zeros([l, j, 1])]
-    row2 = np.c_[
-        dt * np.c_[[[g.thick]] * l],  #
-        np.zeros([l, 1, k]),
-        np.ones([l, 1, 1])]
+    I = np.r_[[eye] * l]
+    A = dt * lam[:, None, None] * g.geo[None]
+    B = dt * r_gas * lam[:, None, None] * g.temp[None, :, None]
+    C = dt * np.r_[[h] * l]
+    D = dt * np.c_[[[g.thick]] * l]
+    Z = np.zeros([l, j, 1])
+    Z0 = np.zeros([l, 1, k])
+    I0 = np.ones([l, 1, 1])
+    row0 = np.c_[I, A, B]
+    row1 = np.c_[C, I, Z]
+    row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
     di = (einsum("lgh,hml->gml", inv[:, :j, :j], s.di) +
           einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s.te) +

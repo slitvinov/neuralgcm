@@ -335,31 +335,16 @@ def implicit_inverse(s, dt):
     h = get_temperature_implicit_weights()
     l = g.total_wavenumbers
     j = k = g.layers
-    row0 = np.concatenate(
-        [
-            np.broadcast_to(eye, [l, j, k]),
-            dt * np.einsum("l,jk->ljk", lam, g.geo),
-            dt * r_gas * np.einsum("l,jo->ljo", lam, g.temp[:, np.newaxis]),
-        ],
-        axis=2,
-    )
-    row1 = np.concatenate(
-        [
-            dt * np.broadcast_to(h[np.newaxis], [l, j, k]),
-            np.broadcast_to(eye, [l, j, k]),
-            np.zeros([l, j, 1]),
-        ],
-        axis=2,
-    )
-    row2 = np.concatenate(
-        [
-            dt *
-            np.broadcast_to(g.thick[np.newaxis, np.newaxis, :], [l, 1, k]),
-            np.zeros([l, 1, k]),
-            np.ones([l, 1, 1]),
-        ],
-        axis=2,
-    )
+    row0 = np.c_[np.broadcast_to(eye, [l, j, k]),
+                 dt * np.einsum("l,jk->ljk", lam, g.geo), dt * r_gas *
+                 np.einsum("l,jo->ljo", lam, g.temp[:, np.newaxis])]
+    row1 = np.c_[dt * np.broadcast_to(h[np.newaxis], [l, j, k]),
+                 np.broadcast_to(eye, [l, j, k]),
+                 np.zeros([l, j, 1])]
+    row2 = np.c_[dt * np.broadcast_to(g.thick[np.newaxis,
+                                              np.newaxis, :], [l, 1, k]),
+                 np.zeros([l, 1, k]),
+                 np.ones([l, 1, 1])]
     implicit_matrix = np.concatenate((row0, row1, row2), axis=1)
     inv = np.linalg.inv(implicit_matrix)
     div = slice(0, g.layers)

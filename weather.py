@@ -89,8 +89,8 @@ def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 def regrid(surface_pressure, target, field):
     source = a_boundaries / surface_pressure + b_boundaries
-    upper = jnp.minimum(target[1:, jNone], source[jNone, 1:])
-    lower = jnp.maximum(target[:-1, jNone], source[jNone, :-1])
+    upper = jnp.minimum(target[1:, None], source[None, 1:])
+    lower = jnp.maximum(target[:-1, None], source[None, :-1])
     weights = jnp.maximum(upper - lower, 0)
     weights /= jnp.sum(weights, axis=1, keepdims=True)
     return jnp.einsum("ab,b->a", weights, field, precision="float32")

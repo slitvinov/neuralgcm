@@ -319,6 +319,7 @@ def implicit_terms(s):
     weights = -get_temperature_weights()
     te = einsum("gh,hml->gml", weights, s.di)
     sp = -einsum("gh,hml->gml", g.thick[None], s.di)
+    vo = jnp.zeros(shape)
     return State(vo, di, te, sp, jnp.zeros(shape),
                  jax.tree_util.tree_map(jnp.zeros_like, s.tracers))
 

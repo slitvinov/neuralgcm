@@ -339,8 +339,7 @@ def implicit_inverse(s, dt):
         [
             np.broadcast_to(eye, [l, j, k]),
             dt * np.einsum("l,jk->ljk", lam, g.geo),
-            dt * r_gas *
-            np.einsum("l,jo->ljo", lam, g.temp[:, np.newaxis]),
+            dt * r_gas * np.einsum("l,jo->ljo", lam, g.temp[:, np.newaxis]),
         ],
         axis=2,
     )

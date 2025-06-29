@@ -101,6 +101,8 @@ di.g.thick = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
 di.g.geo = di.geopotential_weights()
+di.g.temp = np.stack(
+    [get_reference_temperature(sigma) for sigma in di.g.centers])
 di.g.tew = di.temperature_weights()
 
 tau = 0.010938

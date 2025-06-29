@@ -54,6 +54,7 @@ di.g.centers = (di.g.boundaries[1:] + di.g.boundaries[:-1]) / 2
 di.g.thick = np.diff(di.g.boundaries)
 di.g.center_to_center = np.diff(di.g.centers)
 di.g.f, di.g.p, di.g.w = di.basis()
+di.g.temp = np.full((di.g.layers, ), 288)
 di.g.geo = di.geopotential_weights()
 di.g.tew = di.temperature_weights()
 
@@ -85,7 +86,6 @@ nodal_surface_pressure = surface_pressure + p1 * perturbation
 state = di.State(modal_vorticity, jnp.zeros_like(modal_vorticity),
                  jnp.zeros_like(modal_vorticity),
                  di.transform(jnp.log(nodal_surface_pressure)))
-di.g.temp = np.full((di.g.layers, ), 288)
 di.g.orography = di.transform(np.zeros_like(lat))
 dt = 8.7504000000000012e-02
 sigma_b = 0.7

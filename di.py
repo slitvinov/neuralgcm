@@ -329,7 +329,7 @@ def implicit_inverse(s, dt):
     eye = np.eye(g.layers)
     l0 = np.arange(g.total_wavenumbers)
     lam = -l0 * (l0 + 1)
-    h = get_temperature_implicit_weights()[None]
+    h = get_temperature_implicit_weights()
     l = g.total_wavenumbers
     j = k = g.layers
     row0 = np.c_[np.broadcast_to(eye, [l, j, k]),

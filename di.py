@@ -311,9 +311,10 @@ def explicit_terms(s):
 
 
 def implicit_terms(s):
+    shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
     geopotential_diff = einsum("gh,hml->gml", g.geo, s.te)
     rt_log_p = r_gas * g.temp[..., None, None] * s.sp
-    vorticity_implicit = jnp.zeros_like(s.vo)
+    vorticity_implicit = jnp.zeros(shape)
     l0 = np.arange(g.total_wavenumbers)
     divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
     weights = -get_temperature_implicit_weights()

@@ -13,7 +13,7 @@ einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 # gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 gravity_acceleration = 7.2364082834567185e+01
 kappa = 2 / 7
-gas_constant = kappa * 0.0011628807950492582
+r_gas = kappa * 0.0011628807950492582
 
 
 class g:
@@ -185,7 +185,7 @@ def geopotential_weights():
         weights[j, j] = alpha[j]
         for k in range(j + 1, g.layers):
             weights[j, k] = alpha[k] + alpha[k - 1]
-    return gas_constant * weights
+    return r_gas * weights
 
 
 def get_temperature_implicit_weights():
@@ -270,7 +270,7 @@ def explicit_terms(s):
     vort_v = u * total_vort * sec2
     sigma_u = -vadvection(sigma_full, u)
     sigma_v = -vadvection(sigma_full, v)
-    rt = gas_constant * temp
+    rt = r_gas * temp
     vert_u = (sigma_u + rt * grad_u) * sec2
     vert_v = (sigma_v + rt * grad_v) * sec2
     u_mod = transform(vort_u + vert_u)
@@ -314,7 +314,7 @@ def explicit_terms(s):
 
 def implicit_terms(s):
     geopotential_diff = einsum("gh,...hml->...gml", g.geo, s.te)
-    rt_log_p = gas_constant * g.temp[..., np.newaxis, np.newaxis] * s.sp
+    rt_log_p = r_gas * g.temp[..., np.newaxis, np.newaxis] * s.sp
     vorticity_implicit = jnp.zeros_like(s.vo)
     l0 = np.arange(g.total_wavenumbers)
     divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
@@ -339,7 +339,7 @@ def implicit_inverse(s, dt):
         [
             np.broadcast_to(eye, [l, j, k]),
             dt * np.einsum("l,jk->ljk", lam, g.geo),
-            dt * gas_constant *
+            dt * r_gas *
             np.einsum("l,jo->ljo", lam, g.temp[:, np.newaxis]),
         ],
         axis=2,

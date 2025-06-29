@@ -326,7 +326,7 @@ def implicit_terms(s):
 
 
 def implicit_inverse(s, dt):
-    eye = np.eye(g.layers)[None]
+    eye = np.eye(g.layers)
     l0 = np.arange(g.total_wavenumbers)
     lam = -l0 * (l0 + 1)
     h = get_temperature_implicit_weights()[None]
@@ -338,10 +338,10 @@ def implicit_inverse(s, dt):
     row1 = np.c_[dt * np.broadcast_to(h, [l, j, k]),
                  np.broadcast_to(eye, [l, j, k]),
                  np.zeros([l, j, 1])]
-    row2 = np.c_[dt * np.broadcast_to(g.thick[None, None, :], [l, 1, k]),
+    row2 = np.c_[dt * np.broadcast_to(g.thick, [l, 1, k]),
                  np.zeros([l, 1, k]),
                  np.ones([l, 1, 1])]
-    inv = np.linalg.inv(np.concatenate((row0, row1, row2), axis=1))
+    inv = np.linalg.inv(np.r_['1', row0, row1, row2])
     div = np.s_[:j]
     temp = np.s_[j:2 * j]
     logp = np.s_[2 * j:2 * j + 1]

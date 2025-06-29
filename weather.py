@@ -9,7 +9,6 @@ import scipy
 import xarray
 
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
-_CONSTANT_NORMALIZATION_FACTOR = 3.5449077
 
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5

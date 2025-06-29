@@ -314,7 +314,7 @@ def explicit_terms(s):
 
 def implicit_terms(s):
     geopotential_diff = einsum("gh,...hml->...gml", g.geo, s.te)
-    rt_log_p = (gas_constant * g.temp[..., np.newaxis, np.newaxis] * s.sp)
+    rt_log_p = gas_constant * g.temp[..., np.newaxis, np.newaxis] * s.sp
     vorticity_implicit = jnp.zeros_like(s.vo)
     l0 = np.arange(g.total_wavenumbers)
     divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)

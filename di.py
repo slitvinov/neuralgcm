@@ -343,11 +343,10 @@ def implicit_inverse(s, dt):
     row2 = np.c_[dt * np.broadcast_to(g.thick[None, None, :], [l, 1, k]),
                  np.zeros([l, 1, k]),
                  np.ones([l, 1, 1])]
-    implicit_matrix = np.concatenate((row0, row1, row2), axis=1)
-    inv = np.linalg.inv(implicit_matrix)
-    div = slice(0, g.layers)
-    temp = slice(g.layers, 2 * g.layers)
-    logp = slice(2 * g.layers, 2 * g.layers + 1)
+    inv = np.linalg.inv(np.concatenate((row0, row1, row2), axis=1))
+    div = np.s_[:j]
+    temp = np.s_[j:2 * j]
+    logp = np.s_[2 * j:2 * j + 1]
     inverted_divergence = (
         einsum("lgh,...hml->...gml", inv[:, div, div], s.di) +
         einsum("lgh,...hml->...gml", inv[:, div, temp], s.te) +

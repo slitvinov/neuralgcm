@@ -337,9 +337,10 @@ def implicit_inverse(s, dt):
     D = dt * np.c_[[[g.thick]] * l]
     Z = np.zeros([l, j, 1])
     Z0 = np.zeros([l, 1, j])
+    I0 = np.ones([l, 1, 1])
     row0 = np.c_[I, A, B]
     row1 = np.c_[C, I, Z]
-    row2 = np.c_[D, Z0, 1]
+    row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
     di = (einsum("lgh,hml->gml", inv[:, :j, :j], s.di) +
           einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s.te) +

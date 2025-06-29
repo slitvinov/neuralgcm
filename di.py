@@ -39,7 +39,6 @@ def basis():
     f[:, 1::2] = np.real(dft[:, 1:])
     f[:, 2::2] = -np.imag(dft[:, 1:])
     x, w = scipy.special.roots_legendre(g.latitude_nodes)
-    w *= 2 * np.pi / g.longitude_nodes
     q = np.sqrt(1 - x * x)
     y = np.zeros(
         (g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
@@ -61,7 +60,7 @@ def basis():
     for m in range(g.longitude_wavenumbers):
         p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
     p = np.repeat(p, 2, axis=0)
-    return f, p[1:], w
+    return f, p[1:], 2 * np.pi * w / g.longitude_nodes
 
 
 def sigma_integral(x):

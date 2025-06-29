@@ -22,21 +22,19 @@ def explicit_terms(s):
     u1 = di.inverse_transform(v1)
     temperature_variation = di.inverse_transform(s.te)
     kv_coeff = kf * (np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b)))
-    kv = kv_coeff[:, np.newaxis, np.newaxis]
+    kv = kv_coeff[:, None, None]
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
     cos2 = 1 - sin_lat**2
     nodal_velocity_tendency = -kv * u0 / cos2, -kv * u1 / cos2
-    nodal_temperature = (di.g.temp[:, np.newaxis, np.newaxis] +
-                         temperature_variation)
+    nodal_temperature = (di.g.temp[:, None, None] + temperature_variation)
     nodal_log_surface_pressure = di.inverse_transform(s.sp)
     nodal_surface_pressure = jnp.exp(nodal_log_surface_pressure)
-    p_over_p0 = (di.g.centers[:, np.newaxis, np.newaxis] *
-                 nodal_surface_pressure / p0)
+    p_over_p0 = (di.g.centers[:, None, None] * nodal_surface_pressure / p0)
     temperature = p_over_p0**di.kappa * (maxT - dTy * np.sin(lat)**2 - dThz *
                                          jnp.log(p_over_p0) * np.cos(lat)**2)
     Teq = jnp.maximum(minT, temperature)
     cutoff = np.maximum(0, (di.g.centers - sigma_b) / (1 - sigma_b))
-    kt = ka + (ks - ka) * (cutoff[:, np.newaxis, np.newaxis] * np.cos(lat)**4)
+    kt = ka + (ks - ka) * (cutoff[:, None, None] * np.cos(lat)**4)
     u, v = di.transform(jnp.asarray(nodal_velocity_tendency))
     raw_vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(u)
     raw_div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)

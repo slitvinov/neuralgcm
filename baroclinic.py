@@ -142,7 +142,7 @@ final, _ = jax.lax.scan(lambda x, _: (filter_fn(step_fn(x)), None),
                         xs=None,
                         length=8640)
 f0 = di.inverse_transform(final.te)
-temperature = f0 + di.g.temp[:, np.newaxis, np.newaxis]
+temperature = f0 + di.g.temp[:, None, None]
 levels = [(220 + 10 * i) for i in range(10)]
 plt.contourf(temperature[22, :, :], levels=levels, cmap=plt.cm.Spectral_r)
 plt.savefig("b.09.png")

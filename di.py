@@ -190,17 +190,16 @@ def geopotential_weights():
 
 def get_temperature_implicit_weights():
     p = np.tril(np.ones([g.layers, g.layers]))
-    alpha = get_sigma_ratios()[..., np.newaxis]
+    alpha = get_sigma_ratios()[..., None]
     p_alpha = p * alpha
     p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
     p_alpha_shifted[0] = 0
-    h0 = (kappa * g.temp[..., np.newaxis] * (p_alpha + p_alpha_shifted) /
-          g.thick[..., np.newaxis])
+    h0 = (kappa * g.temp[..., None] * (p_alpha + p_alpha_shifted) /
+          g.thick[..., None])
     temp_diff = np.diff(g.temp)
     thickness_sum = g.thick[:-1] + g.thick[1:]
-    k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[...,
-                                                                  np.newaxis]
-    thickness_cumulative = np.cumsum(g.thick)[..., np.newaxis]
+    k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[..., None]
+    thickness_cumulative = np.cumsum(g.thick)[..., None]
     k1 = p - thickness_cumulative
     k = k0 * k1
     k_shifted = np.roll(k, 1, axis=0)
@@ -210,10 +209,10 @@ def get_temperature_implicit_weights():
 
 def omega(g_term):
     f = jax.lax.cumsum(g_term * g.thick[:, None, None])
-    alpha = get_sigma_ratios()[:, np.newaxis, np.newaxis]
+    alpha = get_sigma_ratios()[:, None, None]
     pad = (1, 0), (0, 0), (0, 0)
-    return (alpha * f + jnp.pad(
-        alpha * f, pad)[:-1, ...]) / g.thick[:, np.newaxis, np.newaxis]
+    return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None,
+                                                                     None]
 
 
 def hadvection(scalar, cos_lat_u, divergence):
@@ -314,14 +313,14 @@ def explicit_terms(s):
 
 def implicit_terms(s):
     geopotential_diff = einsum("gh,...hml->...gml", g.geo, s.te)
-    rt_log_p = r_gas * g.temp[..., np.newaxis, np.newaxis] * s.sp
+    rt_log_p = r_gas * g.temp[..., None, None] * s.sp
     vorticity_implicit = jnp.zeros_like(s.vo)
     l0 = np.arange(g.total_wavenumbers)
     divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
     weights = -get_temperature_implicit_weights()
     temperature_variation_implicit = einsum("gh,...hml->...gml", weights, s.di)
-    log_surface_pressure_implicit = -einsum("gh,...hml->...gml",
-                                            g.thick[np.newaxis], s.di)
+    log_surface_pressure_implicit = -einsum("gh,...hml->...gml", g.thick[None],
+                                            s.di)
     tracers_implicit = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
     return State(vorticity_implicit, divergence_implicit,
                  temperature_variation_implicit, log_surface_pressure_implicit,
@@ -329,20 +328,19 @@ def implicit_terms(s):
 
 
 def implicit_inverse(s, dt):
-    eye = np.eye(g.layers)[np.newaxis]
+    eye = np.eye(g.layers)[None]
     l0 = np.arange(g.total_wavenumbers)
     lam = -l0 * (l0 + 1)
-    h = get_temperature_implicit_weights()[np.newaxis]
+    h = get_temperature_implicit_weights()[None]
     l = g.total_wavenumbers
     j = k = g.layers
     row0 = np.c_[np.broadcast_to(eye, [l, j, k]),
-                 dt * np.einsum("l,jk->ljk", lam, g.geo), dt * r_gas *
-                 np.einsum("l,jo->ljo", lam, g.temp[:, np.newaxis])]
+                 dt * np.einsum("l,jk->ljk", lam, g.geo),
+                 dt * r_gas * np.einsum("l,jo->ljo", lam, g.temp[:, None])]
     row1 = np.c_[dt * np.broadcast_to(h, [l, j, k]),
                  np.broadcast_to(eye, [l, j, k]),
                  np.zeros([l, j, 1])]
-    row2 = np.c_[dt * np.broadcast_to(g.thick[np.newaxis,
-                                              np.newaxis, :], [l, 1, k]),
+    row2 = np.c_[dt * np.broadcast_to(g.thick[None, None, :], [l, 1, k]),
                  np.zeros([l, 1, k]),
                  np.ones([l, 1, 1])]
     implicit_matrix = np.concatenate((row0, row1, row2), axis=1)

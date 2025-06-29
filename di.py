@@ -13,7 +13,7 @@ einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 # gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
 gravity_acceleration = 7.2364082834567185e+01
 kappa = 2 / 7
-ideal_gas_constant = kappa * 0.0011628807950492582
+gas_constant = kappa * 0.0011628807950492582
 
 
 class g:
@@ -185,7 +185,7 @@ def geopotential_weights():
         weights[j, j] = alpha[j]
         for k in range(j + 1, g.layers):
             weights[j, k] = alpha[k] + alpha[k - 1]
-    return ideal_gas_constant * weights
+    return gas_constant * weights
 
 
 def get_temperature_implicit_weights():
@@ -270,7 +270,7 @@ def explicit_terms(s):
     vort_v = u * total_vort * sec2
     sigma_u = -vadvection(sigma_full, u)
     sigma_v = -vadvection(sigma_full, v)
-    rt = ideal_gas_constant * temp
+    rt = gas_constant * temp
     vert_u = (sigma_u + rt * grad_u) * sec2
     vert_v = (sigma_v + rt * grad_v) * sec2
     u_mod = transform(vort_u + vert_u)
@@ -314,8 +314,7 @@ def explicit_terms(s):
 
 def implicit_terms(s):
     geopotential_diff = einsum("gh,...hml->...gml", g.geo, s.te)
-    rt_log_p = (ideal_gas_constant * g.temp[..., np.newaxis, np.newaxis] *
-                s.sp)
+    rt_log_p = (gas_constant * g.temp[..., np.newaxis, np.newaxis] * s.sp)
     vorticity_implicit = jnp.zeros_like(s.vo)
     l0 = np.arange(g.total_wavenumbers)
     divergence_implicit = l0 * (l0 + 1) * (geopotential_diff + rt_log_p)
@@ -333,17 +332,15 @@ def implicit_inverse(s, dt):
     eye = np.eye(g.layers)[np.newaxis]
     l0 = np.arange(g.total_wavenumbers)
     lam = -l0 * (l0 + 1)
-    r = ideal_gas_constant
     h = get_temperature_implicit_weights()
-    t = g.temp[:, np.newaxis]
-    thickness = g.thick[np.newaxis, np.newaxis, :]
     l = g.total_wavenumbers
     j = k = g.layers
     row0 = np.concatenate(
         [
             np.broadcast_to(eye, [l, j, k]),
             dt * np.einsum("l,jk->ljk", lam, g.geo),
-            dt * r * np.einsum("l,jo->ljo", lam, t),
+            dt * gas_constant *
+            np.einsum("l,jo->ljo", lam, g.temp[:, np.newaxis]),
         ],
         axis=2,
     )
@@ -357,7 +354,8 @@ def implicit_inverse(s, dt):
     )
     row2 = np.concatenate(
         [
-            dt * np.broadcast_to(thickness, [l, 1, k]),
+            dt *
+            np.broadcast_to(g.thick[np.newaxis, np.newaxis, :], [l, 1, k]),
             np.zeros([l, 1, k]),
             np.ones([l, 1, 1]),
         ],

@@ -28,7 +28,7 @@ while True:
     year, = struct.unpack(">H", section[12:14])
     month, day, hour, minute, second = section[15:20]
 
-    print(f"{CENTER[center]=} {subcenter=}")
+    print(f"{CENTER[center]=}")
     print(f"{year=} {month=} {day=} {minute=} {second=}")
 
     # Section 2 - Local Use Section
@@ -47,6 +47,7 @@ while True:
     template_number, = struct.unpack(">H", section[12:14])
     assert template_number == 50, "Spherical harmonic coefficients"
     print(f"{npoint=}")
+    ## pentagonal resolution parameter
     J, = struct.unpack(">L", section[14:18])
     K, = struct.unpack(">L", section[18:22])
     M, = struct.unpack(">L", section[22:26])
@@ -79,12 +80,12 @@ while True:
     assert template_number == 51, "Spectral Data - Complex Packing"
     # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-51.shtml
     R, = struct.unpack(">f", section[11:15])
-    E, = struct.unpack(">H", section[15:17])
-    D, = struct.unpack(">H", section[17:19])
-    nbits = section[19]
+    E, = struct.unpack(">h", section[15:17])
+    D, = struct.unpack(">h", section[17:19])
+    nbits_packed = section[19]
     L, Js, Ks, Ms, Ts = struct.unpack(">lHHHL", section[20:34])
     precision = section[34]
-    print(f"{R=:.2e} {E=} {D=} {nbits=}")
+    print(f"{R=:.2e} {E=} {D=} {nbits_packed=}")
     print(f"{L=} {Js=} {Ks=} {Ms=} {Ts=}")
     print(f"{PRECISION[precision]=}")
 
@@ -100,15 +101,28 @@ while True:
     assert section[0] == 7, "Number of the section"
     section = section[1:]
     print(f"{section_length=}")
+    # check of the total size (packed + unpack)
     assert 2 * (npoint - Ts) + 4 * Ts == len(section)
-
-    print("np:", npoint)
-    for i in range(Ts):
-        x, = struct.unpack(">f", section[4 * i:4 * (i + 1)])
-        print("x:", x)
-
-    for i in range(npoint - Ts):
-        x, = struct.unpack(">e", section[4 * Ts + 2 * i:4 * Ts + 2 * (i + 1)])
+    unpk = list(struct.iter_unpack(">ff", section[:4 * Ts]))
+    pked = list(struct.iter_unpack(">hh", section[4 * Ts:]))
+    E = -24 ##### TODO
+    i = 0
+    j = 0
+    with open("value", "w") as fv:
+        for m in range(M + 1):
+            for n in range(m, J + 1):
+                if n <= Js and m <= Ms:
+                    x, y = unpk[i]
+                    i += 1
+                else:
+                    x, y = pked[j]
+                    j += 1
+                    scale = 2.0**(E)
+                    laplace = (n * (n + 1))**(-L * 1e-6)
+                    x = (R + x * scale) * laplace
+                    y = (R + y * scale) * laplace
+                fv.write(f"{x:.10e}\n")
+                fv.write(f"{y:.10e}\n")
 
     # Section 8 - End Section
     section = f.read(4)
@@ -116,5 +130,4 @@ while True:
 
     pad = 64 - f.tell() % 64
     f.seek(pad, 1)
-
     break

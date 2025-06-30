@@ -2,7 +2,13 @@ import struct
 import sys
 
 f = open(sys.argv[1], "rb")
-
+CENTER = {98: "European Center for Medium-Range Weather Forecasts (RSMC)"}
+# https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table5-7.shtml
+PRECISION = {
+    1: "IEEE 32-bit (I=4 in Section 7)",
+    2: "IEEE 64-bit (I=8 in Section 7)",
+    3: "IEEE 128-bit (I=16 in Section 7)"
+}
 while True:
     # Section 0 - Indicator Section
     section = f.read(16)
@@ -22,7 +28,6 @@ while True:
     year, = struct.unpack(">H", section[12:14])
     month, day, hour, minute, second = section[15:20]
 
-    CENTER = {98: "European Center for Medium-Range Weather Forecasts (RSMC)"}
     print(f"{CENTER[center]=} {subcenter=}")
     print(f"{year=} {month=} {day=} {minute=} {second=}")
 
@@ -68,17 +73,20 @@ while True:
     section_length, = struct.unpack(">L", f.read(4))
     section = b'0000' + f.read(section_length - 4)
     assert section[4] == 5, "Number of the section"
-    npoint, = struct.unpack(">L", section[6:10])
+    npoint0, = struct.unpack(">L", section[5:9])
+    assert npoint0 == npoint, "npoint do not much"
     template_number, = struct.unpack(">H", section[9:11])
     assert template_number == 51, "Spectral Data - Complex Packing"
     # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-51.shtml
     R, = struct.unpack(">f", section[11:15])
-    E, = struct.unpack(">h", section[15:17])
-    D, = struct.unpack(">h", section[17:19])
+    E, = struct.unpack(">H", section[15:17])
+    D, = struct.unpack(">H", section[17:19])
     nbits = section[19]
     L, Js, Ks, Ms, Ts = struct.unpack(">lHHHL", section[20:34])
+    precision = section[34]
     print(f"{R=:.2e} {E=} {D=} {nbits=}")
     print(f"{L=} {Js=} {Ks=} {Ms=} {Ts=}")
+    print(f"{PRECISION[precision]=}")
 
     # Section 6 - Bit Map Section
     section_length, = struct.unpack(">L", f.read(4))
@@ -90,7 +98,17 @@ while True:
     section_length, = struct.unpack(">L", f.read(4))
     section = f.read(section_length - 4)
     assert section[0] == 7, "Number of the section"
+    section = section[1:]
     print(f"{section_length=}")
+    assert 2 * (npoint - Ts) + 4 * Ts == len(section)
+
+    print("np:", npoint)
+    for i in range(Ts):
+        x, = struct.unpack(">f", section[4 * i:4 * (i + 1)])
+        print("x:", x)
+
+    for i in range(npoint - Ts):
+        x, = struct.unpack(">e", section[4 * Ts + 2 * i:4 * Ts + 2 * (i + 1)])
 
     # Section 8 - End Section
     section = f.read(4)

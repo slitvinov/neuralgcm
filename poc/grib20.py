@@ -20,9 +20,9 @@ while True:
     center, subcenter = struct.unpack(">HH", section[5:9])
     assert section[11] == 1, "Start of Forecast"
     year, = struct.unpack(">H", section[12:14])
-    month, day, hour, minute, second  = section[15:20]
+    month, day, hour, minute, second = section[15:20]
 
-    CENTER = {98 : "European Center for Medium-Range Weather Forecasts (RSMC)"}
+    CENTER = {98: "European Center for Medium-Range Weather Forecasts (RSMC)"}
     print(f"{CENTER[center]=} {subcenter=}")
     print(f"{year=} {month=} {day=} {minute=} {second=}")
 
@@ -35,19 +35,13 @@ while True:
     section_length, = struct.unpack(">L", f.read(4))
     section = b'0000' + f.read(section_length - 4)
     assert section[4] == 3, "Number of the section"
-
-    source = section[5]
-    assert source == 0, "Source of Grid Definition"
-
+    assert section[5] == 0, "Source of Grid Definition"
     npoint, = struct.unpack(">L", section[6:10])
     assert section[10] == 0, "number of octets for optional list is not zero"
 
     template_number, = struct.unpack(">H", section[12:14])
     assert template_number == 50, "Spherical harmonic coefficients"
-
     print(f"{npoint=}")
-    print(f"{section_length=}")
-
     J, = struct.unpack(">L", section[14:18])
     K, = struct.unpack(">L", section[18:22])
     M, = struct.unpack(">L", section[22:26])
@@ -55,6 +49,7 @@ while True:
     order = section[27]
     assert method == 1
     assert order == 1
+    # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table3-6.shtml
     print(f"{J=} {K=} {M=} {method=} {order=}")
 
     # Section 4 - Product Definition Section
@@ -76,12 +71,14 @@ while True:
     npoint, = struct.unpack(">L", section[6:10])
     template_number, = struct.unpack(">H", section[9:11])
     assert template_number == 51, "Spectral Data - Complex Packing"
-    R, E, D = struct.unpack(">fHH", section[11:19])
+    # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-51.shtml
+    R, = struct.unpack(">f", section[11:15])
+    E, = struct.unpack(">h", section[15:17])
+    D, = struct.unpack(">h", section[17:19])
     nbits = section[19]
-    L, Js, Ks, Ms, Ts = struct.unpack(">LHHHL", section[20:34])
-    print(f"{R=} {E=} {D=} {nbits=} {L=}")
+    L, Js, Ks, Ms, Ts = struct.unpack(">lHHHL", section[20:34])
+    print(f"{R=:.2e} {E=} {D=} {nbits=}")
     print(f"{L=} {Js=} {Ks=} {Ms=} {Ts=}")
-    print(f"{npoint=}")
 
     # Section 6 - Bit Map Section
     section_length, = struct.unpack(">L", f.read(4))

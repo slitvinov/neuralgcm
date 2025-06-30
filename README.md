@@ -16,7 +16,8 @@ for i in *.raw; do cmp $i ~/$i; echo $i $?; done
 
 ## Data
 
-https://github.com/google-research/arco-era5
+- https://github.com/google-research/arco-era5
+- https://github.com/NOAA-EMC/NCEPLIBS-g2c.git
 
 ## References
 

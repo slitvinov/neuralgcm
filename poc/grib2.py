@@ -80,7 +80,8 @@ while True:
     assert template_number == 51, "Spectral Data - Complex Packing"
     # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-51.shtml
     R, = struct.unpack(">f", section[11:15])
-    E, = struct.unpack(">h", section[15:17])
+    # E, = struct.unpack(">h", section[15:17])
+    E = -struct.unpack(">b", section[16:17])[0]
     D, = struct.unpack(">h", section[17:19])
     nbits_packed = section[19]
     L, Js, Ks, Ms, Ts = struct.unpack(">lHHHL", section[20:34])

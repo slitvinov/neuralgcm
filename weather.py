@@ -237,7 +237,8 @@ def G_inv(s, dt):
     row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
     M = einsum("lgh,hml->gml", inv, s[g.ditesp])
-    di, te, sp = M[:j], M[j:2*j], M[2*j:]
+    M = jnp.transpose(M, (1, 2, 0))
+    di, te, sp = M[:j], M[j:2 * j], M[2 * j:]
     return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wo], s[g.ic]]
 
 

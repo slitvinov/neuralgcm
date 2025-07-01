@@ -229,8 +229,8 @@ def G(s):
     te = einsum("gh,hml->gml", -g.tew, s.di)
     sp = -einsum("gh,hml->gml", g.thick[None], s.di)
     vo = jnp.zeros(shape)
-    tracers = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
-    return State(vo, di, te, sp, tracers)
+    return State(vo, di, te, sp, jnp.zeros_like(vo), jnp.zeros_like(vo),
+                 jnp.zeros_like(vo))
 
 
 def implicit_inverse(s, dt):

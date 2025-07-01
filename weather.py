@@ -247,7 +247,7 @@ def G_inv(s, dt):
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
     print(np.min(np.diff(M - jnp.r_[di, te, sp])))
-    print(np.max(np.diff(M - jnp.r_[di, te, sp])))    
+    print(np.max(np.diff(M - jnp.r_[di, te, sp])))
     return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wo], s[g.ic]]
 
 
@@ -446,7 +446,7 @@ g.sp = np.s_[3 * n:3 * n + 1]
 g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
-g.ditesp = np.s_[n : 3 * n + 1]
+g.ditesp = np.s_[n:3 * n + 1]
 
 raw_init_state = np.r_[vorticity, divergence, temperature_variation, log_sp,
                        hu, wo, ic]

@@ -107,7 +107,9 @@ class State:
     di: Any
     te: Any
     sp: Any
-    tracers: Any = dataclasses.field(default_factory=dict)
+    hu: Any
+    wa: Any
+    ic: Any
 
 
 def omega(g_term):
@@ -222,6 +224,7 @@ def G(s):
     tracers = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
     return State(vo, di, te, sp, tracers)
 
+
 def implicit_inverse(s, dt):
     l = g.total_wavenumbers
     j = g.layers
@@ -249,7 +252,10 @@ def implicit_inverse(s, dt):
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s.te) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s.sp))
     return State(s.vo, di, te, sp, s.tracers)
+
+
 G_inv = tree_math.unwrap(implicit_inverse, vector_argnums=0)
+
 
 def to_modal(z):
 
@@ -443,7 +449,9 @@ tracers = to_modal({
     M["specific_cloud_ice_water_content"],
 })
 raw_init_state = State(vorticity, divergence, temperature_variation, log_sp,
-                       tracers)
+                       tracers["specific_humidity"],
+                       tracers["specific_cloud_liquid_water_content"],
+                       tracers["specific_cloud_ice_water_content"])
 total_wavenumber = np.arange(g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
 orography = to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
@@ -466,7 +474,6 @@ np.asarray(out.vo).tofile("w.00.raw")
 np.asarray(out.di).tofile("w.01.raw")
 np.asarray(out.te).tofile("w.02.raw")
 np.asarray(out.sp).tofile("w.03.raw")
-np.asarray(out.tracers["specific_humidity"]).tofile("w.04.raw")
-np.asarray(
-    out.tracers["specific_cloud_liquid_water_content"]).tofile("w.05.raw")
-np.asarray(out.tracers["specific_cloud_ice_water_content"]).tofile("w.06.raw")
+np.asarray(out.hu).tofile("w.04.raw")
+np.asarray(out.wa).tofile("w.05.raw")
+np.asarray(out.ic).tofile("w.06.raw")

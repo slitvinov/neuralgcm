@@ -413,9 +413,9 @@ g.alpha[-1] = -np.log(g.centers[-1])
 
 weights = np.zeros([g.layers, g.layers])
 for j in range(g.layers):
-    weights[j, j] = alpha[j]
+    weights[j, j] = g.alpha[j]
     for k in range(j + 1, g.layers):
-        weights[j, k] = alpha[k] + alpha[k - 1]
+        weights[j, k] = g.alpha[k] + g.alpha[k - 1]
 g.geo = r_gas * weights
 p = np.tril(np.ones([g.layers, g.layers]))
 alpha = g.alpha[..., None]

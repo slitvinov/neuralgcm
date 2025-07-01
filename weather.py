@@ -432,6 +432,10 @@ def step_with_filters(fun):
 
     return step
 
+def step(frame, _):
+    gfun = lambda x, _: (step_fn(x), None)
+    x_final, _ = jax.lax.scan(gfun, frame, xs=None, length=inner_steps)
+    return x_final, nodal_prognostics_and_diagnostics(frame)
 
 g.longitude_wavenumbers = 171
 g.total_wavenumbers = 172
@@ -568,13 +572,6 @@ times = 0.25 * np.arange(outer_steps)
 step_fn = step_with_filters(
     runge_kutta(explicit_terms, implicit_terms, implicit_inverse,
                    dt))
-
-
-def step(frame, _):
-    gfun = lambda x, _: (step_fn(x), None)
-    x_final, _ = jax.lax.scan(gfun, frame, xs=None, length=inner_steps)
-    return x_final, nodal_prognostics_and_diagnostics(frame)
-
 
 out_state, trajectory0 = jax.lax.scan(step,
                                       dfi_init_state,

@@ -222,7 +222,6 @@ def G(s):
     tracers = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
     return State(vo, di, te, sp, tracers)
 
-@tree_math.unwrap(vector_argnums=0)
 def implicit_inverse(s, dt):
     l = g.total_wavenumbers
     j = g.layers
@@ -250,7 +249,7 @@ def implicit_inverse(s, dt):
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s.te) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s.sp))
     return State(s.vo, di, te, sp, s.tracers)
-
+G_inv = tree_math.unwrap(implicit_inverse, vector_argnums=0)
 
 def to_modal(z):
 

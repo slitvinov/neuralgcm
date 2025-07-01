@@ -245,7 +245,7 @@ def G_inv(s, dt):
     sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s[g.di]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
-    return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wa], s[g.ic]]
+    return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wo], s[g.ic]]
 
 
 def to_modal(z):

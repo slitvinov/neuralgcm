@@ -108,6 +108,7 @@ di.g.tew = di.temperature_weights()
 output_level_indices = [
     di.g.layers // 4, di.g.layers // 2, 3 * di.g.layers // 4, -1
 ]
+sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 desired_lat = np.rad2deg(np.arcsin(sin_lat))
 desired_lon = np.linspace(0, 360, di.g.longitude_nodes, endpoint=False)
 a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
@@ -166,7 +167,6 @@ u_nodal = M["u_component_of_wind"]
 v_nodal = M["v_component_of_wind"]
 t_nodal = M["temperature"]
 
-sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
 cos = np.sqrt(1 - sin_lat**2)
 u = di.transform(u_nodal / cos)
 v = di.transform(v_nodal / cos)

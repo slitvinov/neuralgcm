@@ -1,7 +1,6 @@
 aiohappyeyeballs
 aiohttp
 aiosignal
-asciitree
 async-timeout
 attrs
 cachetools
@@ -9,10 +8,8 @@ certifi
 charset-normalizer
 contourpy
 cycler
+dateutils
 decorator
-fasteners
-flexcache
-flexparser
 fonttools
 frozenlist
 fsspec
@@ -36,7 +33,6 @@ kiwisolver
 matplotlib
 ml_dtypes
 multidict
-numcodecs
 numpy
 nvidia-cublas-cu12
 nvidia-cuda-cupti-cu12
@@ -53,8 +49,6 @@ opt_einsum
 packaging
 pandas
 pillow
-Pint
-platformdirs
 propcache
 proto-plus
 protobuf
@@ -68,7 +62,6 @@ requests-oauthlib
 rsa
 scipy
 six
-tree-math
 typing_extensions
 tzdata
 urllib3

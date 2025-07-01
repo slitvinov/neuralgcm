@@ -215,8 +215,8 @@ def F(s):
         mask,
         transform(logsp_tendency) * mask,
         (transform(hu_v + hu_h[0]) + hu_h[1]) * mask,
-        (transform(hu_v + hu_h[0]) + hu_h[1]) * mask,
-        (transform(hu_v + hu_h[0]) + hu_h[1]) * mask)
+        (transform(wa_v + wa_h[0]) + wa_h[1]) * mask,
+        (transform(ic_v + ic_h[0]) + ic_h[1]) * mask)
 
 
 @tree_math.unwrap
@@ -259,7 +259,7 @@ def implicit_inverse(s, dt):
     sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s.di) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s.te) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s.sp))
-    return State(s.vo, di, te, sp, s.tracers)
+    return State(s.vo, di, te, sp, s.hu, s.wa, s.ic)
 
 
 G_inv = tree_math.unwrap(implicit_inverse, vector_argnums=0)

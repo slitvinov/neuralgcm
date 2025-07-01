@@ -214,10 +214,9 @@ def F(s):
         (transform(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) *
         mask,
         transform(logsp_tendency) * mask,
-        jax.tree_util.tree_map(
-            lambda vert, pair: (transform(vert + pair[0]) + pair[1]) * mask,
-            tracers_v, tracers_h))
-
+        (transform(vert + hu_v) + hu_h) * mask,
+        (transform(vert + wa_v) + wa_h) * mask,
+        (transform(vert + ic_v) + ic_h) * mask)
 
 @tree_math.unwrap
 def G(s):

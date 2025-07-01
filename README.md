@@ -17,7 +17,14 @@ for i in *.raw; do cmp $i ~/$i; echo $i $?; done
 ## Data
 
 - https://github.com/google-research/arco-era5
-- https://github.com/NOAA-EMC/NCEPLIBS-g2c.git
+- https://github.com/NOAA-EMC/NCEPLIBS-g2c
+- https://github.com/NOAA-EMC/NCEPLIBS-g2
+
+To download raw data (~24Gb)
+
+```
+gsutil cp gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501* ~
+```
 
 ## References
 

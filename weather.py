@@ -25,38 +25,6 @@ def inverse_transform(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
 
-def basis():
-    dft = scipy.linalg.dft(
-        g.longitude_nodes)[:, :g.longitude_wavenumbers] / np.sqrt(np.pi)
-    f = np.empty((g.longitude_nodes, 2 * g.longitude_wavenumbers - 1))
-    f[:, 0] = 1 / np.sqrt(2 * np.pi)
-    f[:, 1::2] = np.real(dft[:, 1:])
-    f[:, 2::2] = -np.imag(dft[:, 1:])
-    x, w = scipy.special.roots_legendre(g.latitude_nodes)
-    q = np.sqrt(1 - x * x)
-    y = np.zeros(
-        (g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
-    y[0, 0] = 1 / np.sqrt(2)
-    for m in range(1, g.longitude_wavenumbers):
-        y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
-    for k in range(1, g.total_wavenumbers):
-        M = min(g.longitude_wavenumbers, g.total_wavenumbers - k)
-        m = np.c_[:M]
-        m2 = m**2
-        mk2 = (m + k)**2
-        mkp2 = (m + k - 1)**2
-        a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
-        b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
-        y[k, :M] = a * (x * y[k - 1, :M] - b * y[k - 2, :M])
-    r = np.transpose(y, (1, 2, 0))
-    p = np.zeros(
-        (g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))
-    for m in range(g.longitude_wavenumbers):
-        p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
-    p = np.repeat(p, 2, axis=0)
-    return f, p[1:], 2 * np.pi * w / g.longitude_nodes
-
-
 def sigma_integral(x):
     x_axes = range(x.ndim)
     axes = [x_axes[-3]]
@@ -169,36 +137,6 @@ def get_sigma_ratios():
     alpha = np.diff(np.log(g.centers), append=0) / 2
     alpha[-1] = -np.log(g.centers[-1])
     return alpha
-
-
-def geopotential_weights():
-    alpha = get_sigma_ratios()
-    weights = np.zeros([g.layers, g.layers])
-    for j in range(g.layers):
-        weights[j, j] = alpha[j]
-        for k in range(j + 1, g.layers):
-            weights[j, k] = alpha[k] + alpha[k - 1]
-    return r_gas * weights
-
-
-def temperature_weights():
-    p = np.tril(np.ones([g.layers, g.layers]))
-    alpha = get_sigma_ratios()[..., None]
-    p_alpha = p * alpha
-    p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
-    p_alpha_shifted[0] = 0
-    h0 = (kappa * g.temp[..., None] * (p_alpha + p_alpha_shifted) /
-          g.thick[..., None])
-    temp_diff = np.diff(g.temp)
-    thickness_sum = g.thick[:-1] + g.thick[1:]
-    k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[..., None]
-    thickness_cumulative = np.cumsum(g.thick)[..., None]
-    k1 = p - thickness_cumulative
-    k = k0 * k1
-    k_shifted = np.roll(k, 1, axis=0)
-    k_shifted[0] = 0
-    return (h0 - k - k_shifted) * g.thick
-
 
 def omega(g_term):
     f = jax.lax.cumsum(g_term * g.thick[:, None, None])
@@ -448,10 +386,59 @@ g.boundaries = np.linspace(0, 1, g.layers + 1, dtype=np.float32)
 g.centers = (g.boundaries[1:] + g.boundaries[:-1]) / 2
 g.thick = np.diff(g.boundaries)
 g.center_to_center = np.diff(g.centers)
-g.f, g.p, g.w = basis()
+dft = scipy.linalg.dft(
+    g.longitude_nodes)[:, :g.longitude_wavenumbers] / np.sqrt(np.pi)
+f = np.empty((g.longitude_nodes, 2 * g.longitude_wavenumbers - 1))
+f[:, 0] = 1 / np.sqrt(2 * np.pi)
+f[:, 1::2] = np.real(dft[:, 1:])
+f[:, 2::2] = -np.imag(dft[:, 1:])
+x, w = scipy.special.roots_legendre(g.latitude_nodes)
+q = np.sqrt(1 - x * x)
+y = np.zeros((g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
+y[0, 0] = 1 / np.sqrt(2)
+for m in range(1, g.longitude_wavenumbers):
+    y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
+for k in range(1, g.total_wavenumbers):
+    M = min(g.longitude_wavenumbers, g.total_wavenumbers - k)
+    m = np.c_[:M]
+    m2 = m**2
+    mk2 = (m + k)**2
+    mkp2 = (m + k - 1)**2
+    a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
+    b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
+    y[k, :M] = a * (x * y[k - 1, :M] - b * y[k - 2, :M])
+r = np.transpose(y, (1, 2, 0))
+p = np.zeros((g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))
+for m in range(g.longitude_wavenumbers):
+    p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
+p = np.repeat(p, 2, axis=0)
+g.f = f
+g.p = p[1:]
+g.w = 2 * np.pi * w / g.longitude_nodes
 g.temp = np.full((g.layers, ), 250)
-g.geo = geopotential_weights()
-g.tew = temperature_weights()
+alpha = get_sigma_ratios()
+weights = np.zeros([g.layers, g.layers])
+for j in range(g.layers):
+    weights[j, j] = alpha[j]
+    for k in range(j + 1, g.layers):
+        weights[j, k] = alpha[k] + alpha[k - 1]
+g.geo = r_gas * weights
+p = np.tril(np.ones([g.layers, g.layers]))
+alpha = get_sigma_ratios()[..., None]
+p_alpha = p * alpha
+p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
+p_alpha_shifted[0] = 0
+h0 = (kappa * g.temp[..., None] * (p_alpha + p_alpha_shifted) /
+      g.thick[..., None])
+temp_diff = np.diff(g.temp)
+thickness_sum = g.thick[:-1] + g.thick[1:]
+k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[..., None]
+thickness_cumulative = np.cumsum(g.thick)[..., None]
+k1 = p - thickness_cumulative
+k = k0 * k1
+k_shifted = np.roll(k, 1, axis=0)
+k_shifted[0] = 0
+g.tew = (h0 - k - k_shifted) * g.thick
 
 output_level_indices = [g.layers // 4, g.layers // 2, 3 * g.layers // 4, -1]
 sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)

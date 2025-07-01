@@ -52,6 +52,7 @@ def real_basis_derivative(u):
     i = np.c_[:n]
     return (i + 1) // 2 * jnp.where(i % 2, u_do, -u_up)
 
+
 def cos_lat_d_dlat(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
@@ -116,15 +117,9 @@ class State:
     tracers: Any = dataclasses.field(default_factory=dict)
 
 
-def get_sigma_ratios():
-    alpha = np.diff(np.log(g.centers), append=0) / 2
-    alpha[-1] = -np.log(g.centers[-1])
-    return alpha
-
-
 def omega(g_term):
     f = jax.lax.cumsum(g_term * g.thick[:, None, None])
-    alpha = get_sigma_ratios()[:, None, None]
+    alpha = g.alpha[:, None, None]
     pad = (1, 0), (0, 0), (0, 0)
     return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None,
                                                                      None]
@@ -413,8 +408,9 @@ b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
 b[:, -1] = 0
 g.a = a
 g.b = b
+g.alpha = np.diff(np.log(g.centers), append=0) / 2
+g.alpha[-1] = -np.log(g.centers[-1])
 
-alpha = get_sigma_ratios()
 weights = np.zeros([g.layers, g.layers])
 for j in range(g.layers):
     weights[j, j] = alpha[j]
@@ -422,7 +418,7 @@ for j in range(g.layers):
         weights[j, k] = alpha[k] + alpha[k - 1]
 g.geo = r_gas * weights
 p = np.tril(np.ones([g.layers, g.layers]))
-alpha = get_sigma_ratios()[..., None]
+alpha = g.alpha[..., None]
 p_alpha = p * alpha
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
 p_alpha_shifted[0] = 0

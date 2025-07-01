@@ -276,52 +276,6 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
-
-def nodal_prognostics_and_diagnostics(s):
-    sp_nodal = jnp.exp(inverse_transform(s.sp))
-    tracers_nodal = {k: inverse_transform(v) for k, v in s.tracers.items()}
-    s_nodal = {
-        "surface_pressure": sp_nodal,
-        **tracers_nodal,
-    }
-
-    def get_horizontal(x):
-        if x.shape[0] == 1:
-            return x
-        else:
-            return x[output_level_indices, ...]
-
-    return jax.tree.map(get_horizontal, s_nodal)
-
-
-def explicit_terms0(state):
-    forward_term = explicit_terms(state)
-    return tree_map(jnp.negative, forward_term)
-
-
-def implicit_terms0(state):
-    forward_term = implicit_terms(state)
-    return tree_map(jnp.negative, forward_term)
-
-
-def implicit_inverse0(state, step_size):
-    return implicit_inverse(state, -step_size)
-
-
-def accumulate_repeated(step_fn, weights, state):
-
-    def f(carry, weight):
-        state, averaged = carry
-        state = step_fn(state)
-        averaged = tree_map(lambda s, a: a + weight * s, state, averaged)
-        return (state, averaged), None
-
-    zeros = tree_map(jnp.zeros_like, state)
-    init = (state, zeros)
-    (_, averaged), _ = jax.lax.scan(f, init, weights)
-    return averaged
-
-
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 def regrid(surface_pressure, target, field):
@@ -331,21 +285,6 @@ def regrid(surface_pressure, target, field):
     weights = jnp.maximum(upper - lower, 0)
     weights /= jnp.sum(weights, axis=1, keepdims=True)
     return jnp.einsum("ab,b->a", weights, field, precision="float32")
-
-
-def step_with_filters(fun):
-
-    def step(u):
-        return hyperdiffusion_filter(fun(u))
-
-    return step
-
-
-def step(frame, _):
-    gfun = lambda x, _: (step_fn(x), None)
-    x_final, _ = jax.lax.scan(gfun, frame, xs=None, length=inner_steps)
-    return x_final, nodal_prognostics_and_diagnostics(frame)
-
 
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
 uL = 6.37122e6
@@ -522,36 +461,16 @@ g.orography = orography
 res_factor = g.latitude_nodes / 128
 dt = 4.3752000000000006e-02
 tau = 3600 * 8.6 / (2.4**np.log2(res_factor)) / uT
-
 l0 = np.arange(g.total_wavenumbers)
 eigenvalues = -l0 * (l0 + 1)
 scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
-hyperdiffusion_filter = _make_filter_fn(scaling)
-time_span = cutoff_period = 3.1501440000000001e+00
-forward_step = step_with_filters(
-    runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
-backward_step = step_with_filters(
-    runge_kutta(explicit_terms0, implicit_terms0, implicit_inverse0, dt))
-N = round(time_span / (2 * dt))
-n = np.arange(1, N + 1)
-weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))
-init_weight = 1.0
-total_weight = init_weight + 2 * weights.sum()
-init_weight /= total_weight
-weights /= total_weight
-init_term = tree_map(lambda x: x * init_weight, raw_init_state)
-forward_term = accumulate_repeated(forward_step, weights, raw_init_state)
-backward_term = accumulate_repeated(backward_step, weights, raw_init_state)
-dfi_init_state = tree_map(lambda *xs: sum(xs), init_term, forward_term,
-                          backward_term)
+hyperdiffusion = _make_filter_fn(scaling)
+step = runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
+out, *rest = jax.lax.scan(lambda x, _ : (hyperdiffusion(step(x)), None),
+                          raw_init_state,
+                          xs=None, length=579)
 
-inner_steps = 3
-outer_steps = 193
-times = 0.25 * np.arange(outer_steps)
-step_fn = step_with_filters(
-    runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
-out, *rest = jax.lax.scan(step, raw_init_state, xs=None, length=outer_steps)
 np.asarray(out.vo).tofile("w.00.raw")
 np.asarray(out.di).tofile("w.01.raw")
 np.asarray(out.te).tofile("w.02.raw")

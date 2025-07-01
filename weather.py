@@ -461,8 +461,8 @@ g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 
-raw_init_state = State(vorticity, divergence, temperature_variation, log_sp,
-                       hu, wo, ic)
+raw_init_state = np.r_[vorticity, divergence, temperature_variation, log_sp,
+                       hu, wo, ic]
 
 total_wavenumber = np.arange(g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()

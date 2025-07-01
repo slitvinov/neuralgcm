@@ -3,7 +3,8 @@
 ```
 python -m venv ~/.venv/neuralgcm
 . ~/.venv/neuralgcm/bin/activate
-python -m pip install jax[cuda12] gcsfs matplotlib xarray zarr
+python -m pip install 'jax[cuda12]' gcsfs matplotlib pandas
+python -m pip install --no-deps xarray zarr
 ```
 
 ## Test

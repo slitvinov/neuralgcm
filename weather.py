@@ -136,6 +136,7 @@ def hadvection(scalar, cos_lat_u, divergence):
         n_component)
     return nodal_terms, modal_terms
 
+
 def explicit_terms(s):
     vort = inverse_transform(s.vo)
     div = inverse_transform(s.di)
@@ -463,7 +464,7 @@ scaling = jnp.exp(-scale * (-eigenvalues)**2)
 rescale = lambda x: scaling * x
 step = runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt)
 out, *rest = jax.lax.scan(lambda x, _:
-                          (jax.tree_util.tree_map, rescale, step(x), None),
+                          (jax.tree_util.tree_map(rescale, step(x)), None),
                           raw_init_state,
                           xs=None,
                           length=579)

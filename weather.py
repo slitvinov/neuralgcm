@@ -85,7 +85,7 @@ def runge_kutta(y):
     b_im = 3 / 8, 0, 3 / 8, 1 / 4
     n = len(b_ex)
     f = [None] * n
-    g = [None] * n
+    h = [None] * n
     f[0] = F(y)
     h[0] = G(y)
     for i in range(1, n):

@@ -466,7 +466,7 @@ eigenvalues = -l0 * (l0 + 1)
 scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 hyperdiffusion = _make_filter_fn(scaling)
-step = runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
+step = runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt)
 out, *rest = jax.lax.scan(lambda x, _ : (hyperdiffusion(step(x)), None),
                           raw_init_state,
                           xs=None, length=579)

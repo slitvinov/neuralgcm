@@ -79,9 +79,9 @@ def sec_lat_d_dlat_cos2(x):
 
 @tree_math.wrap
 def runge_kutta(y):
-    F = tree_math.unwrap(explicit_terms)
-    G = tree_math.unwrap(implicit_terms)
-    G_inv = tree_math.unwrap(implicit_inverse, vector_argnums=0)
+    dt = g.dt
+    G = tree_math.unwrap(implicit)
+    G_inv = tree_math.unwrap(inverse, vector_argnums=0)
     a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
     a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
     b_ex = 1 / 2, -1 / 2, 1, 0
@@ -93,15 +93,15 @@ def runge_kutta(y):
     f[0] = F(y)
     g[0] = G(y)
     for i in range(1, n):
-        ex = g.dt * sum(a_ex[i - 1][j] * f[j]
+        ex = dt * sum(a_ex[i - 1][j] * f[j]
                       for j in range(i) if a_ex[i - 1][j])
-        im = g.dt * sum(a_im[i - 1][j] * g[j]
+        im = dt * sum(a_im[i - 1][j] * g[j]
                       for j in range(i) if a_im[i - 1][j])
-        Y = G_inv(y + ex + im, g.dt * a_im[i - 1][i])
+        Y = G_inv(y + ex + im, dt * a_im[i - 1][i])
         if any(a_ex[j][i] for j in range(i, n - 1)) or b_ex[i]: f[i] = F(Y)
         if any(a_im[j][i] for j in range(i, n - 1)) or b_im[i]: g[i] = G(Y)
-    ex = g.dt * sum(b_ex[j] * f[j] for j in range(n) if b_ex[j])
-    im = g.dt * sum(b_im[j] * g[j] for j in range(n) if b_im[j])
+    ex = dt * sum(b_ex[j] * f[j] for j in range(n) if b_ex[j])
+    im = dt * sum(b_im[j] * g[j] for j in range(n) if b_im[j])
     return y + ex + im
 
 @tree_math.struct
@@ -133,7 +133,8 @@ def hadvection(scalar, cos_lat_u, divergence):
     return nodal_terms, modal_terms
 
 
-def explicit_terms(s):
+@tree_math.unwrap
+def F(s):
     vort = inverse_transform(s.vo)
     div = inverse_transform(s.di)
     temp = inverse_transform(s.te)

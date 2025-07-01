@@ -45,17 +45,17 @@ def nodal_prognostics_and_diagnostics(s):
     return jax.tree.map(get_horizontal, s_nodal)
 
 
-def explicit_terms(state):
+def explicit_terms0(state):
     forward_term = di.explicit_terms(state)
     return di.tree_map(jnp.negative, forward_term)
 
 
-def implicit_terms(state):
+def implicit_terms0(state):
     forward_term = di.implicit_terms(state)
     return di.tree_map(jnp.negative, forward_term)
 
 
-def implicit_inverse(state, step_size):
+def implicit_inverse0(state, step_size):
     return di.implicit_inverse(state, -step_size)
 
 
@@ -206,7 +206,7 @@ forward_step = step_with_filters(
     di.runge_kutta(di.explicit_terms, di.implicit_terms, di.implicit_inverse,
                    dt))
 backward_step = step_with_filters(
-    di.runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
+    di.runge_kutta(explicit_terms0, implicit_terms0, implicit_inverse0, dt))
 N = round(time_span / (2 * dt))
 n = np.arange(1, N + 1)
 weights = np.sinc(n / (N + 1)) * np.sinc(n * time_span / (cutoff_period * N))

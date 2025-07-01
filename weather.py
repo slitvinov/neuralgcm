@@ -236,17 +236,8 @@ def G_inv(s, dt):
     row1 = np.c_[C, I, Z]
     row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
-    di = (einsum("lgh,hml->gml", inv[:, :j, :j], s[g.di]) +
-          einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s[g.te]) +
-          einsum("lgh,hml->gml", inv[:, :j, 2 * j:], s[g.sp]))
-    te = (einsum("lgh,hml->gml", inv[:, j:2 * j, :j], s[g.di]) +
-          einsum("lgh,hml->gml", inv[:, j:2 * j, j:2 * j], s[g.te]) +
-          einsum("lgh,hml->gml", inv[:, j:2 * j, 2 * j:], s[g.sp]))
-    sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s[g.di]) +
-          einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
-          einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
-    return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wo], s[g.ic]]
-
+    M = einsum("lgh,hml->gml", inv, s[g.ditesp])
+    return jnp.r_[s[g.vo], M, s[g.hu], s[g.wo], s[g.ic]]
 
 def to_modal(z):
 
@@ -443,6 +434,7 @@ g.sp = np.s_[3 * n:3 * n + 1]
 g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
+g.ditesp = np.s[n : 3 * n + 1]
 
 raw_init_state = np.r_[vorticity, divergence, temperature_variation, log_sp,
                        hu, wo, ic]

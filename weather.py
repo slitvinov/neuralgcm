@@ -213,10 +213,10 @@ def G(s):
     te = einsum("gh,hml->gml", -g.tew, s[g.di])
     sp = -einsum("gh,hml->gml", g.thick[None], s[g.di])
     vo = jnp.zeros(shape)
-    return jnp.r[vo, di, te, sp,
-                 jnp.zeros_like(vo),
-                 jnp.zeros_like(vo),
-                 jnp.zeros_like(vo)]
+    return jnp.r_[vo, di, te, sp,
+                  jnp.zeros_like(vo),
+                  jnp.zeros_like(vo),
+                  jnp.zeros_like(vo)]
 
 
 def G_inv(s, dt):

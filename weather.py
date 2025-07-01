@@ -1,6 +1,5 @@
 from typing import Any
 import dataclasses
-import di
 import functools
 import jax
 import jax.numpy as jnp

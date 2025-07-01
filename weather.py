@@ -465,6 +465,7 @@ eigenvalues = -l0 * (l0 + 1)
 scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 rescale = lambda x: scaling * x
+print(scaling)
 g.dt = dt
 out, *rest = jax.lax.scan(
     lambda x, _: (jax.tree_util.tree_map(rescale, runge_kutta(x)), None),

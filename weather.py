@@ -451,8 +451,19 @@ log_sp = to_modal(np.log(sp_nodal))
 hu = transform(M["specific_humidity"])
 wo = transform(M["specific_cloud_liquid_water_content"])
 ic = transform(M["specific_cloud_ice_water_content"])
+
+n = g.layers
+g.vo = np.s_[:n]
+g.di = np.s_[n:2 * n]
+g.te = np.s_[2 * n:3 * n]
+g.sp = np.s_[3 * n + 1]
+g.hu = np.s_[3 * n + 1:4 * n + 1]
+g.wo = np.s_[4 * n + 1:5 * n + 1]
+g.ic = np.s_[5 * n + 1:6 * n + 1]
+
 raw_init_state = State(vorticity, divergence, temperature_variation, log_sp,
                        hu, wo, ic)
+
 total_wavenumber = np.arange(g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
 orography = to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)

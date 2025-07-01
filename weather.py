@@ -551,16 +551,12 @@ outer_steps = 193
 times = 0.25 * np.arange(outer_steps)
 step_fn = step_with_filters(
     runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
-
-out_state, trajectory0 = jax.lax.scan(step,
-                                      dfi_init_state,
-                                      xs=None,
-                                      length=outer_steps)
-out_state, trajectory = jax.lax.scan(step,
-                                     raw_init_state,
-                                     xs=None,
-                                     length=outer_steps)
-np.asarray(trajectory["surface_pressure"]).tofile("w.00.raw")
-np.asarray(trajectory0["specific_humidity"]).tofile("w.01.raw")
+out, *rest = jax.lax.scan(step, raw_init_state, xs=None, length=outer_steps)
+np.asarray(out.vo).tofile("w.00.raw")
+np.asarray(out.di).tofile("w.01.raw")
+np.asarray(out.te).tofile("w.02.raw")
+np.asarray(out.sp).tofile("w.03.raw")
+np.asarray(out.tracers["specific_humidity"]).tofile("w.04.raw")
 np.asarray(
-    trajectory0["specific_cloud_liquid_water_content"]).tofile("w.02.raw")
+    out.tracers["specific_cloud_liquid_water_content"]).tofile("w.05.raw")
+np.asarray(out.tracers["specific_cloud_ice_water_content"]).tofile("w.06.raw")

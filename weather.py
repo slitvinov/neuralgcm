@@ -6,7 +6,6 @@ import jax.numpy as jnp
 import numpy as np
 import os
 import scipy
-import tree_math
 import xarray
 
 
@@ -77,7 +76,6 @@ def sec_lat_d_dlat_cos2(x):
     return lm1 + lp1
 
 
-@tree_math.wrap
 def runge_kutta(y):
     a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
     a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
@@ -100,18 +98,6 @@ def runge_kutta(y):
     im = g.dt * sum(b_im[j] * h[j] for j in range(n) if b_im[j])
     return y + ex + im
 
-
-@tree_math.struct
-class State:
-    vo: Any
-    di: Any
-    te: Any
-    sp: Any
-    hu: Any
-    wa: Any
-    ic: Any
-
-
 def omega(g_term):
     f = jax.lax.cumsum(g_term * g.thick[:, None, None])
     alpha = g.alpha[:, None, None]
@@ -132,7 +118,6 @@ def hadvection(scalar, cos_lat_u, divergence):
     return nodal_terms, modal_terms
 
 
-@tree_math.unwrap
 def F(s):
     vort = inverse_transform(s[g.vo])
     div = inverse_transform(s[g.di])
@@ -219,7 +204,6 @@ def F(s):
         (transform(ic_v + ic_h[0]) + ic_h[1]) * mask]
 
 
-@tree_math.unwrap
 def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
     geopotential_diff = einsum("gh,hml->gml", g.geo, s[g.te])
@@ -233,7 +217,7 @@ def G(s):
                  jnp.zeros_like(vo)]
 
 
-def implicit_inverse(s, dt):
+def G_inv(s, dt):
     l = g.total_wavenumbers
     j = g.layers
     l0 = np.r_[:l]
@@ -260,9 +244,6 @@ def implicit_inverse(s, dt):
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
     return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wa], s[g.ic]]
-
-
-G_inv = tree_math.unwrap(implicit_inverse, vector_argnums=0)
 
 
 def to_modal(z):

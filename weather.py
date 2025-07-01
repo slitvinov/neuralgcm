@@ -188,8 +188,9 @@ def F(s):
 
     h_adv = functools.partial(hadvection, cos_lat_u=(u, v), divergence=div)
     temp_h_nodal, temp_h_modal = h_adv(temp)
-    wa_h = h_adv(wa)
+
     hu_h = h_adv(hu)
+    wa_h = h_adv(wa)
     ic_h = h_adv(ic)
 
     temp_vert = vadvection(sigma_full, temp)
@@ -201,8 +202,11 @@ def F(s):
     temp_adiab = kappa * (t_mean + t_var)
 
     logsp_tendency = -sigma_integral(u_dot_grad)
-    tracers_v = jax.tree_util.tree_map(lambda x: vadvection(sigma_full, x),
-                                       tracers)
+
+    hu_v = vadvection(sigma_full, hu)
+    wa_v = vadvection(sigma_full, wa)
+    ic_v = vadvection(sigma_full, ic)
+
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
     return State(
         vort_tendency * mask,

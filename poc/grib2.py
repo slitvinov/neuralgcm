@@ -4,10 +4,14 @@ import sys
 
 def decode_short(data):
     # sign-and-magnitude not standard two's complement
-    uint16_val, = struct.unpack('>H', data)
-    is_negative = uint16_val & 0x8000
-    magnitude = uint16_val & 0x7FFF
-    return -magnitude if is_negative else magnitude
+    val, = struct.unpack('>H', data)
+    sig = (val >> 15) & 1
+    mag = val & 0x7FFF
+    return -mag if sig else mag
+
+
+def fma(x, y, z):
+    return x * y + z
 
 
 CENTER = {98: "European Center for Medium-Range Weather Forecasts (RSMC)"}
@@ -114,8 +118,8 @@ while True:
     assert 2 * (npoint - Ts) + 4 * Ts == len(section)
     i = 0
     j = 0
-    bscale = 2.0**(E)
-    dscale = 10.0**(-D)
+    bscale = 2**(E)
+    dscale = 10**(-D)
     tscale = L * 1e-6
     with open("value", "w") as fv:
         for m in range(M + 1):
@@ -124,17 +128,18 @@ while True:
                     buf = section[8 * i:]
                     i += 1
                     x, y = struct.unpack(">ff", buf[:8])
-
+                    fv.write(f"{x:.10e}\n")
+                    fv.write(f"{y:.10e}\n")
                 else:
                     buf = section[4 * Ts + 4 * j:]
                     j += 1
-                    x = decode_short(buf[0:2])
-                    y = decode_short(buf[2:4])
-                    pscale = (n * (n + 1))**(-tscale)
-                    x = (x * bscale + R) * dscale * pscale
-                    y = (y * bscale + R) * dscale * pscale
-                fv.write(f"{x:.10e}\n")
-                fv.write(f"{y:.10e}\n")
+                    x0 = decode_short(buf[0:2])
+                    y0 = decode_short(buf[2:4])
+                    pscale = dscale * (n * (n + 1))**(-tscale)
+                    x = fma(x0, bscale, R) * pscale
+                    y = fma(y0, bscale, R) * pscale
+                    fv.write(f"{x:.10e}\n")
+                    fv.write(f"{y:.10e}\n")
 
     # Section 8 - End Section
     section = f.read(4)

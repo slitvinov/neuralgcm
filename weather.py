@@ -455,7 +455,7 @@ raw_init_state = State(vorticity, divergence, temperature_variation, log_sp,
                        hu, wo, ic)
 total_wavenumber = np.arange(g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
-orography = to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
+orography = transform(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
 g.orography = orography
 res_factor = g.latitude_nodes / 128
 g.dt = 4.3752000000000006e-02

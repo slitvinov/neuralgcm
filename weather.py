@@ -208,7 +208,7 @@ def F(s):
     ic_v = vadvection(sigma_full, ic)
 
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
-    return State(
+    return jnp.r_[
         vort_tendency * mask,
         (div_tendency + ke_tendency + oro_tendency) * mask,
         (transform(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) *
@@ -216,7 +216,7 @@ def F(s):
         transform(logsp_tendency) * mask,
         (transform(hu_v + hu_h[0]) + hu_h[1]) * mask,
         (transform(wa_v + wa_h[0]) + wa_h[1]) * mask,
-        (transform(ic_v + ic_h[0]) + ic_h[1]) * mask)
+        (transform(ic_v + ic_h[0]) + ic_h[1]) * mask]
 
 
 @tree_math.unwrap
@@ -229,8 +229,8 @@ def G(s):
     te = einsum("gh,hml->gml", -g.tew, s[g.di])
     sp = -einsum("gh,hml->gml", g.thick[None], s[g.di])
     vo = jnp.zeros(shape)
-    return State(vo, di, te, sp, jnp.zeros_like(vo), jnp.zeros_like(vo),
-                 jnp.zeros_like(vo))
+    return jnp.r[vo, di, te, sp, jnp.zeros_like(vo), jnp.zeros_like(vo),
+                 jnp.zeros_like(vo)]
 
 
 def implicit_inverse(s, dt):
@@ -259,7 +259,7 @@ def implicit_inverse(s, dt):
     sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s[g.di]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
-    return State(s[g.vo], di, te, sp, s[g.hu], s[g.wa], s[g.ic])
+    return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wa], s[g.ic]]
 
 
 G_inv = tree_math.unwrap(implicit_inverse, vector_argnums=0)

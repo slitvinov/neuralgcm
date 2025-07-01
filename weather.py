@@ -458,15 +458,13 @@ k = total_wavenumber / total_wavenumber.max()
 orography = to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
 g.orography = orography
 res_factor = g.latitude_nodes / 128
-dt = 4.3752000000000006e-02
+g.dt = 4.3752000000000006e-02
 tau = 3600 * 8.6 / (2.4**np.log2(res_factor)) / uT
 l0 = np.arange(g.total_wavenumbers)
 eigenvalues = -l0 * (l0 + 1)
 scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 rescale = lambda x: scaling * x
-print(scaling)
-g.dt = dt
 out, *rest = jax.lax.scan(
     lambda x, _: (jax.tree_util.tree_map(rescale, runge_kutta(x)), None),
     raw_init_state,

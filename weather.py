@@ -9,17 +9,6 @@ import scipy
 import tree_math
 import xarray
 
-GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
-
-uL = 6.37122e6
-uT = 1 / 2 / 7.292e-5
-tree_map = jax.tree_util.tree_map
-einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-
-# gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
-gravity_acceleration = 7.2364082834567185e+01
-kappa = 2 / 7
-r_gas = kappa * 0.0011628807950492582
 
 class g:
     pass
@@ -356,6 +345,7 @@ def implicit_inverse(s, dt):
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s.sp))
     return State(s.vo, di, te, sp, s.tracers)
 
+
 def to_modal(z):
 
     def g(x):
@@ -414,6 +404,7 @@ def accumulate_repeated(step_fn, weights, state):
     (_, averaged), _ = jax.lax.scan(f, init, weights)
     return averaged
 
+
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 def regrid(surface_pressure, target, field):
@@ -432,11 +423,22 @@ def step_with_filters(fun):
 
     return step
 
+
 def step(frame, _):
     gfun = lambda x, _: (step_fn(x), None)
     x_final, _ = jax.lax.scan(gfun, frame, xs=None, length=inner_steps)
     return x_final, nodal_prognostics_and_diagnostics(frame)
 
+
+GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
+uL = 6.37122e6
+uT = 1 / 2 / 7.292e-5
+tree_map = jax.tree_util.tree_map
+einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
+# gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
+gravity_acceleration = 7.2364082834567185e+01
+kappa = 2 / 7
+r_gas = kappa * 0.0011628807950492582
 g.longitude_wavenumbers = 171
 g.total_wavenumbers = 172
 g.longitude_nodes = 512
@@ -451,9 +453,7 @@ g.temp = np.full((g.layers, ), 250)
 g.geo = geopotential_weights()
 g.tew = temperature_weights()
 
-output_level_indices = [
-    g.layers // 4, g.layers // 2, 3 * g.layers // 4, -1
-]
+output_level_indices = [g.layers // 4, g.layers // 2, 3 * g.layers // 4, -1]
 sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
 desired_lat = np.rad2deg(np.arcsin(sin_lat))
 desired_lon = np.linspace(0, 360, g.longitude_nodes, endpoint=False)
@@ -533,7 +533,7 @@ tracers = to_modal({
     M["specific_cloud_ice_water_content"],
 })
 raw_init_state = State(vorticity, divergence, temperature_variation, log_sp,
-                          tracers)
+                       tracers)
 total_wavenumber = np.arange(g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
 orography = to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
@@ -549,8 +549,7 @@ scaling = jnp.exp(-scale * (-eigenvalues)**2)
 hyperdiffusion_filter = _make_filter_fn(scaling)
 time_span = cutoff_period = 3.1501440000000001e+00
 forward_step = step_with_filters(
-    runge_kutta(explicit_terms, implicit_terms, implicit_inverse,
-                   dt))
+    runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
 backward_step = step_with_filters(
     runge_kutta(explicit_terms0, implicit_terms0, implicit_inverse0, dt))
 N = round(time_span / (2 * dt))
@@ -564,14 +563,13 @@ init_term = tree_map(lambda x: x * init_weight, raw_init_state)
 forward_term = accumulate_repeated(forward_step, weights, raw_init_state)
 backward_term = accumulate_repeated(backward_step, weights, raw_init_state)
 dfi_init_state = tree_map(lambda *xs: sum(xs), init_term, forward_term,
-                             backward_term)
+                          backward_term)
 
 inner_steps = 3
 outer_steps = 193
 times = 0.25 * np.arange(outer_steps)
 step_fn = step_with_filters(
-    runge_kutta(explicit_terms, implicit_terms, implicit_inverse,
-                   dt))
+    runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt))
 
 out_state, trajectory0 = jax.lax.scan(step,
                                       dfi_init_state,

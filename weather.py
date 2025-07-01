@@ -79,8 +79,6 @@ def sec_lat_d_dlat_cos2(x):
 
 @tree_math.wrap
 def runge_kutta(y):
-    G = tree_math.unwrap(implicit)
-    G_inv = tree_math.unwrap(inverse, vector_argnums=0)
     a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
     a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
     b_ex = 1 / 2, -1 / 2, 1, 0
@@ -211,7 +209,8 @@ def F(s):
             tracers_v, tracers_h))
 
 
-def implicit_terms(s):
+@tree_math.unwrap
+def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
     geopotential_diff = einsum("gh,hml->gml", g.geo, s.te)
     l0 = np.arange(g.total_wavenumbers)
@@ -223,7 +222,7 @@ def implicit_terms(s):
     tracers = jax.tree_util.tree_map(jnp.zeros_like, s.tracers)
     return State(vo, di, te, sp, tracers)
 
-
+@tree_math.unwrap(vector_argnums=0)
 def implicit_inverse(s, dt):
     l = g.total_wavenumbers
     j = g.layers

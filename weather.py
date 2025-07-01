@@ -79,7 +79,6 @@ def sec_lat_d_dlat_cos2(x):
 
 @tree_math.wrap
 def runge_kutta(y):
-    dt = g.dt
     G = tree_math.unwrap(implicit)
     G_inv = tree_math.unwrap(inverse, vector_argnums=0)
     a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
@@ -87,22 +86,22 @@ def runge_kutta(y):
     b_ex = 1 / 2, -1 / 2, 1, 0
     b_im = 3 / 8, 0, 3 / 8, 1 / 4
     n = len(b_ex)
-
     f = [None] * n
     g = [None] * n
     f[0] = F(y)
-    g[0] = G(y)
+    h[0] = G(y)
     for i in range(1, n):
-        ex = dt * sum(a_ex[i - 1][j] * f[j]
-                      for j in range(i) if a_ex[i - 1][j])
-        im = dt * sum(a_im[i - 1][j] * g[j]
-                      for j in range(i) if a_im[i - 1][j])
-        Y = G_inv(y + ex + im, dt * a_im[i - 1][i])
+        ex = g.dt * sum(a_ex[i - 1][j] * f[j]
+                        for j in range(i) if a_ex[i - 1][j])
+        im = g.dt * sum(a_im[i - 1][j] * h[j]
+                        for j in range(i) if a_im[i - 1][j])
+        Y = G_inv(y + ex + im, g.dt * a_im[i - 1][i])
         if any(a_ex[j][i] for j in range(i, n - 1)) or b_ex[i]: f[i] = F(Y)
-        if any(a_im[j][i] for j in range(i, n - 1)) or b_im[i]: g[i] = G(Y)
-    ex = dt * sum(b_ex[j] * f[j] for j in range(n) if b_ex[j])
-    im = dt * sum(b_im[j] * g[j] for j in range(n) if b_im[j])
+        if any(a_im[j][i] for j in range(i, n - 1)) or b_im[i]: h[i] = G(Y)
+    ex = g.dt * sum(b_ex[j] * f[j] for j in range(n) if b_ex[j])
+    im = g.dt * sum(b_im[j] * h[j] for j in range(n) if b_im[j])
     return y + ex + im
+
 
 @tree_math.struct
 class State:
@@ -460,11 +459,11 @@ scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 rescale = lambda x: scaling * x
 g.dt = dt
-out, *rest = jax.lax.scan(lambda x, _:
-                          (jax.tree_util.tree_map(rescale, runge_kutta(x)), None),
-                          raw_init_state,
-                          xs=None,
-                          length=579)
+out, *rest = jax.lax.scan(
+    lambda x, _: (jax.tree_util.tree_map(rescale, runge_kutta(x)), None),
+    raw_init_state,
+    xs=None,
+    length=579)
 np.asarray(out.vo).tofile("w.00.raw")
 np.asarray(out.di).tofile("w.01.raw")
 np.asarray(out.te).tofile("w.02.raw")

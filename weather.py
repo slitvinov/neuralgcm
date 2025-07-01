@@ -74,14 +74,6 @@ def accumulate_repeated(step_fn, weights, state):
 
 
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
-    sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
-    cos = np.sqrt(1 - sin_lat**2)
-    u = di.transform(u_nodal / cos)
-    v = di.transform(v_nodal / cos)
-    vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(u)
-    div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
-    mask = np.r_[[1] * (di.g.total_wavenumbers - 1), 0]
-    return vor * mask, div * mask
 
 
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
@@ -178,7 +170,17 @@ for key, scale in [
 u_nodal = M["u_component_of_wind"]
 v_nodal = M["v_component_of_wind"]
 t_nodal = M["temperature"]
-vorticity, divergence = uv_nodal_to_vor_div_modal(u_nodal, v_nodal)
+
+sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
+cos = np.sqrt(1 - sin_lat**2)
+u = di.transform(u_nodal / cos)
+v = di.transform(v_nodal / cos)
+vor = di.real_basis_derivative(v) - di.sec_lat_d_dlat_cos2(u)
+div = di.real_basis_derivative(u) + di.sec_lat_d_dlat_cos2(v)
+mask = np.r_[[1] * (di.g.total_wavenumbers - 1), 0]
+vorticity = vor * mask
+divergence = div * mask
+
 temperature_variation = di.transform(t_nodal - di.g.temp.reshape(-1, 1, 1))
 log_sp = to_modal(np.log(sp_nodal))
 tracers = to_modal({

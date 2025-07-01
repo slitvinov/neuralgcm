@@ -450,7 +450,7 @@ temperature_variation = transform(t_nodal - g.temp.reshape(-1, 1, 1))
 log_sp = to_modal(np.log(sp_nodal))
 hu = to_modal(M["specific_humidity"])
 wo = to_modal(M["specific_cloud_liquid_water_content"])
-ic = to_modal(M["specific_cloud_ice_water_content"])
+ic = transform(M["specific_cloud_ice_water_content"])
 raw_init_state = State(vorticity, divergence, temperature_variation, log_sp,
                        hu, wo, ic)
 total_wavenumber = np.arange(g.total_wavenumbers)

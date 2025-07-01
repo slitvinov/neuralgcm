@@ -137,9 +137,9 @@ def F(s):
     vort = inverse_transform(s.vo)
     div = inverse_transform(s.di)
     temp = inverse_transform(s.te)
-    s.hu = inverse_transform(s.hu)
-    s.wa = inverse_transform(s.wa)
-    s.ic = inverse_transform(s.ic)        
+    hu = inverse_transform(s.hu)
+    wa = inverse_transform(s.wa)
+    ic = inverse_transform(s.ic)
     l = np.arange(1, g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
@@ -188,7 +188,9 @@ def F(s):
 
     h_adv = functools.partial(hadvection, cos_lat_u=(u, v), divergence=div)
     temp_h_nodal, temp_h_modal = h_adv(temp)
-    tracers_h = jax.tree_util.tree_map(h_adv, tracers)
+    wa_h = h_adv(wa)
+    hu_h = h_adv(hu)
+    ic_h = h_adv(ic)
 
     temp_vert = vadvection(sigma_full, temp)
     if np.unique(g.temp[..., None, None].ravel()).size > 1:

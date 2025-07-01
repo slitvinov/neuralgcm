@@ -238,7 +238,7 @@ def G_inv(s, dt):
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
     di = (einsum("lgh,hml->gml", inv[:, :j, :j] , s[g.ditesp][:j]) +
           einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s[g.ditesp][j:2*j]) +
-          einsum("lgh,hml->gml", inv[:, :j, 2 * j:], s[g.ditesp][2*j:2*j+1]))
+          einsum("lgh,hml->gml", inv[:, :j, 2 * j:], s[g.ditesp][2*j:]))
     te = (einsum("lgh,hml->gml", inv[:, j:2 * j, :j], s[g.di]) +
           einsum("lgh,hml->gml", inv[:, j:2 * j, j:2 * j], s[g.te]) +
           einsum("lgh,hml->gml", inv[:, j:2 * j, 2 * j:], s[g.sp]))

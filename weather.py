@@ -464,10 +464,10 @@ out, *rest = jax.lax.scan(
     raw_init_state,
     xs=None,
     length=579)
-np.asarray(out.vo).tofile("w.00.raw")
-np.asarray(out.di).tofile("w.01.raw")
-np.asarray(out.te).tofile("w.02.raw")
-np.asarray(out.sp).tofile("w.03.raw")
-np.asarray(out.hu).tofile("w.04.raw")
-np.asarray(out.wa).tofile("w.05.raw")
-np.asarray(out.ic).tofile("w.06.raw")
+np.asarray(out[g.vo]).tofile("w.00.raw")
+np.asarray(out[g.di]).tofile("w.01.raw")
+np.asarray(out[g.te]).tofile("w.02.raw")
+np.asarray(out[g.sp]).tofile("w.03.raw")
+np.asarray(out[g.hu]).tofile("w.04.raw")
+np.asarray(out[g.wa]).tofile("w.05.raw")
+np.asarray(out[g.ic]).tofile("w.06.raw")

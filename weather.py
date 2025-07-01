@@ -52,27 +52,11 @@ def real_basis_derivative(u):
     i = np.c_[:n]
     return (i + 1) // 2 * jnp.where(i % 2, u_do, -u_up)
 
-
-def derivative_recurrence_weights():
-    p = np.r_[1:g.longitude_wavenumbers]
-    q = np.c_[p, -p]
-    m, l = np.meshgrid(np.r_[0, q.ravel()],
-                       np.r_[:g.total_wavenumbers],
-                       indexing="ij")
-    mask = abs(m) <= l
-    a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
-    a[:, 0] = 0
-    b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
-    b[:, -1] = 0
-    return a, b
-
-
 def cos_lat_d_dlat(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
-    a, b = derivative_recurrence_weights()
-    zm = (l + 1) * a * x
-    zp = -l * b * x
+    zm = (l + 1) * g.a * x
+    zp = -l * g.b * x
     lm1 = jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0,
                       ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
     lp1 = jax.lax.pad(zp[:, :, :g.total_wavenumbers - 1], 0.0,
@@ -83,9 +67,8 @@ def cos_lat_d_dlat(x):
 def sec_lat_d_dlat_cos2(x):
     l0 = np.arange(g.total_wavenumbers)
     l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
-    a, b = derivative_recurrence_weights()
-    zm = (l - 1) * a * x
-    zp = -(l + 2) * b * x
+    zm = (l - 1) * g.a * x
+    zp = -(l + 2) * g.b * x
     lm1 = jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0,
                       ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
     lp1 = jax.lax.pad(zp[:, :, :g.total_wavenumbers - 1], 0.0,
@@ -137,6 +120,7 @@ def get_sigma_ratios():
     alpha = np.diff(np.log(g.centers), append=0) / 2
     alpha[-1] = -np.log(g.centers[-1])
     return alpha
+
 
 def omega(g_term):
     f = jax.lax.cumsum(g_term * g.thick[:, None, None])
@@ -416,6 +400,20 @@ g.f = f
 g.p = p[1:]
 g.w = 2 * np.pi * w / g.longitude_nodes
 g.temp = np.full((g.layers, ), 250)
+
+p = np.r_[1:g.longitude_wavenumbers]
+q = np.c_[p, -p]
+m, l = np.meshgrid(np.r_[0, q.ravel()],
+                   np.r_[:g.total_wavenumbers],
+                   indexing="ij")
+mask = abs(m) <= l
+a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
+a[:, 0] = 0
+b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
+b[:, -1] = 0
+g.a = a
+g.b = b
+
 alpha = get_sigma_ratios()
 weights = np.zeros([g.layers, g.layers])
 for j in range(g.layers):

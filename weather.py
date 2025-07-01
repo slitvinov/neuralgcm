@@ -136,13 +136,6 @@ def hadvection(scalar, cos_lat_u, divergence):
         n_component)
     return nodal_terms, modal_terms
 
-
-def _make_filter_fn(scaling):
-    rescale = lambda x: scaling * x if np.shape(x) == np.broadcast_shapes(
-        np.shape(x), scaling.shape) else x
-    return functools.partial(jax.tree_util.tree_map, rescale)
-
-
 def explicit_terms(s):
     vort = inverse_transform(s.vo)
     div = inverse_transform(s.di)
@@ -467,9 +460,10 @@ l0 = np.arange(g.total_wavenumbers)
 eigenvalues = -l0 * (l0 + 1)
 scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
-hyperdiffusion = _make_filter_fn(scaling)
+rescale = lambda x: scaling * x
 step = runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt)
-out, *rest = jax.lax.scan(lambda x, _: (hyperdiffusion(step(x)), None),
+out, *rest = jax.lax.scan(lambda x, _:
+                          (jax.tree_util.tree_map, rescale, step(x), None),
                           raw_init_state,
                           xs=None,
                           length=579)

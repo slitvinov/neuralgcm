@@ -98,6 +98,7 @@ def runge_kutta(y):
     im = g.dt * sum(b_im[j] * h[j] for j in range(n) if b_im[j])
     return y + ex + im
 
+
 def omega(g_term):
     f = jax.lax.cumsum(g_term * g.thick[:, None, None])
     alpha = g.alpha[:, None, None]
@@ -193,15 +194,14 @@ def F(s):
     ic_v = vadvection(sigma_full, ic)
 
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
-    return jnp.r_[
-        vort_tendency * mask,
-        (div_tendency + ke_tendency + oro_tendency) * mask,
-        (transform(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) *
-        mask,
-        transform(logsp_tendency) * mask,
-        (transform(hu_v + hu_h[0]) + hu_h[1]) * mask,
-        (transform(wa_v + wa_h[0]) + wa_h[1]) * mask,
-        (transform(ic_v + ic_h[0]) + ic_h[1]) * mask]
+    return jnp.r_[vort_tendency * mask,
+                  (div_tendency + ke_tendency + oro_tendency) * mask,
+                  (transform(temp_h_nodal + temp_vert + temp_adiab) +
+                   temp_h_modal) * mask,
+                  transform(logsp_tendency) * mask,
+                  (transform(hu_v + hu_h[0]) + hu_h[1]) * mask,
+                  (transform(wa_v + wa_h[0]) + wa_h[1]) * mask,
+                  (transform(ic_v + ic_h[0]) + ic_h[1]) * mask]
 
 
 def G(s):
@@ -213,7 +213,9 @@ def G(s):
     te = einsum("gh,hml->gml", -g.tew, s[g.di])
     sp = -einsum("gh,hml->gml", g.thick[None], s[g.di])
     vo = jnp.zeros(shape)
-    return jnp.r[vo, di, te, sp, jnp.zeros_like(vo), jnp.zeros_like(vo),
+    return jnp.r[vo, di, te, sp,
+                 jnp.zeros_like(vo),
+                 jnp.zeros_like(vo),
                  jnp.zeros_like(vo)]
 
 
@@ -437,7 +439,7 @@ n = g.layers
 g.vo = np.s_[:n]
 g.di = np.s_[n:2 * n]
 g.te = np.s_[2 * n:3 * n]
-g.sp = np.s_[3 * n + 1]
+g.sp = np.s_[3 * n:3 * n + 1]
 g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]

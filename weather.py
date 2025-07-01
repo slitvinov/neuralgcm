@@ -214,9 +214,10 @@ def F(s):
         (transform(temp_h_nodal + temp_vert + temp_adiab) + temp_h_modal) *
         mask,
         transform(logsp_tendency) * mask,
-        (transform(vert + hu_v) + hu_h) * mask,
-        (transform(vert + wa_v) + wa_h) * mask,
-        (transform(vert + ic_v) + ic_h) * mask)
+        (transform(hu_v + hu_h[0]) + hu_h[1]) * mask,
+        (transform(hu_v + hu_h[0]) + hu_h[1]) * mask,
+        (transform(hu_v + hu_h[0]) + hu_h[1]) * mask)
+
 
 @tree_math.unwrap
 def G(s):

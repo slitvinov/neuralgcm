@@ -73,7 +73,6 @@ def accumulate_repeated(step_fn, weights, state):
     return averaged
 
 
-@jax.jit
 def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
     sin_lat, _ = scipy.special.roots_legendre(di.g.latitude_nodes)
     cos = np.sqrt(1 - sin_lat**2)

@@ -72,10 +72,6 @@ def accumulate_repeated(step_fn, weights, state):
     (_, averaged), _ = jax.lax.scan(f, init, weights)
     return averaged
 
-
-def uv_nodal_to_vor_div_modal(u_nodal, v_nodal):
-
-
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 def regrid(surface_pressure, target, field):

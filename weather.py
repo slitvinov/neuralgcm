@@ -276,6 +276,7 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
+
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 @functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 def regrid(surface_pressure, target, field):
@@ -285,6 +286,7 @@ def regrid(surface_pressure, target, field):
     weights = jnp.maximum(upper - lower, 0)
     weights /= jnp.sum(weights, axis=1, keepdims=True)
     return jnp.einsum("ab,b->a", weights, field, precision="float32")
+
 
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
 uL = 6.37122e6
@@ -467,10 +469,10 @@ scale = dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 hyperdiffusion = _make_filter_fn(scaling)
 step = runge_kutta(explicit_terms, implicit_terms, implicit_inverse, dt)
-out, *rest = jax.lax.scan(lambda x, _ : (hyperdiffusion(step(x)), None),
+out, *rest = jax.lax.scan(lambda x, _: (hyperdiffusion(step(x)), None),
                           raw_init_state,
-                          xs=None, length=579)
-
+                          xs=None,
+                          length=579)
 np.asarray(out.vo).tofile("w.00.raw")
 np.asarray(out.di).tofile("w.01.raw")
 np.asarray(out.te).tofile("w.02.raw")

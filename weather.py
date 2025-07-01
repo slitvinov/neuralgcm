@@ -134,17 +134,17 @@ def hadvection(scalar, cos_lat_u, divergence):
 
 @tree_math.unwrap
 def F(s):
-    vort = inverse_transform(s.vo)
-    div = inverse_transform(s.di)
-    temp = inverse_transform(s.te)
-    hu = inverse_transform(s.hu)
-    wa = inverse_transform(s.wa)
-    ic = inverse_transform(s.ic)
+    vort = inverse_transform(s[g.vo])
+    div = inverse_transform(s[g.di])
+    temp = inverse_transform(s[g.te])
+    hu = inverse_transform(s[g.hu])
+    wa = inverse_transform(s[g.wo])
+    ic = inverse_transform(s[g.ic])
     l = np.arange(1, g.total_wavenumbers)
     inverse_eigenvalues = np.zeros(g.total_wavenumbers)
     inverse_eigenvalues[1:] = -1 / (l * (l + 1))
-    stream_function = s.vo * inverse_eigenvalues
-    velocity_potential = s.di * inverse_eigenvalues
+    stream_function = s[g.vo] * inverse_eigenvalues
+    velocity_potential = s[g.di] * inverse_eigenvalues
 
     c00 = real_basis_derivative(velocity_potential)
     c01 = cos_lat_d_dlat(velocity_potential)
@@ -154,8 +154,8 @@ def F(s):
     v1 = c01 + c10
     u = inverse_transform(v0)
     v = inverse_transform(v1)
-    grad_u = inverse_transform(real_basis_derivative(s.sp))
-    grad_v = inverse_transform(cos_lat_d_dlat(s.sp))
+    grad_u = inverse_transform(real_basis_derivative(s[g.sp]))
+    grad_v = inverse_transform(cos_lat_d_dlat(s[g.sp]))
     sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
     sec2 = 1 / (1 - sin_lat**2)
     u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
@@ -222,12 +222,12 @@ def F(s):
 @tree_math.unwrap
 def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
-    geopotential_diff = einsum("gh,hml->gml", g.geo, s.te)
+    geopotential_diff = einsum("gh,hml->gml", g.geo, s[g.te])
     l0 = np.arange(g.total_wavenumbers)
     di = l0 * (l0 + 1) * (geopotential_diff +
-                          r_gas * g.temp[..., None, None] * s.sp)
-    te = einsum("gh,hml->gml", -g.tew, s.di)
-    sp = -einsum("gh,hml->gml", g.thick[None], s.di)
+                          r_gas * g.temp[..., None, None] * s[g.sp])
+    te = einsum("gh,hml->gml", -g.tew, s[g.di])
+    sp = -einsum("gh,hml->gml", g.thick[None], s[g.di])
     vo = jnp.zeros(shape)
     return State(vo, di, te, sp, jnp.zeros_like(vo), jnp.zeros_like(vo),
                  jnp.zeros_like(vo))
@@ -250,16 +250,16 @@ def implicit_inverse(s, dt):
     row1 = np.c_[C, I, Z]
     row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
-    di = (einsum("lgh,hml->gml", inv[:, :j, :j], s.di) +
-          einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s.te) +
-          einsum("lgh,hml->gml", inv[:, :j, 2 * j:], s.sp))
-    te = (einsum("lgh,hml->gml", inv[:, j:2 * j, :j], s.di) +
-          einsum("lgh,hml->gml", inv[:, j:2 * j, j:2 * j], s.te) +
-          einsum("lgh,hml->gml", inv[:, j:2 * j, 2 * j:], s.sp))
-    sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s.di) +
-          einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s.te) +
-          einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s.sp))
-    return State(s.vo, di, te, sp, s.hu, s.wa, s.ic)
+    di = (einsum("lgh,hml->gml", inv[:, :j, :j], s[g.di]) +
+          einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s[g.te]) +
+          einsum("lgh,hml->gml", inv[:, :j, 2 * j:], s[g.sp]))
+    te = (einsum("lgh,hml->gml", inv[:, j:2 * j, :j], s[g.di]) +
+          einsum("lgh,hml->gml", inv[:, j:2 * j, j:2 * j], s[g.te]) +
+          einsum("lgh,hml->gml", inv[:, j:2 * j, 2 * j:], s[g.sp]))
+    sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s[g.di]) +
+          einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
+          einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
+    return State(s[g.vo], di, te, sp, s[g.hu], s[g.wa], s[g.ic])
 
 
 G_inv = tree_math.unwrap(implicit_inverse, vector_argnums=0)

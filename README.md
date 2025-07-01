@@ -19,6 +19,7 @@ for i in *.raw; do cmp $i ~/$i; echo $i $?; done
 - https://github.com/google-research/arco-era5
 - https://github.com/NOAA-EMC/NCEPLIBS-g2c
 - https://github.com/NOAA-EMC/NCEPLIBS-g2
+- https://github.com/weathersource/grib_api
 
 To download raw data (~24Gb)
 

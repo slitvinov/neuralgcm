@@ -1,7 +1,13 @@
 import struct
 import sys
 
-f = open(sys.argv[1], "rb")
+def decode_short(data):
+    # sign-and-magnitude not standard two's complement
+    uint16_val, = struct.unpack('>H', data)
+    is_negative = uint16_val & 0x8000
+    magnitude = uint16_val & 0x7FFF
+    return -magnitude if is_negative else magnitude
+
 CENTER = {98: "European Center for Medium-Range Weather Forecasts (RSMC)"}
 # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table5-7.shtml
 PRECISION = {
@@ -9,6 +15,7 @@ PRECISION = {
     2: "IEEE 64-bit (I=8 in Section 7)",
     3: "IEEE 128-bit (I=16 in Section 7)"
 }
+f = open(sys.argv[1], "rb")
 while True:
     # Section 0 - Indicator Section
     section = f.read(16)
@@ -80,9 +87,8 @@ while True:
     assert template_number == 51, "Spectral Data - Complex Packing"
     # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-51.shtml
     R, = struct.unpack(">f", section[11:15])
-    # E, = struct.unpack(">h", section[15:17])
-    E = -struct.unpack(">b", section[16:17])[0]
-    D, = struct.unpack(">h", section[17:19])
+    E = decode_short(section[15:17])
+    D = decode_short(section[17:19])
     nbits_packed = section[19]
     L, Js, Ks, Ms, Ts = struct.unpack(">lHHHL", section[20:34])
     precision = section[34]
@@ -106,9 +112,11 @@ while True:
     assert 2 * (npoint - Ts) + 4 * Ts == len(section)
     unpk = list(struct.iter_unpack(">ff", section[:4 * Ts]))
     pked = list(struct.iter_unpack(">hh", section[4 * Ts:]))
-    E = -24 ##### TODO
     i = 0
     j = 0
+    bscale = 2.0**(E)
+    dscale = 10.0**(-D)
+    tscale = L * 1e-6
     with open("value", "w") as fv:
         for m in range(M + 1):
             for n in range(m, J + 1):
@@ -118,10 +126,9 @@ while True:
                 else:
                     x, y = pked[j]
                     j += 1
-                    scale = 2.0**(E)
-                    laplace = (n * (n + 1))**(-L * 1e-6)
-                    x = (R + x * scale) * laplace
-                    y = (R + y * scale) * laplace
+                    pscale = (n * (n + 1))**(-tscale)
+                    x = (x * bscale + R) * dscale * pscale
+                    y = (y * bscale + R) * dscale * pscale
                 fv.write(f"{x:.10e}\n")
                 fv.write(f"{y:.10e}\n")
 

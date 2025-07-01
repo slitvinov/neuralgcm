@@ -448,18 +448,11 @@ divergence = div * mask
 
 temperature_variation = transform(t_nodal - g.temp.reshape(-1, 1, 1))
 log_sp = to_modal(np.log(sp_nodal))
-tracers = to_modal({
-    "specific_humidity":
-    M["specific_humidity"],
-    "specific_cloud_liquid_water_content":
-    M["specific_cloud_liquid_water_content"],
-    "specific_cloud_ice_water_content":
-    M["specific_cloud_ice_water_content"],
-})
+hu = to_modal(M["specific_humidity"])
+wo = to_modal(M["specific_cloud_liquid_water_content"])
+ic = to_modal(M["specific_cloud_ice_water_content"])
 raw_init_state = State(vorticity, divergence, temperature_variation, log_sp,
-                       tracers["specific_humidity"],
-                       tracers["specific_cloud_liquid_water_content"],
-                       tracers["specific_cloud_ice_water_content"])
+                       hu, wo, ic)
 total_wavenumber = np.arange(g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
 orography = to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)

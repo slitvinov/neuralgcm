@@ -246,6 +246,7 @@ def G_inv(s, dt):
     sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s[g.di]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
+    print(M - np.r_[di, te, sp])
     return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wo], s[g.ic]]
 
 

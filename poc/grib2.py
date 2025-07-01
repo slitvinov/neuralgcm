@@ -1,12 +1,14 @@
 import struct
 import sys
 
+
 def decode_short(data):
     # sign-and-magnitude not standard two's complement
     uint16_val, = struct.unpack('>H', data)
     is_negative = uint16_val & 0x8000
     magnitude = uint16_val & 0x7FFF
     return -magnitude if is_negative else magnitude
+
 
 CENTER = {98: "European Center for Medium-Range Weather Forecasts (RSMC)"}
 # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table5-7.shtml
@@ -110,8 +112,6 @@ while True:
     print(f"{section_length=}")
     # check of the total size (packed + unpack)
     assert 2 * (npoint - Ts) + 4 * Ts == len(section)
-    unpk = list(struct.iter_unpack(">ff", section[:4 * Ts]))
-    pked = list(struct.iter_unpack(">hh", section[4 * Ts:]))
     i = 0
     j = 0
     bscale = 2.0**(E)
@@ -121,11 +121,15 @@ while True:
         for m in range(M + 1):
             for n in range(m, J + 1):
                 if n <= Js and m <= Ms:
-                    x, y = unpk[i]
+                    buf = section[8 * i:]
                     i += 1
+                    x, y = struct.unpack(">ff", buf[:8])
+
                 else:
-                    x, y = pked[j]
+                    buf = section[4 * Ts + 4 * j:]
                     j += 1
+                    x = decode_short(buf[0:2])
+                    y = decode_short(buf[2:4])
                     pscale = (n * (n + 1))**(-tscale)
                     x = (x * bscale + R) * dscale * pscale
                     y = (y * bscale + R) * dscale * pscale

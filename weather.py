@@ -396,10 +396,9 @@ else:
 g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.latitude_nodes / 128) / uT
 l0 = np.r_[:g.total_wavenumbers]
-eigenvalues = l0 * (l0 + 1)
-scale = g.dt / (tau * eigenvalues[-1]**2)
-scaling = jnp.exp(-scale * eigenvalues**2)
-out, *rest = jax.lax.scan(lambda x, _: (scaling * runge_kutta(x), None),
+eig = l0 * (l0 + 1)
+scale = jnp.exp(-g.dt * eig**2 / (tau * eig[-1]**2))
+out, *rest = jax.lax.scan(lambda x, _: (scale * runge_kutta(x), None),
                           s,
                           xs=None,
                           length=579)

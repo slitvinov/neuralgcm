@@ -458,7 +458,7 @@ eigenvalues = -l0 * (l0 + 1)
 scale = g.dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
 out, *rest = jax.lax.scan(
-    lambda x, _: scaling * runge_kutta(x), None),
+    lambda x, _: (scaling * runge_kutta(x), None),
     raw_init_state,
     xs=None,
     length=579)

@@ -366,15 +366,6 @@ for key, scale in [
 cos = np.sqrt(1 - g.sin_lat**2)
 u = transform(M["u_component_of_wind"] / cos)
 v = transform(M["v_component_of_wind"] / cos)
-vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(u)
-div = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
-mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
-te = transform(M["temperature"] - g.temp.reshape(-1, 1, 1))
-sp = transform(jnp.array(np.log(sp_nodal)))
-hu = transform(M["specific_humidity"])
-wo = transform(M["specific_cloud_liquid_water_content"])
-ic = transform(M["specific_cloud_ice_water_content"])
-state = np.r_[vor * mask, div * mask, te, sp, hu, wo, ic]
 n = g.layers
 g.vo = np.s_[:n]
 g.di = np.s_[n:2 * n]
@@ -384,6 +375,19 @@ g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
+s = np.empty(
+    (6 * g.layers + 1, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers))
+vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(u)
+div = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
+mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
+s[g.vo] = vor * mask
+s[g.di] = div * mask
+s[g.te] = transform(M["temperature"] - g.temp.reshape(-1, 1, 1))
+s[g.sp] = transform(jnp.array(np.log(sp_nodal)))
+s[g.hu] = transform(M["specific_humidity"])
+s[g.wo] = transform(M["specific_cloud_liquid_water_content"])
+s[g.ic] = transform(M["specific_cloud_ice_water_content"])
+
 k = np.r_[:g.total_wavenumbers] / (g.total_wavenumbers - 1)
 g.orography = transform(jnp.array(orography_input)) * jnp.exp(-16 * k**4)
 g.dt = 4.3752000000000006e-02
@@ -393,7 +397,7 @@ eigenvalues = l0 * (l0 + 1)
 scale = g.dt / (tau * eigenvalues[-1]**2)
 scaling = jnp.exp(-scale * eigenvalues**2)
 out, *rest = jax.lax.scan(lambda x, _: (scaling * runge_kutta(x), None),
-                          state,
+                          s,
                           xs=None,
                           length=579)
 np.asarray(out[g.vo]).tofile("w.00.raw")

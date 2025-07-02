@@ -323,7 +323,7 @@ g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.layers + 1, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
 if os.path.exists("s.raw") and os.path.exists("oro.raw"):
     s = np.fromfile("s.raw").reshape(shape)
-    g.orography = np.fromfile("oro.raw").reshape(shape[1:])
+    g.orography = np.fromfile("oro.raw", dtype=np.float32).reshape(shape[1:])
 else:
     era = xarray.merge([
         open(

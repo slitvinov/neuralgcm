@@ -391,9 +391,7 @@ g.ditesp = np.s_[n:3 * n + 1]
 
 total_wavenumber = np.arange(g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
-orography = transform(jnp.array(orography_input)) * jnp.exp(
-    (k > 0) * (-16) * k**4)
-g.orography = orography
+g.orography = transform(jnp.array(orography_input)) * jnp.exp(-16 * k**4)
 res_factor = g.latitude_nodes / 128
 g.dt = 4.3752000000000006e-02
 tau = 3600 * 8.6 / (2.4**np.log2(res_factor)) / uT

@@ -156,7 +156,7 @@ def F(s):
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
 
-    temp_h_nodal, temp_h_modal = hadvection(temp)
+    t0, t1 = hadvection(temp)
     hu_h0, hu_h1 = hadvection(hu)
     wa_h0, wa_h1 = hadvection(wa)
     ic_h0, ic_h1 = hadvection(ic)
@@ -180,8 +180,7 @@ def F(s):
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
     return jnp.r_[vort_tendency * mask,
                   (div_tendency + ke_tendency + oro_tendency) * mask,
-                  (transform(temp_h_nodal + temp_vert + temp_adiab) +
-                   temp_h_modal) * mask,
+                  (transform(t0 + temp_vert + temp_adiab) + t1) * mask,
                   transform(logsp_tendency) * mask,
                   (transform(v + h0) + h1) * mask]
 

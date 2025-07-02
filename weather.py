@@ -157,12 +157,10 @@ def F(s):
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
 
-    h_adv = functools.partial(hadvection, cos_lat_u=(u, v), divergence=div)
-    temp_h_nodal, temp_h_modal = h_adv(temp)
-
-    hu_h0, hu_h1 = h_adv(hu)
-    wa_h0, wa_h1 = h_adv(wa)
-    ic_h0, ic_h1 = h_adv(ic)
+    temp_h_nodal, temp_h_modal = hadvection(temp, (u, v), div))
+    hu_h0, hu_h1 = hadvection(hu, (u, v), div)
+    wa_h0, wa_h1 = hadvection(wa, (u, v), div)
+    ic_h0, ic_h1 = hadvection(ic, (u, v), div)
 
     temp_vert = vadvection(sigma_full, temp)
     # np.unique(g.temp[..., None, None].ravel()).size > 1:

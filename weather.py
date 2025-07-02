@@ -227,14 +227,6 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
-def regrid(surface_pressure, target, field):
-    source = a_boundaries[:, None, None] / surface_pressure + b_boundaries[:, None, None]
-    upper = np.minimum(target[1:, None, None, None], source[None, 1:, :, :])
-    lower = np.maximum(target[:-1, None, None, None], source[None, :-1, :, :])
-    weights = np.maximum(upper - lower, 0)
-    weights /= np.sum(weights, axis=1, keepdims=True)
-    return np.einsum("lnxy,nxy->lxy", weights, field)
-
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
@@ -373,7 +365,12 @@ for key, scale in [
     val = np.empty(shape)
     for i in range(nhyb):
         val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
-    M[key] = regrid(sp_init_hpa, g.boundaries, val / scale)
+    source = a_boundaries[:, None, None] / sp_init_hpa + b_boundaries[:, None, None]
+    upper = np.minimum(g.boundaries[1:, None, None, None], source[None, 1:, :, :])
+    lower = np.maximum(g.boundaries[:-1, None, None, None], source[None, :-1, :, :])
+    weights = np.maximum(upper - lower, 0)
+    weights /= np.sum(weights, axis=1, keepdims=True)
+    M[key] = np.einsum("lnxy,nxy->lxy", weights, val / scale)
 cos = np.sqrt(1 - g.sin_lat**2)
 u = transform(M["u_component_of_wind"] / cos)
 v = transform(M["v_component_of_wind"] / cos)

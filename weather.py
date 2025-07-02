@@ -227,6 +227,7 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
+
 GRAVITY_ACCELERATION = 9.80616
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
@@ -312,11 +313,10 @@ g.tew = (h0 - k - k_shifted) * g.thick
 output_level_indices = [g.layers // 4, g.layers // 2, 3 * g.layers // 4, -1]
 desired_lat = np.rad2deg(np.arcsin(g.sin_lat))
 desired_lon = np.linspace(0, 360, g.longitude_nodes, endpoint=False)
-a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
-                                   skiprows=1,
-                                   usecols=(1, 2),
-                                   delimiter="\t").T
-a_boundaries = a_in_pa / 100
+a_boundaries, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
+                                        skiprows=1,
+                                        usecols=(1, 2),
+                                        delimiter="\t").T
 if os.path.exists("weather.h5"):
     era = xarray.open_dataset("weather.h5")
 else:
@@ -361,9 +361,11 @@ for key, scale in [
     val = np.empty((nhyb, g.longitude_nodes, g.latitude_nodes))
     for i in range(nhyb):
         val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
-    source = 100 * a_boundaries[:, None, None] / sp + b_boundaries[:, None, None]
-    upper = np.minimum(g.boundaries[1:, None, None, None], source[None, 1:, :, :])
-    lower = np.maximum(g.boundaries[:-1, None, None, None], source[None, :-1, :, :])
+    source = a_boundaries[:, None, None] / sp + b_boundaries[:, None, None]
+    upper = np.minimum(g.boundaries[1:, None, None, None], source[None,
+                                                                  1:, :, :])
+    lower = np.maximum(g.boundaries[:-1, None, None, None],
+                       source[None, :-1, :, :])
     weights = np.maximum(upper - lower, 0)
     weights /= np.sum(weights, axis=1, keepdims=True)
     M[key] = np.einsum("lnxy,nxy->lxy", weights, val / scale)
@@ -388,14 +390,11 @@ g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
-
-total_wavenumber = np.arange(g.total_wavenumbers)
-k = total_wavenumber / total_wavenumber.max()
+k = np.r_[:g.total_wavenumbers] / (g.total_wavenumbers - 1)
 g.orography = transform(jnp.array(orography_input)) * jnp.exp(-16 * k**4)
-res_factor = g.latitude_nodes / 128
 g.dt = 4.3752000000000006e-02
-tau = 3600 * 8.6 / (2.4**np.log2(res_factor)) / uT
-l0 = np.arange(g.total_wavenumbers)
+tau = 12900 / np.log2(g.latitude_nodes / 128) / uT
+l0 = np.r_[:g.total_wavenumbers]
 eigenvalues = l0 * (l0 + 1)
 scale = g.dt / (tau * eigenvalues[-1]**2)
 scaling = jnp.exp(-scale * eigenvalues**2)

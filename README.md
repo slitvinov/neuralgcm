@@ -9,10 +9,10 @@ python -m pip install --no-deps xarray zarr
 
 ## Test
 
-Save reference raw files
+Save reference file `out.raw`
 
 ```
-for i in *.raw; do cmp $i ~/$i; echo $i $?; done
+python poc/diff.py out.raw ~/out.raw
 ```
 
 ## Data

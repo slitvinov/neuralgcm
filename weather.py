@@ -457,9 +457,8 @@ l0 = np.arange(g.total_wavenumbers)
 eigenvalues = -l0 * (l0 + 1)
 scale = g.dt / (tau * abs(eigenvalues[-1])**2)
 scaling = jnp.exp(-scale * (-eigenvalues)**2)
-rescale = lambda x: scaling * x
 out, *rest = jax.lax.scan(
-    lambda x, _: (jax.tree_util.tree_map(rescale, runge_kutta(x)), None),
+    lambda x, _: scaling * runge_kutta(x), None),
     raw_init_state,
     xs=None,
     length=579)

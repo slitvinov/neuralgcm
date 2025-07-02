@@ -320,10 +320,10 @@ g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
+shape = 6 * g.layers + 1, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
 if os.path.exists("s.raw") and os.path.exists("oro.raw"):
-    s = np.fromfile("s.raw").reshape(-1, g.longitude_nodes, g.latitude_nodes)
-    g.orography = np.fromfile("oro.raw").reshape(g.longitude_nodes,
-                                                 g.latitude_nodes)
+    s = np.fromfile("s.raw").reshape(shape)
+    g.orography = np.fromfile("oro.raw").reshape(shape[1:])
 else:
     era = xarray.merge([
         open(
@@ -377,8 +377,7 @@ else:
     cos = np.sqrt(1 - g.sin_lat**2)
     u = transform(M["u_component_of_wind"] / cos)
     v = transform(M["v_component_of_wind"] / cos)
-    s = np.empty((6 * g.layers + 1, 2 * g.longitude_wavenumbers - 1,
-                  g.total_wavenumbers))
+    s = np.empty(shape)
     vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(u)
     div = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
@@ -391,10 +390,6 @@ else:
     s[g.ic] = transform(M["specific_cloud_ice_water_content"])
     k = np.r_[:g.total_wavenumbers] / (g.total_wavenumbers - 1)
     g.orography = transform(jnp.array(orography_input)) * jnp.exp(-16 * k**4)
-
-    print(np.shape(s), np.shape(g.orography))
-    print(-1, g.longitude_nodes, g.latitude_nodes)
-    print(g.longitude_nodes, g.latitude_nodes)
     s.tofile("s.raw")
     np.asarray(g.orography).tofile("oro.raw")
 

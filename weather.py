@@ -109,9 +109,8 @@ def F(s):
     hu = inverse_transform(s[g.hu])
     wa = inverse_transform(s[g.wo])
     ic = inverse_transform(s[g.ic])
-    l = np.arange(1, g.total_wavenumbers)
-    inverse_eigenvalues = np.zeros(g.total_wavenumbers)
-    inverse_eigenvalues[1:] = -1 / (l * (l + 1))
+    l = np.r_[1:g.total_wavenumbers]
+    inverse_eigenvalues = np.r_[0, -1 / (l * (l + 1))]
     stream_function = s[g.vo] * inverse_eigenvalues
     velocity_potential = s[g.di] * inverse_eigenvalues
 

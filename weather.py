@@ -400,10 +400,4 @@ out, *rest = jax.lax.scan(lambda x, _: (scaling * runge_kutta(x), None),
                           s,
                           xs=None,
                           length=579)
-np.asarray(out[g.vo]).tofile("w.00.raw")
-np.asarray(out[g.di]).tofile("w.01.raw")
-np.asarray(out[g.te]).tofile("w.02.raw")
-np.asarray(out[g.sp]).tofile("w.03.raw")
-np.asarray(out[g.hu]).tofile("w.04.raw")
-np.asarray(out[g.wo]).tofile("w.05.raw")
-np.asarray(out[g.ic]).tofile("w.06.raw")
+np.asarray(out).tofile("out.raw")

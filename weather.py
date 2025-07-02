@@ -191,7 +191,7 @@ def F(s):
 
     hu_v = vadvection(sigma_full, hu)
     wa_v = vadvection(sigma_full, wa)
-    ic_v = vadvection(sigma_full, ic)    
+    ic_v = vadvection(sigma_full, ic)
     v = jnp.r_[hu_v, wa_v, ic_v]
     h0 = jnp.r_[hu_h0, wa_h0, ic_h0]
     h1 = jnp.r_[hu_h1, wa_h1, ic_h1]
@@ -207,7 +207,7 @@ def F(s):
 
 def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
-    tscale = 3 * g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers 
+    tscale = 3 * g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
     geopotential_diff = einsum("gh,hml->gml", g.geo, s[g.te])
     l0 = np.arange(g.total_wavenumbers)
     di = l0 * (l0 + 1) * (geopotential_diff +
@@ -244,15 +244,6 @@ def G_inv(s, dt):
           einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
           einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
     return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wo], s[g.ic]]
-
-
-def to_modal(z):
-
-    def g(x):
-        x = jnp.asarray(x)
-        return transform(x) if x.ndim else x
-
-    return jax.tree_util.tree_map(g, z)
 
 
 def open(path):
@@ -326,12 +317,10 @@ m, l = np.meshgrid(np.r_[0, q.ravel()],
                    np.r_[:g.total_wavenumbers],
                    indexing="ij")
 mask = abs(m) <= l
-a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
-a[:, 0] = 0
-b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
-b[:, -1] = 0
-g.a = a
-g.b = b
+g.a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
+g.a[:, 0] = 0
+g.b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
+g.b[:, -1] = 0
 g.alpha = np.diff(np.log(g.centers), append=0) / 2
 g.alpha[-1] = -np.log(g.centers[-1])
 
@@ -414,25 +403,18 @@ for key, scale in [
     for i in range(nhyb):
         val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
     M[key] = regrid(sp_init_hpa, g.boundaries, val / scale)
-u_nodal = M["u_component_of_wind"]
-v_nodal = M["v_component_of_wind"]
-t_nodal = M["temperature"]
-
 cos = np.sqrt(1 - sin_lat**2)
-u = transform(u_nodal / cos)
-v = transform(v_nodal / cos)
+u = transform(M["u_component_of_wind"] / cos)
+v = transform(M["v_component_of_wind"] / cos)
 vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(u)
 div = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
 mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
-vorticity = vor * mask
-divergence = div * mask
-
-temperature_variation = transform(t_nodal - g.temp.reshape(-1, 1, 1))
-log_sp = to_modal(np.log(sp_nodal))
+te = transform(M["temperature"] - g.temp.reshape(-1, 1, 1))
+sp = transform(jnp.array(np.log(sp_nodal)))
 hu = transform(M["specific_humidity"])
 wo = transform(M["specific_cloud_liquid_water_content"])
 ic = transform(M["specific_cloud_ice_water_content"])
-
+state = np.r_[vor * mask, div * mask, te, sp, hu, wo, ic]
 n = g.layers
 g.vo = np.s_[:n]
 g.di = np.s_[n:2 * n]
@@ -443,12 +425,10 @@ g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
 
-raw_init_state = np.r_[vorticity, divergence, temperature_variation, log_sp,
-                       hu, wo, ic]
-
 total_wavenumber = np.arange(g.total_wavenumbers)
 k = total_wavenumber / total_wavenumber.max()
-orography = to_modal(orography_input) * jnp.exp((k > 0) * (-16) * k**4)
+orography = transform(jnp.array(orography_input)) * jnp.exp(
+    (k > 0) * (-16) * k**4)
 g.orography = orography
 res_factor = g.latitude_nodes / 128
 g.dt = 4.3752000000000006e-02
@@ -457,11 +437,10 @@ l0 = np.arange(g.total_wavenumbers)
 eigenvalues = l0 * (l0 + 1)
 scale = g.dt / (tau * eigenvalues[-1]**2)
 scaling = jnp.exp(-scale * eigenvalues**2)
-out, *rest = jax.lax.scan(
-    lambda x, _: (scaling * runge_kutta(x), None),
-    raw_init_state,
-    xs=None,
-    length=579)
+out, *rest = jax.lax.scan(lambda x, _: (scaling * runge_kutta(x), None),
+                          state,
+                          xs=None,
+                          length=579)
 np.asarray(out[g.vo]).tofile("w.00.raw")
 np.asarray(out[g.di]).tofile("w.01.raw")
 np.asarray(out[g.te]).tofile("w.02.raw")

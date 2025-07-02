@@ -199,9 +199,8 @@ def F(s):
 def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
     tscale = 3 * g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
-    geopotential_diff = einsum("gh,hml->gml", g.geo, s[g.te])
     l0 = np.arange(g.total_wavenumbers)
-    di = l0 * (l0 + 1) * (geopotential_diff +
+    di = l0 * (l0 + 1) * (einsum("gh,hml->gml", g.geo, s[g.te]) +
                           r_gas * g.temp[..., None, None] * s[g.sp])
     tesp = einsum("gh,hml->gml", jnp.r_[-g.tew, -g.thick[None]], s[g.di])
     return jnp.r_[jnp.zeros(shape), di, tesp, jnp.zeros(tscale)]

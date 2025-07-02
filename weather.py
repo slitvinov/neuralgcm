@@ -203,9 +203,8 @@ def G(s):
     l0 = np.arange(g.total_wavenumbers)
     di = l0 * (l0 + 1) * (geopotential_diff +
                           r_gas * g.temp[..., None, None] * s[g.sp])
-    te = einsum("gh,hml->gml", -g.tew, s[g.di])
-    sp = -einsum("gh,hml->gml", g.thick[None], s[g.di])
-    return jnp.r_[jnp.zeros(shape), di, te, sp, jnp.zeros(tscale)]
+    tesp = einsum("gh,hml->gml", jnp.r_[-g.tew, -g.thick[None]], s[g.di])
+    return jnp.r_[jnp.zeros(shape), di, tesp, jnp.zeros(tscale)]
 
 
 def G_inv(s, dt):

@@ -24,13 +24,6 @@ def inverse_transform(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
 
-def sigma_integral(x):
-    x_axes = range(x.ndim)
-    axes = [x_axes[-3]]
-    xds = einsum(x, x_axes, g.thick, axes, x_axes)
-    return xds.sum(axis=-3, keepdims=True)
-
-
 def vadvection(w, x):
     shape = list(x.shape)
     shape[-3] = 1
@@ -187,7 +180,10 @@ def F(s):
     t_var = temp * (u_dot_grad - omega(div + u_dot_grad))
     temp_adiab = kappa * (t_mean + t_var)
 
-    logsp_tendency = -sigma_integral(u_dot_grad)
+    x_axes = range(u_dot_grad.ndim)
+    axes = [x_axes[-3]]
+    xds = einsum(u_dot_grad, x_axes, g.thick, axes, x_axes)
+    logsp_tendency = -xds.sum(axis=-3, keepdims=True)
 
     hu_v = vadvection(sigma_full, hu)
     wa_v = vadvection(sigma_full, wa)

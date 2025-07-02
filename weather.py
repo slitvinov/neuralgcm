@@ -103,8 +103,7 @@ def omega(g_term):
 def hadvection(scalar, cos_lat_u, divergence):
     u, v = cos_lat_u
     nodal_terms = scalar * divergence
-    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
-    sec2 = 1 / (1 - sin_lat**2)
+    sec2 = 1 / (1 - g.sin_lat**2)
     m_component = transform(u * scalar * sec2)
     n_component = transform(v * scalar * sec2)
     modal_terms = -real_basis_derivative(m_component) - sec_lat_d_dlat_cos2(
@@ -135,16 +134,14 @@ def F(s):
     v = inverse_transform(v1)
     grad_u = inverse_transform(real_basis_derivative(s[g.sp]))
     grad_v = inverse_transform(cos_lat_d_dlat(s[g.sp]))
-    sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
-    sec2 = 1 / (1 - sin_lat**2)
+    sec2 = 1 / (1 - g.sin_lat**2)
     u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
     f_exp = jax.lax.cumsum(u_dot_grad * g.thick[:, None, None])
     f_full = jax.lax.cumsum((div + u_dot_grad) * g.thick[:, None, None])
     sum_sigma = np.cumsum(g.thick)[:, None, None]
     sigma_exp = (sum_sigma * f_exp[-1] - f_exp)[:-1]
     sigma_full = (sum_sigma * f_full[-1] - f_full)[:-1]
-    sin_latitude, _ = scipy.special.roots_legendre(g.latitude_nodes)
-    coriolis = np.tile(sin_latitude, (g.longitude_nodes, 1))
+    coriolis = np.tile(g.sin_lat, (g.longitude_nodes, 1))
     total_vort = vort + coriolis
     vort_u = -v * total_vort * sec2
     vort_v = u * total_vort * sec2
@@ -280,8 +277,8 @@ g.f = np.empty((g.longitude_nodes, 2 * g.longitude_wavenumbers - 1))
 g.f[:, 0] = 1 / np.sqrt(2 * np.pi)
 g.f[:, 1::2] = np.real(dft[:, 1:])
 g.f[:, 2::2] = -np.imag(dft[:, 1:])
-x, w = scipy.special.roots_legendre(g.latitude_nodes)
-q = np.sqrt(1 - x * x)
+g.sin_lat, w = scipy.special.roots_legendre(g.latitude_nodes)
+q = np.sqrt(1 - g.sin_lat * g.sin_lat)
 y = np.zeros((g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
 y[0, 0] = 1 / np.sqrt(2)
 for m in range(1, g.longitude_wavenumbers):
@@ -294,7 +291,7 @@ for k in range(1, g.total_wavenumbers):
     mkp2 = (m + k - 1)**2
     a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
     b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
-    y[k, :M] = a * (x * y[k - 1, :M] - b * y[k - 2, :M])
+    y[k, :M] = a * (g.sin_lat * y[k - 1, :M] - b * y[k - 2, :M])
 r = np.transpose(y, (1, 2, 0))
 p = np.zeros((g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))
 for m in range(g.longitude_wavenumbers):
@@ -341,8 +338,7 @@ k_shifted[0] = 0
 g.tew = (h0 - k - k_shifted) * g.thick
 
 output_level_indices = [g.layers // 4, g.layers // 2, 3 * g.layers // 4, -1]
-sin_lat, _ = scipy.special.roots_legendre(g.latitude_nodes)
-desired_lat = np.rad2deg(np.arcsin(sin_lat))
+desired_lat = np.rad2deg(np.arcsin(g.sin_lat))
 desired_lon = np.linspace(0, 360, g.longitude_nodes, endpoint=False)
 a_in_pa, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
                                    skiprows=1,
@@ -396,7 +392,7 @@ for key, scale in [
     for i in range(nhyb):
         val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
     M[key] = regrid(sp_init_hpa, g.boundaries, val / scale)
-cos = np.sqrt(1 - sin_lat**2)
+cos = np.sqrt(1 - g.sin_lat**2)
 u = transform(M["u_component_of_wind"] / cos)
 v = transform(M["v_component_of_wind"] / cos)
 vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(u)

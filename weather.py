@@ -156,29 +156,23 @@ def F(s):
     hu_h1 = hadvection(hu)
     wa_h1 = hadvection(wa)
     ic_h1 = hadvection(ic)
-    t0 = temp * div
-
     temp_vert = vadvection(sigma_full, temp)
     # np.unique(g.temp[..., None, None].ravel()).size > 1:
-
     t_mean = g.temp[..., None, None] * (u_dot_grad - omega(u_dot_grad))
     t_var = temp * (u_dot_grad - omega(div + u_dot_grad))
     temp_adiab = kappa * (t_mean + t_var)
-
     xds = g.thick[:, None, None] * u_dot_grad
     logsp_tendency = -xds.sum(axis=0, keepdims=True)
-
     hu_v = vadvection(sigma_full, hu)
     wa_v = vadvection(sigma_full, wa)
     ic_v = vadvection(sigma_full, ic)
     v = jnp.r_[hu_v, wa_v, ic_v]
-    h0 = jnp.r_[hu, wa, ic] * div
+    h0 = jnp.r_[hu * div, wa * div, ic * div]
     h1 = jnp.r_[hu_h1, wa_h1, ic_h1]
-
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
     return jnp.r_[vort_tendency * mask,
                   (div_tendency + ke_tendency + oro_tendency) * mask,
-                  (transform(t0 + temp_vert + temp_adiab) + t1) * mask,
+                  (transform(temp * div + temp_vert + temp_adiab) + t1) * mask,
                   transform(logsp_tendency) * mask,
                   (transform(v + h0) + h1) * mask]
 

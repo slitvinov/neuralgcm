@@ -282,10 +282,10 @@ g.thick = np.diff(g.boundaries)
 g.center_to_center = np.diff(g.centers)
 dft = scipy.linalg.dft(
     g.longitude_nodes)[:, :g.longitude_wavenumbers] / np.sqrt(np.pi)
-f = np.empty((g.longitude_nodes, 2 * g.longitude_wavenumbers - 1))
-f[:, 0] = 1 / np.sqrt(2 * np.pi)
-f[:, 1::2] = np.real(dft[:, 1:])
-f[:, 2::2] = -np.imag(dft[:, 1:])
+g.f = np.empty((g.longitude_nodes, 2 * g.longitude_wavenumbers - 1))
+g.f[:, 0] = 1 / np.sqrt(2 * np.pi)
+g.f[:, 1::2] = np.real(dft[:, 1:])
+g.f[:, 2::2] = -np.imag(dft[:, 1:])
 x, w = scipy.special.roots_legendre(g.latitude_nodes)
 q = np.sqrt(1 - x * x)
 y = np.zeros((g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
@@ -306,7 +306,6 @@ p = np.zeros((g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))
 for m in range(g.longitude_wavenumbers):
     p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
 p = np.repeat(p, 2, axis=0)
-g.f = f
 g.p = p[1:]
 g.w = 2 * np.pi * w / g.longitude_nodes
 g.temp = np.full((g.layers, ), 250)

@@ -175,9 +175,9 @@ def F(s):
     h_adv = functools.partial(hadvection, cos_lat_u=(u, v), divergence=div)
     temp_h_nodal, temp_h_modal = h_adv(temp)
 
-    hu_h = h_adv(hu)
-    wa_h = h_adv(wa)
-    ic_h = h_adv(ic)
+    hu_h0, hu_h1 = h_adv(hu)
+    wa_h0, wa_h1 = h_adv(wa)
+    ic_h0, ic_h1 = h_adv(ic)
 
     temp_vert = vadvection(sigma_full, temp)
     if np.unique(g.temp[..., None, None].ravel()).size > 1:
@@ -191,7 +191,10 @@ def F(s):
 
     hu_v = vadvection(sigma_full, hu)
     wa_v = vadvection(sigma_full, wa)
-    ic_v = vadvection(sigma_full, ic)
+    ic_v = vadvection(sigma_full, ic)    
+    v = jnp.r_[hu_v, wa_v, ic_v]
+    h0 = jnp.r_[hu_h0, wa_h0, ic_h0]
+    h1 = jnp.r_[hu_h1, wa_h1, ic_h1]
 
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
     return jnp.r_[vort_tendency * mask,
@@ -199,9 +202,7 @@ def F(s):
                   (transform(temp_h_nodal + temp_vert + temp_adiab) +
                    temp_h_modal) * mask,
                   transform(logsp_tendency) * mask,
-                  (transform(hu_v + hu_h[0]) + hu_h[1]) * mask,
-                  (transform(wa_v + wa_h[0]) + wa_h[1]) * mask,
-                  (transform(ic_v + ic_h[0]) + ic_h[1]) * mask]
+                  (transform(v + h0) + h1) * mask]
 
 
 def G(s):

@@ -227,13 +227,11 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
-GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
+GRAVITY_ACCELERATION = 9.80616
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
-tree_map = jax.tree_util.tree_map
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-# gravity_acceleration = DEFAULT_SCALE.nondimensionalize(GRAVITY_ACCELERATION)
-gravity_acceleration = 7.2364082834567185e+01
+gravity_acceleration = GRAVITY_ACCELERATION / (uL / uT**2)
 kappa = 2 / 7
 r_gas = kappa * 0.0011628807950492582
 g.longitude_wavenumbers = 171

@@ -311,8 +311,19 @@ a_boundaries, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
                                         skiprows=1,
                                         usecols=(1, 2),
                                         delimiter="\t").T
-if os.path.exists("weather.h5"):
-    era = xarray.open_dataset("weather.h5")
+n = g.layers
+g.vo = np.s_[:n]
+g.di = np.s_[n:2 * n]
+g.te = np.s_[2 * n:3 * n]
+g.sp = np.s_[3 * n:3 * n + 1]
+g.hu = np.s_[3 * n + 1:4 * n + 1]
+g.wo = np.s_[4 * n + 1:5 * n + 1]
+g.ic = np.s_[5 * n + 1:6 * n + 1]
+g.ditesp = np.s_[n:3 * n + 1]
+if os.path.exists("s.raw") and os.path.exists("oro.raw"):
+    s = np.fromfile("s.raw").reshape(-1, g.longitude_nodes, g.latitude_nodes)
+    g.orography = np.fromfile("oro.raw").reshape(g.longitude_nodes,
+                                                 g.latitude_nodes)
 else:
     era = xarray.merge([
         open(
@@ -332,64 +343,61 @@ else:
         "geopotential_at_surface",
     ]]
     era.to_netcdf("weather.h5")
-hyb = era["hybrid"].data
-lat = era["latitude"].data
-lon = era["longitude"].data
-nhyb = len(hyb)
-xi = np.meshgrid(desired_lat, desired_lon)
-points = lat, lon
-sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)
-oro = scipy.interpolate.interpn(points, era["geopotential_at_surface"].data,
-                                xi)
-sp_nodal = sp[None, ...] / (1 / uL / uT**2)
-orography_input = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
-M = {}
-for key, scale in [
-    ("u_component_of_wind", uL / uT),
-    ("v_component_of_wind", uL / uT),
-    ("temperature", 1),
-    ("specific_cloud_liquid_water_content", 1),
-    ("specific_cloud_ice_water_content", 1),
-    ("specific_humidity", 1),
-]:
-    val = np.empty((nhyb, g.longitude_nodes, g.latitude_nodes))
-    for i in range(nhyb):
-        val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
-    source = a_boundaries[:, None, None] / sp + b_boundaries[:, None, None]
-    upper = np.minimum(g.boundaries[1:, None, None, None], source[None,
-                                                                  1:, :, :])
-    lower = np.maximum(g.boundaries[:-1, None, None, None],
-                       source[None, :-1, :, :])
-    weights = np.maximum(upper - lower, 0)
-    weights /= np.sum(weights, axis=1, keepdims=True)
-    M[key] = np.einsum("lnxy,nxy->lxy", weights, val / scale)
-cos = np.sqrt(1 - g.sin_lat**2)
-u = transform(M["u_component_of_wind"] / cos)
-v = transform(M["v_component_of_wind"] / cos)
-n = g.layers
-g.vo = np.s_[:n]
-g.di = np.s_[n:2 * n]
-g.te = np.s_[2 * n:3 * n]
-g.sp = np.s_[3 * n:3 * n + 1]
-g.hu = np.s_[3 * n + 1:4 * n + 1]
-g.wo = np.s_[4 * n + 1:5 * n + 1]
-g.ic = np.s_[5 * n + 1:6 * n + 1]
-g.ditesp = np.s_[n:3 * n + 1]
-s = np.empty(
-    (6 * g.layers + 1, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers))
-vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(u)
-div = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
-mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
-s[g.vo] = vor * mask
-s[g.di] = div * mask
-s[g.te] = transform(M["temperature"] - g.temp.reshape(-1, 1, 1))
-s[g.sp] = transform(jnp.array(np.log(sp_nodal)))
-s[g.hu] = transform(M["specific_humidity"])
-s[g.wo] = transform(M["specific_cloud_liquid_water_content"])
-s[g.ic] = transform(M["specific_cloud_ice_water_content"])
+    hyb = era["hybrid"].data
+    lat = era["latitude"].data
+    lon = era["longitude"].data
+    nhyb = len(hyb)
+    xi = np.meshgrid(desired_lat, desired_lon)
+    points = lat, lon
+    sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)
+    oro = scipy.interpolate.interpn(points,
+                                    era["geopotential_at_surface"].data, xi)
+    sp_nodal = sp[None, ...] / (1 / uL / uT**2)
+    orography_input = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
+    M = {}
+    for key, scale in [
+        ("u_component_of_wind", uL / uT),
+        ("v_component_of_wind", uL / uT),
+        ("temperature", 1),
+        ("specific_cloud_liquid_water_content", 1),
+        ("specific_cloud_ice_water_content", 1),
+        ("specific_humidity", 1),
+    ]:
+        val = np.empty((nhyb, g.longitude_nodes, g.latitude_nodes))
+        for i in range(nhyb):
+            val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
+        source = a_boundaries[:, None, None] / sp + b_boundaries[:, None, None]
+        upper = np.minimum(g.boundaries[1:, None, None, None],
+                           source[None, 1:, :, :])
+        lower = np.maximum(g.boundaries[:-1, None, None, None],
+                           source[None, :-1, :, :])
+        weights = np.maximum(upper - lower, 0)
+        weights /= np.sum(weights, axis=1, keepdims=True)
+        M[key] = np.einsum("lnxy,nxy->lxy", weights, val / scale)
+    cos = np.sqrt(1 - g.sin_lat**2)
+    u = transform(M["u_component_of_wind"] / cos)
+    v = transform(M["v_component_of_wind"] / cos)
+    s = np.empty((6 * g.layers + 1, 2 * g.longitude_wavenumbers - 1,
+                  g.total_wavenumbers))
+    vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(u)
+    div = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
+    mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
+    s[g.vo] = vor * mask
+    s[g.di] = div * mask
+    s[g.te] = transform(M["temperature"] - g.temp.reshape(-1, 1, 1))
+    s[g.sp] = transform(jnp.array(np.log(sp_nodal)))
+    s[g.hu] = transform(M["specific_humidity"])
+    s[g.wo] = transform(M["specific_cloud_liquid_water_content"])
+    s[g.ic] = transform(M["specific_cloud_ice_water_content"])
+    k = np.r_[:g.total_wavenumbers] / (g.total_wavenumbers - 1)
+    g.orography = transform(jnp.array(orography_input)) * jnp.exp(-16 * k**4)
 
-k = np.r_[:g.total_wavenumbers] / (g.total_wavenumbers - 1)
-g.orography = transform(jnp.array(orography_input)) * jnp.exp(-16 * k**4)
+    print(np.shape(s), np.shape(g.orography))
+    print(-1, g.longitude_nodes, g.latitude_nodes)
+    print(g.longitude_nodes, g.latitude_nodes)
+    s.tofile("s.raw")
+    np.asarray(g.orography).tofile("oro.raw")
+
 g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.latitude_nodes / 128) / uT
 l0 = np.r_[:g.total_wavenumbers]

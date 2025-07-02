@@ -97,14 +97,11 @@ def omega(g_term):
 
 def F(s):
 
-    def hadvection(scalar):
-        nodal_terms = scalar * div
+    def hadvection(s):
         sec2 = 1 / (1 - g.sin_lat**2)
-        m_component = transform(u * scalar * sec2)
-        n_component = transform(v * scalar * sec2)
-        modal_terms = -real_basis_derivative(
-            m_component) - sec_lat_d_dlat_cos2(n_component)
-        return nodal_terms, modal_terms
+        m = transform(u * s * sec2)
+        n = transform(v * s * sec2)
+        return -real_basis_derivative(m) - sec_lat_d_dlat_cos2(n)
 
     vort = inverse_transform(s[g.vo])
     div = inverse_transform(s[g.di])
@@ -156,10 +153,16 @@ def F(s):
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
 
-    t0, t1 = hadvection(temp)
-    hu_h0, hu_h1 = hadvection(hu)
-    wa_h0, wa_h1 = hadvection(wa)
-    ic_h0, ic_h1 = hadvection(ic)
+    t1 = hadvection(temp)
+    hu_h1 = hadvection(hu)
+    wa_h1 = hadvection(wa)
+    ic_h1 = hadvection(ic)
+
+    t0 = temp * div
+    hu_h0 = hu * div
+    wa_h0 = wa * div
+    ic_h0 = ic * div
+
     temp_vert = vadvection(sigma_full, temp)
     # np.unique(g.temp[..., None, None].ravel()).size > 1:
 

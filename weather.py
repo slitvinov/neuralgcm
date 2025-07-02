@@ -180,10 +180,8 @@ def F(s):
     t_var = temp * (u_dot_grad - omega(div + u_dot_grad))
     temp_adiab = kappa * (t_mean + t_var)
 
-    x_axes = range(u_dot_grad.ndim)
-    axes = [x_axes[-3]]
-    xds = einsum(u_dot_grad, x_axes, g.thick, axes, x_axes)
-    logsp_tendency = -xds.sum(axis=-3, keepdims=True)
+    xds = einsum(u_dot_grad, [0, 1, 2], g.thick, [0], [0, 1, 2])
+    logsp_tendency = -xds.sum(axis=0, keepdims=True)
 
     hu_v = vadvection(sigma_full, hu)
     wa_v = vadvection(sigma_full, wa)

@@ -30,8 +30,8 @@ def vadvection(w, x):
     wt = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
     xt = np.zeros(shape)
     dx = x[1:] - x[:-1]
-    xd = einsum(dx, [0, 1, 2], 1 / g.center_to_center, [0], [0, 1, 2])
-    wx = jnp.concatenate([wt, w, wt]) * jnp.concatenate([xt, xd, xt])
+    xd = dx * (1 / g.center_to_center)[:, None, None]
+    wx = jnp.r_[wt, w, wt] * jnp.r_[xt, xd, xt]
     return -0.5 * (wx[1:] + wx[:-1])
 
 
@@ -177,7 +177,7 @@ def F(s):
     t_var = temp * (u_dot_grad - omega(div + u_dot_grad))
     temp_adiab = kappa * (t_mean + t_var)
 
-    xds = einsum(u_dot_grad, [0, 1, 2], g.thick, [0], [0, 1, 2])
+    xds = g.thick[:, None, None] * u_dot_grad
     logsp_tendency = -xds.sum(axis=0, keepdims=True)
 
     hu_v = vadvection(sigma_full, hu)

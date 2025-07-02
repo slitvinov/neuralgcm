@@ -343,10 +343,9 @@ else:
         "geopotential_at_surface",
     ]]
     era.to_netcdf("weather.h5")
-    hyb = era["hybrid"].data
+    nhyb = len(era["hybrid"].data)
     lat = era["latitude"].data
     lon = era["longitude"].data
-    nhyb = len(hyb)
     xi = np.meshgrid(desired_lat, desired_lon)
     points = lat, lon
     sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)

@@ -225,16 +225,8 @@ def G_inv(s, dt):
     row1 = np.c_[C, I, Z]
     row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
-    di = (einsum("lgh,hml->gml", inv[:, :j, :j], s[g.di]) +
-          einsum("lgh,hml->gml", inv[:, :j, j:2 * j], s[g.te]) +
-          einsum("lgh,hml->gml", inv[:, :j, 2 * j:], s[g.sp]))
-    te = (einsum("lgh,hml->gml", inv[:, j:2 * j, :j], s[g.di]) +
-          einsum("lgh,hml->gml", inv[:, j:2 * j, j:2 * j], s[g.te]) +
-          einsum("lgh,hml->gml", inv[:, j:2 * j, 2 * j:], s[g.sp]))
-    sp = (einsum("lgh,hml->gml", inv[:, 2 * j:, :j], s[g.di]) +
-          einsum("lgh,hml->gml", inv[:, 2 * j:, j:2 * j], s[g.te]) +
-          einsum("lgh,hml->gml", inv[:, 2 * j:, 2 * j:], s[g.sp]))
-    return jnp.r_[s[g.vo], di, te, sp, s[g.hu], s[g.wo], s[g.ic]]
+    M = einsum("lgh,hml->gml", inv, s[g.ditesp])
+    return jnp.r_[s[g.vo], M, s[g.hu], s[g.wo], s[g.ic]]
 
 
 def open(path):
@@ -250,7 +242,7 @@ def regrid(surface_pressure, target, field):
     lower = jnp.maximum(target[:-1, None], source[None, :-1])
     weights = jnp.maximum(upper - lower, 0)
     weights /= jnp.sum(weights, axis=1, keepdims=True)
-    return jnp.einsum("ab,b->a", weights, field, precision="float32")
+    return jnp.einsum("ab,b->a", weights, field)
 
 
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
@@ -267,7 +259,7 @@ g.total_wavenumbers = 172
 g.longitude_nodes = 512
 g.latitude_nodes = 256
 g.layers = 32
-g.boundaries = np.linspace(0, 1, g.layers + 1, dtype=np.float32)
+g.boundaries = np.linspace(0, 1, g.layers + 1)
 g.centers = (g.boundaries[1:] + g.boundaries[:-1]) / 2
 g.thick = np.diff(g.boundaries)
 g.center_to_center = np.diff(g.centers)

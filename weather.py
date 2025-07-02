@@ -25,13 +25,10 @@ def inverse_transform(x):
 
 
 def vadvection(w, x):
-    shape = list(x.shape)
-    shape[-3] = 1
     wt = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
-    xt = np.zeros(shape)
     dx = x[1:] - x[:-1]
     xd = dx * (1 / g.center_to_center)[:, None, None]
-    wx = jnp.r_[wt, w, wt] * jnp.r_[xt, xd, xt]
+    wx = jnp.r_[wt, xd * w, wt]
     return -0.5 * (wx[1:] + wx[:-1])
 
 
@@ -170,8 +167,7 @@ def F(s):
     ic_h0, ic_h1 = h_adv(ic)
 
     temp_vert = vadvection(sigma_full, temp)
-    if np.unique(g.temp[..., None, None].ravel()).size > 1:
-        temp_vert += vadvection(sigma_exp, g.temp[..., None, None])
+    # np.unique(g.temp[..., None, None].ravel()).size > 1:
 
     t_mean = g.temp[..., None, None] * (u_dot_grad - omega(u_dot_grad))
     t_var = temp * (u_dot_grad - omega(div + u_dot_grad))

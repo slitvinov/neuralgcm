@@ -157,11 +157,7 @@ def F(s):
     hu_h1 = hadvection(hu)
     wa_h1 = hadvection(wa)
     ic_h1 = hadvection(ic)
-
     t0 = temp * div
-    hu_h0 = hu * div
-    wa_h0 = wa * div
-    ic_h0 = ic * div
 
     temp_vert = vadvection(sigma_full, temp)
     # np.unique(g.temp[..., None, None].ravel()).size > 1:
@@ -177,7 +173,7 @@ def F(s):
     wa_v = vadvection(sigma_full, wa)
     ic_v = vadvection(sigma_full, ic)
     v = jnp.r_[hu_v, wa_v, ic_v]
-    h0 = jnp.r_[hu_h0, wa_h0, ic_h0]
+    h0 = jnp.r_[hu, wa, ic] * div
     h1 = jnp.r_[hu_h1, wa_h1, ic_h1]
 
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]

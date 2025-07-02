@@ -156,12 +156,10 @@ def F(s):
     l0 = np.arange(g.total_wavenumbers)
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
-
-    temp_h_nodal, temp_h_modal = hadvection(temp, (u, v), div))
+    temp_h_nodal, temp_h_modal = hadvection(temp, (u, v), div)
     hu_h0, hu_h1 = hadvection(hu, (u, v), div)
     wa_h0, wa_h1 = hadvection(wa, (u, v), div)
     ic_h0, ic_h1 = hadvection(ic, (u, v), div)
-
     temp_vert = vadvection(sigma_full, temp)
     # np.unique(g.temp[..., None, None].ravel()).size > 1:
 

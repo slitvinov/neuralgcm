@@ -95,17 +95,6 @@ def omega(g_term):
                                                                      None]
 
 
-def hadvection(scalar, cos_lat_u, divergence):
-    u, v = cos_lat_u
-    nodal_terms = scalar * divergence
-    sec2 = 1 / (1 - g.sin_lat**2)
-    m_component = transform(u * scalar * sec2)
-    n_component = transform(v * scalar * sec2)
-    modal_terms = -real_basis_derivative(m_component) - sec_lat_d_dlat_cos2(
-        n_component)
-    return nodal_terms, modal_terms
-
-
 def F(s):
     vort = inverse_transform(s[g.vo])
     div = inverse_transform(s[g.di])
@@ -156,10 +145,20 @@ def F(s):
     l0 = np.arange(g.total_wavenumbers)
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
-    temp_h_nodal, temp_h_modal = hadvection(temp, (u, v), div)
-    hu_h0, hu_h1 = hadvection(hu, (u, v), div)
-    wa_h0, wa_h1 = hadvection(wa, (u, v), div)
-    ic_h0, ic_h1 = hadvection(ic, (u, v), div)
+
+    def hadvection(scalar):
+        nodal_terms = scalar * div
+        sec2 = 1 / (1 - g.sin_lat**2)
+        m_component = transform(u * scalar * sec2)
+        n_component = transform(v * scalar * sec2)
+        modal_terms = -real_basis_derivative(
+            m_component) - sec_lat_d_dlat_cos2(n_component)
+        return nodal_terms, modal_terms
+
+    temp_h_nodal, temp_h_modal = hadvection(temp, u, v, div)
+    hu_h0, hu_h1 = hadvection(hu, u, v, div)
+    wa_h0, wa_h1 = hadvection(wa, u, v, div)
+    ic_h0, ic_h1 = hadvection(ic, u, v, div)
     temp_vert = vadvection(sigma_full, temp)
     # np.unique(g.temp[..., None, None].ravel()).size > 1:
 

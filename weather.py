@@ -207,17 +207,14 @@ def F(s):
 
 def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
+    tscale = 3 * g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers 
     geopotential_diff = einsum("gh,hml->gml", g.geo, s[g.te])
     l0 = np.arange(g.total_wavenumbers)
     di = l0 * (l0 + 1) * (geopotential_diff +
                           r_gas * g.temp[..., None, None] * s[g.sp])
     te = einsum("gh,hml->gml", -g.tew, s[g.di])
     sp = -einsum("gh,hml->gml", g.thick[None], s[g.di])
-    vo = jnp.zeros(shape)
-    return jnp.r_[vo, di, te, sp,
-                  jnp.zeros_like(vo),
-                  jnp.zeros_like(vo),
-                  jnp.zeros_like(vo)]
+    return jnp.r_[jnp.zeros(shape), di, te, sp, jnp.zeros(tscale)]
 
 
 def G_inv(s, dt):

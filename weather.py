@@ -342,13 +342,11 @@ hyb = era["hybrid"].data
 lat = era["latitude"].data
 lon = era["longitude"].data
 nhyb = len(hyb)
-shape = nhyb, len(desired_lon), len(desired_lat)
 xi = np.meshgrid(desired_lat, desired_lon)
 points = lat, lon
 sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)
 oro = scipy.interpolate.interpn(points, era["geopotential_at_surface"].data,
                                 xi)
-sp_init_hpa = sp / 100
 sp_nodal = sp[None, ...] / (1 / uL / uT**2)
 orography_input = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
 M = {}
@@ -360,10 +358,10 @@ for key, scale in [
     ("specific_cloud_ice_water_content", 1),
     ("specific_humidity", 1),
 ]:
-    val = np.empty(shape)
+    val = np.empty((nhyb, g.longitude_nodes, g.latitude_nodes))
     for i in range(nhyb):
         val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
-    source = a_boundaries[:, None, None] / sp_init_hpa + b_boundaries[:, None, None]
+    source = 100 * a_boundaries[:, None, None] / sp + b_boundaries[:, None, None]
     upper = np.minimum(g.boundaries[1:, None, None, None], source[None, 1:, :, :])
     lower = np.maximum(g.boundaries[:-1, None, None, None], source[None, :-1, :, :])
     weights = np.maximum(upper - lower, 0)

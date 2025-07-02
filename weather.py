@@ -454,9 +454,9 @@ res_factor = g.latitude_nodes / 128
 g.dt = 4.3752000000000006e-02
 tau = 3600 * 8.6 / (2.4**np.log2(res_factor)) / uT
 l0 = np.arange(g.total_wavenumbers)
-eigenvalues = -l0 * (l0 + 1)
-scale = g.dt / (tau * abs(eigenvalues[-1])**2)
-scaling = jnp.exp(-scale * (-eigenvalues)**2)
+eigenvalues = l0 * (l0 + 1)
+scale = g.dt / (tau * eigenvalues[-1]**2)
+scaling = jnp.exp(-scale * eigenvalues**2)
 out, *rest = jax.lax.scan(
     lambda x, _: (scaling * runge_kutta(x), None),
     raw_init_state,

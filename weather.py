@@ -227,17 +227,13 @@ def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
 
-
-@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
-@functools.partial(jax.vmap, in_axes=(-1, None, -1), out_axes=-1)
 def regrid(surface_pressure, target, field):
-    source = a_boundaries / surface_pressure + b_boundaries
-    upper = jnp.minimum(target[1:, None], source[None, 1:])
-    lower = jnp.maximum(target[:-1, None], source[None, :-1])
-    weights = jnp.maximum(upper - lower, 0)
-    weights /= jnp.sum(weights, axis=1, keepdims=True)
-    return jnp.einsum("ab,b->a", weights, field)
-
+    source = a_boundaries[:, None, None] / surface_pressure + b_boundaries[:, None, None]
+    upper = np.minimum(target[1:, None, None, None], source[None, 1:, :, :])
+    lower = np.maximum(target[:-1, None, None, None], source[None, :-1, :, :])
+    weights = np.maximum(upper - lower, 0)
+    weights /= np.sum(weights, axis=1, keepdims=True)
+    return np.einsum("lnxy,nxy->lxy", weights, field)
 
 GRAVITY_ACCELERATION = 9.80616  #  * units.m / units.s**2
 uL = 6.37122e6

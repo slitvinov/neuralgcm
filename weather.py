@@ -14,16 +14,18 @@ class g:
 def transform(x):
     wx = g.w * x
     fwx = einsum("im,...ij->...mj", g.f, wx)
-    pfwx = einsum("mjl,...mj->...ml", g.p, fwx)
-    return pfwx
+    return einsum("mjl,...mj->...ml", g.p, fwx)
 
-  def inverse_transform(self, x):
+
+def inverse_transform(self, x):
     px = einsum('mjl,...ml->...mj', p, x)
     return einsum('im,...mj->...ij', f, px)
+
 
 def inverse_transform(x):
     px = einsum('mjl,...ml->...mj', g.p, x)
     return einsum('im,...mj->...ij', g.f, px)
+
 
 def dx(u):
     n = 2 * g.m - 1
@@ -126,7 +128,7 @@ def F(s):
     sigma = np.cumsum(g.thick)[:, None, None]
     dot_sigma = (sigma * int_div[-1] - int_div)[:-1]
 
-    abs_vo = vo + g.sin_y[None, None, :] # coriolis
+    abs_vo = vo + g.sin_y[None, None, :]  # coriolis
 
     fvx = -v * abs_vo * g.sec2
     fvy = u * abs_vo * g.sec2
@@ -336,9 +338,11 @@ else:
     x_src = era["longitude"].data
     xy_grid = np.meshgrid(y_deg, x_deg)
     xy_src = y_src, x_src
-    sp = scipy.interpolate.interpn(xy_src, era["surface_pressure"].data, xy_grid)
+    sp = scipy.interpolate.interpn(xy_src, era["surface_pressure"].data,
+                                   xy_grid)
     oro = scipy.interpolate.interpn(xy_src,
-                                    era["geopotential_at_surface"].data, xy_grid)
+                                    era["geopotential_at_surface"].data,
+                                    xy_grid)
     fields = {}
     for key, scale in [
         ("u_component_of_wind", uL / uT),
@@ -350,7 +354,8 @@ else:
     ]:
         samples = np.empty((nhyb, g.nx, g.ny))
         for i in range(nhyb):
-            samples[i] = scipy.interpolate.interpn(xy_src, era[key].data[i], xy_grid)
+            samples[i] = scipy.interpolate.interpn(xy_src, era[key].data[i],
+                                                   xy_grid)
         source = a_zb[:, None, None] / sp + b_zb[:, None, None]
         upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
         lower = np.maximum(g.zb[:-1, None, None, None],

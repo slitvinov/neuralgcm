@@ -168,7 +168,7 @@ def F(s):
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
     return jnp.r_[vort_tendency * mask,
                   (div_tendency + ke_tendency + oro_tendency) * mask,
-                  (transform(temp * di + temp_vert + temp_adiab) + t1) * mask,
+                  (transform(te * di + temp_vert + temp_adiab) + t1) * mask,
                   transform(logsp_tendency) * mask,
                   (transform(v + h0) + h1) * mask]
 

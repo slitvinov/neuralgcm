@@ -147,17 +147,17 @@ def F(s):
     dvo = -dx(fy_spec) + dy(fx_spec)
     ddi = -dx(fx_spec) - dy(fy_spec)
 
-    ke = 0.5 * g.sec2 * (u**2 + v**2)
+    ke = g.sec2 * (u**2 + v**2)
     dke = g.eig * transform(ke)
     doro = gravity_acceleration * (g.eig * g.orography)
-    ddi += dke + doro
+    ddi += 0.5 * dke + doro
 
     dte_hadv = hadv(te)
     dte_vadv = vadv(dot_sigma, te)
 
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
-    dte_adiab = kappa * (g.temp[..., None, None] *
+    dte_adiab = kappa * (g.temp[:, None, None] *
                          (u_dot_grad_sp - omega_mean) + te *
                          (u_dot_grad_sp - omega_full))
     dte = transform(te * di + dte_vadv + dte_adiab) + dte_hadv

@@ -23,7 +23,7 @@ def modal(x):
 
 def dx(u):
     n = 2 * g.m - 1
-    y = u[:, 1:n, :]
+    y = u[:, 1:, :]
     z = u[:, :n - 1, :]
     lo = jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 1, 0), (0, 0, 0)))
     hi = jax.lax.pad(z, 0.0, ((0, 0, 0), (1, 0, 0), (0, 0, 0)))
@@ -46,7 +46,7 @@ def dy_cos(x):
 
 
 def pad(zm, zp):
-    return jax.lax.pad(zm[:, :, 1:g.l], 0.0,
+    return jax.lax.pad(zm[:, :, 1:], 0.0,
                        ((0, 0, 0), (0, 0, 0),
                         (0, 1, 0))) + jax.lax.pad(zp[:, :, :g.l - 1], 0.0,
                                                   ((0, 0, 0), (0, 0, 0),

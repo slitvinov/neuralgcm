@@ -17,9 +17,9 @@ def transform(x):
     pfwx = einsum("mjl,...mj->...ml", g.p, fwx)
     return pfwx
 
-
-def inverse_transform(x):
-    return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
+  def inverse_transform(self, x):
+    px = einsum('mjl,...ml->...mj', p, x)
+    return einsum('im,...mj->...ij', f, px)
 
 def inverse_transform(x):
     px = einsum('mjl,...ml->...mj', g.p, x)

@@ -11,14 +11,15 @@ class g:
     pass
 
 
-def transform(x):
+def nodal(x):
     wx = g.w * x
     fwx = einsum("im,...ij->...mj", g.f, wx)
     return einsum("mjl,...mj->...ml", g.p, fwx)
 
 
-def inverse_transform(x):
+def modal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
+
 
 def dx(u):
     n = 2 * g.m - 1
@@ -78,7 +79,7 @@ def runge_kutta(y):
 def F(s):
 
     def hadv(x):
-        return -dx(transform(u * x * g.sec2)) - dy(transform(v * x * g.sec2))
+        return -dx(nodal(u * x * g.sec2)) - dy(nodal(v * x * g.sec2))
 
     def vadv(w, x):
         wt = np.zeros((1, g.nx, g.ny))
@@ -94,12 +95,12 @@ def F(s):
         return (alpha * f +
                 jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None, None]
 
-    vo = inverse_transform(s[g.vo])
-    di = inverse_transform(s[g.di])
-    te = inverse_transform(s[g.te])
-    hu = inverse_transform(s[g.hu])
-    wo = inverse_transform(s[g.wo])
-    ic = inverse_transform(s[g.ic])
+    vo = modal(s[g.vo])
+    di = modal(s[g.di])
+    te = modal(s[g.te])
+    hu = modal(s[g.hu])
+    wo = modal(s[g.wo])
+    ic = modal(s[g.ic])
 
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
@@ -109,11 +110,11 @@ def F(s):
     dpsi_dx = dx(psi)
     dpsi_dy_cos = dy_cos(psi)
 
-    u = inverse_transform(dchi_dx - dpsi_dy_cos)
-    v = inverse_transform(dchi_dy_cos + dpsi_dx)
+    u = modal(dchi_dx - dpsi_dy_cos)
+    v = modal(dchi_dy_cos + dpsi_dx)
 
-    spx = inverse_transform(dx(s[g.sp]))
-    spy = inverse_transform(dy_cos(s[g.sp]))
+    spx = modal(dx(s[g.sp]))
+    spy = modal(dy_cos(s[g.sp]))
 
     u_dot_grad_sp = u * spx * g.sec2 + v * spy * g.sec2
 
@@ -135,14 +136,14 @@ def F(s):
     fx = fvx + (vadv_u + sp_force_x) * g.sec2
     fy = fvy + (vadv_v + sp_force_y) * g.sec2
 
-    fx_spec = transform(fx)
-    fy_spec = transform(fy)
+    fx_spec = nodal(fx)
+    fy_spec = nodal(fy)
 
     dvo = -dx(fy_spec) + dy(fx_spec)
     ddi = -dx(fx_spec) - dy(fy_spec)
 
     ke = g.sec2 * (u**2 + v**2)
-    dke = g.eig * transform(ke)
+    dke = g.eig * nodal(ke)
     doro = gravity_acceleration * (g.eig * g.orography)
     ddi += 0.5 * dke + doro
 
@@ -154,7 +155,7 @@ def F(s):
     dte_adiab = kappa * (g.temp[:, None, None] *
                          (u_dot_grad_sp - omega_mean) + te *
                          (u_dot_grad_sp - omega_full))
-    dte = transform(te * di + dte_vadv + dte_adiab) + dte_hadv
+    dte = nodal(te * di + dte_vadv + dte_adiab) + dte_hadv
 
     dhu_hadv = hadv(hu)
     dwo_hadv = hadv(wo)
@@ -171,11 +172,11 @@ def F(s):
     dmoist_vadv = jnp.r_[dhu_vadv, dwo_vadv, dic_vadv]
     dmoist_dil = jnp.r_[dhu_dil, dwo_dil, dic_dil]
     dmoist_hadv = jnp.r_[dhu_hadv, dwo_hadv, dic_hadv]
-    dmoist = transform(dmoist_vadv + dmoist_dil) + dmoist_hadv
+    dmoist = nodal(dmoist_vadv + dmoist_dil) + dmoist_hadv
 
     dsp_phys = -jnp.sum(
         g.thick[:, None, None] * u_dot_grad_sp, axis=0, keepdims=True)
-    dsp = transform(dsp_phys)
+    dsp = nodal(dsp_phys)
     return jnp.r_[dvo, ddi, dte, dsp, dmoist] * g.mask
 
 
@@ -354,8 +355,8 @@ else:
         weights /= np.sum(weights, axis=1, keepdims=True)
         fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
     cos = np.sqrt(1 - g.sin_y**2)
-    u = transform(fields["u_component_of_wind"] / cos)
-    v = transform(fields["v_component_of_wind"] / cos)
+    u = nodal(fields["u_component_of_wind"] / cos)
+    v = nodal(fields["v_component_of_wind"] / cos)
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
     sp0 = sp[None, :, :] / (1 / uL / uT**2)
@@ -363,13 +364,13 @@ else:
     s = np.empty(shape, dtype=np.float32)
     s[g.vo] = vor * g.mask
     s[g.di] = div * g.mask
-    s[g.te] = transform(fields["temperature"] - g.temp.reshape(-1, 1, 1))
-    s[g.sp] = transform(np.log(sp0))
-    s[g.hu] = transform(fields["specific_humidity"])
-    s[g.wo] = transform(fields["specific_cloud_liquid_water_content"])
-    s[g.ic] = transform(fields["specific_cloud_ice_water_content"])
+    s[g.te] = nodal(fields["temperature"] - g.temp.reshape(-1, 1, 1))
+    s[g.sp] = nodal(np.log(sp0))
+    s[g.hu] = nodal(fields["specific_humidity"])
+    s[g.wo] = nodal(fields["specific_cloud_liquid_water_content"])
+    s[g.ic] = nodal(fields["specific_cloud_ice_water_content"])
     k = g.l0 / (g.l - 1)
-    g.orography = transform(oro0) * np.exp(-16 * k**4)
+    g.orography = nodal(oro0) * np.exp(-16 * k**4)
     s.tofile("s.raw")
     np.asarray(g.orography).tofile("oro.raw")
 

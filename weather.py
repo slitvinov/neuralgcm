@@ -41,7 +41,7 @@ def real_basis_derivative(u):
 
 
 def cos_lat_d_dlat(x):
-    l = np.tile(g.l0, (2 * g.longitude_wavenumbers - 1, 1))
+    l = g.l0[None, :]
     zm = (l + 1) * g.a * x
     zp = -l * g.b * x
     lm1 = jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0,

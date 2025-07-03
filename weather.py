@@ -171,9 +171,8 @@ def F(s):
 def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
     tscale = 3 * g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
-    l0 = np.arange(g.total_wavenumbers)
-    di = l0 * (l0 + 1) * (einsum("gh,hml->gml", g.geo, s[g.te]) +
-                          r_gas * g.temp[..., None, None] * s[g.sp])
+    di = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) +
+                  r_gas * g.temp[..., None, None] * s[g.sp])
     tesp = einsum("gh,hml->gml", jnp.r_[-g.tew, -g.thick[None]], s[g.di])
     return jnp.r_[jnp.zeros(shape), di, tesp, jnp.zeros(tscale)]
 
@@ -286,7 +285,7 @@ k_shifted = np.roll(k, 1, axis=0)
 k_shifted[0] = 0
 g.tew = (h0 - k - k_shifted) * g.thick
 g.l0 = np.r_[:g.total_wavenumbers]
-g.eig = g.l0 * (g.l0  + 1)
+g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
 
 output_level_indices = [g.layers // 4, g.layers // 2, 3 * g.layers // 4, -1]

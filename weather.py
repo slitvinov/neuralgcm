@@ -25,10 +25,10 @@ def dx(u):
     n = 2 * g.m - 1
     y = u[:, 1:n, :]
     z = u[:, :n - 1, :]
-    u_do = jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 1, 0), (0, 0, 0)))
-    u_up = jax.lax.pad(z, 0.0, ((0, 0, 0), (1, 0, 0), (0, 0, 0)))
+    lo = jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 1, 0), (0, 0, 0)))
+    hi = jax.lax.pad(z, 0.0, ((0, 0, 0), (1, 0, 0), (0, 0, 0)))
     i = np.c_[:n]
-    return (i + 1) // 2 * jnp.where(i % 2, u_do, -u_up)
+    return (i + 1) // 2 * jnp.where(i % 2, lo, -hi)
 
 
 def dy(x):

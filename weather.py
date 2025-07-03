@@ -123,8 +123,7 @@ def F(s):
     sigma = np.cumsum(g.thick)[:, None, None]
     dot_sigma = (sigma * int_div[-1] - int_div)[:-1]
 
-    coriolis = np.tile(g.sin_y, (g.nx, 1))
-    abs_vo = vo + coriolis
+    abs_vo = vo + g.coriolis
 
     fvx = -v * abs_vo * g.sec2
     fvy = u * abs_vo * g.sec2
@@ -300,6 +299,7 @@ g.tew = (h0 - k - k_shifted) * g.thick
 g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
+g.coriolis = np.c_[ [g.sin_y] * g.nx]
 
 output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
 y_deg = np.rad2deg(np.arcsin(g.sin_y))
@@ -329,17 +329,6 @@ else:
         open(
             "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1")
     ])
-    era = era[[
-        "u_component_of_wind",
-        "v_component_of_wind",
-        "temperature",
-        "specific_humidity",
-        "specific_cloud_liquid_water_content",
-        "specific_cloud_ice_water_content",
-        "surface_pressure",
-        "geopotential_at_surface",
-    ]]
-    era.to_netcdf("weather.h5")
     nhyb = len(era["hybrid"].data)
     y_src = era["latitude"].data
     x_src = era["longitude"].data
@@ -348,8 +337,6 @@ else:
     sp = scipy.interpolate.interpn(xy_src, era["surface_pressure"].data, xy_grid)
     oro = scipy.interpolate.interpn(xy_src,
                                     era["geopotential_at_surface"].data, xy_grid)
-    sp0 = sp[None, ...] / (1 / uL / uT**2)
-    oro0 = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
     fields = {}
     for key, scale in [
         ("u_component_of_wind", uL / uT),
@@ -376,6 +363,8 @@ else:
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
     mask = np.r_[[1] * (g.l - 1), 0]
+    sp0 = sp[None, ...] / (1 / uL / uT**2)
+    oro0 = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
     s[g.vo] = vor * mask
     s[g.di] = div * mask
     s[g.te] = transform(fields["temperature"] - g.temp.reshape(-1, 1, 1))

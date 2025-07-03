@@ -30,7 +30,7 @@ def vadvection(w, x):
     return -0.5 * (wx[1:] + wx[:-1])
 
 
-def real_basis_derivative(u):
+def dlon(u):
     n = 2 * g.longitude_wavenumbers - 1
     y = u[:, 1:n, :]
     z = u[:, :n - 1, :]
@@ -40,7 +40,7 @@ def real_basis_derivative(u):
     return (i + 1) // 2 * jnp.where(i % 2, u_do, -u_up)
 
 
-def sec_lat_d_dlat_cos2(x):
+def dlat(x):
     l = g.l0[None, :]
     zm = (l - 1) * g.a * x
     zp = -(l + 2) * g.b * x
@@ -83,15 +83,18 @@ def runge_kutta(y):
     im = g.dt * sum(b_im[j] * h[j] for j in range(n) if b_im[j])
     return y + ex + im
 
+
 def F(s):
+
     def hadv(x):
-        return -real_basis_derivative(transform(u * x * sec2)) - sec_lat_d_dlat_cos2(transform(v * x * sec2))
+        return -dlon(transform(u * x * sec2)) - dlat(transform(v * x * sec2))
 
     def omega(x):
         f = jax.lax.cumsum(x * g.thick[:, None, None])
         alpha = g.alpha[:, None, None]
         pad = (1, 0), (0, 0), (0, 0)
-        return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None, None]
+        return (alpha * f +
+                jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None, None]
 
     vo = inverse_transform(s[g.vo])
     di = inverse_transform(s[g.di])
@@ -103,15 +106,15 @@ def F(s):
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
 
-    dchi_dlon = real_basis_derivative(chi)
+    dchi_dlon = dlon(chi)
     dchi_dlat = cos_lat_d_dlat(chi)
-    dpsi_dlon = real_basis_derivative(psi)
+    dpsi_dlon = dlon(psi)
     dpsi_dlat = cos_lat_d_dlat(psi)
 
     u = inverse_transform(dchi_dlon - dpsi_dlat)
     v = inverse_transform(dchi_dlat + dpsi_dlon)
 
-    sp_dlon = inverse_transform(real_basis_derivative(s[g.sp]))
+    sp_dlon = inverse_transform(dlon(s[g.sp]))
     sp_dlat = inverse_transform(cos_lat_d_dlat(s[g.sp]))
 
     sec2 = 1 / (1 - g.sin_lat**2)
@@ -125,7 +128,7 @@ def F(s):
     abs_vo = vo + coriolis
 
     vort_u = -v * abs_vo * sec2
-    vort_v =  u * abs_vo * sec2
+    vort_v = u * abs_vo * sec2
 
     vadv_u = -vadvection(dot_sigma, u)
     vadv_v = -vadvection(dot_sigma, v)
@@ -140,8 +143,8 @@ def F(s):
     force_u_spec = transform(force_u)
     force_v_spec = transform(force_v)
 
-    dvo = -real_basis_derivative(force_v_spec) + sec_lat_d_dlat_cos2(force_u_spec)
-    ddi = -real_basis_derivative(force_u_spec) - sec_lat_d_dlat_cos2(force_v_spec)
+    dvo = -dlon(force_v_spec) + dlat(force_u_spec)
+    ddi = -dlon(force_u_spec) - dlat(force_v_spec)
 
     ke = 0.5 * sec2 * (u**2 + v**2)
     dke = g.eig * transform(ke)
@@ -153,7 +156,9 @@ def F(s):
 
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
-    dte_adiab = kappa * (g.temp[..., None, None] * (u_dot_grad_sp - omega_mean) + te * (u_dot_grad_sp - omega_full))
+    dte_adiab = kappa * (g.temp[..., None, None] *
+                         (u_dot_grad_sp - omega_mean) + te *
+                         (u_dot_grad_sp - omega_full))
     dte = transform(te * di + dte_vadv + dte_adiab) + dte_hadv
 
     dhu_hadv = hadv(hu)
@@ -173,18 +178,15 @@ def F(s):
     dmoist_hadv = jnp.r_[dhu_hadv, dwo_hadv, dic_hadv]
     dmoist = transform(dmoist_vadv + dmoist_dil) + dmoist_hadv
 
-    dsp_phys = -jnp.sum(g.thick[:, None, None] * u_dot_grad_sp, axis=0, keepdims=True)
+    dsp_phys = -jnp.sum(
+        g.thick[:, None, None] * u_dot_grad_sp, axis=0, keepdims=True)
     dsp = transform(dsp_phys)
 
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
 
-    return jnp.r_[
-        dvo * mask,
-        ddi * mask,
-        dte * mask,
-        dsp * mask,
-        dmoist * mask
-    ]
+    return jnp.r_[dvo * mask, ddi * mask, dte * mask, dsp * mask,
+                  dmoist * mask]
+
 
 def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
@@ -377,8 +379,8 @@ else:
     u = transform(M["u_component_of_wind"] / cos)
     v = transform(M["v_component_of_wind"] / cos)
     s = np.empty(shape)
-    vor = real_basis_derivative(v) - sec_lat_d_dlat_cos2(u)
-    div = real_basis_derivative(u) + sec_lat_d_dlat_cos2(v)
+    vor = dlon(v) - dlat(u)
+    div = dlon(u) + dlat(v)
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
     s[g.vo] = vor * mask
     s[g.di] = div * mask

@@ -41,8 +41,7 @@ def real_basis_derivative(u):
 
 
 def cos_lat_d_dlat(x):
-    l0 = np.arange(g.total_wavenumbers)
-    l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
+    l = np.tile(g.l0, (2 * g.longitude_wavenumbers - 1, 1))
     zm = (l + 1) * g.a * x
     zp = -l * g.b * x
     lm1 = jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0,
@@ -53,8 +52,7 @@ def cos_lat_d_dlat(x):
 
 
 def sec_lat_d_dlat_cos2(x):
-    l0 = np.arange(g.total_wavenumbers)
-    l = np.tile(l0, (2 * g.longitude_wavenumbers - 1, 1))
+    l = np.tile(g.l0, (2 * g.longitude_wavenumbers - 1, 1))
     zm = (l - 1) * g.a * x
     zp = -(l + 2) * g.b * x
     lm1 = jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0,
@@ -139,9 +137,8 @@ def F(s):
     div_tendency = -real_basis_derivative(u_mod) - sec_lat_d_dlat_cos2(v_mod)
 
     ke = 0.5 * sec2 * (u**2 + v**2)
-    l0 = np.arange(g.total_wavenumbers)
-    ke_tendency = l0 * (l0 + 1) * transform(ke)
-    oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
+    ke_tendency = g.eig * transform(ke)
+    oro_tendency = gravity_acceleration * (g.eig * g.orography)
 
     t1 = hadvection(te)
     hu_h1 = hadvection(hu)
@@ -180,11 +177,9 @@ def G(s):
 def G_inv(s, dt):
     l = g.total_wavenumbers
     j = g.layers
-    l0 = np.r_[:l]
-    lam = -l0 * (l0 + 1)
     I = np.r_[[np.eye(j)] * l]
-    A = dt * lam[:, None, None] * g.geo[None]
-    B = dt * r_gas * lam[:, None, None] * g.temp[None, :, None]
+    A = -dt * g.eig[:, None, None] * g.geo[None]
+    B = -dt * r_gas * g.eig[:, None, None] * g.temp[None, :, None]
     C = dt * np.r_[[g.tew] * l]
     D = dt * np.c_[[[g.thick]] * l]
     Z = np.zeros([l, j, 1])
@@ -378,9 +373,7 @@ else:
 
 g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.latitude_nodes / 128) / uT
-l0 = np.r_[:g.total_wavenumbers]
-eig = l0 * (l0 + 1)
-scale = jnp.exp(-g.dt * eig**2 / (tau * eig[-1]**2))
+scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 out, *rest = jax.lax.scan(lambda x, _: (scale * runge_kutta(x), None),
                           s,
                           xs=None,

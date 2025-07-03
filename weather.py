@@ -370,12 +370,12 @@ else:
     s[g.vo] = vor * mask
     s[g.di] = div * mask
     s[g.te] = transform(fields["temperature"] - g.temp.reshape(-1, 1, 1))
-    s[g.sp] = transform(jnp.array(np.log(sp0)))
+    s[g.sp] = transform(np.log(sp0))
     s[g.hu] = transform(fields["specific_humidity"])
     s[g.wo] = transform(fields["specific_cloud_liquid_water_content"])
     s[g.ic] = transform(fields["specific_cloud_ice_water_content"])
-    k = np.r_[:g.l] / (g.l - 1)
-    g.orography = transform(jnp.array(oro0)) * jnp.exp(-16 * k**4)
+    k = g.l0 / (g.l - 1)
+    g.orography = transform(oro0) * np.exp(-16 * k**4)
     s.tofile("s.raw")
     np.asarray(g.orography).tofile("oro.raw")
 

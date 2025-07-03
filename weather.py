@@ -22,14 +22,6 @@ def inverse_transform(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
 
-def vadvection(w, x):
-    wt = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
-    dx = x[1:] - x[:-1]
-    xd = dx * (1 / g.center_to_center)[:, None, None]
-    wx = jnp.r_[wt, xd * w, wt]
-    return -0.5 * (wx[1:] + wx[:-1])
-
-
 def dlon(u):
     n = 2 * g.longitude_wavenumbers - 1
     y = u[:, 1:n, :]
@@ -89,6 +81,14 @@ def F(s):
     def hadv(x):
         return -dlon(transform(u * x * sec2)) - dlat(transform(v * x * sec2))
 
+    def vadv(w, x):
+        wt = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
+        dx = x[1:] - x[:-1]
+        xd = dx * (1 / g.center_to_center)[:, None, None]
+        wx = jnp.r_[wt, xd * w, wt]
+        return -0.5 * (wx[1:] + wx[:-1])
+
+
     def omega(x):
         f = jax.lax.cumsum(x * g.thick[:, None, None])
         alpha = g.alpha[:, None, None]
@@ -130,8 +130,8 @@ def F(s):
     vort_u = -v * abs_vo * sec2
     vort_v = u * abs_vo * sec2
 
-    vadv_u = -vadvection(dot_sigma, u)
-    vadv_v = -vadvection(dot_sigma, v)
+    vadv_u = -vadv(dot_sigma, u)
+    vadv_v = -vadv(dot_sigma, v)
 
     RT = r_gas * te
     sp_force_u = RT * sp_dlon
@@ -152,7 +152,7 @@ def F(s):
     ddi += dke + doro
 
     dte_hadv = hadv(te)
-    dte_vadv = vadvection(dot_sigma, te)
+    dte_vadv = vadv(dot_sigma, te)
 
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
@@ -165,9 +165,9 @@ def F(s):
     dwo_hadv = hadv(wo)
     dic_hadv = hadv(ic)
 
-    dhu_vadv = vadvection(dot_sigma, hu)
-    dwo_vadv = vadvection(dot_sigma, wo)
-    dic_vadv = vadvection(dot_sigma, ic)
+    dhu_vadv = vadv(dot_sigma, hu)
+    dwo_vadv = vadv(dot_sigma, wo)
+    dic_vadv = vadv(dot_sigma, ic)
 
     dhu_dil = hu * di
     dwo_dil = wo * di

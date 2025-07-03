@@ -198,16 +198,14 @@ def G(s):
 
 
 def G_inv(s, dt):
-    l = g.l
-    j = g.nz
-    I = np.r_[[np.eye(j)] * l]
+    I = np.r_[[np.eye(g.nz)] * g.l]
     A = -dt * g.eig[:, None, None] * g.geo[None]
     B = -dt * r_gas * g.eig[:, None, None] * g.temp[None, :, None]
-    C = dt * np.r_[[g.tew] * l]
-    D = dt * np.c_[[[g.thick]] * l]
-    Z = np.zeros([l, j, 1])
-    Z0 = np.zeros([l, 1, j])
-    I0 = np.ones([l, 1, 1])
+    C = dt * np.r_[[g.tew] * g.l]
+    D = dt * np.c_[[[g.thick]] * g.l]
+    Z = np.zeros([g.l, g.nz, 1])
+    Z0 = np.zeros([g.l, 1, g.nz])
+    I0 = np.ones([g.l, 1, 1])
     row0 = np.c_[I, A, B]
     row1 = np.c_[C, I, Z]
     row2 = np.c_[D, Z0, I0]

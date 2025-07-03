@@ -210,9 +210,8 @@ def G_inv(s, dt):
     row1 = np.c_[C, I, Z]
     row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
-    M = einsum("lgh,hml->gml", inv, s[g.ditesp])
-    return jnp.r_[s[g.vo], M, s[g.hu], s[g.wo], s[g.ic]]
-
+    sol = einsum("lgh,hml->gml", inv, s[g.ditesp])
+    return jnp.r_[s[g.vo], sol, s[g.hu], s[g.wo], s[g.ic]]
 
 def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))

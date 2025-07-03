@@ -42,8 +42,8 @@ def dx(u):
     n = 2 * g.m - 1
     y = u[:, 1:, :]
     z = u[:, :n - 1, :]
-    lo = jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 1, 0), (0, 0, 0)))
-    hi = jax.lax.pad(z, 0.0, ((0, 0, 0), (1, 0, 0), (0, 0, 0)))
+    lo = roll(y, [0, -1, 0])
+    hi = roll(y, [0, 1, 0])
     i = np.c_[:n]
     return (i + 1) // 2 * jnp.where(i % 2, lo, -hi)
 

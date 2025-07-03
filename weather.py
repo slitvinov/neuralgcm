@@ -117,14 +117,14 @@ def F(s):
     sp_dx = inverse_transform(dx(s[g.sp]))
     sp_dy = inverse_transform(dy_cos(s[g.sp]))
 
-    sec2 = 1 / (1 - g.sin_lat**2)
+    sec2 = 1 / (1 - g.sin_y**2)
     u_dot_grad_sp = u * sp_dx * sec2 + v * sp_dy * sec2
 
     int_div = jax.lax.cumsum((di + u_dot_grad_sp) * g.thick[:, None, None])
     sigma = np.cumsum(g.thick)[:, None, None]
     dot_sigma = (sigma * int_div[-1] - int_div)[:-1]
 
-    coriolis = np.tile(g.sin_lat, (g.nx, 1))
+    coriolis = np.tile(g.sin_y, (g.nx, 1))
     abs_vo = vo + coriolis
 
     vort_u = -v * abs_vo * sec2
@@ -240,8 +240,8 @@ g.f = np.empty((g.nx, 2 * g.m - 1))
 g.f[:, 0] = 1 / np.sqrt(2 * np.pi)
 g.f[:, 1::2] = np.real(dft[:, 1:])
 g.f[:, 2::2] = -np.imag(dft[:, 1:])
-g.sin_lat, w = scipy.special.roots_legendre(g.ny)
-q = np.sqrt(1 - g.sin_lat * g.sin_lat)
+g.sin_y, w = scipy.special.roots_legendre(g.ny)
+q = np.sqrt(1 - g.sin_y * g.sin_y)
 y = np.zeros((g.l, g.m, g.ny))
 y[0, 0] = 1 / np.sqrt(2)
 for m in range(1, g.m):
@@ -254,7 +254,7 @@ for k in range(1, g.l):
     mkp2 = (m + k - 1)**2
     a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
     b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
-    y[k, :M] = a * (g.sin_lat * y[k - 1, :M] - b * y[k - 2, :M])
+    y[k, :M] = a * (g.sin_y * y[k - 1, :M] - b * y[k - 2, :M])
 r = np.transpose(y, (1, 2, 0))
 p = np.zeros((g.m, g.ny, g.l))
 for m in range(g.m):
@@ -302,7 +302,7 @@ g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
 
 output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
-desired_lat = np.rad2deg(np.arcsin(g.sin_lat))
+desired_lat = np.rad2deg(np.arcsin(g.sin_y))
 desired_lon = np.linspace(0, 360, g.nx, endpoint=False)
 a_zb, b_zb = np.loadtxt("ecmwf137_hybrid_levels.csv",
                         skiprows=1,
@@ -369,7 +369,7 @@ else:
         weights = np.maximum(upper - lower, 0)
         weights /= np.sum(weights, axis=1, keepdims=True)
         M[key] = np.einsum("lnxy,nxy->lxy", weights, val / scale)
-    cos = np.sqrt(1 - g.sin_lat**2)
+    cos = np.sqrt(1 - g.sin_y**2)
     u = transform(M["u_component_of_wind"] / cos)
     v = transform(M["v_component_of_wind"] / cos)
     s = np.empty(shape)

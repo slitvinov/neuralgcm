@@ -116,10 +116,10 @@ def F(s):
     c11 = cos_lat_d_dlat(stream_function)
     u = inverse_transform(c00 - c11)
     v = inverse_transform(c01 + c10)
-    grad_u = inverse_transform(real_basis_derivative(s[g.sp]))
-    grad_v = inverse_transform(cos_lat_d_dlat(s[g.sp]))
+    sp_lon = inverse_transform(real_basis_derivative(s[g.sp]))
+    sp_lat = inverse_transform(cos_lat_d_dlat(s[g.sp]))
     sec2 = 1 / (1 - g.sin_lat**2)
-    u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
+    u_dot_grad = u * sp_lon * sec2 + v * sp_lat * sec2
     f_full = jax.lax.cumsum((di + u_dot_grad) * g.thick[:, None, None])
     sum_sigma = np.cumsum(g.thick)[:, None, None]
     sigma_full = (sum_sigma * f_full[-1] - f_full)[:-1]
@@ -138,8 +138,7 @@ def F(s):
     vort_tendency = -real_basis_derivative(v_mod) + sec_lat_d_dlat_cos2(u_mod)
     div_tendency = -real_basis_derivative(u_mod) - sec_lat_d_dlat_cos2(v_mod)
 
-    ke = jnp.stack((u, v))**2
-    ke = ke.sum(0) * sec2 / 2
+    ke = 0.5 * sec2 * (u**2 + v**2)
     l0 = np.arange(g.total_wavenumbers)
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)

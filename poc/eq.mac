@@ -1,0 +1,46 @@
+kappa: R / Cp;
+u: grad(inverse_laplacian(di)) + cross(k, grad(inverse_laplacian(vo)));
+eq_vo: diff(vo, t) =
+ - curl(
+     (vo + f) * cross(k, u)
+   + dot_sigma * diff(u, sigma)
+   + R * te_prime * grad(sp)
+ );
+eq_di: diff(di, t) =
+ - div(
+     (vo + f) * cross(k, u)
+   + dot_sigma * diff(u, sigma)
+   + R * te_prime * grad(sp)
+ )
+ - laplacian(
+     0.5 * (u . u) + phi + R * te_bar * sp
+ );
+eq_te: diff(te, t) =
+ - div(u * te_prime)
+ + te_prime * di
+ - dot_sigma * diff(te, sigma)
+ + kappa * te * omega / p;
+eq_hu: diff(hu, t) =
+ - div(u * hu)
+ + hu * di
+ - dot_sigma * diff(hu, sigma);
+eq_sp: diff(sp, t) =
+ - integrate(
+     di + u . grad(sp), sigma, 0, 1
+ );
+dot_sigma_kp12:=
+ - sigma_kp12 * diff(sp, t)
+ - (1 / exp(sp)) * integrate(
+     div(exp(sp) * u), sigma, 0, sigma_kp12
+ );
+omega_k :=
+ exp(sp) * sigma_k * (
+   u . grad(sp)
+ - (1 / sigma_k) * integrate(
+     di + u . grad(sp), sigma, 0, sigma_k
+ ));
+phi_k :=
+ phi_s + R * integrate(tv, log_sigma, log(sigma_k), 0);
+tv :=
+ te * (1 + (Rvap / R - 1) * hu - hu_ci - hu_cl);
+phi_s := g * zs;

@@ -191,7 +191,7 @@ def G(s):
     shape = g.nz, 2 * g.m - 1, g.l
     tscale = 3 * g.nz, 2 * g.m - 1, g.l
     ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) +
-                   g.r_gas * g.temp[..., None, None] * s[g.sp])
+                   g.r_gas * g.temp[:, None, None] * s[g.sp])
     dtesp = einsum("gh,hml->gml", jnp.r_[-g.tew, -g.thick[None]], s[g.di])
     return jnp.r_[jnp.zeros(shape), ddi, dtesp, jnp.zeros(tscale)]
 
@@ -365,12 +365,11 @@ else:
     v = transform(fields["v_component_of_wind"] / cos)
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
-    mask = np.r_[[1] * (g.l - 1), 0]
-    sp0 = sp[None, ...] / (1 / uL / uT**2)
-    oro0 = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
+    sp0 = sp[None, :, :] / (1 / uL / uT**2)
+    oro0 = oro[None, :, :] / (uL * GRAVITY_ACCELERATION)
     s = np.empty(shape, dtype=np.float32)
-    s[g.vo] = vor * mask
-    s[g.di] = div * mask
+    s[g.vo] = vor * g.mask
+    s[g.di] = div * g.mask
     s[g.te] = transform(fields["temperature"] - g.temp.reshape(-1, 1, 1))
     s[g.sp] = transform(np.log(sp0))
     s[g.hu] = transform(fields["specific_humidity"])

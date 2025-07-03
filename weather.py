@@ -130,8 +130,8 @@ def F(s):
     sigma_u = -vadvection(sigma_full, u)
     sigma_v = -vadvection(sigma_full, v)
     rt = r_gas * te
-    vert_u = (sigma_u + rt * grad_u) * sec2
-    vert_v = (sigma_v + rt * grad_v) * sec2
+    vert_u = (sigma_u + rt * sp_lon) * sec2
+    vert_v = (sigma_v + rt * sp_lat) * sec2
     u_mod = transform(vort_u + vert_u)
     v_mod = transform(vort_v + vert_v)
 

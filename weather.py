@@ -87,14 +87,6 @@ def runge_kutta(y):
     return y + ex + im
 
 
-def omega(g_term):
-    f = jax.lax.cumsum(g_term * g.thick[:, None, None])
-    alpha = g.alpha[:, None, None]
-    pad = (1, 0), (0, 0), (0, 0)
-    return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None,
-                                                                     None]
-
-
 def F(s):
 
     def hadvection(s):
@@ -102,6 +94,13 @@ def F(s):
         m = transform(u * s * sec2)
         n = transform(v * s * sec2)
         return -real_basis_derivative(m) - sec_lat_d_dlat_cos2(n)
+
+    def omega(g_term):
+        f = jax.lax.cumsum(g_term * g.thick[:, None, None])
+        alpha = g.alpha[:, None, None]
+        pad = (1, 0), (0, 0), (0, 0)
+        return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None,
+                                                                         None]
 
     vort = inverse_transform(s[g.vo])
     div = inverse_transform(s[g.di])

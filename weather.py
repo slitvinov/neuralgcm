@@ -102,9 +102,9 @@ def F(s):
         return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None,
                                                                          None]
 
-    vort = inverse_transform(s[g.vo])
-    div = inverse_transform(s[g.di])
-    temp = inverse_transform(s[g.te])
+    vo = inverse_transform(s[g.vo])
+    di = inverse_transform(s[g.di])
+    te = inverse_transform(s[g.te])
     hu = inverse_transform(s[g.hu])
     wa = inverse_transform(s[g.wo])
     ic = inverse_transform(s[g.ic])
@@ -126,17 +126,17 @@ def F(s):
     sec2 = 1 / (1 - g.sin_lat**2)
     u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
     f_exp = jax.lax.cumsum(u_dot_grad * g.thick[:, None, None])
-    f_full = jax.lax.cumsum((div + u_dot_grad) * g.thick[:, None, None])
+    f_full = jax.lax.cumsum((di + u_dot_grad) * g.thick[:, None, None])
     sum_sigma = np.cumsum(g.thick)[:, None, None]
     sigma_exp = (sum_sigma * f_exp[-1] - f_exp)[:-1]
     sigma_full = (sum_sigma * f_full[-1] - f_full)[:-1]
     coriolis = np.tile(g.sin_lat, (g.longitude_nodes, 1))
-    total_vort = vort + coriolis
+    total_vort = vo + coriolis
     vort_u = -v * total_vort * sec2
     vort_v = u * total_vort * sec2
     sigma_u = -vadvection(sigma_full, u)
     sigma_v = -vadvection(sigma_full, v)
-    rt = r_gas * temp
+    rt = r_gas * te
     vert_u = (sigma_u + rt * grad_u) * sec2
     vert_v = (sigma_v + rt * grad_v) * sec2
     u_mod = transform(vort_u + vert_u)
@@ -151,14 +151,14 @@ def F(s):
     ke_tendency = l0 * (l0 + 1) * transform(ke)
     oro_tendency = gravity_acceleration * (l0 * (l0 + 1) * g.orography)
 
-    t1 = hadvection(temp)
+    t1 = hadvection(te)
     hu_h1 = hadvection(hu)
     wa_h1 = hadvection(wa)
     ic_h1 = hadvection(ic)
-    temp_vert = vadvection(sigma_full, temp)
+    temp_vert = vadvection(sigma_full, te)
     # np.unique(g.temp[..., None, None].ravel()).size > 1:
     t_mean = g.temp[..., None, None] * (u_dot_grad - omega(u_dot_grad))
-    t_var = temp * (u_dot_grad - omega(div + u_dot_grad))
+    t_var = te * (u_dot_grad - omega(di + u_dot_grad))
     temp_adiab = kappa * (t_mean + t_var)
     xds = g.thick[:, None, None] * u_dot_grad
     logsp_tendency = -xds.sum(axis=0, keepdims=True)
@@ -166,12 +166,12 @@ def F(s):
     wa_v = vadvection(sigma_full, wa)
     ic_v = vadvection(sigma_full, ic)
     v = jnp.r_[hu_v, wa_v, ic_v]
-    h0 = jnp.r_[hu * div, wa * div, ic * div]
+    h0 = jnp.r_[hu * di, wa * di, ic * di]
     h1 = jnp.r_[hu_h1, wa_h1, ic_h1]
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
     return jnp.r_[vort_tendency * mask,
                   (div_tendency + ke_tendency + oro_tendency) * mask,
-                  (transform(temp * div + temp_vert + temp_adiab) + t1) * mask,
+                  (transform(temp * di + temp_vert + temp_adiab) + t1) * mask,
                   transform(logsp_tendency) * mask,
                   (transform(v + h0) + h1) * mask]
 

@@ -39,12 +39,9 @@ def modal(x):
 
 
 def dx(u):
-    n = 2 * g.m - 1
-    y = u[:, 1:, :]
-    z = u[:, :n - 1, :]
     lo = roll(y, [0, -1, 0])
     hi = roll(y, [0, 1, 0])
-    i = np.c_[:n]
+    i = np.c_[:2 * g.m - 1]
     return (i + 1) // 2 * jnp.where(i % 2, lo, -hi)
 
 

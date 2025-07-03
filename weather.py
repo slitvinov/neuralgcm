@@ -23,7 +23,7 @@ def inverse_transform(x):
 
 
 def dlon(u):
-    n = 2 * g.longitude_wavenumbers - 1
+    n = 2 * g.m - 1
     y = u[:, 1:n, :]
     z = u[:, :n - 1, :]
     u_do = jax.lax.pad(y, 0.0, ((0, 0, 0), (0, 1, 0), (0, 0, 0)))
@@ -47,10 +47,11 @@ def dlat_cos(x):
 
 
 def pad(zm, zp):
-    return jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0, (
-        (0, 0, 0), (0, 0, 0),
-        (0, 1, 0))) + jax.lax.pad(zp[:, :, :g.total_wavenumbers - 1], 0.0,
-                                  ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
+    return jax.lax.pad(zm[:, :, 1:g.l], 0.0,
+                       ((0, 0, 0), (0, 0, 0),
+                        (0, 1, 0))) + jax.lax.pad(zp[:, :, :g.l - 1], 0.0,
+                                                  ((0, 0, 0), (0, 0, 0),
+                                                   (1, 0, 0)))
 
 
 def runge_kutta(y):
@@ -82,12 +83,11 @@ def F(s):
         return -dlon(transform(u * x * sec2)) - dlat(transform(v * x * sec2))
 
     def vadv(w, x):
-        wt = np.zeros((1, g.longitude_nodes, g.latitude_nodes))
+        wt = np.zeros((1, g.nx, g.ny))
         dx = x[1:] - x[:-1]
-        xd = dx * (1 / g.center_to_center)[:, None, None]
+        xd = dx * (1 / g.dz)[:, None, None]
         wx = jnp.r_[wt, xd * w, wt]
         return -0.5 * (wx[1:] + wx[:-1])
-
 
     def omega(x):
         f = jax.lax.cumsum(x * g.thick[:, None, None])
@@ -124,7 +124,7 @@ def F(s):
     sigma = np.cumsum(g.thick)[:, None, None]
     dot_sigma = (sigma * int_div[-1] - int_div)[:-1]
 
-    coriolis = np.tile(g.sin_lat, (g.longitude_nodes, 1))
+    coriolis = np.tile(g.sin_lat, (g.nx, 1))
     abs_vo = vo + coriolis
 
     vort_u = -v * abs_vo * sec2
@@ -182,22 +182,24 @@ def F(s):
         g.thick[:, None, None] * u_dot_grad_sp, axis=0, keepdims=True)
     dsp = transform(dsp_phys)
 
-    mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
+    mask = np.r_[[1] * (g.l - 1), 0]
 
     return jnp.r_[dvo * mask, ddi * mask, dte * mask, dsp * mask,
                   dmoist * mask]
 
 
 def G(s):
-    shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
-    tscale = 3 * g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
-    ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) + r_gas * g.temp[..., None, None] * s[g.sp])
+    shape = g.nz, 2 * g.m - 1, g.l
+    tscale = 3 * g.nz, 2 * g.m - 1, g.l
+    ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) +
+                   r_gas * g.temp[..., None, None] * s[g.sp])
     dtesp = einsum("gh,hml->gml", jnp.r_[-g.tew, -g.thick[None]], s[g.di])
     return jnp.r_[jnp.zeros(shape), ddi, dtesp, jnp.zeros(tscale)]
 
+
 def G_inv(s, dt):
-    l = g.total_wavenumbers
-    j = g.layers
+    l = g.l
+    j = g.nz
     I = np.r_[[np.eye(j)] * l]
     A = -dt * g.eig[:, None, None] * g.geo[None]
     B = -dt * r_gas * g.eig[:, None, None] * g.temp[None, :, None]
@@ -213,6 +215,7 @@ def G_inv(s, dt):
     sol = einsum("lgh,hml->gml", inv, s[g.ditesp])
     return jnp.r_[s[g.vo], sol, s[g.hu], s[g.wo], s[g.ic]]
 
+
 def open(path):
     x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
     return x.sel(time="19900501T00")
@@ -225,29 +228,28 @@ einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 gravity_acceleration = GRAVITY_ACCELERATION / (uL / uT**2)
 kappa = 2 / 7
 r_gas = kappa * 0.0011628807950492582
-g.longitude_wavenumbers = 171
-g.total_wavenumbers = 172
-g.longitude_nodes = 512
-g.latitude_nodes = 256
-g.layers = 32
-g.boundaries = np.linspace(0, 1, g.layers + 1)
-g.centers = (g.boundaries[1:] + g.boundaries[:-1]) / 2
-g.thick = np.diff(g.boundaries)
-g.center_to_center = np.diff(g.centers)
-dft = scipy.linalg.dft(
-    g.longitude_nodes)[:, :g.longitude_wavenumbers] / np.sqrt(np.pi)
-g.f = np.empty((g.longitude_nodes, 2 * g.longitude_wavenumbers - 1))
+g.m = 171
+g.l = 172
+g.nx = 512
+g.ny = 256
+g.nz = 32
+g.zb = np.linspace(0, 1, g.nz + 1)
+g.zc = (g.zb[1:] + g.zb[:-1]) / 2
+g.thick = np.diff(g.zb)
+g.dz = np.diff(g.zc)
+dft = scipy.linalg.dft(g.nx)[:, :g.m] / np.sqrt(np.pi)
+g.f = np.empty((g.nx, 2 * g.m - 1))
 g.f[:, 0] = 1 / np.sqrt(2 * np.pi)
 g.f[:, 1::2] = np.real(dft[:, 1:])
 g.f[:, 2::2] = -np.imag(dft[:, 1:])
-g.sin_lat, w = scipy.special.roots_legendre(g.latitude_nodes)
+g.sin_lat, w = scipy.special.roots_legendre(g.ny)
 q = np.sqrt(1 - g.sin_lat * g.sin_lat)
-y = np.zeros((g.total_wavenumbers, g.longitude_wavenumbers, g.latitude_nodes))
+y = np.zeros((g.l, g.m, g.ny))
 y[0, 0] = 1 / np.sqrt(2)
-for m in range(1, g.longitude_wavenumbers):
+for m in range(1, g.m):
     y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
-for k in range(1, g.total_wavenumbers):
-    M = min(g.longitude_wavenumbers, g.total_wavenumbers - k)
+for k in range(1, g.l):
+    M = min(g.m, g.l - k)
     m = np.c_[:M]
     m2 = m**2
     mk2 = (m + k)**2
@@ -256,34 +258,32 @@ for k in range(1, g.total_wavenumbers):
     b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
     y[k, :M] = a * (g.sin_lat * y[k - 1, :M] - b * y[k - 2, :M])
 r = np.transpose(y, (1, 2, 0))
-p = np.zeros((g.longitude_wavenumbers, g.latitude_nodes, g.total_wavenumbers))
-for m in range(g.longitude_wavenumbers):
-    p[m, :, m:g.total_wavenumbers] = r[m, :, 0:g.total_wavenumbers - m]
+p = np.zeros((g.m, g.ny, g.l))
+for m in range(g.m):
+    p[m, :, m:g.l] = r[m, :, 0:g.l - m]
 p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
-g.w = 2 * np.pi * w / g.longitude_nodes
-g.temp = np.full((g.layers, ), 250)
+g.w = 2 * np.pi * w / g.nx
+g.temp = np.full((g.nz, ), 250)
 
-p = np.r_[1:g.longitude_wavenumbers]
+p = np.r_[1:g.m]
 q = np.c_[p, -p]
-m, l = np.meshgrid(np.r_[0, q.ravel()],
-                   np.r_[:g.total_wavenumbers],
-                   indexing="ij")
+m, l = np.meshgrid(np.r_[0, q.ravel()], np.r_[:g.l], indexing="ij")
 mask = abs(m) <= l
 g.a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
 g.a[:, 0] = 0
 g.b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
 g.b[:, -1] = 0
-g.alpha = np.diff(np.log(g.centers), append=0) / 2
-g.alpha[-1] = -np.log(g.centers[-1])
+g.alpha = np.diff(np.log(g.zc), append=0) / 2
+g.alpha[-1] = -np.log(g.zc[-1])
 
-weights = np.zeros([g.layers, g.layers])
-for j in range(g.layers):
+weights = np.zeros([g.nz, g.nz])
+for j in range(g.nz):
     weights[j, j] = g.alpha[j]
-    for k in range(j + 1, g.layers):
+    for k in range(j + 1, g.nz):
         weights[j, k] = g.alpha[k] + g.alpha[k - 1]
 g.geo = r_gas * weights
-p = np.tril(np.ones([g.layers, g.layers]))
+p = np.tril(np.ones([g.nz, g.nz]))
 alpha = g.alpha[..., None]
 p_alpha = p * alpha
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
@@ -299,18 +299,18 @@ k = k0 * k1
 k_shifted = np.roll(k, 1, axis=0)
 k_shifted[0] = 0
 g.tew = (h0 - k - k_shifted) * g.thick
-g.l0 = np.r_[:g.total_wavenumbers]
+g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
 
-output_level_indices = [g.layers // 4, g.layers // 2, 3 * g.layers // 4, -1]
+output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
 desired_lat = np.rad2deg(np.arcsin(g.sin_lat))
-desired_lon = np.linspace(0, 360, g.longitude_nodes, endpoint=False)
-a_boundaries, b_boundaries = np.loadtxt("ecmwf137_hybrid_levels.csv",
-                                        skiprows=1,
-                                        usecols=(1, 2),
-                                        delimiter="\t").T
-n = g.layers
+desired_lon = np.linspace(0, 360, g.nx, endpoint=False)
+a_zb, b_zb = np.loadtxt("ecmwf137_hybrid_levels.csv",
+                        skiprows=1,
+                        usecols=(1, 2),
+                        delimiter="\t").T
+n = g.nz
 g.vo = np.s_[:n]
 g.di = np.s_[n:2 * n]
 g.te = np.s_[2 * n:3 * n]
@@ -319,7 +319,7 @@ g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
-shape = 6 * g.layers + 1, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers
+shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
 if os.path.exists("s.raw") and os.path.exists("oro.raw"):
     s = np.fromfile("s.raw").reshape(shape)
     g.orography = np.fromfile("oro.raw", dtype=np.float32).reshape(shape[1:])
@@ -361,13 +361,12 @@ else:
         ("specific_cloud_ice_water_content", 1),
         ("specific_humidity", 1),
     ]:
-        val = np.empty((nhyb, g.longitude_nodes, g.latitude_nodes))
+        val = np.empty((nhyb, g.nx, g.ny))
         for i in range(nhyb):
             val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
-        source = a_boundaries[:, None, None] / sp + b_boundaries[:, None, None]
-        upper = np.minimum(g.boundaries[1:, None, None, None],
-                           source[None, 1:, :, :])
-        lower = np.maximum(g.boundaries[:-1, None, None, None],
+        source = a_zb[:, None, None] / sp + b_zb[:, None, None]
+        upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
+        lower = np.maximum(g.zb[:-1, None, None, None],
                            source[None, :-1, :, :])
         weights = np.maximum(upper - lower, 0)
         weights /= np.sum(weights, axis=1, keepdims=True)
@@ -378,7 +377,7 @@ else:
     s = np.empty(shape)
     vor = dlon(v) - dlat(u)
     div = dlon(u) + dlat(v)
-    mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
+    mask = np.r_[[1] * (g.l - 1), 0]
     s[g.vo] = vor * mask
     s[g.di] = div * mask
     s[g.te] = transform(M["temperature"] - g.temp.reshape(-1, 1, 1))
@@ -386,13 +385,13 @@ else:
     s[g.hu] = transform(M["specific_humidity"])
     s[g.wo] = transform(M["specific_cloud_liquid_water_content"])
     s[g.ic] = transform(M["specific_cloud_ice_water_content"])
-    k = np.r_[:g.total_wavenumbers] / (g.total_wavenumbers - 1)
+    k = np.r_[:g.l] / (g.l - 1)
     g.orography = transform(jnp.array(orography_input)) * jnp.exp(-16 * k**4)
     s.tofile("s.raw")
     np.asarray(g.orography).tofile("oro.raw")
 
 g.dt = 4.3752000000000006e-02
-tau = 12900 / np.log2(g.latitude_nodes / 128) / uT
+tau = 12900 / np.log2(g.ny / 128) / uT
 scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 out, *rest = jax.lax.scan(lambda x, _: (scale * runge_kutta(x), None),
                           s,

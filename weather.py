@@ -22,7 +22,7 @@ def inverse_transform(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
 
-def dlon(u):
+def dx(u):
     n = 2 * g.m - 1
     y = u[:, 1:n, :]
     z = u[:, :n - 1, :]
@@ -32,14 +32,14 @@ def dlon(u):
     return (i + 1) // 2 * jnp.where(i % 2, u_do, -u_up)
 
 
-def dlat(x):
+def dy(x):
     l = g.l0[None, :]
     zm = (l - 1) * g.a * x
     zp = -(l + 2) * g.b * x
     return pad(zm, zp)
 
 
-def dlat_cos(x):
+def dy_cos(x):
     l = g.l0[None, :]
     zm = (l + 1) * g.a * x
     zp = -l * g.b * x
@@ -80,7 +80,7 @@ def runge_kutta(y):
 def F(s):
 
     def hadv(x):
-        return -dlon(transform(u * x * sec2)) - dlat(transform(v * x * sec2))
+        return -dx(transform(u * x * sec2)) - dy(transform(v * x * sec2))
 
     def vadv(w, x):
         wt = np.zeros((1, g.nx, g.ny))
@@ -106,19 +106,19 @@ def F(s):
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
 
-    dchi_dlon = dlon(chi)
-    dchi_dlat = dlat_cos(chi)
-    dpsi_dlon = dlon(psi)
-    dpsi_dlat = dlat_cos(psi)
+    dchi_dx = dx(chi)
+    dchi_dy_cos = dy_cos(chi)
+    dpsi_dx = dx(psi)
+    dpsi_dy_cos = dy_cos(psi)
 
-    u = inverse_transform(dchi_dlon - dpsi_dlat)
-    v = inverse_transform(dchi_dlat + dpsi_dlon)
+    u = inverse_transform(dchi_dx - dpsi_dy_cos)
+    v = inverse_transform(dchi_dy_cos + dpsi_dx)
 
-    sp_dlon = inverse_transform(dlon(s[g.sp]))
-    sp_dlat = inverse_transform(dlat_cos(s[g.sp]))
+    sp_dx = inverse_transform(dx(s[g.sp]))
+    sp_dy = inverse_transform(dy_cos(s[g.sp]))
 
     sec2 = 1 / (1 - g.sin_lat**2)
-    u_dot_grad_sp = u * sp_dlon * sec2 + v * sp_dlat * sec2
+    u_dot_grad_sp = u * sp_dx * sec2 + v * sp_dy * sec2
 
     int_div = jax.lax.cumsum((di + u_dot_grad_sp) * g.thick[:, None, None])
     sigma = np.cumsum(g.thick)[:, None, None]
@@ -134,8 +134,8 @@ def F(s):
     vadv_v = -vadv(dot_sigma, v)
 
     RT = r_gas * te
-    sp_force_u = RT * sp_dlon
-    sp_force_v = RT * sp_dlat
+    sp_force_u = RT * sp_dx
+    sp_force_v = RT * sp_dy
 
     force_u = vort_u + (vadv_u + sp_force_u) * sec2
     force_v = vort_v + (vadv_v + sp_force_v) * sec2
@@ -143,8 +143,8 @@ def F(s):
     force_u_spec = transform(force_u)
     force_v_spec = transform(force_v)
 
-    dvo = -dlon(force_v_spec) + dlat(force_u_spec)
-    ddi = -dlon(force_u_spec) - dlat(force_v_spec)
+    dvo = -dx(force_v_spec) + dy(force_u_spec)
+    ddi = -dx(force_u_spec) - dy(force_v_spec)
 
     ke = 0.5 * sec2 * (u**2 + v**2)
     dke = g.eig * transform(ke)
@@ -373,8 +373,8 @@ else:
     u = transform(M["u_component_of_wind"] / cos)
     v = transform(M["v_component_of_wind"] / cos)
     s = np.empty(shape)
-    vor = dlon(v) - dlat(u)
-    div = dlon(u) + dlat(v)
+    vor = dx(v) - dy(u)
+    div = dx(u) + dy(v)
     mask = np.r_[[1] * (g.l - 1), 0]
     s[g.vo] = vor * mask
     s[g.di] = div * mask

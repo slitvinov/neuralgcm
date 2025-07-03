@@ -285,7 +285,7 @@ k = k0 * k1
 k_shifted = np.roll(k, 1, axis=0)
 k_shifted[0] = 0
 g.tew = (h0 - k - k_shifted) * g.thick
-g.l0 = np.r_[1:g.total_wavenumbers]
+g.l0 = np.r_[:g.total_wavenumbers]
 g.eig = g.l0 * (g.l0  + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
 

@@ -125,8 +125,7 @@ def F(s):
     u_dot_grad_sp = u * spx * g.sec2 + v * spy * g.sec2
 
     int_div = jax.lax.cumsum((di + u_dot_grad_sp) * g.thick[:, None, None])
-    sigma = np.cumsum(g.thick)[:, None, None]
-    dot_sigma = (sigma * int_div[-1] - int_div)[:-1]
+    dot_sigma = (g.sigma[:, None, None] * int_div[-1] - int_div)[:-1]
 
     abs_vo = vo + g.sin_y[None, None, :]  # coriolis
 
@@ -301,6 +300,7 @@ g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
 g.mask = np.r_[[1] * (g.l - 1), 0]
+g.sigma = np.cumsum(g.thick)
 
 output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
 y_deg = np.rad2deg(np.arcsin(g.sin_y))

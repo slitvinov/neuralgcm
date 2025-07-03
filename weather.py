@@ -21,6 +21,9 @@ def transform(x):
 def inverse_transform(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
+def inverse_transform(x):
+    px = einsum('mjl,...ml->...mj', g.p, x)
+    return einsum('im,...mj->...ij', g.f, px)
 
 def dx(u):
     n = 2 * g.m - 1

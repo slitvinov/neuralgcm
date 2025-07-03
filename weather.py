@@ -323,7 +323,7 @@ g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
 if os.path.exists("s.raw") and os.path.exists("oro.raw"):
-    s = np.fromfile("s.raw").reshape(shape)
+    s = np.fromfile("s.raw", dtype=np.float32).reshape(shape)
     g.orography = np.fromfile("oro.raw", dtype=np.float32).reshape(shape[1:])
 else:
     era = xarray.merge([
@@ -366,12 +366,12 @@ else:
     cos = np.sqrt(1 - g.sin_y**2)
     u = transform(fields["u_component_of_wind"] / cos)
     v = transform(fields["v_component_of_wind"] / cos)
-    s = np.empty(shape)
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
     mask = np.r_[[1] * (g.l - 1), 0]
     sp0 = sp[None, ...] / (1 / uL / uT**2)
     oro0 = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
+    s = np.empty(shape, dtype=np.float32)
     s[g.vo] = vor * mask
     s[g.di] = div * mask
     s[g.te] = transform(fields["temperature"] - g.temp.reshape(-1, 1, 1))

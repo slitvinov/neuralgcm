@@ -44,3 +44,9 @@ phi_k :=
 tv :=
  te * (1 + (Rvap / R - 1) * hu - hu_ci - hu_cl);
 phi_s := g * zs;
+
+chi := inverse_laplacian(di);
+psi := inverse_laplacian(vo);
+
+u := diff(chi, lon) - diff(psi, lat);
+v := diff(chi, lat) + diff(psi, lon);

@@ -126,7 +126,7 @@ def F(s):
     sigma = np.cumsum(g.thick)[:, None, None]
     dot_sigma = (sigma * int_div[-1] - int_div)[:-1]
 
-    abs_vo = vo + g.coriolis
+    abs_vo = vo + g.sin_y[None, None, :] # coriolis
 
     fvx = -v * abs_vo * g.sec2
     fvy = u * abs_vo * g.sec2
@@ -302,7 +302,6 @@ g.tew = (h0 - k - k_shifted) * g.thick
 g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
-g.coriolis = np.c_[ [g.sin_y] * g.nx]
 
 output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
 y_deg = np.rad2deg(np.arcsin(g.sin_y))

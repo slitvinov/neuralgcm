@@ -99,8 +99,8 @@ def F(s):
         f = jax.lax.cumsum(g_term * g.thick[:, None, None])
         alpha = g.alpha[:, None, None]
         pad = (1, 0), (0, 0), (0, 0)
-        return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None,
-                                                                         None]
+        return (alpha * f +
+                jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None, None]
 
     vo = inverse_transform(s[g.vo])
     di = inverse_transform(s[g.di])
@@ -112,7 +112,6 @@ def F(s):
     inverse_eigenvalues = np.r_[0, -1 / (l * (l + 1))]
     stream_function = s[g.vo] * inverse_eigenvalues
     velocity_potential = s[g.di] * inverse_eigenvalues
-
     c00 = real_basis_derivative(velocity_potential)
     c01 = cos_lat_d_dlat(velocity_potential)
     c10 = real_basis_derivative(stream_function)
@@ -125,10 +124,8 @@ def F(s):
     grad_v = inverse_transform(cos_lat_d_dlat(s[g.sp]))
     sec2 = 1 / (1 - g.sin_lat**2)
     u_dot_grad = u * grad_u * sec2 + v * grad_v * sec2
-    f_exp = jax.lax.cumsum(u_dot_grad * g.thick[:, None, None])
     f_full = jax.lax.cumsum((di + u_dot_grad) * g.thick[:, None, None])
     sum_sigma = np.cumsum(g.thick)[:, None, None]
-    sigma_exp = (sum_sigma * f_exp[-1] - f_exp)[:-1]
     sigma_full = (sum_sigma * f_full[-1] - f_full)[:-1]
     coriolis = np.tile(g.sin_lat, (g.longitude_nodes, 1))
     total_vort = vo + coriolis

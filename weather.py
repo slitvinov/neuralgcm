@@ -83,86 +83,108 @@ def runge_kutta(y):
     im = g.dt * sum(b_im[j] * h[j] for j in range(n) if b_im[j])
     return y + ex + im
 
-
 def F(s):
+    def hadv(x):
+        return -real_basis_derivative(transform(u * x * sec2)) - sec_lat_d_dlat_cos2(transform(v * x * sec2))
 
-    def hadvection(s):
-        sec2 = 1 / (1 - g.sin_lat**2)
-        m = transform(u * s * sec2)
-        n = transform(v * s * sec2)
-        return -real_basis_derivative(m) - sec_lat_d_dlat_cos2(n)
-
-    def omega(g_term):
-        f = jax.lax.cumsum(g_term * g.thick[:, None, None])
+    def omega(x):
+        f = jax.lax.cumsum(x * g.thick[:, None, None])
         alpha = g.alpha[:, None, None]
         pad = (1, 0), (0, 0), (0, 0)
-        return (alpha * f +
-                jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None, None]
+        return (alpha * f + jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None, None]
 
     vo = inverse_transform(s[g.vo])
     di = inverse_transform(s[g.di])
     te = inverse_transform(s[g.te])
     hu = inverse_transform(s[g.hu])
-    wa = inverse_transform(s[g.wo])
+    wo = inverse_transform(s[g.wo])
     ic = inverse_transform(s[g.ic])
-    stream_function = s[g.vo] * g.inv_eig
-    velocity_potential = s[g.di] * g.inv_eig
-    c00 = real_basis_derivative(velocity_potential)
-    c01 = cos_lat_d_dlat(velocity_potential)
-    c10 = real_basis_derivative(stream_function)
-    c11 = cos_lat_d_dlat(stream_function)
-    u = inverse_transform(c00 - c11)
-    v = inverse_transform(c01 + c10)
-    sp_lon = inverse_transform(real_basis_derivative(s[g.sp]))
-    sp_lat = inverse_transform(cos_lat_d_dlat(s[g.sp]))
-    sec2 = 1 / (1 - g.sin_lat**2)
-    u_dot_grad = u * sp_lon * sec2 + v * sp_lat * sec2
-    f_full = jax.lax.cumsum((di + u_dot_grad) * g.thick[:, None, None])
-    sum_sigma = np.cumsum(g.thick)[:, None, None]
-    sigma_full = (sum_sigma * f_full[-1] - f_full)[:-1]
-    coriolis = np.tile(g.sin_lat, (g.longitude_nodes, 1))
-    total_vort = vo + coriolis
-    vort_u = -v * total_vort * sec2
-    vort_v = u * total_vort * sec2
-    sigma_u = -vadvection(sigma_full, u)
-    sigma_v = -vadvection(sigma_full, v)
-    rt = r_gas * te
-    vert_u = (sigma_u + rt * sp_lon) * sec2
-    vert_v = (sigma_v + rt * sp_lat) * sec2
-    u_mod = transform(vort_u + vert_u)
-    v_mod = transform(vort_v + vert_v)
 
-    vort_tendency = -real_basis_derivative(v_mod) + sec_lat_d_dlat_cos2(u_mod)
-    div_tendency = -real_basis_derivative(u_mod) - sec_lat_d_dlat_cos2(v_mod)
+    psi = s[g.vo] * g.inv_eig
+    chi = s[g.di] * g.inv_eig
+
+    dchi_dlon = real_basis_derivative(chi)
+    dchi_dlat = cos_lat_d_dlat(chi)
+    dpsi_dlon = real_basis_derivative(psi)
+    dpsi_dlat = cos_lat_d_dlat(psi)
+
+    u = inverse_transform(dchi_dlon - dpsi_dlat)
+    v = inverse_transform(dchi_dlat + dpsi_dlon)
+
+    sp_dlon = inverse_transform(real_basis_derivative(s[g.sp]))
+    sp_dlat = inverse_transform(cos_lat_d_dlat(s[g.sp]))
+
+    sec2 = 1 / (1 - g.sin_lat**2)
+    u_dot_grad_sp = u * sp_dlon * sec2 + v * sp_dlat * sec2
+
+    int_div = jax.lax.cumsum((di + u_dot_grad_sp) * g.thick[:, None, None])
+    sigma = np.cumsum(g.thick)[:, None, None]
+    dot_sigma = (sigma * int_div[-1] - int_div)[:-1]
+
+    coriolis = np.tile(g.sin_lat, (g.longitude_nodes, 1))
+    abs_vo = vo + coriolis
+
+    vort_u = -v * abs_vo * sec2
+    vort_v =  u * abs_vo * sec2
+
+    vadv_u = -vadvection(dot_sigma, u)
+    vadv_v = -vadvection(dot_sigma, v)
+
+    RT = r_gas * te
+    sp_force_u = RT * sp_dlon
+    sp_force_v = RT * sp_dlat
+
+    force_u = vort_u + (vadv_u + sp_force_u) * sec2
+    force_v = vort_v + (vadv_v + sp_force_v) * sec2
+
+    force_u_spec = transform(force_u)
+    force_v_spec = transform(force_v)
+
+    dvo = -real_basis_derivative(force_v_spec) + sec_lat_d_dlat_cos2(force_u_spec)
+    ddi = -real_basis_derivative(force_u_spec) - sec_lat_d_dlat_cos2(force_v_spec)
 
     ke = 0.5 * sec2 * (u**2 + v**2)
-    ke_tendency = g.eig * transform(ke)
-    oro_tendency = gravity_acceleration * (g.eig * g.orography)
+    dke = g.eig * transform(ke)
+    doro = gravity_acceleration * (g.eig * g.orography)
+    ddi += dke + doro
 
-    t1 = hadvection(te)
-    hu_h1 = hadvection(hu)
-    wa_h1 = hadvection(wa)
-    ic_h1 = hadvection(ic)
-    temp_vert = vadvection(sigma_full, te)
-    # np.unique(g.temp[..., None, None].ravel()).size > 1:
-    t_mean = g.temp[..., None, None] * (u_dot_grad - omega(u_dot_grad))
-    t_var = te * (u_dot_grad - omega(di + u_dot_grad))
-    temp_adiab = kappa * (t_mean + t_var)
-    xds = g.thick[:, None, None] * u_dot_grad
-    logsp_tendency = -xds.sum(axis=0, keepdims=True)
-    hu_v = vadvection(sigma_full, hu)
-    wa_v = vadvection(sigma_full, wa)
-    ic_v = vadvection(sigma_full, ic)
-    v = jnp.r_[hu_v, wa_v, ic_v]
-    h0 = jnp.r_[hu * di, wa * di, ic * di]
-    h1 = jnp.r_[hu_h1, wa_h1, ic_h1]
+    dte_hadv = hadv(te)
+    dte_vadv = vadvection(dot_sigma, te)
+
+    omega_mean = omega(u_dot_grad_sp)
+    omega_full = omega(di + u_dot_grad_sp)
+    dte_adiab = kappa * (g.temp[..., None, None] * (u_dot_grad_sp - omega_mean) + te * (u_dot_grad_sp - omega_full))
+    dte = transform(te * di + dte_vadv + dte_adiab) + dte_hadv
+
+    dhu_hadv = hadv(hu)
+    dwo_hadv = hadv(wo)
+    dic_hadv = hadv(ic)
+
+    dhu_vadv = vadvection(dot_sigma, hu)
+    dwo_vadv = vadvection(dot_sigma, wo)
+    dic_vadv = vadvection(dot_sigma, ic)
+
+    dhu_dil = hu * di
+    dwo_dil = wo * di
+    dic_dil = ic * di
+
+    dmoist_vadv = jnp.r_[dhu_vadv, dwo_vadv, dic_vadv]
+    dmoist_dil = jnp.r_[dhu_dil, dwo_dil, dic_dil]
+    dmoist_hadv = jnp.r_[dhu_hadv, dwo_hadv, dic_hadv]
+    dmoist = transform(dmoist_vadv + dmoist_dil) + dmoist_hadv
+
+    dsp_phys = -jnp.sum(g.thick[:, None, None] * u_dot_grad_sp, axis=0, keepdims=True)
+    dsp = transform(dsp_phys)
+
     mask = np.r_[[1] * (g.total_wavenumbers - 1), 0]
-    return jnp.r_[vort_tendency * mask,
-                  (div_tendency + ke_tendency + oro_tendency) * mask,
-                  (transform(te * di + temp_vert + temp_adiab) + t1) * mask,
-                  transform(logsp_tendency) * mask,
-                  (transform(v + h0) + h1) * mask]
 
+    return jnp.r_[
+        dvo * mask,
+        ddi * mask,
+        dte * mask,
+        dsp * mask,
+        dmoist * mask
+    ]
 
 def G(s):
     shape = g.layers, 2 * g.longitude_wavenumbers - 1, g.total_wavenumbers

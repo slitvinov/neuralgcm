@@ -184,11 +184,7 @@ def F(s):
     dsp_phys = -jnp.sum(
         g.thick[:, None, None] * u_dot_grad_sp, axis=0, keepdims=True)
     dsp = transform(dsp_phys)
-
-    mask = np.r_[[1] * (g.l - 1), 0]
-
-    return jnp.r_[dvo * mask, ddi * mask, dte * mask, dsp * mask,
-                  dmoist * mask]
+    return jnp.r_[dvo, ddi, dte, dsp, dmoist] * g.mask
 
 
 def G(s):
@@ -304,6 +300,7 @@ g.tew = (h0 - k - k_shifted) * g.thick
 g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
+g.mask = np.r_[[1] * (g.l - 1), 0]
 
 output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
 y_deg = np.rad2deg(np.arcsin(g.sin_y))

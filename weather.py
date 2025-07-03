@@ -114,10 +114,10 @@ def F(s):
     u = inverse_transform(dchi_dx - dpsi_dy_cos)
     v = inverse_transform(dchi_dy_cos + dpsi_dx)
 
-    sp_dx = inverse_transform(dx(s[g.sp]))
-    sp_dy = inverse_transform(dy_cos(s[g.sp]))
+    spx = inverse_transform(dx(s[g.sp]))
+    spy = inverse_transform(dy_cos(s[g.sp]))
 
-    u_dot_grad_sp = u * sp_dx * g.sec2 + v * sp_dy * g.sec2
+    u_dot_grad_sp = u * spx * g.sec2 + v * spy * g.sec2
 
     int_div = jax.lax.cumsum((di + u_dot_grad_sp) * g.thick[:, None, None])
     sigma = np.cumsum(g.thick)[:, None, None]
@@ -126,24 +126,24 @@ def F(s):
     coriolis = np.tile(g.sin_y, (g.nx, 1))
     abs_vo = vo + coriolis
 
-    vort_u = -v * abs_vo * g.sec2
-    vort_v = u * abs_vo * g.sec2
+    fvx = -v * abs_vo * g.sec2
+    fvy = u * abs_vo * g.sec2
 
     vadv_u = -vadv(dot_sigma, u)
     vadv_v = -vadv(dot_sigma, v)
 
     RT = g.r_gas * te
-    sp_force_u = RT * sp_dx
-    sp_force_v = RT * sp_dy
+    sp_force_x = RT * spx
+    sp_force_y = RT * spy
 
-    force_u = vort_u + (vadv_u + sp_force_u) * g.sec2
-    force_v = vort_v + (vadv_v + sp_force_v) * g.sec2
+    fx = fvx + (vadv_u + sp_force_x) * g.sec2
+    fy = fvy + (vadv_v + sp_force_y) * g.sec2
 
-    force_u_spec = transform(force_u)
-    force_v_spec = transform(force_v)
+    fx_spec = transform(fx)
+    fy_spec = transform(fy)
 
-    dvo = -dx(force_v_spec) + dy(force_u_spec)
-    ddi = -dx(force_u_spec) - dy(force_v_spec)
+    dvo = -dx(fy_spec) + dy(fx_spec)
+    ddi = -dx(fx_spec) - dy(fy_spec)
 
     ke = 0.5 * g.sec2 * (u**2 + v**2)
     dke = g.eig * transform(ke)
@@ -247,14 +247,14 @@ y[0, 0] = 1 / np.sqrt(2)
 for m in range(1, g.m):
     y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
 for k in range(1, g.l):
-    M = min(g.m, g.l - k)
-    m = np.c_[:M]
+    fields = min(g.m, g.l - k)
+    m = np.c_[:fields]
     m2 = m**2
     mk2 = (m + k)**2
     mkp2 = (m + k - 1)**2
     a = np.sqrt((4 * mk2 - 1) / (mk2 - m2))
     b = np.sqrt((mkp2 - m2) / (4 * mkp2 - 1))
-    y[k, :M] = a * (g.sin_y * y[k - 1, :M] - b * y[k - 2, :M])
+    y[k, :fields] = a * (g.sin_y * y[k - 1, :fields] - b * y[k - 2, :fields])
 r = np.transpose(y, (1, 2, 0))
 p = np.zeros((g.m, g.ny, g.l))
 for m in range(g.m):
@@ -341,16 +341,16 @@ else:
     ]]
     era.to_netcdf("weather.h5")
     nhyb = len(era["hybrid"].data)
-    lat = era["latitude"].data
-    lon = era["longitude"].data
-    xi = np.meshgrid(y_deg, x_deg)
-    xy_src = lat, lon
-    sp = scipy.interpolate.interpn(xy_src, era["surface_pressure"].data, xi)
+    y_src = era["latitude"].data
+    x_src = era["longitude"].data
+    xy_grid = np.meshgrid(y_deg, x_deg)
+    xy_src = y_src, x_src
+    sp = scipy.interpolate.interpn(xy_src, era["surface_pressure"].data, xy_grid)
     oro = scipy.interpolate.interpn(xy_src,
-                                    era["geopotential_at_surface"].data, xi)
-    sp_nodal = sp[None, ...] / (1 / uL / uT**2)
-    orography_input = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
-    M = {}
+                                    era["geopotential_at_surface"].data, xy_grid)
+    sp0 = sp[None, ...] / (1 / uL / uT**2)
+    oro0 = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
+    fields = {}
     for key, scale in [
         ("u_component_of_wind", uL / uT),
         ("v_component_of_wind", uL / uT),
@@ -359,32 +359,32 @@ else:
         ("specific_cloud_ice_water_content", 1),
         ("specific_humidity", 1),
     ]:
-        val = np.empty((nhyb, g.nx, g.ny))
+        samples = np.empty((nhyb, g.nx, g.ny))
         for i in range(nhyb):
-            val[i] = scipy.interpolate.interpn(xy_src, era[key].data[i], xi)
+            samples[i] = scipy.interpolate.interpn(xy_src, era[key].data[i], xy_grid)
         source = a_zb[:, None, None] / sp + b_zb[:, None, None]
         upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
         lower = np.maximum(g.zb[:-1, None, None, None],
                            source[None, :-1, :, :])
         weights = np.maximum(upper - lower, 0)
         weights /= np.sum(weights, axis=1, keepdims=True)
-        M[key] = np.einsum("lnxy,nxy->lxy", weights, val / scale)
+        fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
     cos = np.sqrt(1 - g.sin_y**2)
-    u = transform(M["u_component_of_wind"] / cos)
-    v = transform(M["v_component_of_wind"] / cos)
+    u = transform(fields["u_component_of_wind"] / cos)
+    v = transform(fields["v_component_of_wind"] / cos)
     s = np.empty(shape)
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
     mask = np.r_[[1] * (g.l - 1), 0]
     s[g.vo] = vor * mask
     s[g.di] = div * mask
-    s[g.te] = transform(M["temperature"] - g.temp.reshape(-1, 1, 1))
-    s[g.sp] = transform(jnp.array(np.log(sp_nodal)))
-    s[g.hu] = transform(M["specific_humidity"])
-    s[g.wo] = transform(M["specific_cloud_liquid_water_content"])
-    s[g.ic] = transform(M["specific_cloud_ice_water_content"])
+    s[g.te] = transform(fields["temperature"] - g.temp.reshape(-1, 1, 1))
+    s[g.sp] = transform(jnp.array(np.log(sp0)))
+    s[g.hu] = transform(fields["specific_humidity"])
+    s[g.wo] = transform(fields["specific_cloud_liquid_water_content"])
+    s[g.ic] = transform(fields["specific_cloud_ice_water_content"])
     k = np.r_[:g.l] / (g.l - 1)
-    g.orography = transform(jnp.array(orography_input)) * jnp.exp(-16 * k**4)
+    g.orography = transform(jnp.array(oro0)) * jnp.exp(-16 * k**4)
     s.tofile("s.raw")
     np.asarray(g.orography).tofile("oro.raw")
 

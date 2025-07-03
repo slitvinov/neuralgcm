@@ -80,7 +80,7 @@ def runge_kutta(y):
 def F(s):
 
     def hadv(x):
-        return -dx(transform(u * x * sec2)) - dy(transform(v * x * sec2))
+        return -dx(transform(u * x * g.sec2)) - dy(transform(v * x * g.sec2))
 
     def vadv(w, x):
         wt = np.zeros((1, g.nx, g.ny))
@@ -117,8 +117,7 @@ def F(s):
     sp_dx = inverse_transform(dx(s[g.sp]))
     sp_dy = inverse_transform(dy_cos(s[g.sp]))
 
-    sec2 = 1 / (1 - g.sin_y**2)
-    u_dot_grad_sp = u * sp_dx * sec2 + v * sp_dy * sec2
+    u_dot_grad_sp = u * sp_dx * g.sec2 + v * sp_dy * g.sec2
 
     int_div = jax.lax.cumsum((di + u_dot_grad_sp) * g.thick[:, None, None])
     sigma = np.cumsum(g.thick)[:, None, None]
@@ -127,8 +126,8 @@ def F(s):
     coriolis = np.tile(g.sin_y, (g.nx, 1))
     abs_vo = vo + coriolis
 
-    vort_u = -v * abs_vo * sec2
-    vort_v = u * abs_vo * sec2
+    vort_u = -v * abs_vo * g.sec2
+    vort_v = u * abs_vo * g.sec2
 
     vadv_u = -vadv(dot_sigma, u)
     vadv_v = -vadv(dot_sigma, v)
@@ -137,8 +136,8 @@ def F(s):
     sp_force_u = RT * sp_dx
     sp_force_v = RT * sp_dy
 
-    force_u = vort_u + (vadv_u + sp_force_u) * sec2
-    force_v = vort_v + (vadv_v + sp_force_v) * sec2
+    force_u = vort_u + (vadv_u + sp_force_u) * g.sec2
+    force_v = vort_v + (vadv_v + sp_force_v) * g.sec2
 
     force_u_spec = transform(force_u)
     force_v_spec = transform(force_v)
@@ -146,7 +145,7 @@ def F(s):
     dvo = -dx(force_v_spec) + dy(force_u_spec)
     ddi = -dx(force_u_spec) - dy(force_v_spec)
 
-    ke = 0.5 * sec2 * (u**2 + v**2)
+    ke = 0.5 * g.sec2 * (u**2 + v**2)
     dke = g.eig * transform(ke)
     doro = gravity_acceleration * (g.eig * g.orography)
     ddi += dke + doro
@@ -241,6 +240,7 @@ g.f[:, 0] = 1 / np.sqrt(2 * np.pi)
 g.f[:, 1::2] = np.real(dft[:, 1:])
 g.f[:, 2::2] = -np.imag(dft[:, 1:])
 g.sin_y, w = scipy.special.roots_legendre(g.ny)
+g.sec2 = 1 / (1 - g.sin_y**2)
 q = np.sqrt(1 - g.sin_y * g.sin_y)
 y = np.zeros((g.l, g.m, g.ny))
 y[0, 0] = 1 / np.sqrt(2)
@@ -302,8 +302,8 @@ g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
 
 output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
-desired_lat = np.rad2deg(np.arcsin(g.sin_y))
-desired_lon = np.linspace(0, 360, g.nx, endpoint=False)
+y_deg = np.rad2deg(np.arcsin(g.sin_y))
+x_deg = np.linspace(0, 360, g.nx, endpoint=False)
 a_zb, b_zb = np.loadtxt("ecmwf137_hybrid_levels.csv",
                         skiprows=1,
                         usecols=(1, 2),
@@ -343,10 +343,10 @@ else:
     nhyb = len(era["hybrid"].data)
     lat = era["latitude"].data
     lon = era["longitude"].data
-    xi = np.meshgrid(desired_lat, desired_lon)
-    points = lat, lon
-    sp = scipy.interpolate.interpn(points, era["surface_pressure"].data, xi)
-    oro = scipy.interpolate.interpn(points,
+    xi = np.meshgrid(y_deg, x_deg)
+    xy_src = lat, lon
+    sp = scipy.interpolate.interpn(xy_src, era["surface_pressure"].data, xi)
+    oro = scipy.interpolate.interpn(xy_src,
                                     era["geopotential_at_surface"].data, xi)
     sp_nodal = sp[None, ...] / (1 / uL / uT**2)
     orography_input = oro[None, ...] / (uL * GRAVITY_ACCELERATION)
@@ -361,7 +361,7 @@ else:
     ]:
         val = np.empty((nhyb, g.nx, g.ny))
         for i in range(nhyb):
-            val[i] = scipy.interpolate.interpn(points, era[key].data[i], xi)
+            val[i] = scipy.interpolate.interpn(xy_src, era[key].data[i], xi)
         source = a_zb[:, None, None] / sp + b_zb[:, None, None]
         upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
         lower = np.maximum(g.zb[:-1, None, None, None],

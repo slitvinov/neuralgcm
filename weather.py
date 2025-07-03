@@ -39,11 +39,13 @@ def real_basis_derivative(u):
     i = np.c_[:n]
     return (i + 1) // 2 * jnp.where(i % 2, u_do, -u_up)
 
+
 def sec_lat_d_dlat_cos2(x):
     l = g.l0[None, :]
     zm = (l - 1) * g.a * x
     zp = -(l + 2) * g.b * x
     return pad(zm, zp)
+
 
 def cos_lat_d_dlat(x):
     l = g.l0[None, :]
@@ -51,12 +53,12 @@ def cos_lat_d_dlat(x):
     zp = -l * g.b * x
     return pad(zm, zp)
 
+
 def pad(zm, zp):
-    lm1 = jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0,
-                      ((0, 0, 0), (0, 0, 0), (0, 1, 0)))
-    lp1 = jax.lax.pad(zp[:, :, :g.total_wavenumbers - 1], 0.0,
-                      ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
-    return lm1 + lp1
+    return jax.lax.pad(zm[:, :, 1:g.total_wavenumbers], 0.0, (
+        (0, 0, 0), (0, 0, 0),
+        (0, 1, 0))) + jax.lax.pad(zp[:, :, :g.total_wavenumbers - 1], 0.0,
+                                  ((0, 0, 0), (0, 0, 0), (1, 0, 0)))
 
 
 def runge_kutta(y):

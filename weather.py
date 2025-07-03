@@ -108,10 +108,8 @@ def F(s):
     hu = inverse_transform(s[g.hu])
     wa = inverse_transform(s[g.wo])
     ic = inverse_transform(s[g.ic])
-    l = np.r_[1:g.total_wavenumbers]
-    inv_eig = np.r_[0, -1 / (l * (l + 1))]
-    stream_function = s[g.vo] * inv_eig
-    velocity_potential = s[g.di] * inv_eig
+    stream_function = s[g.vo] * g.inv_eig
+    velocity_potential = s[g.di] * g.inv_eig
     c00 = real_basis_derivative(velocity_potential)
     c01 = cos_lat_d_dlat(velocity_potential)
     c10 = real_basis_derivative(stream_function)
@@ -288,6 +286,8 @@ k = k0 * k1
 k_shifted = np.roll(k, 1, axis=0)
 k_shifted[0] = 0
 g.tew = (h0 - k - k_shifted) * g.thick
+l = np.r_[1:g.total_wavenumbers]
+g.inv_eig = np.r_[0, -1 / (l * (l + 1))]
 
 output_level_indices = [g.layers // 4, g.layers // 2, 3 * g.layers // 4, -1]
 desired_lat = np.rad2deg(np.arcsin(g.sin_lat))

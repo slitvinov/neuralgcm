@@ -57,12 +57,8 @@ def dy_cos(x):
     return pad(zm, zp)
 
 
-def pad(zm, zp):
-    return jax.lax.pad(zm[:, :, 1:], 0.0,
-                       ((0, 0, 0), (0, 0, 0),
-                        (0, 1, 0))) + jax.lax.pad(zp[:, :, :g.l - 1], 0.0,
-                                                  ((0, 0, 0), (0, 0, 0),
-                                                   (1, 0, 0)))
+def pad(a, b):
+    return roll(a, [0, 0, -1]) + roll(b, [0, 0, 1])
 
 
 def runge_kutta(y):

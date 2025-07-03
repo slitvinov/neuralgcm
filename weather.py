@@ -39,7 +39,7 @@ def dlat(x):
     return pad(zm, zp)
 
 
-def cos_lat_d_dlat(x):
+def dlat_cos(x):
     l = g.l0[None, :]
     zm = (l + 1) * g.a * x
     zp = -l * g.b * x
@@ -107,15 +107,15 @@ def F(s):
     chi = s[g.di] * g.inv_eig
 
     dchi_dlon = dlon(chi)
-    dchi_dlat = cos_lat_d_dlat(chi)
+    dchi_dlat = dlat_cos(chi)
     dpsi_dlon = dlon(psi)
-    dpsi_dlat = cos_lat_d_dlat(psi)
+    dpsi_dlat = dlat_cos(psi)
 
     u = inverse_transform(dchi_dlon - dpsi_dlat)
     v = inverse_transform(dchi_dlat + dpsi_dlon)
 
     sp_dlon = inverse_transform(dlon(s[g.sp]))
-    sp_dlat = inverse_transform(cos_lat_d_dlat(s[g.sp]))
+    sp_dlat = inverse_transform(dlat_cos(s[g.sp]))
 
     sec2 = 1 / (1 - g.sin_lat**2)
     u_dot_grad_sp = u * sp_dlon * sec2 + v * sp_dlat * sec2

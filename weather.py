@@ -99,9 +99,7 @@ def F(s):
     def omega(x):
         f = jax.lax.cumsum(x * g.thick[:, None, None])
         alpha = g.alpha[:, None, None]
-        pad = (1, 0), (0, 0), (0, 0)
-        return (alpha * f +
-                jnp.pad(alpha * f, pad)[:-1, ...]) / g.thick[:, None, None]
+        return (alpha * f + roll(alpha * f, [1, 0, 0])) / g.thick[:, None, None]
 
     vo = modal(s[g.vo])
     di = modal(s[g.di])

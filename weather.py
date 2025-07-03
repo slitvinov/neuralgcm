@@ -32,16 +32,14 @@ def dx(u):
 
 
 def dy(x):
-    l = g.l0[None, :]
-    zm = (l - 1) * g.a * x
-    zp = -(l + 2) * g.b * x
+    zm = g.ax * x
+    zp = g.bx * x
     return pad(zm, zp)
 
 
 def dy_cos(x):
-    l = g.l0[None, :]
-    zm = (l + 1) * g.a * x
-    zp = -l * g.b * x
+    zm = g.ay * x
+    zp = g.by * x
     return pad(zm, zp)
 
 
@@ -263,6 +261,7 @@ m, l = np.meshgrid(np.r_[0, q.ravel()], np.r_[:g.l], indexing="ij")
 mask = abs(m) <= l
 g.a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
 g.a[:, 0] = 0
+
 g.b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
 g.b[:, -1] = 0
 g.alpha = np.diff(np.log(g.zc), append=0) / 2
@@ -295,6 +294,10 @@ g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
 g.mask = np.r_[[1] * (g.l - 1), 0]
 g.sigma = np.cumsum(g.thick)
+g.ax = (g.l0 - 1) * g.a
+g.bx = -(g.l0 + 2) * g.b
+g.ay = (g.l0 + 1) * g.a
+g.by = -g.l0 * g.b
 
 output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
 y_deg = np.rad2deg(np.arcsin(g.sin_y))

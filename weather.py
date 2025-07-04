@@ -385,7 +385,7 @@ else:
 
 g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.ny / 128) / uT
-scale = np.exp(-g.dt * / tau * g.eig**2 / g.eig[-1]**2)
+scale = np.exp(-g.dt / tau * g.eig**2 / g.eig[-1]**2)
 out, *rest = jax.lax.scan(lambda x, _: (scale * runge_kutta(x), None),
                           s,
                           xs=None,

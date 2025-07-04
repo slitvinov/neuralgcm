@@ -347,6 +347,12 @@ else:
     oro = scipy.interpolate.interpn(xy_src,
                                     era["geopotential_at_surface"].data,
                                     xy_grid)
+    source = a_zb[:, None, None] / sp + b_zb[:, None, None]
+    upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
+    lower = np.maximum(g.zb[:-1, None, None, None],
+                       source[None, :-1, :, :])
+    weights = np.maximum(upper - lower, 0)
+    weights /= np.sum(weights, axis=1, keepdims=True)
     fields = {}
     for key, scale in [
         ("u_component_of_wind", uL / uT),
@@ -360,12 +366,6 @@ else:
         for i in range(nhyb):
             samples[i] = scipy.interpolate.interpn(xy_src, era[key].data[i],
                                                    xy_grid)
-        source = a_zb[:, None, None] / sp + b_zb[:, None, None]
-        upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
-        lower = np.maximum(g.zb[:-1, None, None, None],
-                           source[None, :-1, :, :])
-        weights = np.maximum(upper - lower, 0)
-        weights /= np.sum(weights, axis=1, keepdims=True)
         fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
     u = modal(fields["u_component_of_wind"] / g.cos)
     v = modal(fields["v_component_of_wind"] / g.cos)

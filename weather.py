@@ -241,7 +241,7 @@ g.f[:, 1::2] = np.real(dft[:, 1:])
 g.f[:, 2::2] = -np.imag(dft[:, 1:])
 g.sin_y, w = scipy.special.roots_legendre(g.ny)
 g.sec2 = 1 / (1 - g.sin_y**2)
-q = np.sqrt(1 - g.sin_y * g.sin_y)
+g.cos = np.sqrt(1 - g.sin_y**2)
 y = np.zeros((g.l, g.m, g.ny))
 y[0, 0] = 1 / np.sqrt(2)
 for m in range(1, g.m):
@@ -366,18 +366,14 @@ else:
         weights = np.maximum(upper - lower, 0)
         weights /= np.sum(weights, axis=1, keepdims=True)
         fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
-    cos = np.sqrt(1 - g.sin_y**2)
-    u = modal(fields["u_component_of_wind"] / cos)
-    v = modal(fields["v_component_of_wind"] / cos)
-    vor = dx(v) - dy(u)
-    div = dx(u) + dy(v)
-    sp0 = sp[None, :, :] / (1 / uL / uT**2)
+    u = modal(fields["u_component_of_wind"] / g.cos)
+    v = modal(fields["v_component_of_wind"] / g.cos)
     oro0 = oro[None, :, :] / (uL * GRAVITY_ACCELERATION)
     s = np.empty(shape, dtype=np.float32)
-    s[g.vo] = vor * g.mask
-    s[g.di] = div * g.mask
+    s[g.vo] = (dx(v) - dy(u)) * g.mask
+    s[g.di] = (dx(u) + dy(v)) * g.mask
     s[g.te] = modal(fields["temperature"] - g.temp.reshape(-1, 1, 1))
-    s[g.sp] = modal(np.log(sp0))
+    s[g.sp] = modal(np.log(sp[None, :, :] / (1 / uL / uT**2)))
     s[g.hu] = modal(fields["specific_humidity"])
     s[g.wo] = modal(fields["specific_cloud_liquid_water_content"])
     s[g.ic] = modal(fields["specific_cloud_ice_water_content"])

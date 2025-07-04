@@ -90,11 +90,11 @@ def F(s):
     def hadv(x):
         return -dx(modal(u * x * g.sec2)) - dy(modal(v * x * g.sec2))
 
-    def vadv(x):
+    def vadv(w, x):
         wt = np.zeros((1, g.nx, g.ny))
         dx = x[1:] - x[:-1]
         xd = dx * (1 / g.dz)[:, None, None]
-        wx = jnp.r_[wt, xd * dot_sigma, wt]
+        wx = jnp.r_[wt, xd * w, wt]
         return -0.5 * (wx[1:] + wx[:-1])
 
     def omega(x):
@@ -134,8 +134,8 @@ def F(s):
     fvx = -v * abs_vo * g.sec2
     fvy = u * abs_vo * g.sec2
 
-    vadv_u = -vadv(u)
-    vadv_v = -vadv(v)
+    vadv_u = -vadv(dot_sigma, u)
+    vadv_v = -vadv(dot_sigma, v)
 
     RT = g.r_gas * te
     sp_force_x = RT * spx
@@ -156,7 +156,7 @@ def F(s):
     ddi += 0.5 * dke + doro
 
     dte_hadv = hadv(te)
-    dte_vadv = vadv(te)
+    dte_vadv = vadv(dot_sigma, te)
 
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
@@ -169,9 +169,9 @@ def F(s):
     dwo_hadv = hadv(wo)
     dic_hadv = hadv(ic)
 
-    dhu_vadv = vadv(hu)
-    dwo_vadv = vadv(wo)
-    dic_vadv = vadv(ic)
+    dhu_vadv = vadv(dot_sigma, hu)
+    dwo_vadv = vadv(dot_sigma, wo)
+    dic_vadv = vadv(dot_sigma, ic)
 
     dhu_dil = hu * di
     dwo_dil = wo * di
@@ -348,7 +348,8 @@ else:
                                     xy_grid)
     source = a_zb[:, None, None] / sp + b_zb[:, None, None]
     upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
-    lower = np.maximum(g.zb[:-1, None, None, None], source[None, :-1, :, :])
+    lower = np.maximum(g.zb[:-1, None, None, None],
+                       source[None, :-1, :, :])
     weights = np.maximum(upper - lower, 0)
     weights /= np.sum(weights, axis=1, keepdims=True)
     fields = {}

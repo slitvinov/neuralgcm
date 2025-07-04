@@ -5,6 +5,7 @@ import numpy as np
 import os
 import scipy
 import xarray
+import math
 
 
 class g:
@@ -234,9 +235,9 @@ g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
 g.thick = np.diff(g.zb)
 g.dz = np.diff(g.zc)
-dft = scipy.linalg.dft(g.nx)[:, :g.m] / np.sqrt(np.pi)
+dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))
-g.f[:, 0] = 1 / np.sqrt(2 * np.pi)
+g.f[:, 0] = 1 / math.sqrt(2 * math.pi)
 g.f[:, 1::2] = np.real(dft[:, 1:])
 g.f[:, 2::2] = -np.imag(dft[:, 1:])
 g.sin_y, w = scipy.special.roots_legendre(g.ny)
@@ -245,7 +246,7 @@ g.cos = np.sqrt(1 - g.sin_y**2)
 y = np.zeros((g.l, g.m, g.ny))
 y[0, 0] = 1 / np.sqrt(2)
 for m in range(1, g.m):
-    y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
+    y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * g.cos * y[0, m - 1]
 for k in range(1, g.l):
     fields = min(g.m, g.l - k)
     m = np.c_[:fields]
@@ -261,7 +262,7 @@ for m in range(g.m):
     p[m, :, m:g.l] = r[m, :, 0:g.l - m]
 p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
-g.w = 2 * np.pi * w / g.nx
+g.w = 2 * math.pi * w / g.nx
 g.temp = np.full((g.nz, ), 250)
 
 p = np.r_[1:g.m]
@@ -384,7 +385,7 @@ else:
 
 g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.ny / 128) / uT
-scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
+scale = np.exp(-g.dt * / tau * g.eig**2 / g.eig[-1]**2)
 out, *rest = jax.lax.scan(lambda x, _: (scale * runge_kutta(x), None),
                           s,
                           xs=None,

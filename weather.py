@@ -226,10 +226,9 @@ einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 gravity = GRAVITY / (uL / uT**2)
 kappa = 2 / 7
 g.r_gas = kappa * 0.0011628807950492582
-g.m = 171
-g.l = 172
-g.nx = 512
-g.ny = 256
+g.m, g.nx = 171, 512
+g.l = g.m + 1
+g.ny = g.nx * 2
 g.nz = 32
 g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2

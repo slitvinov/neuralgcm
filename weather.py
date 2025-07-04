@@ -28,13 +28,13 @@ def roll(a, shift):
     return a
 
 
-def nodal(x):
+def modal(x):
     wx = g.w * x
     fwx = einsum("im,...ij->...mj", g.f, wx)
     return einsum("mjl,...mj->...ml", g.p, fwx)
 
 
-def modal(x):
+def nodal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
 
@@ -87,7 +87,7 @@ def runge_kutta(y):
 def F(s):
 
     def hadv(x):
-        return -dx(nodal(u * x * g.sec2)) - dy(nodal(v * x * g.sec2))
+        return -dx(modal(u * x * g.sec2)) - dy(modal(v * x * g.sec2))
 
     def vadv(w, x):
         wt = np.zeros((1, g.nx, g.ny))
@@ -101,12 +101,12 @@ def F(s):
         alpha = g.alpha[:, None, None]
         return (alpha * f + roll(alpha * f, [1, 0, 0])) / g.thick[:, None, None]
 
-    vo = modal(s[g.vo])
-    di = modal(s[g.di])
-    te = modal(s[g.te])
-    hu = modal(s[g.hu])
-    wo = modal(s[g.wo])
-    ic = modal(s[g.ic])
+    vo = nodal(s[g.vo])
+    di = nodal(s[g.di])
+    te = nodal(s[g.te])
+    hu = nodal(s[g.hu])
+    wo = nodal(s[g.wo])
+    ic = nodal(s[g.ic])
 
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
@@ -116,11 +116,11 @@ def F(s):
     dpsi_dx = dx(psi)
     dpsi_dy_cos = dy_cos(psi)
 
-    u = modal(dchi_dx - dpsi_dy_cos)
-    v = modal(dchi_dy_cos + dpsi_dx)
+    u = nodal(dchi_dx - dpsi_dy_cos)
+    v = nodal(dchi_dy_cos + dpsi_dx)
 
-    spx = modal(dx(s[g.sp]))
-    spy = modal(dy_cos(s[g.sp]))
+    spx = nodal(dx(s[g.sp]))
+    spy = nodal(dy_cos(s[g.sp]))
 
     u_dot_grad_sp = u * spx * g.sec2 + v * spy * g.sec2
 
@@ -142,14 +142,14 @@ def F(s):
     fx = fvx + (vadv_u + sp_force_x) * g.sec2
     fy = fvy + (vadv_v + sp_force_y) * g.sec2
 
-    fx_spec = nodal(fx)
-    fy_spec = nodal(fy)
+    fx_spec = modal(fx)
+    fy_spec = modal(fy)
 
     dvo = -dx(fy_spec) + dy(fx_spec)
     ddi = -dx(fx_spec) - dy(fy_spec)
 
     ke = g.sec2 * (u**2 + v**2)
-    dke = g.eig * nodal(ke)
+    dke = g.eig * modal(ke)
     doro = gravity_acceleration * (g.eig * g.orography)
     ddi += 0.5 * dke + doro
 
@@ -161,7 +161,7 @@ def F(s):
     dte_adiab = kappa * (g.temp[:, None, None] *
                          (u_dot_grad_sp - omega_mean) + te *
                          (u_dot_grad_sp - omega_full))
-    dte = nodal(te * di + dte_vadv + dte_adiab) + dte_hadv
+    dte = modal(te * di + dte_vadv + dte_adiab) + dte_hadv
 
     dhu_hadv = hadv(hu)
     dwo_hadv = hadv(wo)
@@ -178,11 +178,11 @@ def F(s):
     dmoist_vadv = jnp.r_[dhu_vadv, dwo_vadv, dic_vadv]
     dmoist_dil = jnp.r_[dhu_dil, dwo_dil, dic_dil]
     dmoist_hadv = jnp.r_[dhu_hadv, dwo_hadv, dic_hadv]
-    dmoist = nodal(dmoist_vadv + dmoist_dil) + dmoist_hadv
+    dmoist = modal(dmoist_vadv + dmoist_dil) + dmoist_hadv
 
     dsp_phys = -jnp.sum(
         g.thick[:, None, None] * u_dot_grad_sp, axis=0, keepdims=True)
-    dsp = nodal(dsp_phys)
+    dsp = modal(dsp_phys)
     return jnp.r_[dvo, ddi, dte, dsp, dmoist] * g.mask
 
 
@@ -366,8 +366,8 @@ else:
         weights /= np.sum(weights, axis=1, keepdims=True)
         fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
     cos = np.sqrt(1 - g.sin_y**2)
-    u = nodal(fields["u_component_of_wind"] / cos)
-    v = nodal(fields["v_component_of_wind"] / cos)
+    u = modal(fields["u_component_of_wind"] / cos)
+    v = modal(fields["v_component_of_wind"] / cos)
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
     sp0 = sp[None, :, :] / (1 / uL / uT**2)
@@ -375,13 +375,13 @@ else:
     s = np.empty(shape, dtype=np.float32)
     s[g.vo] = vor * g.mask
     s[g.di] = div * g.mask
-    s[g.te] = nodal(fields["temperature"] - g.temp.reshape(-1, 1, 1))
-    s[g.sp] = nodal(np.log(sp0))
-    s[g.hu] = nodal(fields["specific_humidity"])
-    s[g.wo] = nodal(fields["specific_cloud_liquid_water_content"])
-    s[g.ic] = nodal(fields["specific_cloud_ice_water_content"])
+    s[g.te] = modal(fields["temperature"] - g.temp.reshape(-1, 1, 1))
+    s[g.sp] = modal(np.log(sp0))
+    s[g.hu] = modal(fields["specific_humidity"])
+    s[g.wo] = modal(fields["specific_cloud_liquid_water_content"])
+    s[g.ic] = modal(fields["specific_cloud_ice_water_content"])
     k = g.l0 / (g.l - 1)
-    g.orography = nodal(oro0) * np.exp(-16 * k**4)
+    g.orography = modal(oro0) * np.exp(-16 * k**4)
     s.tofile("s.raw")
     np.asarray(g.orography).tofile("oro.raw")
 

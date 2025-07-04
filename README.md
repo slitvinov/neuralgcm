@@ -28,6 +28,10 @@ To download raw data (~24Gb)
 gsutil cp gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501* ~
 ```
 
+## Resutls
+
+<p align="center"><img src="img/hu.gif"/></p>
+
 ## References
 
 - [neuralgcm/dinosaur](https://github.com/neuralgcm/dinosaur)

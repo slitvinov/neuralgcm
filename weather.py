@@ -227,10 +227,9 @@ gravity = GRAVITY / (uL / uT**2)
 kappa = 2 / 7
 g.r_gas = kappa * 0.0011628807950492582
 g.m = 171
-g.l = 172
 g.nx = 512
-g.ny = 256
-g.nz = 32
+g.l = g.m + 1
+g.ny = 2 * g.nx
 g.nz = 32
 g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
@@ -350,8 +349,7 @@ else:
                                     xy_grid)
     source = a_zb[:, None, None] / sp + b_zb[:, None, None]
     upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
-    lower = np.maximum(g.zb[:-1, None, None, None],
-                       source[None, :-1, :, :])
+    lower = np.maximum(g.zb[:-1, None, None, None], source[None, :-1, :, :])
     weights = np.maximum(upper - lower, 0)
     weights /= np.sum(weights, axis=1, keepdims=True)
     fields = {}

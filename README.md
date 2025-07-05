@@ -57,8 +57,8 @@ gsutil cp gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501* 
 - Lynch, P., & Huang, X. Y. (1992). Initialization of the HIRLAM model
   using a digital filter. Monthly Weather Review, 120(6),
   1019-1034.
-  [doi:10.1175/1520-0493(1992)120%3C1019:IOTHMU%3E2.0.CO;2]
-  (https://doi.org/10.1175/1520-0493(1992)120%3C1019:IOTHMU%3E2.0.CO;2)
+[doi:10.1175/1520-0493(1992)120%3C1019:IOTHMU%3E2.0.CO;2]
+(https://doi.org/10.1175/1520-0493(1992)120%3C1019:IOTHMU%3E2.0.CO;2)
 
 > Our choice of the numerical schemes for interpolation, integrals and
 > diagnostics exactly follows Durran’s book [3] §8.6, with the

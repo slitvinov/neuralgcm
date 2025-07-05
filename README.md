@@ -57,8 +57,13 @@ gsutil cp gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501* 
 - Lynch, P., & Huang, X. Y. (1992). Initialization of the HIRLAM model
   using a digital filter. Monthly Weather Review, 120(6),
   1019-1034.
-[doi:10.1175/1520-0493(1992)120%3C1019:IOTHMU%3E2.0.CO;2]
-(https://doi.org/10.1175/1520-0493(1992)120%3C1019:IOTHMU%3E2.0.CO;2)
+  [doi](https://doi.org/10.1175/1520-0493(1992)120%3C1019:IOTHMU%3E2.0.CO;2)
+- Bourke, W. (1972). An efficient, one-level, primitive-equation
+  spectral model. Monthly Weather Review, 100(9), 683-689.
+  [doi](https://doi.org/10.1175/1520-0493(1972)100%3C0683:AEOPSM%3E2.3.CO;2)
+- Bourke, William. "A multi-level spectral model. I. Formulation and
+  hemispheric integrations." Mon. Wea. Rev 102.10 (1974): 687-701.
+  [doi](https://doi.org/10.1175/1520-0493(1974)102%3C0687:AMLSMI%3E2.0.CO;2)
 
 > Our choice of the numerical schemes for interpolation, integrals and
 > diagnostics exactly follows Durran’s book [3] §8.6, with the

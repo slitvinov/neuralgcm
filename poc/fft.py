@@ -81,4 +81,5 @@ assert np.allclose(m0, m1, atol=0)
 n0 = nodal(m0)
 n1 = nodal0(m0)
 
+print(n0[0, 0, 0] / n1[0, 0, 0])
 assert np.allclose(n0, n1)

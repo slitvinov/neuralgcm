@@ -34,11 +34,11 @@ def nodal0(x):
     F[:, g.m:, :] = 0
     return np.fft.irfft(F, axis=1)
 
-g.m = 171 // 4
-g.nx = 512 // 4
+g.m = 171 // 8
+g.nx = 512 // 8
 g.l = g.m + 1
 g.ny = 2 * g.nx
-g.nz = 32
+g.nz = 32 // 4
 
 g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
@@ -81,8 +81,4 @@ assert np.allclose(m0, m1, atol=0)
 n0 = nodal(m0)
 n1 = nodal0(m0)
 
-# assert np.allclose(n0, n1)
-
-print(n0[0, 0, 0]/n1[0, 0, 0])
-
-#assert np.allclose(x, n, atol=1e-12)
+assert np.allclose(n0, n1)

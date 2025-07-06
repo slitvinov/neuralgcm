@@ -159,8 +159,7 @@ def F(s):
 
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
-    dte_adiab = kappa * (g.temp[:, None, None] *
-                         (u_dot_grad_sp - omega_mean) + te *
+    dte_adiab = kappa * (g.temp0 * (u_dot_grad_sp - omega_mean) + te *
                          (u_dot_grad_sp - omega_full))
     dte = modal(te * di + dte_vadv + dte_adiab) + dte_hadv
 
@@ -263,6 +262,7 @@ p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
 g.w = 2 * math.pi * w / g.nx
 g.temp = np.full((g.nz, ), 250)
+g.temp0 = 250
 
 p = np.r_[1:g.m]
 q = np.c_[p, -p]
@@ -287,17 +287,11 @@ alpha = g.alpha[..., None]
 p_alpha = p * alpha
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
 p_alpha_shifted[0] = 0
-h0 = (kappa * g.temp[..., None] * (p_alpha + p_alpha_shifted) /
-      g.thick[..., None])
-temp_diff = np.diff(g.temp)
+h0 = kappa * g.temp0 * (p_alpha + p_alpha_shifted) / g.thick[..., None]
 thickness_sum = g.thick[:-1] + g.thick[1:]
-k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[..., None]
 thickness_cumulative = np.cumsum(g.thick)[..., None]
 k1 = p - thickness_cumulative
-k = k0 * k1
-k_shifted = np.roll(k, 1, axis=0)
-k_shifted[0] = 0
-g.tew = (h0 - k - k_shifted) * g.thick
+g.tew = h0 * g.thick
 g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
@@ -350,8 +344,7 @@ else:
     samples = np.empty((nhyb, g.nx, g.ny))
     source = a_zb[:, None, None] / sp + b_zb[:, None, None]
     upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
-    lower = np.maximum(g.zb[:-1, None, None, None],
-                       source[None, :-1, :, :])
+    lower = np.maximum(g.zb[:-1, None, None, None], source[None, :-1, :, :])
     weights = np.maximum(upper - lower, 0)
     weights /= np.sum(weights, axis=1, keepdims=True)
     for key, scale in [
@@ -371,18 +364,17 @@ else:
     v = modal(fields["v_component_of_wind"] / cos)
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
-    sp0 = sp[None, :, :] / (1 / uL / uT**2)
-    oro0 = oro[None, :, :] / (uL * GRAVITY)
     s = np.empty(shape, dtype=np.float32)
     s[g.vo] = vor * g.mask
     s[g.di] = div * g.mask
-    s[g.te] = modal(fields["temperature"] - g.temp.reshape(-1, 1, 1))
-    s[g.sp] = modal(np.log(sp0))
+    s[g.te] = modal(fields["temperature"] - g.temp0)
+    s[g.sp] = modal(np.log(sp[None, :, :] / (1 / uL / uT**2)))
     s[g.hu] = modal(fields["specific_humidity"])
     s[g.wo] = modal(fields["specific_cloud_liquid_water_content"])
     s[g.ic] = modal(fields["specific_cloud_ice_water_content"])
     k = g.l0 / (g.l - 1)
-    g.doro = (gravity * g.eig) * modal(oro0) * np.exp(-16 * k**4)
+    g.doro = (gravity * g.eig) * modal(oro[None, :, :]) * np.exp(
+        -16 * k**4) / (uL * GRAVITY)
     s.tofile("s.raw")
     np.asarray(g.doro).tofile("doro.raw")
 

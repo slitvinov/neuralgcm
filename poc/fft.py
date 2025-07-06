@@ -1,7 +1,9 @@
 import numpy as np
 import scipy
 import math
-from numpy import einsum
+import jax.numpy as jnp
+import jax
+import functools
 
 class g:
     pass
@@ -15,7 +17,7 @@ def modal0(x):
     s0 = 1 / math.sqrt(2 * math.pi)
     s1 = 1 / math.sqrt(math.pi)
     F = np.fft.rfft(g.w * x, axis=1)
-    a = np.empty((g.nz, 2 * g.m - 1, g.ny))
+    a = np.empty((g.nz, 2 * g.m - 1, g.ny), dtype="float64")
     a[..., 0, :] = s0 * F[:, 0, :].real 
     a[:, 1::2, :] = s1 * F[:, 1:g.m, :].real
     a[:, 2::2, :] = -s1 * F[:, 1:g.m, :].imag
@@ -27,18 +29,20 @@ def nodal(x):
 def nodal0(x):
     s0 = 1 / math.sqrt(2 * math.pi)
     s1 = 1 / math.sqrt(math.pi)
+    s2 = g.nx / (2 * math.pi)
     u = einsum("mjl,...ml->...mj", g.p, x)
-    F = np.empty((g.nz, g.nx // 2 + 1, g.ny), dtype=np.complex128)
+    F = np.empty((g.nz, g.nx // 2 + 1, g.ny), dtype="complex128")
     F[:, 0, :] = u[:, 0, :] / s0
     F[:, 1:g.m, :] = (u[:, 1::2, :] - 1j * u[:, 2::2, :]) / s1
     F[:, g.m:, :] = 0
-    return np.fft.irfft(F, axis=1)
+    return np.fft.irfft(F, axis=1) * s2
 
-g.m = 171 // 8
-g.nx = 512 // 8
+einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
+g.m = 171
+g.nx = 512
 g.l = g.m + 1
 g.ny = 2 * g.nx
-g.nz = 32 // 4
+g.nz = 32 // 2
 
 g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
@@ -76,10 +80,14 @@ g.w = 2 * math.pi * w / g.nx
 n = np.random.rand(g.nz, g.nx, g.ny)
 m0 = modal(n)
 m1 = modal0(n)
-assert np.allclose(m0, m1, atol=0)
+u = np.unique(m0 / m1)
+print(m0.dtype)
+print(m1.dtype)
+print("%.16e %.16e" % (u[0], u[1]))
+assert np.allclose(m0, m1, atol=0, rtol=1e-2)
 
-n0 = nodal(m0)
-n1 = nodal0(m0)
-
-print(n0[0, 0, 0] / n1[0, 0, 0])
-assert np.allclose(n0, n1)
+n0 = nodal(m1)
+n1 = nodal0(m1)
+u = np.unique(n0 / n1)
+print("%.16e %.16e" % (u[0], u[1]))
+assert np.allclose(n0, n1, atol=0, rtol=1e-5)

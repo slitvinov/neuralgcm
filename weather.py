@@ -264,6 +264,7 @@ p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
 g.w = 2 * math.pi * w / g.nx
 g.temp = np.full((g.nz, ), 250)
+g.temp0 = 250
 
 p = np.r_[1:g.m]
 q = np.c_[p, -p]

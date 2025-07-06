@@ -1,6 +1,7 @@
 import functools
 import jax
 import jax.numpy as jnp
+import math
 import numpy as np
 import os
 import scipy
@@ -151,7 +152,7 @@ def F(s):
 
     ke = g.sec2 * (u**2 + v**2)
     dke = g.eig * modal(ke)
-    doro = gravity_acceleration * (g.eig * g.orography)
+    doro = gravity * (g.eig * g.orography)
     ddi += 0.5 * dke + doro
 
     dte_hadv = hadv(te)
@@ -218,11 +219,11 @@ def open(path):
     return x.sel(time="19900501T00")
 
 
-GRAVITY_ACCELERATION = 9.80616
+GRAVITY = 9.80616
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-gravity_acceleration = GRAVITY_ACCELERATION / (uL / uT**2)
+gravity = GRAVITY / (uL / uT**2)
 kappa = 2 / 7
 g.r_gas = kappa * 0.0011628807950492582
 g.m = 171
@@ -372,7 +373,7 @@ else:
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
     sp0 = sp[None, :, :] / (1 / uL / uT**2)
-    oro0 = oro[None, :, :] / (uL * GRAVITY_ACCELERATION)
+    oro0 = oro[None, :, :] / (uL * GRAVITY)
     s = np.empty(shape, dtype=np.float32)
     s[g.vo] = vor * g.mask
     s[g.di] = div * g.mask

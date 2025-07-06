@@ -347,6 +347,13 @@ else:
                                     era["geopotential_at_surface"].data,
                                     xy_grid)
     fields = {}
+    samples = np.empty((nhyb, g.nx, g.ny))
+    source = a_zb[:, None, None] / sp + b_zb[:, None, None]
+    upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
+    lower = np.maximum(g.zb[:-1, None, None, None],
+                       source[None, :-1, :, :])
+    weights = np.maximum(upper - lower, 0)
+    weights /= np.sum(weights, axis=1, keepdims=True)
     for key, scale in [
         ("u_component_of_wind", uL / uT),
         ("v_component_of_wind", uL / uT),
@@ -355,16 +362,9 @@ else:
         ("specific_cloud_ice_water_content", 1),
         ("specific_humidity", 1),
     ]:
-        samples = np.empty((nhyb, g.nx, g.ny))
         for i in range(nhyb):
             samples[i] = scipy.interpolate.interpn(xy_src, era[key].data[i],
                                                    xy_grid)
-        source = a_zb[:, None, None] / sp + b_zb[:, None, None]
-        upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
-        lower = np.maximum(g.zb[:-1, None, None, None],
-                           source[None, :-1, :, :])
-        weights = np.maximum(upper - lower, 0)
-        weights /= np.sum(weights, axis=1, keepdims=True)
         fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
     cos = np.sqrt(1 - g.sin_y**2)
     u = modal(fields["u_component_of_wind"] / cos)

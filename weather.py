@@ -160,8 +160,7 @@ def F(s):
 
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
-    dte_adiab = kappa * (g.temp[:, None, None] *
-                         (u_dot_grad_sp - omega_mean) + te *
+    dte_adiab = kappa * (g.temp * (u_dot_grad_sp - omega_mean) + te *
                          (u_dot_grad_sp - omega_full))
     dte = modal(te * di + dte_vadv + dte_adiab) + dte_hadv
 
@@ -191,8 +190,7 @@ def F(s):
 def G(s):
     shape = g.nz, 2 * g.m - 1, g.l
     tscale = 3 * g.nz, 2 * g.m - 1, g.l
-    ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) +
-                   g.r_gas * g.temp[:, None, None] * s[g.sp])
+    ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) + g.r_gas * s[g.sp])
     dtesp = einsum("gh,hml->gml", jnp.r_[-g.tew, -g.thick[None]], s[g.di])
     return jnp.r_[jnp.zeros(shape), ddi, dtesp, jnp.zeros(tscale)]
 
@@ -200,7 +198,9 @@ def G(s):
 def G_inv(s, dt):
     I = np.r_[[np.eye(g.nz)] * g.l]
     A = -dt * g.eig[:, None, None] * g.geo[None]
-    B = -dt * g.r_gas * g.eig[:, None, None] * g.temp[None, :, None]
+    temp = np.full((g.nz, ), g.temp)
+    B = -dt * g.r_gas * g.eig[:, None, None] * temp[None, :, None]
+    print(np.shape(B))
     C = dt * np.r_[[g.tew] * g.l]
     D = dt * np.c_[[[g.thick]] * g.l]
     Z = np.zeros([g.l, g.nz, 1])
@@ -263,7 +263,7 @@ for m in range(g.m):
 p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
 g.w = 2 * math.pi * w / g.nx
-g.temp = np.full((g.nz, ), 250)
+g.temp = 250
 
 p = np.r_[1:g.m]
 q = np.c_[p, -p]
@@ -288,17 +288,11 @@ alpha = g.alpha[..., None]
 p_alpha = p * alpha
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
 p_alpha_shifted[0] = 0
-h0 = (kappa * g.temp[..., None] * (p_alpha + p_alpha_shifted) /
-      g.thick[..., None])
-temp_diff = np.diff(g.temp)
+h0 = (kappa * g.temp * (p_alpha + p_alpha_shifted) / g.thick[..., None])
 thickness_sum = g.thick[:-1] + g.thick[1:]
-k0 = np.concatenate((temp_diff / thickness_sum, [0]), axis=0)[..., None]
 thickness_cumulative = np.cumsum(g.thick)[..., None]
 k1 = p - thickness_cumulative
-k = k0 * k1
-k_shifted = np.roll(k, 1, axis=0)
-k_shifted[0] = 0
-g.tew = (h0 - k - k_shifted) * g.thick
+g.tew = (h0 - k) * g.thick
 g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]

@@ -235,9 +235,9 @@ g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
 g.thick = np.diff(g.zb)
 g.dz = np.diff(g.zc)
-dft = scipy.linalg.dft(g.nx)[:, :g.m] / np.sqrt(np.pi)
+dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))
-g.f[:, 0] = 1 / np.sqrt(2 * np.pi)
+g.f[:, 0] = 1 / math.sqrt(2 * math.pi)
 g.f[:, 1::2] = np.real(dft[:, 1:])
 g.f[:, 2::2] = -np.imag(dft[:, 1:])
 g.sin_y, w = scipy.special.roots_legendre(g.ny)
@@ -262,7 +262,7 @@ for m in range(g.m):
     p[m, :, m:g.l] = r[m, :, 0:g.l - m]
 p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
-g.w = 2 * np.pi * w / g.nx
+g.w = 2 * math.pi * w / g.nx
 g.temp = np.full((g.nz, ), 250)
 
 p = np.r_[1:g.m]

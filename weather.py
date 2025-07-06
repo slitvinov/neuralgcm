@@ -5,7 +5,6 @@ import numpy as np
 import os
 import scipy
 import xarray
-import math
 
 
 class g:
@@ -152,7 +151,7 @@ def F(s):
 
     ke = g.sec2 * (u**2 + v**2)
     dke = g.eig * modal(ke)
-    doro = gravity * (g.eig * g.orography)
+    doro = gravity_acceleration * (g.eig * g.orography)
     ddi += 0.5 * dke + doro
 
     dte_hadv = hadv(te)
@@ -219,34 +218,34 @@ def open(path):
     return x.sel(time="19900501T00")
 
 
-GRAVITY = 9.80616
+GRAVITY_ACCELERATION = 9.80616
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-gravity = GRAVITY / (uL / uT**2)
+gravity_acceleration = GRAVITY_ACCELERATION / (uL / uT**2)
 kappa = 2 / 7
 g.r_gas = kappa * 0.0011628807950492582
 g.m = 171
+g.l = 172
 g.nx = 512
-g.l = g.m + 1
-g.ny = 2 * g.nx
+g.ny = 256
 g.nz = 32
 g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
 g.thick = np.diff(g.zb)
 g.dz = np.diff(g.zc)
-dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
+dft = scipy.linalg.dft(g.nx)[:, :g.m] / np.sqrt(np.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))
-g.f[:, 0] = 1 / math.sqrt(2 * math.pi)
+g.f[:, 0] = 1 / np.sqrt(2 * np.pi)
 g.f[:, 1::2] = np.real(dft[:, 1:])
 g.f[:, 2::2] = -np.imag(dft[:, 1:])
 g.sin_y, w = scipy.special.roots_legendre(g.ny)
 g.sec2 = 1 / (1 - g.sin_y**2)
-g.cos = np.sqrt(1 - g.sin_y**2)
+q = np.sqrt(1 - g.sin_y * g.sin_y)
 y = np.zeros((g.l, g.m, g.ny))
 y[0, 0] = 1 / np.sqrt(2)
 for m in range(1, g.m):
-    y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * g.cos * y[0, m - 1]
+    y[0, m] = -np.sqrt(1 + 1 / (2 * m)) * q * y[0, m - 1]
 for k in range(1, g.l):
     fields = min(g.m, g.l - k)
     m = np.c_[:fields]
@@ -262,9 +261,8 @@ for m in range(g.m):
     p[m, :, m:g.l] = r[m, :, 0:g.l - m]
 p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
-g.w = 2 * math.pi * w / g.nx
+g.w = 2 * np.pi * w / g.nx
 g.temp = np.full((g.nz, ), 250)
-g.temp0 = 250
 
 p = np.r_[1:g.m]
 q = np.c_[p, -p]
@@ -348,11 +346,6 @@ else:
     oro = scipy.interpolate.interpn(xy_src,
                                     era["geopotential_at_surface"].data,
                                     xy_grid)
-    source = a_zb[:, None, None] / sp + b_zb[:, None, None]
-    upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
-    lower = np.maximum(g.zb[:-1, None, None, None], source[None, :-1, :, :])
-    weights = np.maximum(upper - lower, 0)
-    weights /= np.sum(weights, axis=1, keepdims=True)
     fields = {}
     for key, scale in [
         ("u_component_of_wind", uL / uT),
@@ -366,15 +359,25 @@ else:
         for i in range(nhyb):
             samples[i] = scipy.interpolate.interpn(xy_src, era[key].data[i],
                                                    xy_grid)
+        source = a_zb[:, None, None] / sp + b_zb[:, None, None]
+        upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
+        lower = np.maximum(g.zb[:-1, None, None, None],
+                           source[None, :-1, :, :])
+        weights = np.maximum(upper - lower, 0)
+        weights /= np.sum(weights, axis=1, keepdims=True)
         fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
-    u = modal(fields["u_component_of_wind"] / g.cos)
-    v = modal(fields["v_component_of_wind"] / g.cos)
-    oro0 = oro[None, :, :] / (uL * GRAVITY)
+    cos = np.sqrt(1 - g.sin_y**2)
+    u = modal(fields["u_component_of_wind"] / cos)
+    v = modal(fields["v_component_of_wind"] / cos)
+    vor = dx(v) - dy(u)
+    div = dx(u) + dy(v)
+    sp0 = sp[None, :, :] / (1 / uL / uT**2)
+    oro0 = oro[None, :, :] / (uL * GRAVITY_ACCELERATION)
     s = np.empty(shape, dtype=np.float32)
-    s[g.vo] = (dx(v) - dy(u)) * g.mask
-    s[g.di] = (dx(u) + dy(v)) * g.mask
+    s[g.vo] = vor * g.mask
+    s[g.di] = div * g.mask
     s[g.te] = modal(fields["temperature"] - g.temp.reshape(-1, 1, 1))
-    s[g.sp] = modal(np.log(sp[None, :, :] / (1 / uL / uT**2)))
+    s[g.sp] = modal(np.log(sp0))
     s[g.hu] = modal(fields["specific_humidity"])
     s[g.wo] = modal(fields["specific_cloud_liquid_water_content"])
     s[g.ic] = modal(fields["specific_cloud_ice_water_content"])
@@ -385,7 +388,7 @@ else:
 
 g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.ny / 128) / uT
-scale = np.exp(-g.dt / tau * g.eig**2 / g.eig[-1]**2)
+scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 out, *rest = jax.lax.scan(lambda x, _: (scale * runge_kutta(x), None),
                           s,
                           xs=None,

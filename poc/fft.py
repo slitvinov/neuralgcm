@@ -5,8 +5,10 @@ import jax.numpy as jnp
 import jax
 import functools
 
+
 class g:
     pass
+
 
 #@jax.jit
 def modal(x):
@@ -14,35 +16,39 @@ def modal(x):
     fwx = einsum("im,...ij->...mj", g.f, wx)
     return einsum("mjl,...mj->...ml", g.p, fwx)
 
-#@jax.jit
-def modal0(x):
-    s0 = 1 / math.sqrt(2 * math.pi)
-    s1 = 1 / math.sqrt(math.pi)
-    F = np.fft.rfft(g.w * x, axis=1)
-    a = np.empty((g.nz, 2 * g.m - 1, g.ny), dtype="float64")
-    a[..., 0, :] = s0 * F[:, 0, :].real 
-    a[:, 1::2, :] = s1 * F[:, 1:g.m, :].real
-    a[:, 2::2, :] = -s1 * F[:, 1:g.m, :].imag
-    return einsum("mjl,...mj->...ml", g.p, a)
 
-#@jax.jit
+@jax.jit
+def modal0(x):
+    s0 = 1 / math.sqrt(math.pi) / math.sqrt(2)
+    s1 = 1 / math.sqrt(math.pi)
+    u = jnp.fft.rfft(g.w * x, axis=1)
+    a0 = s0 * u[:, :1, :].real
+    a_cos = s1 * u[:, 1:g.m, :].real
+    a_sin = -s1 * u[:, 1:g.m, :].imag
+    a1 = jnp.r_['2', a_cos, a_sin].reshape((g.nz, -1, g.ny))
+    a = jnp.r_['1', a0, a1]
+    return jnp.einsum("mjl,...mj->...ml", g.p, a)
+
+
+@jax.jit
 def nodal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
-#@jax.jit
-def nodal0(x):
-    s0 = 1 / math.sqrt(2 * math.pi)
-    s1 = 1 / math.sqrt(math.pi)
-    s2 = g.nx / (2 * math.pi)
-    u = einsum("mjl,...ml->...mj", g.p, x)
-    F = np.empty((g.nz, g.nx // 2 + 1, g.ny), dtype="complex128")
-    F[:, 0, :] = u[:, 0, :] / s0
-    F[:, 1:g.m, :] = (u[:, 1::2, :] - 1j * u[:, 2::2, :]) / s1
-    F[:, g.m:, :] = 0
-    return np.fft.irfft(F, axis=1) * s2
 
-#einsum = jnp.einsum
-einsum = np.einsum
+@jax.jit
+def nodal0(x):
+    s0 = math.sqrt(math.pi) * math.sqrt(2)
+    s1 = math.sqrt(math.pi)
+    s2 = g.nx / s0**2
+    u = jnp.einsum("mjl,...ml->...mj", g.p, x)
+    F0 = u[:, :1, :] * s0
+    F1 = (u[:, 1::2, :] - 1j * u[:, 2::2, :]) * s1
+    Fpad = jnp.zeros((g.nz, g.nx // 2 + 1 - g.m, g.ny))
+    F = jnp.r_['1', F0, F1, Fpad]
+    return jnp.fft.irfft(F, axis=1) * s2
+
+
+einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 g.m = 171 // 2
 g.nx = 512 // 2
 g.l = g.m + 1
@@ -87,10 +93,10 @@ m0 = modal(n)
 m1 = modal0(n)
 u = np.unique(m0 / m1)
 print("%.16e %.16e" % (np.min(u), np.max(u[1])))
-#assert np.allclose(m0, m1, atol=0, rtol=1e-2)
+assert np.allclose(m0, m1, atol=0, rtol=1e-1)
 
 n0 = nodal(m1)
 n1 = nodal0(m1)
 u = np.unique(n0 / n1)
 print("%.16e %.16e" % (np.min(u), np.max(u[1])))
-#assert np.allclose(n0, n1, atol=0, rtol=1e-5)
+assert np.allclose(n0, n1, atol=0, rtol=1e-3)

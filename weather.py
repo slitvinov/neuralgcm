@@ -152,8 +152,7 @@ def F(s):
 
     ke = g.sec2 * (u**2 + v**2)
     dke = g.eig * modal(ke)
-    doro = gravity * (g.eig * g.orography)
-    ddi += 0.5 * dke + doro
+    ddi += 0.5 * dke + g.doro
 
     dte_hadv = hadv(te)
     dte_vadv = vadv(dot_sigma, te)
@@ -326,9 +325,9 @@ g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
-if os.path.exists("s.raw") and os.path.exists("oro.raw"):
+if os.path.exists("s.raw") and os.path.exists("doro.raw"):
     s = np.fromfile("s.raw", dtype=np.float32).reshape(shape)
-    g.orography = np.fromfile("oro.raw", dtype=np.float32).reshape(shape[1:])
+    g.doro = np.fromfile("doro.raw", dtype=np.float32).reshape(shape[1:])
 else:
     era = xarray.merge([
         open(
@@ -383,9 +382,9 @@ else:
     s[g.wo] = modal(fields["specific_cloud_liquid_water_content"])
     s[g.ic] = modal(fields["specific_cloud_ice_water_content"])
     k = g.l0 / (g.l - 1)
-    g.orography = modal(oro0) * np.exp(-16 * k**4)
+    g.doro = (gravity * g.eig) * modal(oro0) * np.exp(-16 * k**4)
     s.tofile("s.raw")
-    np.asarray(g.orography).tofile("oro.raw")
+    np.asarray(g.doro).tofile("doro.raw")
 
 g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.ny / 128) / uT

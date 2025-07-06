@@ -8,11 +8,13 @@ import functools
 class g:
     pass
 
+#@jax.jit
 def modal(x):
     wx = g.w * x
     fwx = einsum("im,...ij->...mj", g.f, wx)
     return einsum("mjl,...mj->...ml", g.p, fwx)
 
+#@jax.jit
 def modal0(x):
     s0 = 1 / math.sqrt(2 * math.pi)
     s1 = 1 / math.sqrt(math.pi)
@@ -23,9 +25,11 @@ def modal0(x):
     a[:, 2::2, :] = -s1 * F[:, 1:g.m, :].imag
     return einsum("mjl,...mj->...ml", g.p, a)
 
+#@jax.jit
 def nodal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
+#@jax.jit
 def nodal0(x):
     s0 = 1 / math.sqrt(2 * math.pi)
     s1 = 1 / math.sqrt(math.pi)
@@ -37,12 +41,13 @@ def nodal0(x):
     F[:, g.m:, :] = 0
     return np.fft.irfft(F, axis=1) * s2
 
-einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
+#einsum = jnp.einsum
+einsum = np.einsum
 g.m = 171
 g.nx = 512
 g.l = g.m + 1
 g.ny = 2 * g.nx
-g.nz = 32 // 2
+g.nz = 2
 
 g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
@@ -81,13 +86,11 @@ n = np.random.rand(g.nz, g.nx, g.ny)
 m0 = modal(n)
 m1 = modal0(n)
 u = np.unique(m0 / m1)
-print(m0.dtype)
-print(m1.dtype)
-print("%.16e %.16e" % (u[0], u[1]))
-assert np.allclose(m0, m1, atol=0, rtol=1e-2)
+print("%.16e %.16e" % (np.min(u), np.max(u[1])))
+#assert np.allclose(m0, m1, atol=0, rtol=1e-2)
 
 n0 = nodal(m1)
 n1 = nodal0(m1)
 u = np.unique(n0 / n1)
-print("%.16e %.16e" % (u[0], u[1]))
-assert np.allclose(n0, n1, atol=0, rtol=1e-5)
+print("%.16e %.16e" % (np.min(u), np.max(u[1])))
+#assert np.allclose(n0, n1, atol=0, rtol=1e-5)

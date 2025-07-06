@@ -43,8 +43,8 @@ def nodal0(x):
 
 #einsum = jnp.einsum
 einsum = np.einsum
-g.m = 171
-g.nx = 512
+g.m = 171 // 2
+g.nx = 512 // 2
 g.l = g.m + 1
 g.ny = 2 * g.nx
 g.nz = 2

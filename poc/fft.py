@@ -23,9 +23,9 @@ def modal0(x):
     s1 = 1 / math.sqrt(math.pi)
     u = jnp.fft.rfft(g.w * x, axis=1)
     a0 = s0 * u[:, :1, :].real
-    a_cos = s1 * u[:, 1:g.m, :].real
-    a_sin = -s1 * u[:, 1:g.m, :].imag
-    a1 = jnp.r_['2', a_cos, a_sin].reshape((g.nz, -1, g.ny))
+    u0 = s1 * u[:, 1:g.m, :].real
+    u1 = -s1 * u[:, 1:g.m, :].imag
+    a1 = jnp.r_['2', u0, u1].reshape((g.nz, -1, g.ny))
     a = jnp.r_['1', a0, a1]
     return jnp.einsum("mjl,...mj->...ml", g.p, a)
 

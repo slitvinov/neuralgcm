@@ -287,13 +287,13 @@ p_alpha = p * alpha
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
 p_alpha_shifted[0] = 0
 h0 = kappa * g.temp * (p_alpha + p_alpha_shifted) * g.nz
-k1 = p - np.linspace(1/g.nz, 1, g.nz)
+k1 = p - np.linspace(1 / g.nz, 1, g.nz)
 g.tew = h0 / g.nz
 g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
 g.mask = np.r_[[1] * (g.l - 1), 0]
-g.sigma = np.cumsum(g.thick)
+g.sigma = np.linspace(1 / g.nz, 1, g.nz)
 g.ax = (g.l0 - 1) * g.a
 g.bx = -(g.l0 + 2) * g.b
 g.ay = (g.l0 + 1) * g.a

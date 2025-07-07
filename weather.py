@@ -103,8 +103,7 @@ def F(s):
         return alpha * f + roll(alpha * f, [1, 0, 0])
 
     nod = nodal(s)
-    vo, di, te, hu, wo, ic = nod[g.vo], nod[g.di], nod[g.te], nod[g.hu], nod[
-        g.wo], nod[g.ic]
+    vo, di, te, mois = nod[g.vo], nod[g.di], nod[g.te], nod[g.mois]
 
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
@@ -159,6 +158,7 @@ def F(s):
                          (u_dot_grad_sp - omega_full))
     dte = modal(te * di + dte_vadv + dte_adiab) + dte_hadv
 
+    hu, wo, ic = mois.reshape(3, g.nz, g.nx, g.ny)
     dhu_hadv = hadv(hu)
     dwo_hadv = hadv(wo)
     dic_hadv = hadv(ic)

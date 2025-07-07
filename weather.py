@@ -222,6 +222,7 @@ uT = 1 / 2 / 7.292e-5
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 gravity = GRAVITY / (uL / uT**2)
 kappa = 2 / 7
+g.temp = 250
 g.r_gas = kappa * 0.0011628807950492582
 g.m = 171
 g.l = 172
@@ -257,7 +258,6 @@ for m in range(g.m):
 p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
 g.w = 2 * math.pi * w / g.nx
-g.temp = 250
 
 p = np.r_[1:g.m]
 q = np.c_[p, -p]

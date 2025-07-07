@@ -125,7 +125,7 @@ def F(s):
 
     u_dot_grad_sp = u * spx * g.sec2 + v * spy * g.sec2
 
-    int_div = jax.lax.cumsum((di + u_dot_grad_sp) * g.thick[:, None, None])
+    int_div = jax.lax.cumsum(di + u_dot_grad_sp) / g.nz
     dot_sigma = (g.sigma[:, None, None] * int_div[-1] - int_div)[:-1]
 
     abs_vo = vo + g.sin_y[None, None, :]  # coriolis

@@ -47,11 +47,19 @@ def dx(u):
 
 
 def dy(x):
-    roll(g.ax * x, [0, 0, -1]) + roll(g.bx * x, [0, 0, 1])
+    zm = g.ax * x
+    zp = g.bx * x
+    return pad(zm, zp)
 
 
 def dy_cos(x):
-    roll(g.ay * x, [0, 0, -1]) + roll(g.by * x, [0, 0, 1])
+    zm = g.ay * x
+    zp = g.by * x
+    return pad(zm, zp)
+
+
+def pad(a, b):
+    return roll(a, [0, 0, -1]) + roll(b, [0, 0, 1])
 
 
 def runge_kutta(y):

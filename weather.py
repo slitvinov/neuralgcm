@@ -179,8 +179,7 @@ def F(s):
     dmoist_hadv = jnp.r_[dhu_hadv, dwo_hadv, dic_hadv]
     dmoist = modal(dmoist_vadv + dmoist_dil) + dmoist_hadv
 
-    dsp_phys = -jnp.sum(
-        g.thick[:, None, None] * u_dot_grad_sp, axis=0, keepdims=True)
+    dsp_phys = -jnp.sum(u_dot_grad_sp, axis=0, keepdims=True) / g.nz
     dsp = modal(dsp_phys)
     return jnp.r_[dvo, ddi, dte, dsp, dmoist] * g.mask
 

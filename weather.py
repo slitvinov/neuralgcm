@@ -199,7 +199,7 @@ def G_inv(s, dt):
     A = -dt * g.eig[:, None, None] * g.geo[None]
     B = np.r_[[-dt * g.r_gas * g.eig * g.temp] * g.nz].T[:, :, None]
     C = dt * np.r_[[g.tew] * g.l]
-    D = dt * np.c_[[[g.thick]] * g.l]
+    D = np.full((g.l, 1, g.nz), dt/g.nz)
     Z = np.zeros([g.l, g.nz, 1])
     Z0 = np.zeros([g.l, 1, g.nz])
     I0 = np.ones([g.l, 1, 1])

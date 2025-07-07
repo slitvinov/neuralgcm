@@ -200,6 +200,7 @@ def G_inv(s, dt):
     row1 = np.c_[C, I, Z]
     row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
+    print("inv")
     sol = einsum("lgh,hml->gml", inv, s[g.ditesp])
     return jnp.r_[s[g.vo], sol, s[g.hu], s[g.wo], s[g.ic]]
 
@@ -361,7 +362,24 @@ else:
     np.asarray(g.doro).tofile("doro.raw")
 
 g.dt = 4.3752000000000006e-02
+
 tau = 12900 / np.log2(g.ny / 128) / uT
 scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
-out = jax.lax.fori_loop(0, 579, lambda _, x: scale * runge_kutta(x), s)
-np.asarray(out).tofile("out.raw")
+g.inner = 3
+g.outter = 193
+
+
+@jax.jit
+def step(s):
+    return jax.lax.fori_loop(0, g.inner, lambda _, x: scale * runge_kutta(x),
+                             s)
+
+
+i = 0
+while True:
+    np.asarray(s).tofile(f"out.{i:08d}.raw")
+    if i == g.outter:
+        break
+    i += 1
+    s = step(s)
+np.asarray(s).tofile("out.raw")

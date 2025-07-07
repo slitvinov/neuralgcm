@@ -229,7 +229,6 @@ g.nx = 512
 g.ny = 256
 g.nz = 32
 g.zb = np.linspace(0, 1, g.nz + 1)
-g.zc = (g.zb[1:] + g.zb[:-1]) / 2
 dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))
 g.f[:, 0] = 1 / math.sqrt(2 * math.pi)
@@ -269,8 +268,9 @@ g.a[:, 0] = 0
 
 g.b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
 g.b[:, -1] = 0
-g.alpha = np.diff(np.log(g.zc), append=0) / 2
-g.alpha[-1] = -np.log(g.zc[-1])
+zc = (g.zb[1:] + g.zb[:-1]) / 2
+g.alpha = np.diff(np.log(zc), append=0) / 2
+g.alpha[-1] = -np.log(zc[-1])
 
 weights = np.zeros([g.nz, g.nz])
 for j in range(g.nz):

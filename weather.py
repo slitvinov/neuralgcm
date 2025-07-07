@@ -189,7 +189,7 @@ def G(s):
     tscale = 3 * g.nz, 2 * g.m - 1, g.l
     ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) +
                    g.r_gas * g.temp * s[g.sp])
-    T = np.full((1, g.nz), -1/g.nz)
+    T = np.full((1, g.nz), -1 / g.nz)
     dtesp = einsum("gh,hml->gml", jnp.r_[-g.tew, T], s[g.di])
     return jnp.r_[jnp.zeros(shape), ddi, dtesp, jnp.zeros(tscale)]
 
@@ -199,7 +199,7 @@ def G_inv(s, dt):
     A = -dt * g.eig[:, None, None] * g.geo[None]
     B = np.r_[[-dt * g.r_gas * g.eig * g.temp] * g.nz].T[:, :, None]
     C = dt * np.r_[[g.tew] * g.l]
-    D = np.full((g.l, 1, g.nz), dt/g.nz)
+    D = np.full((g.l, 1, g.nz), dt / g.nz)
     Z = np.zeros([g.l, g.nz, 1])
     Z0 = np.zeros([g.l, 1, g.nz])
     I0 = np.ones([g.l, 1, 1])

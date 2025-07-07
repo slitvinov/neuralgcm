@@ -30,55 +30,13 @@ def roll(a, shift):
 
 
 def modal(x):
-    # Apply Gaussian weights for the subsequent Legendre transform
     wx = g.w * x
-
-    # Transpose for FFT along the longitude axis
-    wx_T = jnp.swapaxes(wx, -1, -2)
-
-    # Perform real FFT and truncate to the desired number of wavenumbers
-    fft_trunc = jnp.fft.rfft(wx_T, axis=-1)[..., :g.m]
-
-    # The original code used a specific orthonormal basis for the Fourier transform.
-    # We scale the FFT output to get coefficients for this basis.
-    # Basis: 1/sqrt(2pi), cos(mλ)/sqrt(pi), sin(mλ)/sqrt(pi)
-    fwx_T = jnp.empty(x.shape[:-2] + (g.ny, 2 * g.m - 1), dtype=x.dtype)
-
-    # m=0 (zonal mean)
-    fwx_T = fwx_T.at[..., 0].set(fft_trunc[..., 0].real / math.sqrt(2 * math.pi))
-    # m>0: Cosine (real) and Sine (imag) coefficients
-    fwx_T = fwx_T.at[..., 1::2].set(fft_trunc[..., 1:].real / math.sqrt(math.pi))
-    fwx_T = fwx_T.at[..., 2::2].set(-fft_trunc[..., 1:].imag / math.sqrt(math.pi))
-
-    # Transpose back to (..., 2*m-1, ny) for Legendre transform
-    fwx = jnp.swapaxes(fwx_T, -1, -2)
-
-    # Perform Legendre transform
+    fwx = einsum("im,...ij->...mj", g.f, wx)
     return einsum("mjl,...mj->...ml", g.p, fwx)
 
 
 def nodal(x):
-    # x has shape (..., 2*m-1, l)
-
-    # 1. Inverse Legendre transform (from spectral l to grid latitudes ny)
-    grid_lat = einsum("mjl,...ml->...mj", g.p, x)  # shape (..., 2*m-1, ny)
-
-    # Transpose for IFFT
-    grid_lat_T = jnp.swapaxes(grid_lat, -1, -2)  # shape (..., ny, 2*m-1)
-
-    # Reconstruct complex coefficients for standard FFT from the orthonormal basis
-    # C_0 = a_0
-    # C_k = a_k - i*b_k for k>0
-    complex_coeffs = jnp.empty(x.shape[:-2] + (g.ny, g.m), dtype=jnp.complex64)
-    complex_coeffs = complex_coeffs.at[..., 0].set(
-        grid_lat_T[..., 0] * math.sqrt(2 * math.pi))
-    complex_coeffs = complex_coeffs.at[..., 1:].set(
-        (grid_lat_T[..., 1::2] - 1j * grid_lat_T[..., 2::2]) * math.sqrt(math.pi))
-
-    # Perform inverse real FFT
-    grid_T = jnp.fft.irfft(complex_coeffs, n=g.nx, axis=-1)
-
-    return jnp.swapaxes(grid_T, -1, -2)
+    return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
 
 def dx(u):
@@ -269,6 +227,11 @@ g.nx = 512
 g.ny = 256
 g.nz = 32
 g.zb = np.linspace(0, 1, g.nz + 1)
+dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
+g.f = np.empty((g.nx, 2 * g.m - 1))
+g.f[:, 0] = 1 / math.sqrt(2 * math.pi)
+g.f[:, 1::2] = np.real(dft[:, 1:])
+g.f[:, 2::2] = -np.imag(dft[:, 1:])
 g.sin_y, w = scipy.special.roots_legendre(g.ny)
 g.sec2 = 1 / (1 - g.sin_y**2)
 q = np.sqrt(1 - g.sin_y * g.sin_y)

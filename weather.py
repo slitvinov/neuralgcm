@@ -63,7 +63,6 @@ def pad(a, b):
 
 
 def runge_kutta(y):
-    jax.debug.print("runge_kutta")
     a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
     a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
     b_ex = 1 / 2, -1 / 2, 1, 0
@@ -233,7 +232,6 @@ g.nz = 32
 g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
 g.thick = np.diff(g.zb)
-g.thick0 = 1 / g.nz
 g.dz = np.diff(g.zc)
 dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))
@@ -288,7 +286,7 @@ alpha = g.alpha[..., None]
 p_alpha = p * alpha
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
 p_alpha_shifted[0] = 0
-h0 = kappa * g.temp * (p_alpha + p_alpha_shifted) / g.thick0
+h0 = kappa * g.temp * (p_alpha + p_alpha_shifted) * g.nz
 k1 = p - np.linspace(1/g.nz, 1, g.nz)
 g.tew = h0 * g.thick
 g.l0 = np.r_[:g.l]

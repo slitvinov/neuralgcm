@@ -93,7 +93,7 @@ def F(s):
     def vadv(w, x):
         wt = np.zeros((1, g.nx, g.ny))
         dx = x[1:] - x[:-1]
-        xd = dx * (1 / g.dz)[:, None, None]
+        xd = dx * g.nz
         wx = jnp.r_[wt, xd * w, wt]
         return -0.5 * (wx[1:] + wx[:-1])
 
@@ -230,7 +230,6 @@ g.ny = 256
 g.nz = 32
 g.zb = np.linspace(0, 1, g.nz + 1)
 g.zc = (g.zb[1:] + g.zb[:-1]) / 2
-g.dz = np.diff(g.zc)
 dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))
 g.f[:, 0] = 1 / math.sqrt(2 * math.pi)

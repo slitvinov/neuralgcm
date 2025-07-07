@@ -102,12 +102,9 @@ def F(s):
         alpha = g.alpha[:, None, None]
         return alpha * f + roll(alpha * f, [1, 0, 0])
 
-    vo = nodal(s[g.vo])
-    di = nodal(s[g.di])
-    te = nodal(s[g.te])
-    hu = nodal(s[g.hu])
-    wo = nodal(s[g.wo])
-    ic = nodal(s[g.ic])
+    nod = nodal(s)
+    vo, di, te, hu, wo, ic = nod[g.vo], nod[g.di], nod[g.te], nod[g.hu], nod[
+        g.wo], nod[g.ic]
 
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
@@ -123,7 +120,7 @@ def F(s):
     spx = nodal(dx(s[g.sp]))
     spy = nodal(dy_cos(s[g.sp]))
 
-    u_dot_grad_sp = u * spx * g.sec2 + v * spy * g.sec2
+    u_dot_grad_sp = (u * spx + v * spy) * g.sec2
 
     int_div = jax.lax.cumsum(di + u_dot_grad_sp) / g.nz
     dot_sigma = (g.sigma[:, None, None] * int_div[-1] - int_div)[:-1]

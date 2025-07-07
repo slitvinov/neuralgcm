@@ -297,6 +297,7 @@ g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
+g.mois = np.s_[3 * n + 1:]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
 if os.path.exists("s.raw") and os.path.exists("doro.raw"):
     s = np.fromfile("s.raw", dtype=np.float32).reshape(shape)

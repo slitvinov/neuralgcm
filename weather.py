@@ -47,15 +47,11 @@ def dx(u):
 
 
 def dy(x):
-    zm = g.ax * x
-    zp = g.bx * x
-    return pad(zm, zp)
+    return pad(g.ax * x, g.bx * x)
 
 
 def dy_cos(x):
-    zm = g.ay * x
-    zp = g.by * x
-    return pad(zm, zp)
+    return pad(g.ay * x, g.by * x)
 
 
 def pad(a, b):

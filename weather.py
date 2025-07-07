@@ -189,7 +189,8 @@ def G(s):
     tscale = 3 * g.nz, 2 * g.m - 1, g.l
     ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) +
                    g.r_gas * g.temp * s[g.sp])
-    dtesp = einsum("gh,hml->gml", jnp.r_[-g.tew, -g.thick[None]], s[g.di])
+    T = np.full((1, g.nz), -1/g.nz)
+    dtesp = einsum("gh,hml->gml", jnp.r_[-g.tew, T], s[g.di])
     return jnp.r_[jnp.zeros(shape), ddi, dtesp, jnp.zeros(tscale)]
 
 

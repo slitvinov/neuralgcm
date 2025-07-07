@@ -293,12 +293,6 @@ g.ax = (g.l0 - 1) * g.a
 g.bx = -(g.l0 + 2) * g.b
 g.ay = (g.l0 + 1) * g.a
 g.by = -g.l0 * g.b
-y_deg = np.rad2deg(np.arcsin(g.sin_y))
-x_deg = np.linspace(0, 360, g.nx, endpoint=False)
-a_zb, b_zb = np.loadtxt("ecmwf137_hybrid_levels.csv",
-                        skiprows=1,
-                        usecols=(1, 2),
-                        delimiter="\t").T
 n = g.nz
 g.vo = np.s_[:n]
 g.di = np.s_[n:2 * n]
@@ -320,6 +314,12 @@ else:
         open(
             "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1")
     ])
+    y_deg = np.rad2deg(np.arcsin(g.sin_y))
+    x_deg = np.linspace(0, 360, g.nx, endpoint=False)
+    a_zb, b_zb = np.loadtxt("ecmwf137_hybrid_levels.csv",
+                            skiprows=1,
+                            usecols=(1, 2),
+                            delimiter="\t").T
     nhyb = len(era["hybrid"].data)
     y_src = era["latitude"].data
     x_src = era["longitude"].data

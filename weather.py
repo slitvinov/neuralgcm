@@ -63,6 +63,7 @@ def pad(a, b):
 
 
 def runge_kutta(y):
+    jax.debug.print("runge_kutta")
     a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
     a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
     b_ex = 1 / 2, -1 / 2, 1, 0
@@ -159,7 +160,7 @@ def F(s):
 
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
-    dte_adiab = kappa * (g.temp0 * (u_dot_grad_sp - omega_mean) + te *
+    dte_adiab = kappa * (g.temp * (u_dot_grad_sp - omega_mean) + te *
                          (u_dot_grad_sp - omega_full))
     dte = modal(te * di + dte_vadv + dte_adiab) + dte_hadv
 
@@ -189,7 +190,8 @@ def F(s):
 def G(s):
     shape = g.nz, 2 * g.m - 1, g.l
     tscale = 3 * g.nz, 2 * g.m - 1, g.l
-    ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) + g.r_gas * g.temp0 * s[g.sp])
+    ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) +
+                   g.r_gas * g.temp * s[g.sp])
     dtesp = einsum("gh,hml->gml", jnp.r_[-g.tew, -g.thick[None]], s[g.di])
     return jnp.r_[jnp.zeros(shape), ddi, dtesp, jnp.zeros(tscale)]
 
@@ -197,7 +199,7 @@ def G(s):
 def G_inv(s, dt):
     I = np.r_[[np.eye(g.nz)] * g.l]
     A = -dt * g.eig[:, None, None] * g.geo[None]
-    B = -dt * g.r_gas * g.eig[:, None, None] * g.temp[None, :, None]
+    B = np.r_[[-dt * g.r_gas * g.eig * g.temp] * g.nz].T[:, :, None]
     C = dt * np.r_[[g.tew] * g.l]
     D = dt * np.c_[[[g.thick]] * g.l]
     Z = np.zeros([g.l, g.nz, 1])
@@ -260,8 +262,7 @@ for m in range(g.m):
 p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
 g.w = 2 * math.pi * w / g.nx
-g.temp = np.full((g.nz, ), 250)
-g.temp0 = 250
+g.temp = 250
 
 p = np.r_[1:g.m]
 q = np.c_[p, -p]
@@ -286,7 +287,7 @@ alpha = g.alpha[..., None]
 p_alpha = p * alpha
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
 p_alpha_shifted[0] = 0
-h0 = kappa * g.temp0 * (p_alpha + p_alpha_shifted) / g.thick[..., None]
+h0 = kappa * g.temp * (p_alpha + p_alpha_shifted) / g.thick[..., None]
 thickness_sum = g.thick[:-1] + g.thick[1:]
 thickness_cumulative = np.cumsum(g.thick)[..., None]
 k1 = p - thickness_cumulative
@@ -366,7 +367,7 @@ else:
     s = np.empty(shape, dtype=np.float32)
     s[g.vo] = vor * g.mask
     s[g.di] = div * g.mask
-    s[g.te] = modal(fields["temperature"] - g.temp0)
+    s[g.te] = modal(fields["temperature"] - g.temp)
     s[g.sp] = modal(np.log(sp[None, :, :] / (1 / uL / uT**2)))
     s[g.hu] = modal(fields["specific_humidity"])
     s[g.wo] = modal(fields["specific_cloud_liquid_water_content"])

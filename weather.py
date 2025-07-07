@@ -293,8 +293,6 @@ g.ax = (g.l0 - 1) * g.a
 g.bx = -(g.l0 + 2) * g.b
 g.ay = (g.l0 + 1) * g.a
 g.by = -g.l0 * g.b
-
-output_level_indices = [g.nz // 4, g.nz // 2, 3 * g.nz // 4, -1]
 y_deg = np.rad2deg(np.arcsin(g.sin_y))
 x_deg = np.linspace(0, 360, g.nx, endpoint=False)
 a_zb, b_zb = np.loadtxt("ecmwf137_hybrid_levels.csv",

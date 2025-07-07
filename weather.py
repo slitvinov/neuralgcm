@@ -103,7 +103,8 @@ def F(s):
         return alpha * f + roll(alpha * f, [1, 0, 0])
 
     nod = nodal(s)
-    vo, di, te, mois = nod[g.vo], nod[g.di], nod[g.te], nod[g.mois]
+    vo, di, te, hu, wo, ic = nod[g.vo], nod[g.di], nod[g.te], nod[g.hu], nod[
+        g.wo], nod[g.ic]
 
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
@@ -158,7 +159,6 @@ def F(s):
                          (u_dot_grad_sp - omega_full))
     dte = modal(te * di + dte_vadv + dte_adiab) + dte_hadv
 
-    hu, wo, ic = mois.reshape(3, g.nz, g.nx, g.ny)
     dhu_hadv = hadv(hu)
     dwo_hadv = hadv(wo)
     dic_hadv = hadv(ic)
@@ -297,7 +297,6 @@ g.hu = np.s_[3 * n + 1:4 * n + 1]
 g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
-g.mois = np.s_[3 * n + 1:]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
 if os.path.exists("s.raw") and os.path.exists("doro.raw"):
     s = np.fromfile("s.raw", dtype=np.float32).reshape(shape)

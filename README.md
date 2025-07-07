@@ -70,6 +70,8 @@ gsutil cp gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501* 
   758-766.
   [doi](https://doi.org/10.1175/1520-0493(1981)109%3C0758:AEAAMC%3E2.0.CO;2)
 
+- https://www.gfdl.noaa.gov/atmospheric-model
+
 > Our choice of the numerical schemes for interpolation, integrals and
 > diagnostics exactly follows Durran’s book [3] §8.6, with the
 > addition of moisture species (which are advected by the wind and

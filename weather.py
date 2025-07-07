@@ -205,7 +205,6 @@ def G_inv(s, dt):
     row1 = np.c_[C, I, Z]
     row2 = np.c_[D, Z0, I0]
     inv = np.linalg.inv(np.r_['1', row0, row1, row2])
-    print("inv")
     sol = einsum("lgh,hml->gml", inv, s[g.ditesp])
     return jnp.r_[s[g.vo], sol, s[g.hu], s[g.wo], s[g.ic]]
 
@@ -318,6 +317,7 @@ else:
                             usecols=(1, 2),
                             delimiter="\t").T
     nhyb = len(era["hybrid"].data)
+    print(f"{nhyb=}")
     y_src = era["latitude"].data
     x_src = era["longitude"].data
     xy_grid = np.meshgrid(y_deg, x_deg)

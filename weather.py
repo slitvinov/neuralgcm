@@ -275,9 +275,7 @@ for j in range(g.nz):
     for k in range(j + 1, g.nz):
         weights[j, k] = g.alpha[k] + g.alpha[k - 1]
 g.geo = g.r_gas * weights
-p = np.tril(np.ones([g.nz, g.nz]))
-alpha = g.alpha[..., None]
-p_alpha = p * alpha
+p_alpha = np.tril(np.ones([g.nz, g.nz])) * g.alpha[..., None]
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
 p_alpha_shifted[0] = 0
 g.tew = kappa * g.temp * (p_alpha + p_alpha_shifted)

@@ -98,10 +98,9 @@ def F(s):
         return -0.5 * (wx[1:] + wx[:-1])
 
     def omega(x):
-        f = jax.lax.cumsum(x * g.thick[:, None, None])
+        f = jax.lax.cumsum(x)
         alpha = g.alpha[:, None, None]
-        return (alpha * f + roll(alpha * f, [1, 0, 0])) / g.thick[:, None,
-                                                                  None]
+        return alpha * f + roll(alpha * f, [1, 0, 0])
 
     vo = nodal(s[g.vo])
     di = nodal(s[g.di])

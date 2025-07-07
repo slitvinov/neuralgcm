@@ -64,6 +64,11 @@ gsutil cp gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501* 
 - Bourke, William. "A multi-level spectral model. I. Formulation and
   hemispheric integrations." Mon. Wea. Rev 102.10 (1974): 687-701.
   [doi](https://doi.org/10.1175/1520-0493(1974)102%3C0687:AMLSMI%3E2.0.CO;2)
+- Simmons, A. J., & Burridge, D. M. (1981). An energy and
+  angular-momentum conserving vertical finite-difference scheme and
+  hybrid vertical coordinates. Monthly Weather Review, 109(4),
+  758-766.
+  [doi](https://doi.org/10.1175/1520-0493(1981)109%3C0758:AEAAMC%3E2.0.CO;2)
 
 > Our choice of the numerical schemes for interpolation, integrals and
 > diagnostics exactly follows Durran’s book [3] §8.6, with the

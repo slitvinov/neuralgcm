@@ -17,11 +17,11 @@ class g:
     pass
 
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-g.nx = 512
-g.nz = 32
-g.ny = 256
 g.m = 171
-g.l = 172
+g.l = g.m + 1
+g.nx = 3 * g.m + 1
+g.ny = g.nx // 2
+g.nz = 32
 g.f = np.empty((g.nx, 2 * g.m - 1))
 dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f[:, 0] = 1 / math.sqrt(2 * math.pi)

@@ -55,12 +55,14 @@ g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
 for path in sys.argv[1:]:
-    image = re.sub("[.]raw", "", path)
-    image = image + ".png"
+    base = re.sub("[.]raw$", "", path)
+    base = re.sub("^out[.]", "", base)
     s = np.fromfile(path, dtype=np.float32).reshape(shape)
-    sys.stderr.write(f"vis.py: {image}\n")
-    hu = s[g.hu][g.nz//2]
-    hu = nodal(hu)
-    vmin = np.min(hu)
-    vmax = np.max(hu)
-    plt.imsave(image, np.flipud(hu).T, cmap="jet", vmin=vmin, vmax=vmax)
+    for name, slice in ("vo", g.vo), ("di", g.di), ("te", g.te), ("hu", g.he), ("wo", g.wo), ("ic", g.ic):
+        image = name + "." + base + ".png"
+        sys.stderr.write(f"vis.py: {image}\n")
+        fi = s[slice][g.nz//2]
+        fi = nodal(fi)
+        vmin = np.min(fi)
+        vmax = np.max(fi)
+        plt.imsave(image, np.flipud(fi).T, cmap="jet", vmin=vmin, vmax=vmax)

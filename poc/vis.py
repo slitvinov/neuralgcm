@@ -5,11 +5,14 @@ import math
 import scipy
 import re
 
+
 def nodal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
+
 class g:
     pass
+
 
 einsum = np.einsum
 g.nx = 512
@@ -58,10 +61,17 @@ for path in sys.argv[1:]:
     base = re.sub("[.]raw$", "", path)
     base = re.sub("^out[.]", "", base)
     s = np.fromfile(path, dtype=np.float32).reshape(shape)
-    for name, slice in ("vo", g.vo), ("di", g.di), ("te", g.te), ("hu", g.he), ("wo", g.wo), ("ic", g.ic):
+    for name, slice in (
+        ("vo", g.vo),
+        ("di", g.di),
+        ("te", g.te),
+        ("hu", g.hu),
+        ("wo", g.wo),
+        ("ic", g.ic),
+    ):
         image = name + "." + base + ".png"
         sys.stderr.write(f"vis.py: {image}\n")
-        fi = s[slice][g.nz//2]
+        fi = s[slice][g.nz // 2]
         fi = nodal(fi)
         vmin = np.min(fi)
         vmax = np.max(fi)

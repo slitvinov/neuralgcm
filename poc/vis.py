@@ -12,7 +12,6 @@ class g:
     pass
 
 einsum = np.einsum
-
 g.nx = 512
 g.nz = 32
 g.ny = 256
@@ -60,7 +59,8 @@ for path in sys.argv[1:]:
     image = image + ".png"
     s = np.fromfile(path, dtype=np.float32).reshape(shape)
     sys.stderr.write(f"vis.py: {image}\n")
-    hu = nodal(s[g.hu])[g.nz//2]
+    hu = s[g.hu][g.nz//2]
+    hu = nodal(hu)
     vmin = np.min(hu)
     vmax = np.max(hu)
     plt.imsave(image, np.flipud(hu).T, cmap="jet", vmin=vmin, vmax=vmax)

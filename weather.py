@@ -215,6 +215,10 @@ def open(path):
     return x.sel(time="19900501T00")
 
 
+def interpn(data):
+    return scipy.interpolate.interpn(xy_src, data, xy_grid)
+
+
 GRAVITY = 9.80616
 uL = 6.37122e6
 uT = 1 / 2 / 7.292e-5
@@ -315,16 +319,12 @@ else:
     x_deg = np.linspace(0, 360, g.nx, endpoint=False)
     a_zb, b_zb = np.fromfile("levels.raw", dtype=np.float32).reshape(2, -1)
     nhyb = len(era["hybrid"].data)
-    print(f"{nhyb=}")
     y_src = era["latitude"].data
     x_src = era["longitude"].data
     xy_grid = np.meshgrid(y_deg, x_deg)
     xy_src = y_src, x_src
-    sp = scipy.interpolate.interpn(xy_src, era["surface_pressure"].data,
-                                   xy_grid)
-    oro = scipy.interpolate.interpn(xy_src,
-                                    era["geopotential_at_surface"].data,
-                                    xy_grid)
+    sp = interpn(era["surface_pressure"].data)
+    oro = interpn(era["geopotential_at_surface"].data)
     fields = {}
     samples = np.empty((nhyb, g.nx, g.ny))
     source = a_zb[:, None, None] / sp + b_zb[:, None, None]
@@ -341,8 +341,7 @@ else:
         ("specific_humidity", 1),
     ]:
         for i in range(nhyb):
-            samples[i] = scipy.interpolate.interpn(xy_src, era[key].data[i],
-                                                   xy_grid)
+            samples[i] = interpn(era[key].data[i])
         fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
     cos = np.sqrt(1 - g.sin_y**2)
     u = modal(fields["u_component_of_wind"] / cos)

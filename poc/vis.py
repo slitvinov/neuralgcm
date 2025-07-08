@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+class g:
+    pass
 
-oro = np.fromfile("oro.raw", dtype=np.float32).reshape(shape)
-vmin = np.min(hu)
-vmax = np.max(hu)
-plt.imsave(f"oro.png", hu.T, cmap="jet", vmin=vmin, vmax=vmax)
+g.nx = 512
+g.ny = 256
+oro = np.fromfile("oro.raw").reshape((g.nx, g.ny))
+plt.imsave(f"oro.png", oro.T, cmap="jet")

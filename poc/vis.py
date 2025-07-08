@@ -7,7 +7,7 @@ import re
 import scipy
 import sys
 
-@jit.jax
+@jax.jit
 def nodal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 

@@ -110,6 +110,11 @@ PARAMETER = {
     },
 }
 
+SURFACE_TYPE = {
+    105: "Hybrid Level",
+    255: "Missing",
+}
+
 f = open(sys.argv[1], "rb")
 while True:
     # Section 0 - Indicator Section
@@ -180,11 +185,24 @@ while True:
     print(f"{PARAMETER_CATEGORY[parameter_category]=}")
     print(f"{PARAMETER[parameter_category][parameter_number]=}")
     assert generating_process == 0, "Analysis"
-    print(f"{ncoord=}")
 
+    background_generating_process, generating_process = section[12:14]
+    print(f"{background_generating_process=} {generating_process=}")
+
+    type1, factor1 = section[22:24]
+    value1, = struct.unpack(">L", section[24:28])
+
+    type2, factor2 = section[28:30]
+    value2, = struct.unpack(">L", section[30:34])
+    print(f"{SURFACE_TYPE[type1]=} {factor1=} {value1=}")
+    print(f"{SURFACE_TYPE[type2]=} {factor2=} {value2=}")
     buf = section[34:]
-    assert len(buf) == 4 * ncoord
     coord = [x for x, in struct.iter_unpack(">f", buf)]
+    assert len(coord) == ncoord
+    with open("levels.raw", "wb") as out:
+        for c in coord:
+            out.write(struct.pack("<f", c))
+    break
 
     # Section 5 - Data Representation Section
     section_length, = struct.unpack(">L", f.read(4))

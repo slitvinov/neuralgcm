@@ -232,7 +232,6 @@ g.l = g.m + 1
 g.nx = 3 * g.m + 1
 g.ny = g.nx // 2
 g.nz = 32
-print(g.m, g.l, g.nx, g.ny)
 g.zb = np.linspace(0, 1, g.nz + 1)
 dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))
@@ -367,8 +366,8 @@ else:
 g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.ny / 128) / uT
 scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
-g.inner = 3
-g.outter = 193
+g.inner = 6
+g.outter = 100
 i = 0
 while True:
     np.asarray(s).tofile(f"out.{i:08d}.raw")

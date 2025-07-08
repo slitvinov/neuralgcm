@@ -47,6 +47,11 @@ o3q: Ozone and specific humidity-related variables
 qrqs: Cloud and precipitation-related variables like rain/snow mixing ratios
 tw: Temperature and wind components
 
+```
+gsutil ls gs://gcp-public-data-arco-era5/raw/date-variable-single_level/1990/05/01/surface_pressure/
+gs://gcp-public-data-arco-era5/raw/date-variable-single_level/1990/05/01/surface_pressure/surface.nc
+```
+
 - https://old.wmo.int/extranet/pages/prog/www/WMOCodes/Guides/GRIB/GRIB2_062006.pdf
 - https://github.com/ecmwf/cfgrib
 - https://get.ecmwf.int/repository/test-data/cfgrib/era5-levels-members.grib

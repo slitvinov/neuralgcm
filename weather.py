@@ -14,8 +14,7 @@ class g:
 
 @jax.jit
 def step(s):
-    return jax.lax.fori_loop(0, g.inner, lambda _, x: runge_kutta(x),
-                             s)
+    return jax.lax.fori_loop(0, g.inner, lambda _, x: runge_kutta(x), s)
 
 
 def roll(a, shift):

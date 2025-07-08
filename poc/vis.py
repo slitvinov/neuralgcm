@@ -1,11 +1,13 @@
+import functools
+import jax.numpy as jnp
+import math
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
-import math
-import scipy
 import re
+import scipy
+import sys
 
-
+@jit.jax
 def nodal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
@@ -13,8 +15,7 @@ def nodal(x):
 class g:
     pass
 
-
-einsum = np.einsum
+einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 g.nx = 512
 g.nz = 32
 g.ny = 256

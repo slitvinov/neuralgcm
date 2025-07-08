@@ -14,7 +14,8 @@ class g:
 
 @jax.jit
 def step(s):
-    return jax.lax.fori_loop(0, g.inner, lambda _, x: runge_kutta(x), s)
+    return jax.lax.fori_loop(0, g.inner, lambda _, x: scale * runge_kutta(x),
+                             s)
 
 
 def roll(a, shift):
@@ -362,8 +363,8 @@ else:
     np.asarray(g.doro).tofile("doro.raw")
 
 g.dt = 4.3752000000000006e-02
-# tau = 12900 / np.log2(g.ny / 128) / uT
-# scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
+tau = 10 * 12900 / np.log2(g.ny / 128) / uT
+scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 g.inner = 6
 g.outter = 100
 i = 0

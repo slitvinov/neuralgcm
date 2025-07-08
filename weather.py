@@ -180,7 +180,7 @@ def F(s):
 
     dsp_phys = -jnp.sum(u_dot_grad_sp, axis=0, keepdims=True) / g.nz
     dsp = modal(dsp_phys)
-    return jnp.r_[dvo, ddi, dte, dsp, dmoist]
+    return jnp.r_[dvo, ddi, dte, dsp, dmoist] * g.mask
 
 
 def G(s):
@@ -288,6 +288,7 @@ g.tew = kappa * g.temp * (p_alpha + p_alpha_shifted)
 g.l0 = np.r_[:g.l]
 g.eig = g.l0 * (g.l0 + 1)
 g.inv_eig = np.r_[0, -1 / g.eig[1:]]
+g.mask = np.r_[[1] * (g.l - 1), 0]
 g.sigma = np.linspace(1 / g.nz, 1, g.nz)
 g.ax = (g.l0 - 1) * g.a
 g.bx = -(g.l0 + 2) * g.b
@@ -348,8 +349,8 @@ else:
     vor = dx(v) - dy(u)
     div = dx(u) + dy(v)
     s = np.empty(shape, dtype=np.float32)
-    s[g.vo] = vor
-    s[g.di] = div
+    s[g.vo] = vor * g.mask
+    s[g.di] = div * g.mask
     s[g.te] = modal(fields["temperature"] - g.temp)
     s[g.sp] = modal(np.log(sp[None, :, :] / (1 / uL / uT**2)))
     s[g.hu] = modal(fields["specific_humidity"])

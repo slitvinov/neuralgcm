@@ -71,6 +71,24 @@ TYPE = {
     1: "Forecast Products",
 }
 
+# https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table3-1.shtml
+GRID_TEMPLATE = {
+    0: "Latitude/Longitude",
+    1: "Rotated Latitude/Longitude",
+    2: "Stretched Latitude/Longitude",
+    3: "Rotated and Stretched Latitude/Longitude",
+    40: "Gaussian Latitude/Longitude",
+    50: "Spherical Harmonic Coefficients",
+}
+
+# https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-0.shtml
+PRODUCT_TEMPLATE = {
+    0:
+    "Analysis or forecast at a horizontal level or in a horizontal layer at a point in time",
+    1:
+    "Individual ensemble forecast, control and perturbed, at a horizontal level or in a horizontal layer at a point in time",
+}
+
 f = open(sys.argv[1], "rb")
 while True:
     # Section 0 - Indicator Section
@@ -113,19 +131,16 @@ while True:
     npoint, = struct.unpack(">L", section[6:10])
     noctet, interpetation = section[10:12]
     print(f"{noctet=} {interpetation=}")
-    # assert noctet == 0 and interpetation == 0
 
-    template_number, = struct.unpack(">H", section[12:14])
-    assert template_number == 50, "Spherical harmonic coefficients"
+    template, = struct.unpack(">H", section[12:14])
+    print(f"{GRID_TEMPLATE[template]=}")
+    assert noctet == 0 and interpetation == 0, "no extra points"
+    assert template == 50, "Spherical harmonic coefficients"
     print(f"{npoint=}")
     ## pentagonal resolution parameter
-    J, = struct.unpack(">L", section[14:18])
-    K, = struct.unpack(">L", section[18:22])
-    M, = struct.unpack(">L", section[22:26])
-    method = section[26]
-    order = section[27]
-    assert method == 1
-    assert order == 1
+    J, K, M = struct.unpack(">LLL", section[14:26])
+    method, order = section[26:28]
+    assert method == 1 and order == 1
     # https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table3-6.shtml
     print(f"{J=} {K=} {M=} {method=} {order=}")
 
@@ -133,13 +148,16 @@ while True:
     section_length, = struct.unpack(">L", f.read(4))
     section = b'0000' + f.read(section_length - 4)
     assert section[4] == 4, "Number of the section"
+    ncoord, template_number = struct.unpack(">HH", section[5:9])
     template_number, = struct.unpack(">H", section[7:9])
-    assert template_number == 0, "Analysis or forecast at a horizontal level..."
+    print(f"{PRODUCT_TEMPLATE[template_number]=}")
+    assert template_number == 0
     parameter_category, parameter_number, generating_process = section[9:12]
     #### assert parameter_category == 2, "Momentum"
     assert parameter_number in (12, 13), "Relative Vorticity"
     print(f"{parameter_number=}")
     assert generating_process == 0, "Analysis"
+    print(ncoord)
 
     # Section 5 - Data Representation Section
     section_length, = struct.unpack(">L", f.read(4))

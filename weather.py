@@ -228,10 +228,11 @@ kappa = 2 / 7
 g.temp = 250
 g.r_gas = kappa * 0.0011628807950492582
 g.m = 171
-g.l = 172
-g.nx = 512
-g.ny = 256
+g.l = g.m + 1
+g.nx = 3 * g.m + 1
+g.ny = g.nx // 2
 g.nz = 32
+print(g.m, g.l, g.nx, g.ny)
 g.zb = np.linspace(0, 1, g.nz + 1)
 dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))

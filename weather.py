@@ -361,7 +361,7 @@ else:
     g.doro = (gravity * g.eig) * modal(oro[None, :, :]) * np.exp(
         -16 * k**4) / (uL * GRAVITY)
     s.tofile("s.raw")
-    np.asarray(oro).tofile("oro.row")
+    np.asarray(oro).tofile("oro.raw")
     np.asarray(g.doro).tofile("doro.raw")
 
 g.dt = 4.3752000000000006e-02

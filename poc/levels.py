@@ -44,6 +44,7 @@ assert type2 == 255, "type2 is Missing"
 buf = section[34:]
 coord = [x for x, in struct.iter_unpack(">f", buf)]
 assert len(coord) == ncoord
+scale = 10 ** factor1
 with open("levels.raw", "wb") as out:
     for c in coord:
-        out.write(struct.pack("<f", c))
+        out.write(struct.pack("<f", c * scale))

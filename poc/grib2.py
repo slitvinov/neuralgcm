@@ -196,13 +196,8 @@ while True:
     value2, = struct.unpack(">L", section[30:34])
     print(f"{SURFACE_TYPE[type1]=} {factor1=} {value1=}")
     print(f"{SURFACE_TYPE[type2]=} {factor2=} {value2=}")
-    buf = section[34:]
-    coord = [x for x, in struct.iter_unpack(">f", buf)]
-    assert len(coord) == ncoord
-    with open("levels.raw", "wb") as out:
-        for c in coord:
-            out.write(struct.pack("<f", c))
-    break
+    # buf = section[34:]
+    # coord = [x for x, in struct.iter_unpack(">f", buf)]
 
     # Section 5 - Data Representation Section
     section_length, = struct.unpack(">L", f.read(4))

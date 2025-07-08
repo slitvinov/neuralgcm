@@ -313,7 +313,7 @@ else:
     ])
     y_deg = np.rad2deg(np.arcsin(g.sin_y))
     x_deg = np.linspace(0, 360, g.nx, endpoint=False)
-    a_zb, b_zb = np.fromfile("levels.raw").reshape(2, -1)
+    a_zb, b_zb = np.fromfile("levels.raw", dtype=np.float32).reshape(2, -1)
     nhyb = len(era["hybrid"].data)
     print(f"{nhyb=}")
     y_src = era["latitude"].data

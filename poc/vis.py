@@ -1,4 +1,5 @@
 import functools
+import jax
 import jax.numpy as jnp
 import math
 import matplotlib.pyplot as plt

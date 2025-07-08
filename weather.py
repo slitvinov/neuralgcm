@@ -17,6 +17,7 @@ def step(s):
     return jax.lax.fori_loop(0, g.inner, lambda _, x: scale * runge_kutta(x),
                              s)
 
+
 def roll(a, shift):
     for ax, s in enumerate(shift):
         if a.shape[ax] == 0:

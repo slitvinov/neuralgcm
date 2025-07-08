@@ -89,6 +89,27 @@ PRODUCT_TEMPLATE = {
     "Individual ensemble forecast, control and perturbed, at a horizontal level or in a horizontal layer at a point in time",
 }
 
+# https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-1.shtml
+PARAMETER_CATEGORY = {
+    0: "Temperature",
+    1: "Moisture",
+    2: "Momentum",
+    3: "Mass",
+    4: "Short-wave radiation",
+}
+
+# https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-2.shtml
+PARAMETER = {
+    0: {
+        0: "Temperature",
+    },
+    2: {
+        8: "Vertical Velocity (Pressure)",
+        12: "Relative Vorticity",
+        13: "Relative Divergence",
+    },
+}
+
 f = open(sys.argv[1], "rb")
 while True:
     # Section 0 - Indicator Section
@@ -153,11 +174,17 @@ while True:
     print(f"{PRODUCT_TEMPLATE[template_number]=}")
     assert template_number == 0
     parameter_category, parameter_number, generating_process = section[9:12]
+    print(f"{parameter_category=}, {parameter_number=}")
     #### assert parameter_category == 2, "Momentum"
-    assert parameter_number in (12, 13), "Relative Vorticity"
-    print(f"{parameter_number=}")
+
+    print(f"{PARAMETER_CATEGORY[parameter_category]=}")
+    print(f"{PARAMETER[parameter_category][parameter_number]=}")
     assert generating_process == 0, "Analysis"
-    print(ncoord)
+    print(f"{ncoord=}")
+
+    buf = section[34:]
+    assert len(buf) == 4 * ncoord
+    coord = [x for x, in struct.iter_unpack(">f", buf)]
 
     # Section 5 - Data Representation Section
     section_length, = struct.unpack(">L", f.read(4))
@@ -223,4 +250,4 @@ while True:
 
     pad = 64 - f.tell() % 64
     f.seek(pad, 1)
-    break
+    # break

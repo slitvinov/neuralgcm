@@ -402,7 +402,7 @@ s /= norm
 s += sb
 s += sf
 
-g.inner = 6
+g.inner = 60
 g.outter = 100
 i = 0
 while True:

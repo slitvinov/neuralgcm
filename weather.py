@@ -75,7 +75,8 @@ def runge_kutta(y):
                         for j in range(i) if g.a_ex[i - 1][j])
         im = g.dt * sum(g.a_im[i - 1][j] * h[j]
                         for j in range(i) if g.a_im[i - 1][j])
-        Y = G_inv(y + ex + im, g.dt * g.a_im[i - 1][i])
+        tau = g.dt * g.a_im[i - 1][i]
+        Y = G_inv(y + ex + im, tau)
         if any(g.a_ex[j][i] for j in range(i, n - 1)) or g.b_ex[i]: f[i] = F(Y)
         if any(g.a_im[j][i] for j in range(i, n - 1)) or g.b_im[i]: h[i] = G(Y)
     ex = g.dt * sum(g.b_ex[j] * f[j] for j in range(n) if g.b_ex[j])

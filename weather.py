@@ -394,9 +394,9 @@ sf = accumulate(1)
 sb = accumulate(-1)
 
 np.asarray(s).tofile("out.org.raw")
-#s /= norm
-#s += sb
-#s += sf
+s /= norm
+s += sb
+s += sf
 
 g.inner = 6
 g.outter = 100

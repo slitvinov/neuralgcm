@@ -381,7 +381,7 @@ g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.ny / 128) / uT
 g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 
-N = 36
+N = 1
 n = np.arange(1, N + 1)
 g.weights = np.sinc(n / (N + 1)) * np.sinc(n / N)
 norm = 1 + 2 * weights.sum()

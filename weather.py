@@ -380,7 +380,7 @@ else:
     np.asarray(g.doro).tofile("doro.raw")
 
 g.dt = 4.3752000000000006e-02
-tau = 12900 / np.log2(g.ny / 128) / uT
+tau = 3600 * 8.6 / (2.4**np.log2(g.ny / 128)) / uT
 g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 
 N = 36

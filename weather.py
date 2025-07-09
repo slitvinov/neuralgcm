@@ -18,7 +18,7 @@ def step(s):
                              lambda _, x: g.scale * runge_kutta(1, x), s)
 
 
-def accumulate(sign, state):
+def accumulate(sign):
 
     def f(carry, w):
         s, a = carry
@@ -26,10 +26,7 @@ def accumulate(sign, state):
         a += w * s
         return (s, a), None
 
-    shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
-    zeros = np.zeros(shape, dtype=np.float32)
-    init = state, zeros
-    (_, averaged), _ = jax.lax.scan(f, init, g.weights)
+    (_, averaged), _ = jax.lax.scan(f, (s, g.zero), g.weights)
     return averaged
 
 
@@ -389,8 +386,11 @@ n = np.arange(1, N + 1)
 g.weights = np.sinc(n / (N + 1)) * np.sinc(n / N)
 norm = 1 + 2 * weights.sum()
 g.weights /= norm
-sf = accumulate(1, s)
-sb = accumulate(-1, s)
+
+g.zero = np.zeros(shape, dtype=np.float32)
+sf = accumulate(1)
+sb = accumulate(-1)
+
 s /= norm
 s += sb
 s += sf

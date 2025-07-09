@@ -227,7 +227,11 @@ def open(path):
 
 
 def interpn(data):
-    return scipy.interpolate.interpn(xy_src, data, xy_grid, bounds_error=False)
+    return scipy.interpolate.interpn(xy_src,
+                                     data,
+                                     xy_grid,
+                                     bounds_error=False,
+                                     fill_value=None)
 
 
 GRAVITY = 9.80616

@@ -65,25 +65,21 @@ def pad(a, b):
 
 
 def runge_kutta(y):
-    a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
-    a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
-    b_ex = 1 / 2, -1 / 2, 1, 0
-    b_im = 3 / 8, 0, 3 / 8, 1 / 4
-    n = len(b_ex)
+    n = len(g.b_ex)
     f = [None] * n
     h = [None] * n
     f[0] = F(y)
     h[0] = G(y)
     for i in range(1, n):
-        ex = g.dt * sum(a_ex[i - 1][j] * f[j]
-                        for j in range(i) if a_ex[i - 1][j])
-        im = g.dt * sum(a_im[i - 1][j] * h[j]
-                        for j in range(i) if a_im[i - 1][j])
-        Y = G_inv(y + ex + im, g.dt * a_im[i - 1][i])
-        if any(a_ex[j][i] for j in range(i, n - 1)) or b_ex[i]: f[i] = F(Y)
-        if any(a_im[j][i] for j in range(i, n - 1)) or b_im[i]: h[i] = G(Y)
-    ex = g.dt * sum(b_ex[j] * f[j] for j in range(n) if b_ex[j])
-    im = g.dt * sum(b_im[j] * h[j] for j in range(n) if b_im[j])
+        ex = g.dt * sum(g.a_ex[i - 1][j] * f[j]
+                        for j in range(i) if g.a_ex[i - 1][j])
+        im = g.dt * sum(g.a_im[i - 1][j] * h[j]
+                        for j in range(i) if g.a_im[i - 1][j])
+        Y = G_inv(y + ex + im, g.dt * g.a_im[i - 1][i])
+        if any(g.a_ex[j][i] for j in range(i, n - 1)) or g.b_ex[i]: f[i] = F(Y)
+        if any(g.a_im[j][i] for j in range(i, n - 1)) or g.b_im[i]: h[i] = G(Y)
+    ex = g.dt * sum(g.b_ex[j] * f[j] for j in range(n) if g.b_ex[j])
+    im = g.dt * sum(g.b_im[j] * h[j] for j in range(n) if g.b_im[j])
     return y + ex + im
 
 
@@ -294,6 +290,11 @@ g.ax = (g.l0 - 1) * g.a
 g.bx = -(g.l0 + 2) * g.b
 g.ay = (g.l0 + 1) * g.a
 g.by = -g.l0 * g.b
+g.a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
+g.a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
+g.b_ex = 1 / 2, -1 / 2, 1, 0
+g.b_im = 3 / 8, 0, 3 / 8, 1 / 4
+
 n = g.nz
 g.vo = np.s_[:n]
 g.di = np.s_[n:2 * n]

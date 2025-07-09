@@ -389,6 +389,11 @@ n = np.arange(1, N + 1)
 g.weights = np.sinc(n / (N + 1)) * np.sinc(n / N)
 norm = 1 + 2 * weights.sum()
 g.weights /= norm
+sf = accumulate(1, s)
+sb = accumulate(-1, s)
+s /= norm
+s += sb
+s += sf
 
 g.inner = 6
 g.outter = 100

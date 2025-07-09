@@ -386,16 +386,16 @@ g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 N = 36
 n = np.arange(1, N + 1)
 g.weights = np.sinc(n / (N + 1)) * np.sinc(n / N)
-norm = 1 + 2 * weights.sum()
+norm = 1 + 2 * np.sum(g.weights)
 g.weights /= norm
 
 g.zero = np.zeros(shape, dtype=np.float32)
 sf = accumulate(1)
 sb = accumulate(-1)
 
-s /= norm
-s += sb
-s += sf
+# s /= norm
+# s += sb
+# s += sf
 
 g.inner = 6
 g.outter = 100

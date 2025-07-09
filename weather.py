@@ -13,15 +13,24 @@ class g:
 
 
 @jax.jit
-def step0(s):
-    return jax.lax.fori_loop(0, g.inner, lambda _, x: g.scale * runge_kutta(1, x),
-                             s)
+def step(s):
+    return jax.lax.fori_loop(0, g.inner,
+                             lambda _, x: g.scale * runge_kutta(1, x), s)
 
 
-@jax.jit
-def step1(s):
-    return jax.lax.fori_loop(0, g.inner, lambda _, x: g.scale * runge_kutta(-1, x),
-                             s)
+def accumulate(sign, state):
+
+    def f(carry, w):
+        s, a = carry
+        s = g.scale * runge_kutta(sign, s)
+        a += w * s
+        return (s, a), None
+
+    shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
+    zeros = np.zeros(shape, dtype=np.float32)
+    init = state, zeros
+    (_, averaged), _ = jax.lax.scan(f, init, g.weights)
+    return averaged
 
 
 def roll(a, shift):
@@ -377,9 +386,9 @@ g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 
 N = 36
 n = np.arange(1, N + 1)
-weights = np.sinc(n / (N + 1)) * np.sinc(n /  N)
+g.weights = np.sinc(n / (N + 1)) * np.sinc(n / N)
 norm = 1 + 2 * weights.sum()
-weights /= norm
+g.weights /= norm
 
 g.inner = 6
 g.outter = 100
@@ -389,5 +398,5 @@ while True:
     if i == g.outter:
         break
     i += 1
-    s = step0(s)
+    s = step(s)
 np.asarray(s).tofile("out.raw")

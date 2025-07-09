@@ -26,8 +26,8 @@ def accumulate(sign):
         a += w * s
         return (s, a), None
 
-    (_, averaged), _ = jax.lax.scan(f, (s, g.zero), g.weights)
-    return averaged
+    (_, a), _ = jax.lax.scan(f, (s, g.zero), g.weights)
+    return a
 
 
 def roll(a, shift):

@@ -89,8 +89,8 @@ def runge_kutta(sign, y):
                         for j in range(i) if g.a_im[i - 1][j])
         tau = g.dt * g.a_im[i - 1][i]
         Y = G_inv(y + ex + im, sign * tau)
-        if any(g.a_ex[j][i] for j in range(i, n - 1)) or g.b_ex[i]: f[i] = F(Y)
-        if any(g.a_im[j][i] for j in range(i, n - 1)) or g.b_im[i]: h[i] = G(Y)
+        if any(g.a_ex[j][i] for j in range(i, n - 1)) or g.b_ex[i]: f[i] = sign * F(Y)
+        if any(g.a_im[j][i] for j in range(i, n - 1)) or g.b_im[i]: h[i] = sign * G(Y)
     ex = g.dt * sum(g.b_ex[j] * f[j] for j in range(n) if g.b_ex[j])
     im = g.dt * sum(g.b_im[j] * h[j] for j in range(n) if g.b_im[j])
     return y + ex + im
@@ -381,7 +381,7 @@ g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.ny / 128) / uT
 g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 
-N = 1
+N = 36
 n = np.arange(1, N + 1)
 g.weights = np.sinc(n / (N + 1)) * np.sinc(n / N)
 norm = 1 + 2 * weights.sum()

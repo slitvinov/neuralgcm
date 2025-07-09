@@ -13,8 +13,14 @@ class g:
 
 
 @jax.jit
-def step(s):
-    return jax.lax.fori_loop(0, g.inner, lambda _, x: g.scale * runge_kutta(x),
+def step0(s):
+    return jax.lax.fori_loop(0, g.inner, lambda _, x: g.scale * runge_kutta(1, x),
+                             s)
+
+
+@jax.jit
+def step1(s):
+    return jax.lax.fori_loop(0, g.inner, lambda _, x: g.scale * runge_kutta(-1, x),
                              s)
 
 
@@ -64,19 +70,19 @@ def pad(a, b):
     return roll(a, [0, 0, -1]) + roll(b, [0, 0, 1])
 
 
-def runge_kutta(y):
+def runge_kutta(sign, y):
     n = len(g.b_ex)
     f = [None] * n
     h = [None] * n
-    f[0] = g.sign * F(y)
-    h[0] = g.sign * G(y)
+    f[0] = sign * F(y)
+    h[0] = sign * G(y)
     for i in range(1, n):
         ex = g.dt * sum(g.a_ex[i - 1][j] * f[j]
                         for j in range(i) if g.a_ex[i - 1][j])
         im = g.dt * sum(g.a_im[i - 1][j] * h[j]
                         for j in range(i) if g.a_im[i - 1][j])
         tau = g.dt * g.a_im[i - 1][i]
-        Y = G_inv(y + ex + im, g.sign * tau)
+        Y = G_inv(y + ex + im, sign * tau)
         if any(g.a_ex[j][i] for j in range(i, n - 1)) or g.b_ex[i]: f[i] = F(Y)
         if any(g.a_im[j][i] for j in range(i, n - 1)) or g.b_im[i]: h[i] = G(Y)
     ex = g.dt * sum(g.b_ex[j] * f[j] for j in range(n) if g.b_ex[j])
@@ -295,7 +301,6 @@ g.a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
 g.a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
 g.b_ex = 1 / 2, -1 / 2, 1, 0
 g.b_im = 3 / 8, 0, 3 / 8, 1 / 4
-g.sign = 1
 
 n = g.nz
 g.vo = np.s_[:n]
@@ -370,6 +375,11 @@ g.dt = 4.3752000000000006e-02
 tau = 12900 / np.log2(g.ny / 128) / uT
 g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 
+N = 36
+n = np.arange(1, N + 1)
+weights = np.sinc(n / (N + 1)) * np.sinc(n /  N)
+norm = 1 + 2 * weights.sum()
+weights /= norm
 
 g.inner = 6
 g.outter = 100
@@ -379,5 +389,5 @@ while True:
     if i == g.outter:
         break
     i += 1
-    s = step(s)
+    s = step0(s)
 np.asarray(s).tofile("out.raw")

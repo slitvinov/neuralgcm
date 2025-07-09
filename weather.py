@@ -393,9 +393,10 @@ g.zero = np.zeros(shape, dtype=np.float32)
 sf = accumulate(1)
 sb = accumulate(-1)
 
-s /= norm
-s -= sb
-s += sf
+np.asarray(s).tofile("out.org.raw")
+#s /= norm
+#s -= sb
+#s += sf
 
 g.inner = 6
 g.outter = 100

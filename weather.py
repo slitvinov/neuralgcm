@@ -393,9 +393,9 @@ g.zero = np.zeros(shape, dtype=np.float32)
 sf = accumulate(1)
 sb = accumulate(-1)
 
-# s /= norm
-# s += sb
-# s += sf
+s /= norm
+s -= sb
+s += sf
 
 g.inner = 6
 g.outter = 100

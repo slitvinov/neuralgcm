@@ -402,8 +402,8 @@ s /= norm
 s += sb
 s += sf
 
-g.inner = 60
-g.outter = 100
+g.inner = 10
+g.outter = 10
 i = 0
 while True:
     np.asarray(s).tofile(f"out.{i:08d}.raw")

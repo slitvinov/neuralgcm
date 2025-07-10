@@ -43,7 +43,6 @@ def roll(a, shift):
             jax.lax.slice_in_dim(q, 0, i, axis=ax)
         ],
                                 dimension=ax)
-
     return a
 
 
@@ -145,81 +144,58 @@ def F(s):
     nod = nodal(s)
     vo, di, te, hu, wo, ic = nod[g.vo], nod[g.di], nod[g.te], nod[g.hu], nod[
         g.wo], nod[g.ic]
-
     tv = te * (g.eps * hu + 1)
-
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
-
     dchi_dx = dx(chi)
     dchi_dy_cos = dy_cos(chi)
     dpsi_dx = dx(psi)
     dpsi_dy_cos = dy_cos(psi)
-
     u = nodal(dchi_dx - dpsi_dy_cos)
     v = nodal(dchi_dy_cos + dpsi_dx)
-
     spx = nodal(dx(s[g.sp]))
     spy = nodal(dy_cos(s[g.sp]))
-
     u_dot_grad_sp = (u * spx + v * spy) * g.sec2
-
     int_div = jax.lax.cumsum(di + u_dot_grad_sp) / g.nz
     dot_sigma = (g.sigma[:, None, None] * int_div[-1] - int_div)[:-1]
-
     abs_vo = vo + g.sin_y[None, None, :]  # coriolis
-
     fvx = -v * abs_vo * g.sec2
     fvy = u * abs_vo * g.sec2
-
     vadv_u = -vadv(u)
     vadv_v = -vadv(v)
-
     RT = g.r_dry * tv
     sp_force_x = RT * spx
     sp_force_y = RT * spy
-
     fx = fvx + (vadv_u + sp_force_x) * g.sec2
     fy = fvy + (vadv_v + sp_force_y) * g.sec2
-
     fx_spec = modal(fx)
     fy_spec = modal(fy)
-
     dvo = -dx(fy_spec) + dy(fx_spec)
     ddi = -dx(fx_spec) - dy(fy_spec)
-
     ke = g.sec2 * (u**2 + v**2)
     dke = g.eig * modal(ke)
     ddi += 0.5 * dke + g.doro
-
     dte_hadv = hadv(te)
     dte_vadv = vadv(te)
-
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
-
     tempv = g.temp * (g.eps * hu + 1)
     dte_adiab = kappa * (tempv * (u_dot_grad_sp - omega_mean) + tv *
                          (u_dot_grad_sp - omega_full))
     dte = modal(te * di + dte_vadv + dte_adiab) + dte_hadv
-
     dhu_hadv = hadv(hu)
     dwo_hadv = hadv(wo)
     dic_hadv = hadv(ic)
-
     dhu_vadv = vadv(hu)
     dwo_vadv = vadv(wo)
     dic_vadv = vadv(ic)
-
     dhu_dil = hu * di
     dwo_dil = wo * di
     dic_dil = ic * di
-
     dmoist_vadv = jnp.r_[dhu_vadv, dwo_vadv, dic_vadv]
     dmoist_dil = jnp.r_[dhu_dil, dwo_dil, dic_dil]
     dmoist_hadv = jnp.r_[dhu_hadv, dwo_hadv, dic_hadv]
     dmoist = modal(dmoist_vadv + dmoist_dil) + dmoist_hadv
-
     dsp_phys = -jnp.sum(u_dot_grad_sp, axis=0, keepdims=True) / g.nz
     dsp = modal(dsp_phys)
     return jnp.r_[dvo, ddi, dte, dsp, dmoist] * g.mask
@@ -309,20 +285,17 @@ for m in range(g.m):
 p = np.repeat(p, 2, axis=0)
 g.p = p[1:]
 g.w = 2 * math.pi * w / g.nx
-
 p = np.r_[1:g.m]
 q = np.c_[p, -p]
 m, l = np.meshgrid(np.r_[0, q.ravel()], np.r_[:g.l], indexing="ij")
 mask = abs(m) <= l
 g.a = np.sqrt(mask * (l**2 - m**2) / (4 * l**2 - 1))
 g.a[:, 0] = 0
-
 g.b = np.sqrt(mask * ((l + 1)**2 - m**2) / (4 * (l + 1)**2 - 1))
 g.b[:, -1] = 0
 zc = (g.zb[1:] + g.zb[:-1]) / 2
 g.alpha = np.diff(np.log(zc), append=0) / 2
 g.alpha[-1] = -np.log(zc[-1])
-
 weights = np.zeros([g.nz, g.nz])
 for j in range(g.nz):
     weights[j, j] = g.alpha[j]
@@ -348,7 +321,6 @@ g.b_ex = 1 / 2, -1 / 2, 1, 0
 g.b_im = 3 / 8, 0, 3 / 8, 1 / 4
 modal = modal_direct
 nodal = nodal_direct
-
 n = g.nz
 g.vo = np.s_[:n]
 g.di = np.s_[n:2 * n]
@@ -417,26 +389,21 @@ else:
     s.tofile("s.raw")
     np.asarray(oro).tofile("oro.raw")
     np.asarray(g.doro).tofile("doro.raw")
-
 g.dt = 4.3752000000000006e-02
 tau = 3600 * 8.6 / (2.4**np.log2(g.ny / 128)) / uT
 g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
-
 N = 36
 n = np.arange(1, N + 1)
 g.weights = np.sinc(n / (N + 1)) * np.sinc(n / N)
 norm = 1 + 2 * np.sum(g.weights)
 g.weights /= norm
-
 g.zero = np.zeros(shape, dtype=np.float32)
 sf = accumulate(1)
 sb = accumulate(-1)
-
 np.asarray(s).tofile("out.org.raw")
 s /= norm
 s += sb
 s += sf
-
 g.inner = 50
 g.outter = 10
 i = 0

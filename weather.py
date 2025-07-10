@@ -65,6 +65,7 @@ def nodal(x):
     u = jnp.einsum("mjl,...ml->...mj", g.p, x)
     F0 = u[:, :1, :] * s0
     F1 = (u[:, 1::2, :] - 1j * u[:, 2::2, :]) * s1
+    assert g.nx // 2 + 1 - g.m >= 0, "g.nx is too small"
     Fpad = jnp.zeros((g.nz, g.nx // 2 + 1 - g.m, g.ny))
     F = jnp.r_['1', F0, F1, Fpad]
     return jnp.fft.irfft(F, axis=1) * s2

@@ -21,7 +21,7 @@ class g:
 
 
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-g.m = 171 // 8
+g.m = 171
 g.l = g.m + 1
 g.nx = 3 * g.m + 1
 g.ny = g.nx // 2

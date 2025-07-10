@@ -93,7 +93,6 @@ for path in sys.argv[1:]:
         sys.stderr.write(f"vis.py: {image}\n")
         fi = s[sli][g.nz // 2]
         fi = nodal(fi)
-        fi = np.zeros((g.nx, g.ny))
         vmin = 0
         vmax = 1
         if diverging:

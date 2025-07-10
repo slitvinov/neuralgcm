@@ -404,8 +404,8 @@ np.asarray(s).tofile("out.org.raw")
 s /= norm
 s += sb
 s += sf
-g.inner = 50
-g.outter = 10
+g.inner = 32
+g.outter = 27
 i = 0
 while True:
     np.asarray(s).tofile(f"out.{i:08d}.raw")

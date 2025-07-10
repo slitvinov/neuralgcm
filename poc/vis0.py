@@ -80,7 +80,7 @@ for path in sys.argv[1:]:
         if diverging:
             vmax = max(abs(vmin), abs(vmax))
             vmin = -vmax
-            cmap = "Spectral"
+            cmap = "Spectral_r"
         else:
             cmap = "jet"
         plt.imsave(image, np.flipud(fi.T), cmap=cmap, vmin=vmin, vmax=vmax)

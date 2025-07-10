@@ -77,4 +77,5 @@ for path in sys.argv[1:]:
         fi = nodal(fi)
         vmin = np.min(fi)
         vmax = np.max(fi)
+        print(name, vmin, vmax)
         plt.imsave(image, np.flipud(fi).T, cmap="jet", vmin=vmin, vmax=vmax)

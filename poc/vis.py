@@ -80,8 +80,8 @@ for path in sys.argv[1:]:
         if diverging:
             vmax = max(abs(vmin), abs(vmax))
             vmin = -vmax
-            cmap = "seismic"
+            cmap = "Spectral"
         else:
-            cmap = "viridis"
+            cmap = "jet"
         print(name, vmin, vmax)
         plt.imsave(image, np.flipud(fi).T, cmap=cmap, vmin=vmin, vmax=vmax)

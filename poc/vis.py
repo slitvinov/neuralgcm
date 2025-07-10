@@ -91,7 +91,6 @@ for path in sys.argv[1:]:
         im = ax.imshow(
             np.flipud(fi).T,
             cmap="jet",
-            norm=norm,
             extent=[0, 360, -90, 90],
             origin="upper",
             transform=ccrs.PlateCarree()

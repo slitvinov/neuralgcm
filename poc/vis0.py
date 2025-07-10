@@ -83,5 +83,4 @@ for path in sys.argv[1:]:
             cmap = "Spectral"
         else:
             cmap = "jet"
-        print(name, vmin, vmax)
-        plt.imsave(image, np.flipud(fi).T, cmap=cmap, vmin=vmin, vmax=vmax)
+        plt.imsave(image, np.flipud(fi.T), cmap=cmap, vmin=vmin, vmax=vmax)

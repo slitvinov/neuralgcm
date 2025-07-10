@@ -1,3 +1,5 @@
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import functools
 import jax
 import jax.numpy as jnp
@@ -84,4 +86,16 @@ for path in sys.argv[1:]:
         else:
             cmap = "jet"
         print(name, vmin, vmax)
-        plt.imsave(image, np.flipud(fi).T, cmap=cmap, vmin=vmin, vmax=vmax)
+        im = ax.imshow(
+            np.flipud(fi).T,
+            cmap="jet",
+            norm=norm,
+            extent=[0, 360, -90, 90],  # lon_min, lon_max, lat_min, lat_max
+            origin="upper",
+            transform=ccrs.PlateCarree()
+        )
+        ax.add_feature(cfeature.COASTLINE.with_scale('110m'), linewidth=0.3)
+        cbar = fig.colorbar(im, ax=ax, orientation="horizontal", shrink=0.8, pad=0.02)
+        cbar.ax.tick_params(labelsize=6, length=2)
+        fig.savefig(image, bbox_inches="tight", pad_inches=0.05)
+        plt.close(fig)

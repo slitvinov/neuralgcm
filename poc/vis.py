@@ -64,7 +64,7 @@ g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
 
-fig = plt.figure(figsize=(4, 2), dpi=150)
+fig = plt.figure(figsize=(4, 2), dpi=300)
 ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
 ax.add_feature(cfeature.COASTLINE.with_scale('110m'), linewidth=0.3)
 ax.set_xticks([])

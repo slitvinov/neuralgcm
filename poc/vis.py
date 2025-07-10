@@ -105,6 +105,7 @@ for path in sys.argv[1:]:
         im.set_cmap(cmap)
         im.set_clim(vmin, vmax)
         cbar.update_normal(im)
+        cbar.set_ticks([vmin, vmax])
         cbar.set_ticklabels([f"{vmin:+6.2g}", f"{vmax:+6.2g}"])
         fig.savefig(image, bbox_inches="tight", pad_inches=0.05)
         plt.close(fig)

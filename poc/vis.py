@@ -10,6 +10,7 @@ import re
 import scipy
 import sys
 
+
 @jax.jit
 def nodal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
@@ -17,6 +18,7 @@ def nodal(x):
 
 class g:
     pass
+
 
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 g.m = 171
@@ -70,7 +72,10 @@ ax.set_xticks([])
 ax.set_yticks([])
 ax.outline_patch.set_visible(False)
 dummy_data = np.zeros((g.nx, g.ny)).T
-im = ax.imshow(dummy_data, extent=[0, 360, -90, 90], origin='upper', transform=ccrs.PlateCarree())
+im = ax.imshow(dummy_data,
+               extent=[0, 360, -90, 90],
+               origin='upper',
+               transform=ccrs.PlateCarree())
 cbar = fig.colorbar(im, ax=ax, orientation="horizontal", shrink=0.8, pad=0.02)
 cbar.ax.tick_params(labelsize=6, length=2)
 
@@ -102,6 +107,6 @@ for path in sys.argv[1:]:
         im.set_data(fi)
         im.set_norm(norm)
         im.set_cmap("jet")
-         cbar.update_normal(im)
+        cbar.update_normal(im)
         fig.savefig(image, bbox_inches="tight", pad_inches=0.05)
         plt.close(fig)

@@ -48,14 +48,26 @@ def roll(a, shift):
 
 
 def modal(x):
-    wx = g.w * x
-    fwx = einsum("im,...ij->...mj", g.f, wx)
-    return einsum("mjl,...mj->...ml", g.p, fwx)
-
+    s0 = 1 / math.sqrt(math.pi) / math.sqrt(2)
+    s1 = 1 / math.sqrt(math.pi)
+    u = jnp.fft.rfft(g.w * x, axis=1)
+    a0 = s0 * u[:, :1, :].real
+    u0 = s1 * u[:, 1:g.m, :].real
+    u1 = -s1 * u[:, 1:g.m, :].imag
+    a1 = jnp.r_['2', u0, u1].reshape((g.nz, -1, g.ny))
+    a = jnp.r_['1', a0, a1]
+    return jnp.einsum("mjl,...mj->...ml", g.p, a)
 
 def nodal(x):
-    return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
-
+    s0 = math.sqrt(math.pi) * math.sqrt(2)
+    s1 = math.sqrt(math.pi)
+    s2 = g.nx / s0**2
+    u = jnp.einsum("mjl,...ml->...mj", g.p, x)
+    F0 = u[:, :1, :] * s0
+    F1 = (u[:, 1::2, :] - 1j * u[:, 2::2, :]) * s1
+    Fpad = jnp.zeros((g.nz, g.nx // 2 + 1 - g.m, g.ny))
+    F = jnp.r_['1', F0, F1, Fpad]
+    return jnp.fft.irfft(F, axis=1) * s2
 
 def dx(u):
     lo = roll(u, [0, -1, 0])

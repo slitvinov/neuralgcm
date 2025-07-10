@@ -13,8 +13,7 @@ done | xargs -P 4 -n 2 --process-slot-var I sh -c '
      mkdir -p $0
      cd $0
      date > start
-      \
-       nice python ../weather.py 2>stderr 1>stdout
+     python ../weather.py 2>stderr 1>stdout
      date > end
      echo $? > status
      python ../poc/vis.py out.*.raw

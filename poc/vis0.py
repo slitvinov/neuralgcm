@@ -8,6 +8,7 @@ import re
 import scipy
 import sys
 
+
 @jax.jit
 def nodal(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
@@ -15,6 +16,7 @@ def nodal(x):
 
 class g:
     pass
+
 
 einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 g.m = 171

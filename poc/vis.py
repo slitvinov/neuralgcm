@@ -102,7 +102,7 @@ for path in sys.argv[1:]:
         else:
             cmap = "jet"
         im.set_data(fi)
-        im.set_cmap(cmat)
+        im.set_cmap(cmap)
         cbar.update_normal(im)
         fig.savefig(image, bbox_inches="tight", pad_inches=0.05)
         plt.close(fig)

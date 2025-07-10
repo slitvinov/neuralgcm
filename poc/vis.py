@@ -69,7 +69,7 @@ ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
 ax.add_feature(cfeature.COASTLINE.with_scale('110m'), linewidth=0.3)
 ax.set_xticks([])
 ax.set_yticks([])
-dummy_data = np.zeros((g.nx, g.ny)).T
+dummy_data = np.empty((g.nx, g.ny))
 im = ax.imshow(dummy_data,
                extent=[0, 360, -90, 90],
                origin='upper',
@@ -101,7 +101,7 @@ for path in sys.argv[1:]:
             cmap = "Spectral_r"
         else:
             cmap = "jet"
-        im.set_data(fi)
+        im.set_data(fi.T)
         im.set_cmap(cmap)
         im.set_clim(vmin, vmax)
         cbar.update_normal(im)

@@ -99,11 +99,11 @@ for path in sys.argv[1:]:
         if diverging:
             vmax = max(abs(vmin), abs(vmax))
             vmin = -vmax
-            cmap = "Spectral"
+            cmap = "Spectral_r"
         else:
             cmap = "jet"
         im.set_data(fi)
-        im.set_cmap("jet")
+        im.set_cmap(cmat)
         cbar.update_normal(im)
         fig.savefig(image, bbox_inches="tight", pad_inches=0.05)
         plt.close(fig)

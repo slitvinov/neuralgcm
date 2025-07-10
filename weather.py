@@ -59,6 +59,7 @@ def modal_fft(x):
     a = jnp.r_['1', a0, a1]
     return einsum("mjl,...mj->...ml", g.p, a)
 
+
 def modal_direct(x):
     wx = g.w * x
     fwx = einsum("im,...ij->...mj", g.f, wx)
@@ -78,8 +79,10 @@ def nodal_fft(x):
     F = jnp.r_['1', F0, F1, Fpad]
     return jnp.fft.irfft(F, axis=1) * s2
 
+
 def nodal_direct(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
+
 
 def dx(u):
     lo = roll(u, [0, -1, 0])
@@ -143,6 +146,8 @@ def F(s):
     vo, di, te, hu, wo, ic = nod[g.vo], nod[g.di], nod[g.te], nod[g.hu], nod[
         g.wo], nod[g.ic]
 
+    tv = te * (g.eps * hu + 1)
+
     psi = s[g.vo] * g.inv_eig
     chi = s[g.di] * g.inv_eig
 
@@ -170,7 +175,7 @@ def F(s):
     vadv_u = -vadv(u)
     vadv_v = -vadv(v)
 
-    RT = g.r_dry * te
+    RT = g.r_dry * tv
     sp_force_x = RT * spx
     sp_force_y = RT * spy
 
@@ -192,7 +197,9 @@ def F(s):
 
     omega_mean = omega(u_dot_grad_sp)
     omega_full = omega(di + u_dot_grad_sp)
-    dte_adiab = kappa * (g.temp * (u_dot_grad_sp - omega_mean) + te *
+
+    tempv = g.temp * (g.eps * hu + 1)
+    dte_adiab = kappa * (tempv * (u_dot_grad_sp - omega_mean) + tv *
                          (u_dot_grad_sp - omega_full))
     dte = modal(te * di + dte_vadv + dte_adiab) + dte_hadv
 

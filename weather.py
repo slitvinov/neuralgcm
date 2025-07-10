@@ -57,7 +57,7 @@ def modal_fft(x):
     u1 = -s1 * u[:, 1:g.m, :].imag
     a1 = jnp.r_['2', u0, u1].reshape((nz, -1, g.ny))
     a = jnp.r_['1', a0, a1]
-    return jnp.einsum("mjl,...mj->...ml", g.p, a)
+    return einsum("mjl,...mj->...ml", g.p, a)
 
 def modal_direct(x):
     wx = g.w * x
@@ -70,7 +70,7 @@ def nodal_fft(x):
     s0 = math.sqrt(math.pi) * math.sqrt(2)
     s1 = math.sqrt(math.pi)
     s2 = g.nx / s0**2
-    u = jnp.einsum("mjl,...ml->...mj", g.p, x)
+    u = einsum("mjl,...ml->...mj", g.p, x)
     F0 = u[:, :1, :] * s0
     F1 = (u[:, 1::2, :] - 1j * u[:, 2::2, :]) * s1
     assert g.nx // 2 + 1 - g.m >= 0, "g.nx is too small"

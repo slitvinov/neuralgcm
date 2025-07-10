@@ -63,19 +63,25 @@ for path in sys.argv[1:]:
     base = re.sub("[.]raw$", "", path)
     base = re.sub("^out[.]", "", base)
     s = np.fromfile(path, dtype=np.float32).reshape(shape)
-    for name, slice in (
-        ("vo", g.vo),
-        ("di", g.di),
-        ("te", g.te),
-        ("hu", g.hu),
-        ("wo", g.wo),
-        ("ic", g.ic),
+    for name, sli, diverging in (
+        ("vo", g.vo, True),
+        ("di", g.di, False),
+        ("te", g.te, True),
+        ("hu", g.hu, False),
+        ("wo", g.wo, False),
+        ("ic", g.ic, False),
     ):
         image = name + "." + base + ".png"
         sys.stderr.write(f"vis.py: {image}\n")
-        fi = s[slice][g.nz // 2]
+        fi = s[sli][g.nz // 2]
         fi = nodal(fi)
         vmin = np.min(fi)
         vmax = np.max(fi)
+        if diverging:
+            vmax = max(abs(vmin), abs(vmax))
+            vmin = -vmax
+            cmap = "seismic"
+        else:
+            cmap = "viridis"
         print(name, vmin, vmax)
-        plt.imsave(image, np.flipud(fi).T, cmap="jet", vmin=vmin, vmax=vmax)
+        plt.imsave(image, np.flipud(fi).T, cmap=cmap, vmin=vmin, vmax=vmax)

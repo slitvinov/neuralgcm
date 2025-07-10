@@ -7,6 +7,13 @@ python -m pip install 'jax[cuda12]' gcsfs matplotlib pandas
 python -m pip install --no-deps xarray zarr
 ```
 
+## Run
+
+```
+TF_CPP_MIN_LOG_LEVEL=3 XLA_PYTHON_CLIENT_PREALLOCATE=false time python weather.py
+real    1m28.264s
+```
+
 ## Test
 
 Save reference file `out.raw`

@@ -1,0 +1,10 @@
+KAPPA: 2 / 7;
+ISOBARIC_HEAT_CAPACITY: 1004 * J / kilogram / degK;
+IDEAL_GAS_CONSTANT_H20: 461.0 * J / kilogram / degK;
+
+R: ISOBARIC_HEAT_CAPACITY * KAPPA;
+gas_const_ratio: IDEAL_GAS_CONSTANT_H20 / R;
+moisture_contribution: ('gas_const_ratio - 1) * hu;
+rTv: te * (1 + moisture_contribution);
+
+expand(rTv);

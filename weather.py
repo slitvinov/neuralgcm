@@ -265,7 +265,9 @@ einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 gravity = GRAVITY / (uL / uT**2)
 kappa = 2 / 7
 g.temp = 250
-g.r_dry = kappa * 0.0011628807950492582
+g.r_dry = kappa * 1004 * uT**2 / uL**2
+r_vap = 461.0 * uT**2 / uL**2
+g.eps = r_vap / g.r_dry - 1
 g.m = 171
 g.l = g.m + 1
 g.nx = 3 * g.m + 1

@@ -61,6 +61,19 @@ g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
+
+fig = plt.figure(figsize=(4, 2), dpi=150)
+ax = plt.axes(projection=ccrs.PlateCarree())
+ax.set_extent([0, 360, -90, 90], crs=ccrs.PlateCarree())
+ax.add_feature(cfeature.COASTLINE.with_scale('110m'), linewidth=0.3)
+ax.set_xticks([])
+ax.set_yticks([])
+ax.outline_patch.set_visible(False)
+dummy_data = np.zeros((g.nx, g.ny)).T
+im = ax.imshow(dummy_data, extent=[0, 360, -90, 90], origin='upper', transform=ccrs.PlateCarree())
+cbar = fig.colorbar(im, ax=ax, orientation="horizontal", shrink=0.8, pad=0.02)
+cbar.ax.tick_params(labelsize=6, length=2)
+
 for path in sys.argv[1:]:
     base = re.sub("[.]raw$", "", path)
     base = re.sub("^out[.]", "", base)
@@ -77,6 +90,7 @@ for path in sys.argv[1:]:
         sys.stderr.write(f"vis.py: {image}\n")
         fi = s[sli][g.nz // 2]
         fi = nodal(fi)
+        print(np.shape(fi))
         vmin = np.min(fi)
         vmax = np.max(fi)
         if diverging:
@@ -85,18 +99,9 @@ for path in sys.argv[1:]:
             cmap = "Spectral"
         else:
             cmap = "jet"
-        print(name, vmin, vmax)
-        fig = plt.figure(figsize=(4, 2), dpi=150)
-        ax = plt.axes(projection=ccrs.PlateCarree())
-        im = ax.imshow(
-            np.flipud(fi).T,
-            cmap="jet",
-            extent=[0, 360, -90, 90],
-            origin="upper",
-            transform=ccrs.PlateCarree()
-        )
-        ax.add_feature(cfeature.COASTLINE.with_scale('110m'), linewidth=0.3)
-        cbar = fig.colorbar(im, ax=ax, orientation="horizontal", shrink=0.8, pad=0.02)
-        cbar.ax.tick_params(labelsize=6, length=2)
+        im.set_data(fi)
+        im.set_norm(norm)
+        im.set_cmap("jet")
+         cbar.update_normal(im)
         fig.savefig(image, bbox_inches="tight", pad_inches=0.05)
         plt.close(fig)

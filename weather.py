@@ -47,7 +47,7 @@ def roll(a, shift):
     return a
 
 
-def modal(x):
+def modal_fft(x):
     nz, *rest = np.shape(x)
     s0 = 1 / math.sqrt(math.pi) / math.sqrt(2)
     s1 = 1 / math.sqrt(math.pi)
@@ -59,8 +59,13 @@ def modal(x):
     a = jnp.r_['1', a0, a1]
     return jnp.einsum("mjl,...mj->...ml", g.p, a)
 
+def modal_direct(x):
+    wx = g.w * x
+    fwx = einsum("im,...ij->...mj", g.f, wx)
+    return einsum("mjl,...mj->...ml", g.p, fwx)
 
-def nodal(x):
+
+def nodal_fft(x):
     nz, *rest = np.shape(x)
     s0 = math.sqrt(math.pi) * math.sqrt(2)
     s1 = math.sqrt(math.pi)
@@ -73,6 +78,8 @@ def nodal(x):
     F = jnp.r_['1', F0, F1, Fpad]
     return jnp.fft.irfft(F, axis=1) * s2
 
+def nodal_direct(x):
+    return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
 
 def dx(u):
     lo = roll(u, [0, -1, 0])
@@ -330,6 +337,8 @@ g.a_ex = [1 / 3], [1 / 6, 1 / 2], [1 / 2, -1 / 2, 1]
 g.a_im = [1 / 6, 1 / 6], [1 / 3, 0, 1 / 3], [3 / 8, 0, 3 / 8, 1 / 4]
 g.b_ex = 1 / 2, -1 / 2, 1, 0
 g.b_im = 3 / 8, 0, 3 / 8, 1 / 4
+modal = modal_direct
+nodal = nodal_direct
 
 n = g.nz
 g.vo = np.s_[:n]

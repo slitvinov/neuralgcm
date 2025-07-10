@@ -1,12 +1,15 @@
 #!/bin/bash
 
-set -x
-set -e
-c=19900501T00
-while :
-do echo $c
-   c=$(LC_TIME=C LC_ALL=en_US.UTF-8 date -d "${c:0:8} ${c:9:2}:00 +1 hour" '+%Y%m%dT%H')
-done | xargs -P 4 -n 2 --process-slot-var I sh -c '
+set -xe
+
+python -c '
+from datetime import datetime, timedelta
+fmt = "%Y%m%dT%H"
+c = datetime.strptime("19900501T00", fmt)
+while True:
+    print(c.strftime(fmt))
+    c += timedelta(hours=1)
+' | xargs -P 4 -n 2 --process-slot-var I sh -c '
      export XLA_PYTHON_CLIENT_PREALLOCATE=false
      export TF_CPP_MIN_LOG_LEVEL=3
      export CUDA_VISIBLE_DEVICES=$I

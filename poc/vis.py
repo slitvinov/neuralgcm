@@ -86,11 +86,13 @@ for path in sys.argv[1:]:
         else:
             cmap = "jet"
         print(name, vmin, vmax)
+        fig = plt.figure(figsize=(4, 2), dpi=150)
+        ax = plt.axes(projection=ccrs.PlateCarree())
         im = ax.imshow(
             np.flipud(fi).T,
             cmap="jet",
             norm=norm,
-            extent=[0, 360, -90, 90],  # lon_min, lon_max, lat_min, lat_max
+            extent=[0, 360, -90, 90],
             origin="upper",
             transform=ccrs.PlateCarree()
         )

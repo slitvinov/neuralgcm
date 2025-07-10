@@ -170,7 +170,7 @@ def F(s):
     vadv_u = -vadv(u)
     vadv_v = -vadv(v)
 
-    RT = g.r_gas * te
+    RT = g.r_dry * te
     sp_force_x = RT * spx
     sp_force_y = RT * spy
 
@@ -222,7 +222,7 @@ def G(s):
     shape = g.nz, 2 * g.m - 1, g.l
     tscale = 3 * g.nz, 2 * g.m - 1, g.l
     ddi = g.eig * (einsum("gh,hml->gml", g.geo, s[g.te]) +
-                   g.r_gas * g.temp * s[g.sp])
+                   g.r_dry * g.temp * s[g.sp])
     T = np.full((1, g.nz), -1 / g.nz)
     dtesp = einsum("gh,hml->gml", jnp.r_[-g.tew, T], s[g.di])
     return jnp.r_[jnp.zeros(shape), ddi, dtesp, jnp.zeros(tscale)]
@@ -231,7 +231,7 @@ def G(s):
 def G_inv(s, dt):
     I = np.r_[[np.eye(g.nz)] * g.l]
     A = -dt * g.eig[:, None, None] * g.geo[None]
-    B = np.r_[[-dt * g.r_gas * g.eig * g.temp] * g.nz].T[:, :, None]
+    B = np.r_[[-dt * g.r_dry * g.eig * g.temp] * g.nz].T[:, :, None]
     C = dt * np.r_[[g.tew] * g.l]
     D = np.full((g.l, 1, g.nz), dt / g.nz)
     Z = np.zeros([g.l, g.nz, 1])
@@ -265,7 +265,7 @@ einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
 gravity = GRAVITY / (uL / uT**2)
 kappa = 2 / 7
 g.temp = 250
-g.r_gas = kappa * 0.0011628807950492582
+g.r_dry = kappa * 0.0011628807950492582
 g.m = 171
 g.l = g.m + 1
 g.nx = 3 * g.m + 1
@@ -319,7 +319,7 @@ for j in range(g.nz):
     weights[j, j] = g.alpha[j]
     for k in range(j + 1, g.nz):
         weights[j, k] = g.alpha[k] + g.alpha[k - 1]
-g.geo = g.r_gas * weights
+g.geo = g.r_dry * weights
 p_alpha = np.tril(np.ones([g.nz, g.nz])) * g.alpha[..., None]
 p_alpha_shifted = np.roll(p_alpha, 1, axis=0)
 p_alpha_shifted[0] = 0

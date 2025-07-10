@@ -28,6 +28,7 @@ python poc/diff.py out.raw ~/out.raw
 - https://github.com/NOAA-EMC/NCEPLIBS-g2c
 - https://github.com/NOAA-EMC/NCEPLIBS-g2
 - https://github.com/weathersource/grib_api
+- https://registry.opendata.aws/ecmwf-era5
 
 To download raw data (~24Gb)
 

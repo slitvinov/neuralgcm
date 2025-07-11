@@ -24,5 +24,6 @@ for i in range(50000):
      date > end
      echo $? > status
      taskset -c $cpu python ../../poc/vis.py out.*.raw 2>stderr.vis 1>stdout.vis
+     taskset -c $cpu python ../../poc/contour.py out.*.raw 2>stderr.contour 1>stdout.contour
      rm -rf *.raw
 '

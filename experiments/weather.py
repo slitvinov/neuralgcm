@@ -405,8 +405,8 @@ np.asarray(s).tofile("out.org.raw")
 s /= norm
 s += sb
 s += sf
-g.outter = 241
-g.inner = int(10 * 24 * 60 * 60 / (g.dt * uT) / g.outter)
+g.inner = int(60 * 60 / (g.dt * uT))
+g.outter = 24 * 10
 i = 0
 while True:
     np.asarray(s).tofile(f"out.{i:03d}.raw")

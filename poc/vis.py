@@ -2,12 +2,13 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import functools
 import math
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import re
 import scipy
 import sys
-import os
 
 
 def nodal(x):
@@ -93,38 +94,39 @@ cbar = fig.colorbar(im, ax=ax, orientation="horizontal", shrink=0.8, pad=0.02)
 cbar.ax.tick_params(labelsize=6, length=2)
 
 for path in sys.argv[1:]:
-    base = re.sub("[.]raw$", "", path)
-    base = re.sub("^out[.]", "", base)
-    print(shape)
+    dirname = os.path.dirname(path)
+    basename = os.path.basename(path)
+    basename = re.sub("[.]raw$", "", basename)
+    basename = re.sub("^out[.]", "", basename)
     s = np.memmap(path, dtype=dtype).reshape(shape)
     for name, sli, diverging in (
         ("vo", g.vo, True),
-        ("di", g.di, False),
+        ("di", g.di, True),
         ("te", g.te, True),
         ("sp", g.sp, False),
         ("hu", g.hu, False),
         ("wo", g.wo, False),
         ("ic", g.ic, False),
     ):
-        image = name + "." + base + ".png"
+        image = os.path.join(dirname, name + "." + basename + ".png")
         sys.stderr.write(f"vis.py: {image}\n")
         fi = s[sli]
         nz, *rest = np.shape(fi)
         fi = nodal(fi[nz // 2][None])
-        vmin = np.min(fi)
-        vmax = np.max(fi)
-        print(name, vmin, vmax, np.any(np.isnan(fi)))
         if diverging:
-            vmax = max(abs(vmin), abs(vmax))
-            vmin = -vmax
             cmap = "Spectral_r"
+            vmin = np.quantile(fi, 0.05)
+            vmax = np.quantile(fi, 0.95)
+            vmax = 1.1 * max(abs(vmin), abs(vmax))
+            vmin = -vmax
         else:
             cmap = "jet"
+            vmin = np.min(fi)
+            vmax = np.max(fi)
         im.set_data(fi.T)
         im.set_cmap(cmap)
+        im.set_norm(matplotlib.colors.Normalize(vmin, vmax))
         im.set_clim(vmin, vmax)
-        im.norm = None
-        cbar.update_normal(im)
         cbar.set_ticks([vmin, vmax])
         cbar.set_ticklabels([f"{vmin: 8.1e}", f"{vmax: 8.1e}"])
         fig.savefig(image, bbox_inches="tight", pad_inches=0.05)

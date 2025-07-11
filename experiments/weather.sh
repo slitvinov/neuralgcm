@@ -6,9 +6,8 @@ python -c '
 from datetime import datetime, timedelta
 fmt = "%Y%m%dT%H"
 c = datetime.strptime("20000101T00", fmt)
-while True:
+for i in range(50000):
     print(c.strftime(fmt))
-    break
     c += timedelta(hours=1)
 ' | xargs -P 4 -n 1 --process-slot-var I sh -xc '
      dir=$0

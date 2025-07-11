@@ -1,31 +1,44 @@
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import functools
-import jax
-import jax.numpy as jnp
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 import re
 import scipy
 import sys
+import os
 
 
-@jax.jit
 def nodal(x):
-    return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
-
+    nz, *rest = np.shape(x)
+    s0 = math.sqrt(math.pi) * math.sqrt(2)
+    s1 = math.sqrt(math.pi)
+    s2 = g.nx / s0**2
+    u = np.einsum("mjl,...ml->...mj", g.p, x)
+    F0 = u[:, :1, :] * s0
+    F1 = (u[:, 1::2, :] - 1j * u[:, 2::2, :]) * s1
+    Fpad = np.zeros((nz, g.nx // 2 + 1 - g.m, g.ny))
+    F = np.r_['1', F0, F1, Fpad]
+    return np.fft.irfft(F, axis=1) * s2
 
 class g:
     pass
 
+dtype = np.dtype("float32")
+g.nz = 32
+flt = dtype.itemsize
+sz = os.path.getsize(sys.argv[1])
+a = 12*flt*g.nz + 2*flt
+b = 6*flt*g.nz + flt
+c = -sz-6*flt*g.nz-flt
+D = b**2 - 4 * a * c
+g.m = (-b + math.sqrt(D)) / (2 * a)
+g.m = round(g.m)
 
-einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-g.m = 171
 g.l = g.m + 1
 g.nx = 3 * g.m + 1
 g.ny = g.nx // 2
-g.nz = 32
 g.f = np.empty((g.nx, 2 * g.m - 1))
 dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f[:, 0] = 1 / math.sqrt(2 * math.pi)
@@ -80,7 +93,8 @@ cbar.ax.tick_params(labelsize=6, length=2)
 for path in sys.argv[1:]:
     base = re.sub("[.]raw$", "", path)
     base = re.sub("^out[.]", "", base)
-    s = np.fromfile(path, dtype=np.float32).reshape(shape)
+    print(shape)
+    s = np.memmap(path, dtype=dtype).reshape(shape)
     for name, sli, diverging in (
         ("vo", g.vo, True),
         ("di", g.di, False),
@@ -91,7 +105,7 @@ for path in sys.argv[1:]:
     ):
         image = name + "." + base + ".png"
         sys.stderr.write(f"vis.py: {image}\n")
-        fi = s[sli][g.nz // 2]
+        fi = s[sli][g.nz // 2][None]
         fi = nodal(fi)
         vmin = np.min(fi)
         vmax = np.max(fi)

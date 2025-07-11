@@ -117,12 +117,16 @@ for path in sys.argv[1:]:
         ax.set_yticks([])
         levels = np.linspace(vmin, vmax, 4)
         im = ax.contour(fi[0].T,
-                    levels=levels,
-                    extent=[0, 360, -90, 90],                    
-                    origin='upper',
-                    linewidths=0.3,
-                    cmap=cmap)
-        cbar = fig.colorbar(im, ax=ax, orientation="horizontal", shrink=0.8, pad=0.02)
+                        levels=levels,
+                        extent=[0, 360, -90, 90],
+                        origin='upper',
+                        linewidths=0.3,
+                        cmap=cmap)
+        cbar = fig.colorbar(im,
+                            ax=ax,
+                            orientation="horizontal",
+                            shrink=0.8,
+                            pad=0.02)
         cbar.ax.tick_params(labelsize=6, length=2)
         fig.savefig(image, bbox_inches="tight", pad_inches=0.05)
         plt.close()

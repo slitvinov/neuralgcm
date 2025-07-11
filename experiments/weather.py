@@ -414,4 +414,3 @@ while True:
         break
     i += 1
     s = step(s)
-np.asarray(s).tofile("out.raw")

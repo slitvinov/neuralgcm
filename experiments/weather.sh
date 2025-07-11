@@ -19,5 +19,6 @@ while True:
      python ../weather.py $0 2>stderr 1>stdout
      date > end
      echo $? > status
-     exec python ../poc/vis.py out.*.raw 2>stderr.vis 1>stdout.vis
+     python ../vis.py out.*.raw 2>stderr.vis 1>stdout.vis
+     rm -rf *.raw
 '

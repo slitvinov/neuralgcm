@@ -22,16 +22,18 @@ def nodal(x):
     F = np.r_['1', F0, F1, Fpad]
     return np.fft.irfft(F, axis=1) * s2
 
+
 class g:
     pass
+
 
 dtype = np.dtype("float32")
 g.nz = 32
 flt = dtype.itemsize
 sz = os.path.getsize(sys.argv[1])
-a = 12*flt*g.nz + 2*flt
-b = 6*flt*g.nz + flt
-c = -sz-6*flt*g.nz-flt
+a = 12 * flt * g.nz + 2 * flt
+b = 6 * flt * g.nz + flt
+c = -sz - 6 * flt * g.nz - flt
 D = b**2 - 4 * a * c
 g.m = (-b + math.sqrt(D)) / (2 * a)
 g.m = round(g.m)
@@ -99,16 +101,19 @@ for path in sys.argv[1:]:
         ("vo", g.vo, True),
         ("di", g.di, False),
         ("te", g.te, True),
+        ("sp", g.sp, False),
         ("hu", g.hu, False),
         ("wo", g.wo, False),
         ("ic", g.ic, False),
     ):
         image = name + "." + base + ".png"
         sys.stderr.write(f"vis.py: {image}\n")
-        fi = s[sli][g.nz // 2][None]
-        fi = nodal(fi)
+        fi = s[sli]
+        nz, *rest = np.shape(fi)
+        fi = nodal(fi[nz // 2][None])
         vmin = np.min(fi)
         vmax = np.max(fi)
+        print(name, vmin, vmax, np.any(np.isnan(fi)))
         if diverging:
             vmax = max(abs(vmin), abs(vmax))
             vmin = -vmax
@@ -118,8 +123,9 @@ for path in sys.argv[1:]:
         im.set_data(fi.T)
         im.set_cmap(cmap)
         im.set_clim(vmin, vmax)
+        im.norm = None
         cbar.update_normal(im)
         cbar.set_ticks([vmin, vmax])
-        cbar.set_ticklabels([f"{vmin: 8.1e}", f"{vmax: 8.1e}"])
+        cbar.set_ticklabels([f"{vmin: 6.1}", f"{vmax: 6.1e}"])
         fig.savefig(image, bbox_inches="tight", pad_inches=0.05)
         plt.close(fig)

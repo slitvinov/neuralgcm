@@ -252,7 +252,7 @@ g.temp = 250
 g.r_dry = kappa * 1004 * uT**2 / uL**2
 r_vap = 461.0 * uT**2 / uL**2
 g.eps = r_vap / g.r_dry - 1
-g.m = 171 * 3 
+g.m = 171 * 4
 g.l = g.m + 1
 g.nx = 3 * g.m + 1
 g.ny = g.nx // 2
@@ -345,7 +345,8 @@ else:
     ])
     y_deg = np.rad2deg(np.arcsin(g.sin_y))
     x_deg = np.linspace(0, 360, g.nx, endpoint=False)
-    a_zb, b_zb = np.fromfile("../../levels.raw", dtype=np.float32).reshape(2, -1)
+    a_zb, b_zb = np.fromfile("../../levels.raw",
+                             dtype=np.float32).reshape(2, -1)
     nhyb = len(era["hybrid"].data)
     y_src = era["latitude"].data
     x_src = era["longitude"].data
@@ -390,7 +391,7 @@ else:
     s.tofile("s.raw")
     np.asarray(oro).tofile("oro.raw")
     np.asarray(g.doro).tofile("doro.raw")
-g.dt = 4.3752000000000006e-02 / 3
+g.dt = 4.3752000000000006e-02 / 4
 tau = 3600 * 8.6 / (2.4**np.log2(g.ny / 128)) / uT
 g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 N = 36

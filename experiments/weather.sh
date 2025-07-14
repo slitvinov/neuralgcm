@@ -19,6 +19,7 @@ for i in range(50000):
      export CUDA_VISIBLE_DEVICES=$I
      mkdir -p $dir
      cd $dir
+     taskset -c $cpu python -u ../download.py $dir 2>stderr.download 1>stdout.download
      date > start
      taskset -c $cpu python -u ../weather.py $dir 2>stderr 1>stdout
      date > end

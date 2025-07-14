@@ -12,6 +12,7 @@ import sys
 class g:
     pass
 
+
 def modal_fft(x):
     nz, *rest = np.shape(x)
     s0 = 1 / math.sqrt(math.pi) / math.sqrt(2)
@@ -47,6 +48,25 @@ def nodal_fft(x):
 
 def nodal_direct(x):
     return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
+
+
+def dx(u):
+    lo = roll(u, [0, -1, 0])
+    hi = roll(u, [0, 1, 0])
+    i = np.c_[:2 * g.m - 1]
+    return (i + 1) // 2 * jnp.where(i % 2, lo, -hi)
+
+
+def dy(x):
+    return pad(g.ax * x, g.bx * x)
+
+
+def dy_cos(x):
+    return pad(g.ay * x, g.by * x)
+
+
+def pad(a, b):
+    return roll(a, [0, 0, -1]) + roll(b, [0, 0, 1])
 
 
 def open(path):

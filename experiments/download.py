@@ -12,23 +12,6 @@ import sys
 class g:
     pass
 
-
-def roll(a, shift):
-    for ax, s in enumerate(shift):
-        if a.shape[ax] == 0:
-            continue
-        i = (-s) % a.shape[ax]
-        p, q = a, jnp.zeros_like(a)
-        if s > 0:
-            p, q = q, p
-        a = jax.lax.concatenate([
-            jax.lax.slice_in_dim(p, i, a.shape[ax], axis=ax),
-            jax.lax.slice_in_dim(q, 0, i, axis=ax)
-        ],
-                                dimension=ax)
-    return a
-
-
 def modal_fft(x):
     nz, *rest = np.shape(x)
     s0 = 1 / math.sqrt(math.pi) / math.sqrt(2)

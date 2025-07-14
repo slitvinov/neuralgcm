@@ -12,7 +12,7 @@ for i in range(50000):
 ' | xargs -P 2 -n 1 --process-slot-var I sh -xc '
      dir=$0
 
-     set -- 0-31 32-63 64-95 96-127
+     set -- 64-95 96-127
      shift $I
      cpu=$1
 

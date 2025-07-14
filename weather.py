@@ -5,8 +5,8 @@ import math
 import numpy as np
 import os
 import scipy
+import sys
 import xarray
-
 
 class g:
     pass
@@ -408,7 +408,9 @@ g.inner = 32
 g.outter = 27
 i = 0
 while True:
-    np.asarray(s).tofile(f"out.{i:08d}.raw")
+    path = f"out.{i:03d}.raw"
+    np.asarray(s).tofile(path)
+    sys.stderr.write(f"weather.py: {path}: {i}/{g.outter}\n")
     if i == g.outter:
         break
     i += 1

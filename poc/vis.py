@@ -1,5 +1,4 @@
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+import cartopy
 import functools
 import math
 import matplotlib
@@ -42,11 +41,6 @@ g.m = round(g.m)
 g.l = g.m + 1
 g.nx = 3 * g.m + 1
 g.ny = g.nx // 2
-g.f = np.empty((g.nx, 2 * g.m - 1))
-dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
-g.f[:, 0] = 1 / math.sqrt(2 * math.pi)
-g.f[:, 1::2] = np.real(dft[:, 1:])
-g.f[:, 2::2] = -np.imag(dft[:, 1:])
 g.sin_y, w = scipy.special.roots_legendre(g.ny)
 g.sec2 = 1 / (1 - g.sin_y**2)
 q = np.sqrt(1 - g.sin_y * g.sin_y)
@@ -81,15 +75,14 @@ g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
 
 fig = plt.figure(figsize=(4, 2), dpi=300)
-ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
-ax.add_feature(cfeature.COASTLINE.with_scale('110m'), linewidth=0.3)
+ax = plt.axes(projection=cartopy.crs.PlateCarree(central_longitude=180))
+ax.add_feature(cartopy.feature.COASTLINE.with_scale('110m'), linewidth=0.3)
 ax.set_xticks([])
 ax.set_yticks([])
 dummy_data = np.empty((g.nx, g.ny))
 im = ax.imshow(dummy_data,
                extent=[0, 360, -90, 90],
-               origin='upper',
-               transform=ccrs.PlateCarree())
+               origin='upper')
 cbar = fig.colorbar(im, ax=ax, orientation="horizontal", shrink=0.8, pad=0.02)
 cbar.ax.tick_params(labelsize=6, length=2)
 

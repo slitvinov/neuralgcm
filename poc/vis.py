@@ -1,5 +1,4 @@
 import cartopy
-import functools
 import math
 import matplotlib
 import matplotlib.pyplot as plt

@@ -1,25 +1,40 @@
 import functools
-import jax
-import jax.numpy as jnp
 import math
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import re
 import scipy
 import sys
 
 
-@jax.jit
 def nodal(x):
-    return einsum("im,mjl,...ml->...ij", g.f, g.p, x)
-
-
+    nz, *rest = np.shape(x)
+    s0 = math.sqrt(math.pi) * math.sqrt(2)
+    s1 = math.sqrt(math.pi)
+    s2 = g.nx / s0**2
+    u = np.einsum("mjl,...ml->...mj", g.p, x)
+    F0 = u[:, :1, :] * s0
+    F1 = (u[:, 1::2, :] - 1j * u[:, 2::2, :]) * s1
+    Fpad = np.zeros((nz, g.nx // 2 + 1 - g.m, g.ny))
+    F = np.r_['1', F0, F1, Fpad]
+    return np.fft.irfft(F, axis=1) * s2
 class g:
     pass
 
 
-einsum = functools.partial(jnp.einsum, precision=jax.lax.Precision.HIGHEST)
-g.m = 171
+dtype = np.dtype("float32")
+g.nz = 32
+flt = dtype.itemsize
+sz = os.path.getsize(sys.argv[1])
+a = 12 * flt * g.nz + 2 * flt
+b = 6 * flt * g.nz + flt
+c = -sz - 6 * flt * g.nz - flt
+D = b**2 - 4 * a * c
+g.m = (-b + math.sqrt(D)) / (2 * a)
+g.m = round(g.m)
+
 g.l = g.m + 1
 g.nx = 3 * g.m + 1
 g.ny = g.nx // 2
@@ -62,27 +77,33 @@ g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
 for path in sys.argv[1:]:
-    base = re.sub("[.]raw$", "", path)
-    base = re.sub("^out[.]", "", base)
-    s = np.fromfile(path, dtype=np.float32).reshape(shape)
+    dirname = os.path.dirname(path)
+    basename = os.path.basename(path)
+    basename = re.sub("[.]raw$", "", basename)
+    basename = re.sub("^out[.]", "", basename)
+    s = np.memmap(path, dtype=dtype).reshape(shape)
     for name, sli, diverging in (
         ("vo", g.vo, True),
-        ("di", g.di, False),
+        ("di", g.di, True),
         ("te", g.te, True),
+        ("sp", g.sp, False),
         ("hu", g.hu, False),
         ("wo", g.wo, False),
         ("ic", g.ic, False),
     ):
-        image = name + "." + base + ".png"
-        sys.stderr.write(f"vis.py: {image}\n")
-        fi = s[sli][g.nz // 2]
-        fi = nodal(fi)
-        vmin = np.min(fi)
-        vmax = np.max(fi)
+        image = os.path.join(dirname, name + ".raw." + basename + ".png")
+        sys.stderr.write(f"vis0.py: {image}\n")
+        fi = s[sli]
+        nz, *rest = np.shape(fi)
+        fi, = nodal(fi[nz // 2][None])
         if diverging:
-            vmax = max(abs(vmin), abs(vmax))
-            vmin = -vmax
             cmap = "Spectral_r"
+            vmin = np.quantile(fi, 0.05)
+            vmax = np.quantile(fi, 0.95)
+            vmax = 1.1 * max(abs(vmin), abs(vmax))
+            vmin = -vmax
         else:
             cmap = "jet"
+            vmin = np.min(fi)
+            vmax = np.max(fi)
         plt.imsave(image, np.flipud(fi.T), cmap=cmap, vmin=vmin, vmax=vmax)

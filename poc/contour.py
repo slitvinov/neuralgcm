@@ -96,7 +96,7 @@ for path in sys.argv[1:]:
         ("ic", g.ic, False),
     ):
         image = os.path.join(dirname, name + ".contour." + basename + ".png")
-        sys.stderr.write(f"vis.py: {image}\n")
+        sys.stderr.write(f"contour.py: {image}\n")
         fi = s[sli]
         nz, *rest = np.shape(fi)
         fi = nodal(fi[nz // 2][None])

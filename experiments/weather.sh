@@ -20,10 +20,10 @@ for i in range(50000):
      mkdir -p $dir
      cd $dir
      date > start
-     taskset -c $cpu python ../weather.py $dir 2>stderr 1>stdout
+     taskset -c $cpu python -u ../weather.py $dir 2>stderr 1>stdout
      date > end
      echo $? > status
-     taskset -c $cpu python ../../poc/vis.py out.*.raw 2>stderr.vis 1>stdout.vis
-     taskset -c $cpu python ../../poc/contour.py out.*.raw 2>stderr.contour 1>stdout.contour
+     taskset -c $cpu python -u ../../poc/vis.py out.*.raw 2>stderr.vis 1>stdout.vis
+     taskset -c $cpu python -u ../../poc/contour.py out.*.raw 2>stderr.contour 1>stdout.contour
      rm -rf *.raw
 '

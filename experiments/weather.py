@@ -252,7 +252,7 @@ g.temp = 250
 g.r_dry = kappa * 1004 * uT**2 / uL**2
 r_vap = 461.0 * uT**2 / uL**2
 g.eps = r_vap / g.r_dry - 1
-g.m = 171 * 2
+g.m = 171 * 4 
 g.l = g.m + 1
 g.nx = 3 * g.m + 1
 g.ny = g.nx // 2
@@ -390,7 +390,7 @@ else:
     s.tofile("s.raw")
     np.asarray(oro).tofile("oro.raw")
     np.asarray(g.doro).tofile("doro.raw")
-g.dt = 4.3752000000000006e-02 / 2
+g.dt = 4.3752000000000006e-02 / 4
 tau = 3600 * 8.6 / (2.4**np.log2(g.ny / 128)) / uT
 g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
 N = 36
@@ -409,7 +409,9 @@ g.inner = int(60 * 60 / (g.dt * uT))
 g.outter = 24 * 10
 i = 0
 while True:
-    np.asarray(s).tofile(f"out.{i:03d}.raw")
+    path = f"out.{i:03d}.raw"
+    np.asarray(s).tofile(path)
+    sys.stderr.write(f"weather.py: {path}: {i}/{g.outter}\n")
     if i == g.outter:
         break
     i += 1

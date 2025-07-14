@@ -5,7 +5,6 @@ import math
 import numpy as np
 import os
 import scipy
-import xarray
 import sys
 
 
@@ -229,18 +228,17 @@ def G_inv(s, dt):
     return jnp.r_[s[g.vo], sol, s[g.hu], s[g.wo], s[g.ic]]
 
 
-def open(path):
-    x = xarray.open_zarr(path, chunks=None, storage_options=dict(token="anon"))
-    return x.sel(time=sys.argv[1])
-
-
-def interpn(data):
-    return scipy.interpolate.interpn(xy_src,
-                                     data,
-                                     xy_grid,
-                                     bounds_error=False,
-                                     fill_value=None)
-
+input_path = "s.raw"
+dtype = np.dtype("float32")
+g.nz = 32
+flt = dtype.itemsize
+sz = os.path.getsize(input_path)
+a = 12 * flt * g.nz + 2 * flt
+b = 6 * flt * g.nz + flt
+c = -sz - 6 * flt * g.nz - flt
+D = b**2 - 4 * a * c
+g.m = (-b + math.sqrt(D)) / (2 * a)
+g.m = round(g.m)
 
 GRAVITY = 9.80616
 uL = 6.37122e6
@@ -252,11 +250,9 @@ g.temp = 250
 g.r_dry = kappa * 1004 * uT**2 / uL**2
 r_vap = 461.0 * uT**2 / uL**2
 g.eps = r_vap / g.r_dry - 1
-g.m = 171 * 4
 g.l = g.m + 1
 g.nx = 3 * g.m + 1
 g.ny = g.nx // 2
-g.nz = 32
 g.zb = np.linspace(0, 1, g.nz + 1)
 dft = scipy.linalg.dft(g.nx)[:, :g.m] / math.sqrt(math.pi)
 g.f = np.empty((g.nx, 2 * g.m - 1))
@@ -332,65 +328,8 @@ g.wo = np.s_[4 * n + 1:5 * n + 1]
 g.ic = np.s_[5 * n + 1:6 * n + 1]
 g.ditesp = np.s_[n:3 * n + 1]
 shape = 6 * g.nz + 1, 2 * g.m - 1, g.l
-if os.path.exists("s.raw") and os.path.exists("doro.raw"):
-    s = np.fromfile("s.raw", dtype=np.float32).reshape(shape)
-    g.doro = np.fromfile("doro.raw", dtype=np.float32).reshape(shape[1:])
-else:
-    era = xarray.merge([
-        open(
-            "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
-        ).drop_dims("level"),
-        open(
-            "gs://gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1")
-    ])
-    y_deg = np.rad2deg(np.arcsin(g.sin_y))
-    x_deg = np.linspace(0, 360, g.nx, endpoint=False)
-    a_zb, b_zb = np.fromfile("../../levels.raw",
-                             dtype=np.float32).reshape(2, -1)
-    nhyb = len(era["hybrid"].data)
-    y_src = era["latitude"].data
-    x_src = era["longitude"].data
-    xy_grid = np.meshgrid(y_deg, x_deg)
-    xy_src = y_src, x_src
-    sp = interpn(era["surface_pressure"].data)
-    oro = interpn(era["geopotential_at_surface"].data)
-    fields = {}
-    samples = np.empty((nhyb, g.nx, g.ny))
-    source = a_zb[:, None, None] / sp + b_zb[:, None, None]
-    upper = np.minimum(g.zb[1:, None, None, None], source[None, 1:, :, :])
-    lower = np.maximum(g.zb[:-1, None, None, None], source[None, :-1, :, :])
-    weights = np.maximum(upper - lower, 0)
-    weights /= np.sum(weights, axis=1, keepdims=True)
-    for key, scale in [
-        ("u_component_of_wind", uL / uT),
-        ("v_component_of_wind", uL / uT),
-        ("temperature", 1),
-        ("specific_cloud_liquid_water_content", 1),
-        ("specific_cloud_ice_water_content", 1),
-        ("specific_humidity", 1),
-    ]:
-        for i in range(nhyb):
-            samples[i] = interpn(era[key].data[i])
-        fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
-    cos = np.sqrt(1 - g.sin_y**2)
-    u = modal(fields["u_component_of_wind"] / cos)
-    v = modal(fields["v_component_of_wind"] / cos)
-    vor = dx(v) - dy(u)
-    div = dx(u) + dy(v)
-    s = np.empty(shape, dtype=np.float32)
-    s[g.vo] = vor * g.mask
-    s[g.di] = div * g.mask
-    s[g.te] = modal(fields["temperature"] - g.temp)
-    s[g.sp] = modal(np.log(sp[None, :, :] / (1 / uL / uT**2)))
-    s[g.hu] = modal(fields["specific_humidity"])
-    s[g.wo] = modal(fields["specific_cloud_liquid_water_content"])
-    s[g.ic] = modal(fields["specific_cloud_ice_water_content"])
-    k = g.l0 / (g.l - 1)
-    g.doro = (gravity * g.eig) * modal(oro[None, :, :]) * np.exp(
-        -16 * k**4) / (uL * GRAVITY)
-    s.tofile("s.raw")
-    np.asarray(oro).tofile("oro.raw")
-    np.asarray(g.doro).tofile("doro.raw")
+s = np.fromfile(input_path, dtype=dtype).reshape(shape)
+g.doro = np.fromfile("doro.raw", dtype=dtype).reshape(shape[1:])
 g.dt = 4.3752000000000006e-02 / 4
 tau = 3600 * 8.6 / (2.4**np.log2(g.ny / 128)) / uT
 g.scale = jnp.exp(-g.dt * g.eig**2 / (tau * g.eig[-1]**2))
@@ -399,7 +338,7 @@ n = np.arange(1, N + 1)
 g.weights = np.sinc(n / (N + 1)) * np.sinc(n / N)
 norm = 1 + 2 * np.sum(g.weights)
 g.weights /= norm
-g.zero = np.zeros(shape, dtype=np.float32)
+g.zero = np.zeros(shape, dtype=dtype)
 sf = accumulate(1)
 sb = accumulate(-1)
 np.asarray(s).tofile("out.org.raw")

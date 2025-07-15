@@ -6,7 +6,7 @@ import numpy as np
 import os
 import scipy
 import sys
-import xarray
+
 
 class g:
     pass
@@ -335,6 +335,7 @@ if os.path.exists("s.raw") and os.path.exists("doro.raw"):
     s = np.fromfile("s.raw", dtype=np.float32).reshape(shape)
     g.doro = np.fromfile("doro.raw", dtype=np.float32).reshape(shape[1:])
 else:
+    import xarray
     era = xarray.merge([
         open(
             "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"

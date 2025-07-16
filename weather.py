@@ -240,6 +240,8 @@ def interpn(data):
                                      bounds_error=False,
                                      fill_value=None)
 
+def pp_interpn(data):
+    return np.expm1(interpn(np.log1p(data)))
 
 GRAVITY = 9.80616
 uL = 6.37122e6
@@ -360,16 +362,16 @@ else:
     lower = np.maximum(g.zb[:-1, None, None, None], source[None, :-1, :, :])
     weights = np.maximum(upper - lower, 0)
     weights /= np.sum(weights, axis=1, keepdims=True)
-    for key, scale in [
-        ("u_component_of_wind", uL / uT),
-        ("v_component_of_wind", uL / uT),
-        ("temperature", 1),
-        ("specific_cloud_liquid_water_content", 1),
-        ("specific_cloud_ice_water_content", 1),
-        ("specific_humidity", 1),
+    for key, scale, inerp in [
+        ("u_component_of_wind", uL / uT, interpn),
+        ("v_component_of_wind", uL / uT, interpn),
+        ("temperature", 1, interpn),
+        ("specific_cloud_liquid_water_content", 1, pp_interpn),
+        ("specific_cloud_ice_water_content", 1, pp_interpn),
+        ("specific_humidity", 1, pp_interpn),
     ]:
         for i in range(nhyb):
-            samples[i] = interpn(era[key].data[i])
+            samples[i] = interp(era[key].data[i])
         fields[key] = np.einsum("lnxy,nxy->lxy", weights, samples / scale)
     cos = np.sqrt(1 - g.sin_y**2)
     u = modal(fields["u_component_of_wind"] / cos)

@@ -362,7 +362,7 @@ else:
     lower = np.maximum(g.zb[:-1, None, None, None], source[None, :-1, :, :])
     weights = np.maximum(upper - lower, 0)
     weights /= np.sum(weights, axis=1, keepdims=True)
-    for key, scale, inerp in [
+    for key, scale, interp in [
         ("u_component_of_wind", uL / uT, interpn),
         ("v_component_of_wind", uL / uT, interpn),
         ("temperature", 1, interpn),

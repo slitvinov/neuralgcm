@@ -239,9 +239,11 @@ def interpn(data):
                                      xy_grid,
                                      bounds_error=False,
                                      fill_value=None)
-pp_interpn = interpn
-#def pp_interpn(data):
-#    return np.expm1(interpn(np.log1p(data)))
+
+
+def pp_interpn(data):
+    return np.expm1(interpn(np.log1p(data)))
+
 
 GRAVITY = 9.80616
 uL = 6.37122e6

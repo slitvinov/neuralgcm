@@ -36,6 +36,11 @@ To download raw data (~24Gb)
 gsutil cp gs://gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Daily/1990/19900501* ~
 ```
 
+Extract levels
+```
+python poc/levels.py ~/19900501_hres_dve.grb2
+```
+
 ## Resutls
 
 <p align="center"><img src="img/hu.gif"/></p>

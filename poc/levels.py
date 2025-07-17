@@ -1,6 +1,7 @@
 import struct
 import sys
 
+output_path = "levels.raw"
 f = open(sys.argv[1], "rb")
 # Section 0 - Indicator Section
 section = f.read(16)
@@ -41,10 +42,10 @@ type2, factor2 = section[28:30]
 value2, = struct.unpack(">L", section[30:34])
 assert type1 == 105, "type1 is Hybrid Levels"
 assert type2 == 255, "type2 is Missing"
-buf = section[34:]
-coord = [x for x, in struct.iter_unpack(">f", buf)]
+coord = [x for x, in struct.iter_unpack(">f", section[34:])]
 assert len(coord) == ncoord
-scale = 10 ** factor1
-with open("levels.raw", "wb") as out:
+scale = 10**factor1
+with open(output_path, "wb") as out:
     for c in coord:
         out.write(struct.pack("<f", c * scale))
+    sys.stderr.write(f"levels.py: {output_path}\n")

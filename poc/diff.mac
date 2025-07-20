@@ -1,0 +1,73 @@
+psi: m_vo * inv_eig;
+chi: m_di * inv_eig;
+
+dchi_dx: dx(chi);
+dchi_dy_cos: dy_cos(chi);
+dpsi_dx: dx(psi);
+dpsi_dy_cos: dy_cos(psi);
+
+u: nodal(dchi_dx - dpsi_dy_cos);
+v: nodal(dchi_dy_cos + dpsi_dx);
+
+spx: nodal(dx(s[sp]));
+spy: nodal(dy_cos(s[sp]));
+
+u_dot_grad_sp: (u * spx + v * spy) * sec2;
+int_div: cumsum(di + u_dot_grad_sp) / nz;
+/* dot_sigma: (sigma[:, None, None] * int_div[-1] - int_div)[:-1];*/
+
+abs_vo: vo + sin_y[None, None, :];
+
+fvx: -v * abs_vo * sec2;
+fvy: u * abs_vo * sec2;
+
+vadv_u: -vadv(u);
+vadv_v: -vadv(v);
+
+RT: r_gas * te;
+sp_force_x: RT * spx;
+sp_force_y: RT * spy;
+
+fx: fvx + (vadv_u + sp_force_x) * sec2;
+fy: fvy + (vadv_v + sp_force_y) * sec2;
+
+fx_spec: modal(fx);
+fy_spec: modal(fy);
+
+dvo: -dx(fy_spec) + dy(fx_spec);
+ddi: -dx(fx_spec) - dy(fy_spec);
+
+ke: sec2 * (u**2 + v**2);
+dke: eig * modal(ke);
+
+/* ddi += 0.5 * dke + doro */
+
+dte_hadv: hadv(te)
+dte_vadv: vadv(te)
+
+omega_mean: omega(u_dot_grad_sp);
+omega_full: omega(di + u_dot_grad_sp)
+dte_adiab = kappa * (temp * (u_dot_grad_sp - omega_mean) + te * (u_dot_grad_sp - omega_full));
+dte: modal(te * di + dte_vadv + dte_adiab) + dte_hadv;
+
+dhu_hadv: hadv(hu);
+dwo_hadv: hadv(wo);
+dic_hadv: hadv(ic);
+
+dhu_vadv: vadv(hu);
+dwo_vadv: vadv(wo);
+dic_vadv: vadv(ic);
+
+dhu_dil: hu * di;
+dwo_dil: wo * di;
+dic_dil: ic * di;
+
+dmoist_vadv = jnp.r_[dhu_vadv, dwo_vadv, dic_vadv];
+dmoist_dil = jnp.r_[dhu_dil, dwo_dil, dic_dil];
+dmoist_hadv = jnp.r_[dhu_hadv, dwo_hadv, dic_hadv];
+dmoist = modal(dmoist_vadv + dmoist_dil) + dmoist_hadv;
+
+dsp_phys = -jnp.sum(u_dot_grad_sp, axis=0, keepdims=True) / nz;
+dsp = modal(dsp_phys);
+
+/* return jnp.r_[dvo, ddi, dte, dsp, dmoist] * mask */

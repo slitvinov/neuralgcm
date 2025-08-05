@@ -41,6 +41,29 @@ Extract levels
 python poc/levels.py ~/19900501_hres_dve.grb2
 ```
 
+## AWS Trainium
+
+```
+[neuron]
+name=Neuron YUM Repository
+baseurl=https://yum.repos.neuron.amazonaws.com
+enabled=1
+metadata_expire=0
+EOF
+sudo rpm --import https://yum.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB
+sudo yum update -y
+sudo yum install -y \
+     kernel-devel-$(uname -r) \
+     kernel-headers-$(uname -r) \
+     git \
+     aws-neuronx-dkms-2.* \
+     aws-neuronx-collectives-2.* \
+     aws-neuronx-runtime-lib-2.* \
+     aws-neuronx-tools-2.*
+export PATH=/opt/aws/neuron/bin:$PATH
+git clone https://github.com/slitvinov/neuralgcm
+```
+
 ## Resutls
 
 <p align="center"><img src="img/hu.gif"/></p>

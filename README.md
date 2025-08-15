@@ -43,6 +43,8 @@ python poc/levels.py ~/19900501_hres_dve.grb2
 
 ## AWS Trainium
 
+https://github.com/aws-neuron/aws-neuron-sdk/issues/1199
+
 ```
 [neuron]
 name=Neuron YUM Repository

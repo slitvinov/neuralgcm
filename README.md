@@ -66,6 +66,12 @@ export PATH=/opt/aws/neuron/bin:$PATH
 git clone https://github.com/slitvinov/neuralgcm
 ```
 
+```
+sudo yum install -qy python3.11 python3.11-pip
+python3 -m pip install jax==0.6.0 jaxlib==0.6.0 networkx==2.6 scipy==1.12.0 boto3 python-daemon requests-unixsocket psutil islpy==2023.1 protobuf
+python3.11 -m pip install jax-neuronx[stable] libneuronxla neuronx-cc --extra-index-url=https://pip.repos.neuron.amazonaws.com
+```
+
 ## Resutls
 
 <p align="center"><img src="img/hu.gif"/></p>

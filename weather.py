@@ -234,7 +234,7 @@ def open(path):
 
 
 def interpn(data):
-    return scipy.interpolate.interpn(xy_src,
+    return scipy.interpolate.interpn((y_src, x_src),
                                      data,
                                      xy_grid,
                                      bounds_error=False,
@@ -354,7 +354,6 @@ else:
     y_src = era["latitude"].data
     x_src = era["longitude"].data
     xy_grid = np.meshgrid(y_deg, x_deg)
-    xy_src = y_src, x_src
     sp = interpn(era["surface_pressure"].data)
     oro = interpn(era["geopotential_at_surface"].data)
     fields = {}

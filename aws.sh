@@ -1,0 +1,5 @@
+#!/bin/sh
+
+: ${PYTHON=python3.11}
+
+JAX_LOG_COMPILES=1 XLA_PYTHON_CLIENT_PREALLOCATE=false TF_CPP_MIN_LOG_LEVEL=3 exec "$PYTHON" weather.py

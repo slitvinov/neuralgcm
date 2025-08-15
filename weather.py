@@ -235,12 +235,11 @@ def open(path):
 
 def interpn(data):
     ans =scipy.interpolate.interpn((y_src, x_src),
-                                   data,
+                                   data.ravel(),
                                    (y_grid, x_grid),
                                    bounds_error=False,
                                    fill_value=None)
-    print(np.shape(ans), g.nx, g.ny)
-    return ans
+    return ans.reshape(g.nx, g.ny)
 
 
 def pp_interpn(data):

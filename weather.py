@@ -353,7 +353,6 @@ else:
     nhyb = len(era["hybrid"].data)
     y_src = era["latitude"].data
     x_src = era["longitude"].data
-    xy_grid = np.meshgrid(y_deg, x_deg)
     x_grid = [[x for y in y_deg] for x in x_deg]
     y_grid = [[y for y in y_deg] for x in x_deg]
     sp = interpn(era["surface_pressure"].data)

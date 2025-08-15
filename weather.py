@@ -234,11 +234,13 @@ def open(path):
 
 
 def interpn(data):
-    return scipy.interpolate.interpn((y_src, x_src),
-                                     data,
-                                     (y_grid, x_grid),
-                                     bounds_error=False,
-                                     fill_value=None)
+    ans =scipy.interpolate.interpn((y_src, x_src),
+                                   data,
+                                   (y_grid, x_grid),
+                                   bounds_error=False,
+                                   fill_value=None)
+    print(np.shape(ans), g.nx, g.ny)
+    return ans
 
 
 def pp_interpn(data):

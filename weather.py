@@ -236,7 +236,7 @@ def open(path):
 def interpn(data):
     return scipy.interpolate.interpn((y_src, x_src),
                                      data,
-                                     xy_grid,
+                                     (y_grid, x_grid),
                                      bounds_error=False,
                                      fill_value=None)
 
